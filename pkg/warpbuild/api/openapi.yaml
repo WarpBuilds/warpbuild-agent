@@ -1,0 +1,2581 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the docs for warp builds api for argonaut
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Warp Builds API Docs
+  version: 0.4.0
+servers:
+- url: https://backend.warpbuild.com/api/v1
+paths:
+  /auth:
+    post:
+      description: Logs in or signs up the userm
+      operationId: AuthUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthUserRequest'
+        description: Auth request body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      summary: Auth user
+      tags:
+      - v1 auth
+      x-codegen-request-body-name: body
+  /auth/login/{provider}:
+    get:
+      description: Get auth url
+      operationId: GetAuthURL
+      parameters:
+      - description: Provider
+        in: path
+        name: provider
+        required: true
+        schema:
+          type: string
+      - description: Invite code if any
+        in: query
+        name: invite_code
+        schema:
+          type: string
+      responses:
+        "302":
+          content:
+            '*/*':
+              schema:
+                type: string
+          description: Redirects to auth url
+        "400":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      summary: Get auth url
+      tags:
+      - v1 auth
+  /auth/logout:
+    patch:
+      description: Logs out the user
+      operationId: Logout
+      responses:
+        "200":
+          content: {}
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      security:
+      - JWTKeyAuth: []
+      summary: Logout
+      tags:
+      - v1 auth
+  /auth/me:
+    get:
+      description: Gets the currently logged in user
+      operationId: GetMe
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      security:
+      - JWTKeyAuth: []
+      summary: Auth user
+      tags:
+      - v1 auth
+  /auth/switch:
+    patch:
+      operationId: SwitchOrganization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchOrganizationRequest'
+        description: Switch organization
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchOrganizationResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      security:
+      - JWTKeyAuth: []
+      summary: Switch organization
+      tags:
+      - v1 auth
+      x-codegen-request-body-name: body
+  /auth/token/refresh:
+    patch:
+      description: Refreshes the access token
+      operationId: RefreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        description: Refresh token
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      summary: Refresh token
+      tags:
+      - v1 auth
+      x-codegen-request-body-name: body
+  /auth/tokens:
+    get:
+      description: List user tokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.ListTokensOptions'
+        description: ListTokenOptions
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.UserToken'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - WarpBuildAdminSecretAuth: []
+      summary: List user tokens
+      tags:
+      - v1 auth
+      x-codegen-request-body-name: body
+  /auth/users:
+    get:
+      description: List users from authentication provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.ListUsersOptions'
+        description: ListUsersOptions
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.ListUsersResponse'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - WarpBuildAdminSecretAuth: []
+      summary: List users
+      tags:
+      - v1 auth
+      x-codegen-request-body-name: body
+  /billing/checkout:
+    post:
+      operationId: InitateSubscriptionCheckout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.ReqCheckoutSession'
+        description: initiate checkout session input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ResCheckoutSession'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: Initiate Checkout for subscription with PG
+      tags:
+      - v1 subscriptions
+      x-codegen-request-body-name: Body
+  /billing/setup_intent/init:
+    post:
+      operationId: InitiateSetupIntent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.ReqSetupIntentInit'
+        description: initiate setup intent session input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ResSetupIntentInit'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: Initiate Checkout for subscription with PG
+      tags:
+      - v1 subscriptions
+      x-codegen-request-body-name: Body
+  /debugger/events/publish:
+    post:
+      operationId: DebugPublishEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/debugger.PublishEventInput'
+        description: Event to publish
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/types.GenericSuccessMessage'
+          description: JSON response
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      security:
+      - WarpBuildAdminSecretAuth: []
+      summary: Publish an event to the event bus
+      tags:
+      - v1 debugger
+      x-codegen-request-body-name: body
+  /invite:
+    patch:
+      description: Invite is figured out from the auth token since tokens are specific
+        to invites.
+      operationId: UpdateInvite
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/UpdateInviteRequest'
+        description: Update existing invite body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1Invite'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Updates existing invite based on the fields provided.
+      tags:
+      - v1 invite
+      x-codegen-request-body-name: body
+    post:
+      description: "User can manage multiple tenanats from one account, this api provides\
+        \ user a functionality to add a new tenant/org to the user."
+      operationId: CreateInvite
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CreateInviteRequest'
+        description: Create new invite body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1Invite'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Adds a new organisation for a current user
+      tags:
+      - v1 invite
+      x-codegen-request-body-name: body
+  /invite/send/email:
+    post:
+      description: Sending email invite to the user.
+      operationId: SendInvite
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/V1SendInviteRequest'
+        description: Send invite body
+        required: true
+      responses:
+        "200":
+          content: {}
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Adds a new organisation for a current user
+      tags:
+      - v1 invite
+      x-codegen-request-body-name: body
+  /invites:
+    get:
+      operationId: ListOrgInvites
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/V1Invite'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: ListOrgInvites lists all the invite user has access to.
+      tags:
+      - v1 invite
+  /jobs/estimated-costs:
+    get:
+      description: GetEstimatedCosts
+      operationId: GetEstimatedCosts
+      parameters:
+      - description: Date range start
+        in: query
+        name: start_date
+        required: true
+        schema:
+          type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                items:
+                  $ref: '#/components/schemas/EstimatedCost'
+                type: array
+          description: OK
+        "400":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: GetEstimatedCosts
+      tags:
+      - v1 jobs
+  /organization:
+    get:
+      operationId: GetOrganization
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Organization'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get organization details for the current organization. Current organization
+        is figured from the authorization token
+      tags:
+      - v1 organization
+    patch:
+      description: Organization is figured out from the auth token since tokens are
+        specific to organizations.
+      operationId: UpdateOrganization
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationRequest'
+        description: Update existing organization body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Organization'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Updates existing organization based on the fields provided.
+      tags:
+      - v1 organization
+      x-codegen-request-body-name: body
+    post:
+      description: "User can manage multiple tenanats from one account, this api provides\
+        \ user a functionality to add a new tenant/org to the user."
+      operationId: CreateOrganization
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchOrganizationResponse'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Adds a new organisation for a current user
+      tags:
+      - v1 organization
+  /organization/users:
+    get:
+      operationId: ListOrgUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/V1ListUsersForOrganizationResult'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: ListOrgUsers list the users for the current organization
+      tags:
+      - v1 organization
+  /organizations:
+    get:
+      operationId: ListUserOrganizations
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/V1Organization'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: ListUserOrganizations lists all the organization user has access to.
+      tags:
+      - v1 organization
+  /runner_instance/{id}/allocation_details:
+    get:
+      operationId: GetRunnerInstanceAllocationDetails
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerInstanceAllocationDetails'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      summary: Get runner instance allocation details for the id
+      tags:
+      - v1 RunnerInstance
+  /runners:
+    get:
+      operationId: ListRunners
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.Runner'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: ListRunners lists all the runners for an org.
+      tags:
+      - v1 Runners
+    post:
+      description: User can request a runner setup by passing different name.
+      operationId: SetupRunner
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/commons.SetupRunnerInput'
+        description: Create new runner body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Runner'
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: Adds a new runner for a current organization
+      tags:
+      - v1 Runners
+      x-codegen-request-body-name: body
+  /runners/runtimes:
+    get:
+      operationId: GetRuntimes
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.Runtime'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runtimes for runners of the organisation
+      tags:
+      - v1 Runners
+  /runners/{id}:
+    delete:
+      operationId: DeleteRunner
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Runner'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: delete runner for the id. Current organization is figured from the
+        authorization token
+      tags:
+      - v1 Runners
+    get:
+      operationId: GetRunner
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Runner'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner details for the id. Current organization is figured from
+        the authorization token
+      tags:
+      - v1 Runners
+    patch:
+      operationId: UpdateRunner
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.UpdateRunnerInput'
+        description: update runner body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Runner'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner details for the id. Current organization is figured from
+        the authorization token
+      tags:
+      - v1 Runners
+      x-codegen-request-body-name: body
+  /subscription:
+    delete:
+      operationId: DeleteCurrentSubscription
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.SubscriptionDetails'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Cancel Org current Subscription
+      tags:
+      - v1 subscriptions
+    get:
+      operationId: GetSubscriptionDetails
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.SubscriptionDetails'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get Current Org Subscription Details
+      tags:
+      - v1 subscriptions
+  /subscription/stripe/payment_method/{payment_method_id}:
+    delete:
+      operationId: DeleteStripePaymentMethod
+      parameters:
+      - description: ID for the stripe payment method
+        in: path
+        name: payment_method_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.SubscriptionDetails'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: delete stripe setup intent payment method
+      tags:
+      - v1 subscriptions
+    patch:
+      operationId: StripePaymentMethodDefault
+      parameters:
+      - description: ID for the stripe payment method
+        in: path
+        name: payment_method_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.SubscriptionDetails'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: update stripe payment method to default
+      tags:
+      - v1 subscriptions
+  /subscription/{gateway}/webhook:
+    post:
+      operationId: SubscriptionPGWebhook
+      parameters:
+      - description: "gateway name, current only stripe"
+        in: path
+        name: gateway
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: S2S Webhook received from PG
+      tags:
+      - v1 subscriptions
+  /vcs/approve-integration:
+    put:
+      operationId: ApproveVCSIntegration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveVCSIntegrationRequest'
+        description: Approve vcs integration app installation
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      summary: This handles the callback for approving an installation
+      tags:
+      - v1 vcs
+      x-codegen-request-body-name: body
+  /vcs/entities:
+    get:
+      description: |-
+        VCS Entities refers to git entites like git repos, git branches, etc.
+        This endpoint is a commons endpoint to fetch these.
+        ParentID is required depending on what git entity you are fetching.
+
+        Git entity heirchary:
+        Git Organization > Git Repository > Git Branch
+
+        When fetching an entity the parent id is the id of git entity one level above
+        So for example, fetching repository will be
+        http://backend.warpbuild.com/api/v1/vcs/entities?provider=gitlab&entity_type=repository&parent_id=organization_external_id
+        For the most top level entity there is no parent_id.
+      operationId: ListVCSEntites
+      parameters:
+      - description: Git provider
+        in: query
+        name: provider
+        schema:
+          type: string
+      - description: Filter using organization name
+        in: query
+        name: name
+        schema:
+          type: string
+      - description: IntegrationID used by the git provider
+        in: query
+        name: integration_id
+        schema:
+          type: string
+      - description: VCS Entity that should be returned
+        in: query
+        name: entity_type
+        required: true
+        schema:
+          enum:
+          - organization
+          - repository
+          - branch
+          type: string
+      - description: VCS Entity Parent ID
+        in: query
+        name: parent_id
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VCSEntity'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs entities for vcs integration
+      tags:
+      - v1 vcs
+  /vcs/integrations:
+    get:
+      operationId: ListVCSIntegration
+      parameters:
+      - description: vcs integration provider filter
+        in: query
+        name: provider
+        schema:
+          type: string
+      - description: vcs integration provider filter
+        in: query
+        name: status
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VCSIntegration'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs integration for provider
+      tags:
+      - v1 vcs
+    post:
+      operationId: CreateVCSIntegration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVCSIntegrationRequest'
+        description: Create new vcs integration body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VCSIntegration'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Create a new vcs integration
+      tags:
+      - v1 vcs
+      x-codegen-request-body-name: body
+  /vcs/integrations/{integration_id}:
+    delete:
+      operationId: DeleteVCSIntegration
+      parameters:
+      - description: ID for the vcs integration
+        in: path
+        name: integration_id
+        required: true
+        schema:
+          type: string
+      - description: ID for the vcs integration
+        in: query
+        name: provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/types.GenericSuccessMessage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Delete an existing vcs integration
+      tags:
+      - v1 vcs
+    put:
+      operationId: UpdateVCSIntegration
+      parameters:
+      - description: ID for the vcs integration
+        in: path
+        name: integration_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVCSIntegrationRequest'
+        description: Update vcs integration body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateVCSIntegrationResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Update an existing vcs integration
+      tags:
+      - v1 vcs
+      x-codegen-request-body-name: body
+  /vcs/repos:
+    post:
+      operationId: CreateVCSGitRepo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.CreateRepoOptions'
+        description: create repo options
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Repo'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth | WarpBuildAdminSecretAuth: []
+      summary: create vcs repo based on repo internal id
+      tags:
+      - v1 vcs
+      x-codegen-request-body-name: body
+  /vcs/repos/{id}:
+    get:
+      operationId: GetVCSGitRepo
+      parameters:
+      - description: internal id for the vcs git repo
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.Repo'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: get vcs repo based on repo internal id
+      tags:
+      - v1 vcs
+components:
+  schemas:
+    ApproveVCSIntegrationRequest:
+      example:
+        code: code
+        installation_id: installation_id
+      properties:
+        code:
+          type: string
+        installation_id:
+          type: string
+      type: object
+    AuthUserRequest:
+      example:
+        code: code
+        state: state
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+      required:
+      - code
+      - state
+      type: object
+    AuthUserResponse:
+      example:
+        access_token: access_token
+        refresh_token: refresh_token
+        organization:
+          avatar_url: avatar_url
+          name: name
+          id: id
+          created_by: 0
+        should_show_vcs_integration: true
+        user:
+          avatar_url: avatar_url
+          updated_at: updated_at
+          name: name
+          created_at: created_at
+          id: 6
+          login: login
+          signup_provider: signup_provider
+          email: email
+          signup_provider_user_id: signup_provider_user_id
+      properties:
+        access_token:
+          type: string
+        organization:
+          $ref: '#/components/schemas/V1Organization'
+        refresh_token:
+          type: string
+        should_show_vcs_integration:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/V1User'
+      required:
+      - access_token
+      - organization
+      - refresh_token
+      - should_show_vcs_integration
+      - user
+      type: object
+    CreateInviteRequest:
+      example:
+        role_kind: owner
+      properties:
+        role_kind:
+          enum:
+          - owner
+          - admin
+          - member
+          type: string
+      required:
+      - role_kind
+      type: object
+    CreateVCSIntegrationRequest:
+      example:
+        provider: provider
+        vcs_url: vcs_url
+        additional_state:
+          key: ""
+        application_secret: application_secret
+        application_callback_url: application_callback_url
+        application_id: application_id
+      properties:
+        additional_state:
+          additionalProperties: true
+          type: object
+        application_callback_url:
+          type: string
+        application_id:
+          type: string
+        application_secret:
+          type: string
+        provider:
+          type: string
+        vcs_url:
+          type: string
+      required:
+      - provider
+      type: object
+    EstimatedCost:
+      example:
+        date: date
+        amount: 0.8008281904610115
+      properties:
+        amount:
+          type: number
+        date:
+          type: string
+      type: object
+    MeResponse:
+      example:
+        organization:
+          avatar_url: avatar_url
+          name: name
+          id: id
+          created_by: 0
+        vcs_integration:
+          account_id: account_id
+          connection_status: connection_status
+          target_type: target_type
+          installation_id: installation_id
+          id: id
+          account_owner: account_owner
+        user:
+          avatar_url: avatar_url
+          updated_at: updated_at
+          name: name
+          created_at: created_at
+          id: 6
+          login: login
+          signup_provider: signup_provider
+          email: email
+          signup_provider_user_id: signup_provider_user_id
+      properties:
+        organization:
+          $ref: '#/components/schemas/V1Organization'
+        user:
+          $ref: '#/components/schemas/V1User'
+        vcs_integration:
+          $ref: '#/components/schemas/commons.VCSIntegrationLean'
+      required:
+      - organization
+      - user
+      - vcs_integration
+      type: object
+    SwitchOrganizationRequest:
+      example:
+        refresh_token: refresh_token
+        organization_id: organization_id
+      properties:
+        organization_id:
+          type: string
+        refresh_token:
+          type: string
+      required:
+      - organization_id
+      - refresh_token
+      type: object
+    SwitchOrganizationResponse:
+      example:
+        access_token: access_token
+        organization:
+          avatar_url: avatar_url
+          name: name
+          id: id
+          created_by: 0
+      properties:
+        access_token:
+          type: string
+        organization:
+          $ref: '#/components/schemas/V1Organization'
+      required:
+      - access_token
+      - organization
+      type: object
+    TokenRefreshRequest:
+      example:
+        refresh_token: refresh_token
+      properties:
+        refresh_token:
+          type: string
+      required:
+      - refresh_token
+      type: object
+    TokenRefreshResponse:
+      example:
+        access_token: access_token
+      properties:
+        access_token:
+          type: string
+      required:
+      - access_token
+      type: object
+    UpdateInviteRequest:
+      example:
+        Status: Status
+      properties:
+        Status:
+          type: string
+      type: object
+    UpdateOrganizationRequest:
+      example:
+        avatar_url: avatar_url
+        name: name
+      properties:
+        avatar_url:
+          type: string
+        name:
+          type: string
+      type: object
+    UpdateVCSIntegrationRequest:
+      example:
+        setup_action: setup_action
+        code: code
+        installation_id: installation_id
+        id: id
+      properties:
+        code:
+          description: |-
+            Code is
+
+            - 'code' param in the callback from gitlab
+          type: string
+        id:
+          type: string
+        installation_id:
+          description: |-
+            InstallationID
+
+            - 'installation_id' param from github installation
+          type: string
+        setup_action:
+          description: |-
+            SetupAction
+
+            - 'setup_action' param from github installation
+          type: string
+      required:
+      - id
+      type: object
+    UpdateVCSIntegrationResponse:
+      example:
+        vcs_integration:
+          integration_url: integration_url
+          vcs_url: vcs_url
+          connection_status: connection_status
+          target_type: target_type
+          created_at: created_at
+          installation_id: installation_id
+          integration_type: integration_type
+          account_owner: account_owner
+          application_id: application_id
+          account_id: account_id
+          updated_at: updated_at
+          provider: provider
+          configuration_url: configuration_url
+          organization_id: organization_id
+          id: id
+        new_session:
+          access_token: access_token
+          refresh_token: refresh_token
+          organization:
+            avatar_url: avatar_url
+            name: name
+            id: id
+            created_by: 0
+          should_show_vcs_integration: true
+          user:
+            avatar_url: avatar_url
+            updated_at: updated_at
+            name: name
+            created_at: created_at
+            id: 6
+            login: login
+            signup_provider: signup_provider
+            email: email
+            signup_provider_user_id: signup_provider_user_id
+      properties:
+        new_session:
+          $ref: '#/components/schemas/AuthUserResponse'
+        vcs_integration:
+          $ref: '#/components/schemas/VCSIntegration'
+      type: object
+    V1Invite:
+      example:
+        code: code
+        expires_at: expires_at
+        role: role
+        organization_id: organization_id
+        id: id
+        status: status
+      properties:
+        code:
+          type: string
+        expires_at:
+          type: string
+        id:
+          type: string
+        organization_id:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+      type: object
+    V1ListUsersForOrganizationResult:
+      example:
+        joined_at: joined_at
+        role: role
+        avatar_url: avatar_url
+        name: name
+        id: 0
+        email: email
+      properties:
+        avatar_url:
+          type: string
+        email:
+          type: string
+        id:
+          type: integer
+        joined_at:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      type: object
+    V1Organization:
+      example:
+        avatar_url: avatar_url
+        name: name
+        id: id
+        created_by: 0
+      properties:
+        avatar_url:
+          type: string
+        created_by:
+          type: integer
+        id:
+          type: string
+        name:
+          type: string
+      required:
+      - created_by
+      - id
+      - name
+      type: object
+    V1SendInviteRequest:
+      example:
+        invite_id: invite_id
+        email: email
+      properties:
+        email:
+          type: string
+        invite_id:
+          type: string
+      required:
+      - email
+      - invite_id
+      type: object
+    V1User:
+      example:
+        avatar_url: avatar_url
+        updated_at: updated_at
+        name: name
+        created_at: created_at
+        id: 6
+        login: login
+        signup_provider: signup_provider
+        email: email
+        signup_provider_user_id: signup_provider_user_id
+      properties:
+        avatar_url:
+          type: string
+        created_at:
+          type: string
+        email:
+          type: string
+        id:
+          type: integer
+        login:
+          type: string
+        name:
+          type: string
+        signup_provider:
+          type: string
+        signup_provider_user_id:
+          type: string
+        updated_at:
+          type: string
+      type: object
+    VCSEntity:
+      example:
+        account_id: account_id
+        entity_type: entity_type
+        integration_id: integration_id
+        internal_id: internal_id
+        updated_at: updated_at
+        web_url: web_url
+        provider: provider
+        name: name
+        created_at: created_at
+        external_id: external_id
+        display_name: display_name
+        commit_id: commit_id
+      properties:
+        account_id:
+          description: |-
+            AccountID is the github account
+
+            TODO: AccountID should be group id in case of gitlab
+          type: string
+        commit_id:
+          type: string
+        created_at:
+          type: string
+        display_name:
+          type: string
+        entity_type:
+          type: string
+        external_id:
+          type: string
+        integration_id:
+          type: string
+        internal_id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+        updated_at:
+          type: string
+        web_url:
+          type: string
+      required:
+      - display_name
+      - entity_type
+      - external_id
+      - name
+      - provider
+      type: object
+    VCSIntegration:
+      example:
+        integration_url: integration_url
+        vcs_url: vcs_url
+        connection_status: connection_status
+        target_type: target_type
+        created_at: created_at
+        installation_id: installation_id
+        integration_type: integration_type
+        account_owner: account_owner
+        application_id: application_id
+        account_id: account_id
+        updated_at: updated_at
+        provider: provider
+        configuration_url: configuration_url
+        organization_id: organization_id
+        id: id
+      properties:
+        account_id:
+          type: string
+        account_owner:
+          type: string
+        application_id:
+          type: string
+        configuration_url:
+          description: |-
+            ConfigurationURL
+
+            Github
+            - Is the installation's settings page on the github account.
+            - This field is only populated after the github account is successfully connected.
+
+            Gitlab
+            - <no-equivalent-exists>
+          type: string
+        connection_status:
+          type: string
+        created_at:
+          type: string
+        id:
+          type: string
+        installation_id:
+          type: string
+        integration_type:
+          type: string
+        integration_url:
+          type: string
+        organization_id:
+          type: string
+        provider:
+          type: string
+        target_type:
+          type: string
+        updated_at:
+          type: string
+        vcs_url:
+          type: string
+      required:
+      - connection_status
+      - created_at
+      - id
+      - integration_type
+      - integration_url
+      - provider
+      - target_type
+      - updated_at
+      type: object
+    WarpBuildAPIError:
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        message:
+          type: string
+        sub_code:
+          type: string
+        sub_message:
+          type: string
+      type: object
+    commons.Balance:
+      example:
+        percentage: 6.027456183070403
+        limit: 0.8008281904610115
+        id: id
+        used: 1.4658129805029452
+      properties:
+        id:
+          type: string
+        limit:
+          type: number
+        percentage:
+          type: number
+        used:
+          type: number
+      type: object
+    commons.BalanceDetails:
+      example:
+        free_balance:
+          percentage: 6.027456183070403
+          limit: 0.8008281904610115
+          id: id
+          used: 1.4658129805029452
+        paid_balance:
+          percentage: 6.027456183070403
+          limit: 0.8008281904610115
+          id: id
+          used: 1.4658129805029452
+      properties:
+        free_balance:
+          $ref: '#/components/schemas/commons.Balance'
+        paid_balance:
+          $ref: '#/components/schemas/commons.Balance'
+      type: object
+    commons.CreateRepoOptions:
+      properties:
+        description:
+          type: string
+        display_name:
+          type: string
+        integration_id:
+          type: string
+        is_private:
+          type: boolean
+        name:
+          type: string
+        owner:
+          type: string
+        should_auto_init:
+          type: boolean
+        upsert:
+          type: boolean
+      required:
+      - integration_id
+      - name
+      - owner
+      type: object
+    commons.ListTokensOptions:
+      properties:
+        organization_id:
+          type: string
+        user_id:
+          type: string
+      type: object
+    commons.ListUsersOptions:
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+      type: object
+    commons.ListUsersResponse:
+      example:
+        next: 0
+        per_page: 1
+        total_rows: 5
+        page: 6
+        total_pages: 5
+        users:
+        - avatar_url: avatar_url
+          updated_at: updated_at
+          name: name
+          created_at: created_at
+          id: 6
+          login: login
+          signup_provider: signup_provider
+          email: email
+          signup_provider_user_id: signup_provider_user_id
+        - avatar_url: avatar_url
+          updated_at: updated_at
+          name: name
+          created_at: created_at
+          id: 6
+          login: login
+          signup_provider: signup_provider
+          email: email
+          signup_provider_user_id: signup_provider_user_id
+      properties:
+        next:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_rows:
+          type: integer
+        users:
+          items:
+            $ref: '#/components/schemas/V1User'
+          type: array
+      type: object
+    commons.Organization:
+      example:
+        avatar_url: avatar_url
+        name: name
+        id: id
+        created_by: 0
+      properties:
+        avatar_url:
+          type: string
+        created_by:
+          type: integer
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    commons.PaymentDetails:
+      example:
+        amount: 5
+        ref: ref
+        method: method
+        billing_email: billing_email
+        currency: currency
+        method_meta: method_meta
+        status: status
+      properties:
+        amount:
+          type: integer
+        billing_email:
+          type: string
+        currency:
+          type: string
+        method:
+          type: string
+        method_meta:
+          type: string
+        ref:
+          type: string
+        status:
+          type: string
+      type: object
+    commons.PaymentMethod:
+      example:
+        country_code: country_code
+        last4: last4
+        name: name
+        exp_month: 5
+        external_id: external_id
+        exp_year: 2
+        is_default: true
+        type: type
+        issuer: issuer
+        iin: iin
+        network: network
+      properties:
+        country_code:
+          type: string
+        exp_month:
+          type: integer
+        exp_year:
+          type: integer
+        external_id:
+          type: string
+        iin:
+          type: string
+        is_default:
+          type: boolean
+        issuer:
+          type: string
+        last4:
+          type: string
+        name:
+          type: string
+        network:
+          type: string
+        type:
+          type: string
+      type: object
+    commons.Repo:
+      example:
+        DefaultBranch: DefaultBranch
+        owner: owner
+        AccountID: AccountID
+        CreatedAt: CreatedAt
+        WebURL: WebURL
+        IntegrationID: IntegrationID
+        UpdatedAt: UpdatedAt
+        vcs_id: vcs_id
+        SSHURL: SSHURL
+        provider: provider
+        DisplayName: DisplayName
+        name: name
+        id: id
+      properties:
+        AccountID:
+          type: string
+        CreatedAt:
+          type: string
+        DefaultBranch:
+          type: string
+        DisplayName:
+          type: string
+        IntegrationID:
+          type: string
+        SSHURL:
+          type: string
+        UpdatedAt:
+          type: string
+        WebURL:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        provider:
+          type: string
+        vcs_id:
+          type: string
+      type: object
+    commons.ReqCheckoutSession:
+      properties:
+        cancel_url:
+          type: string
+        success_url:
+          type: string
+      required:
+      - cancel_url
+      - success_url
+      type: object
+    commons.ReqSetupIntentInit:
+      properties:
+        cancel_url:
+          type: string
+        success_url:
+          type: string
+      required:
+      - cancel_url
+      - success_url
+      type: object
+    commons.ResCheckoutSession:
+      example:
+        session_id: session_id
+        redirect_url: redirect_url
+      properties:
+        redirect_url:
+          type: string
+        session_id:
+          type: string
+      type: object
+    commons.ResSetupIntentInit:
+      example:
+        data: "{}"
+        gateway: gateway
+      properties:
+        data:
+          type: object
+        gateway:
+          type: string
+      type: object
+    commons.Runner:
+      example:
+        cluster_id: cluster_id
+        updated_at: updated_at
+        configuration:
+          image: image
+          cores: 0
+          memory: 6
+          arch: arch
+        organization_id: organization_id
+        name: name
+        vcs_integration_id: vcs_integration_id
+        active: true
+        created_at: created_at
+        external_reference_id: external_reference_id
+        id: id
+        labels:
+          key: ""
+      properties:
+        active:
+          type: boolean
+        cluster_id:
+          type: string
+        configuration:
+          $ref: '#/components/schemas/commons.RunnerConfiguration'
+        created_at:
+          type: string
+        external_reference_id:
+          type: string
+        id:
+          type: string
+        labels:
+          additionalProperties: true
+          type: object
+        name:
+          type: string
+        organization_id:
+          type: string
+        updated_at:
+          type: string
+        vcs_integration_id:
+          type: string
+      type: object
+    commons.RunnerConfiguration:
+      example:
+        image: image
+        cores: 0
+        memory: 6
+        arch: arch
+      properties:
+        arch:
+          type: string
+        cores:
+          type: integer
+        image:
+          type: string
+        memory:
+          type: integer
+      type: object
+    commons.RunnerInstance:
+      example:
+        cluster: cluster
+        last_job_processed_id: last_job_processed_id
+        configuration:
+          image: image
+          cores: 0
+          memory: 6
+          arch: arch
+        created_at: created_at
+        runner_for: runner_for
+        created_by: created_by
+        runner_set_id: runner_set_id
+        last_polled: last_polled
+        updated_at: updated_at
+        organization_id: organization_id
+        vcs_integration_id: vcs_integration_id
+        id: id
+        status: status
+      properties:
+        cluster:
+          type: string
+        configuration:
+          $ref: '#/components/schemas/commons.RunnerConfiguration'
+        created_at:
+          type: string
+        created_by:
+          type: string
+        id:
+          type: string
+        last_job_processed_id:
+          type: string
+        last_polled:
+          type: string
+        organization_id:
+          type: string
+        runner_for:
+          type: string
+        runner_set_id:
+          type: string
+        status:
+          type: string
+        updated_at:
+          type: string
+        vcs_integration_id:
+          type: string
+      type: object
+    commons.RunnerInstanceAllocationDetails:
+      example:
+        runner_application_details: "{}"
+        runner_instance:
+          cluster: cluster
+          last_job_processed_id: last_job_processed_id
+          configuration:
+            image: image
+            cores: 0
+            memory: 6
+            arch: arch
+          created_at: created_at
+          runner_for: runner_for
+          created_by: created_by
+          runner_set_id: runner_set_id
+          last_polled: last_polled
+          updated_at: updated_at
+          organization_id: organization_id
+          vcs_integration_id: vcs_integration_id
+          id: id
+          status: status
+        status: status
+      properties:
+        runner_application_details:
+          type: object
+        runner_instance:
+          $ref: '#/components/schemas/commons.RunnerInstance'
+        status:
+          type: string
+      type: object
+    commons.Runtime:
+      example:
+        duration_seconds: 0
+        runner_id: runner_id
+      properties:
+        duration_seconds:
+          type: integer
+        runner_id:
+          type: string
+      type: object
+    commons.SetupRunnerInput:
+      properties:
+        Active:
+          type: boolean
+        configuration:
+          $ref: '#/components/schemas/commons.RunnerConfiguration'
+        labels:
+          additionalProperties: true
+          type: object
+        name:
+          type: string
+        vcs_integration_id:
+          type: string
+      type: object
+    commons.SubscriptionDetails:
+      example:
+        last_payment_at: last_payment_at
+        subscribed_at: subscribed_at
+        last_payment_details:
+          amount: 5
+          ref: ref
+          method: method
+          billing_email: billing_email
+          currency: currency
+          method_meta: method_meta
+          status: status
+        created_at: created_at
+        balance_details:
+          free_balance:
+            percentage: 6.027456183070403
+            limit: 0.8008281904610115
+            id: id
+            used: 1.4658129805029452
+          paid_balance:
+            percentage: 6.027456183070403
+            limit: 0.8008281904610115
+            id: id
+            used: 1.4658129805029452
+        pg_subscription_id: pg_subscription_id
+        payment_methods:
+        - country_code: country_code
+          last4: last4
+          name: name
+          exp_month: 5
+          external_id: external_id
+          exp_year: 2
+          is_default: true
+          type: type
+          issuer: issuer
+          iin: iin
+          network: network
+        - country_code: country_code
+          last4: last4
+          name: name
+          exp_month: 5
+          external_id: external_id
+          exp_year: 2
+          is_default: true
+          type: type
+          issuer: issuer
+          iin: iin
+          network: network
+        upcoming_bill:
+          date: date
+          amount: 7
+          currency: currency
+        updated_at: updated_at
+        organization_id: organization_id
+        pg_customer_id: pg_customer_id
+        id: id
+        status: status
+      properties:
+        balance_details:
+          $ref: '#/components/schemas/commons.BalanceDetails'
+        created_at:
+          type: string
+        id:
+          type: string
+        last_payment_at:
+          type: string
+        last_payment_details:
+          $ref: '#/components/schemas/commons.PaymentDetails'
+        organization_id:
+          type: string
+        payment_methods:
+          items:
+            $ref: '#/components/schemas/commons.PaymentMethod'
+          type: array
+        pg_customer_id:
+          type: string
+        pg_subscription_id:
+          type: string
+        status:
+          type: string
+        subscribed_at:
+          type: string
+        upcoming_bill:
+          $ref: '#/components/schemas/commons.UpcomingBill'
+        updated_at:
+          type: string
+      type: object
+    commons.UpcomingBill:
+      example:
+        date: date
+        amount: 7
+        currency: currency
+      properties:
+        amount:
+          type: integer
+        currency:
+          type: string
+        date:
+          type: string
+      type: object
+    commons.UpdateRunnerInput:
+      properties:
+        Active:
+          type: boolean
+        configuration:
+          $ref: '#/components/schemas/commons.RunnerConfiguration'
+        labels:
+          additionalProperties: true
+          type: object
+      type: object
+    commons.UserToken:
+      example:
+        provider: provider
+        user_id: user_id
+        organization_id: organization_id
+        provider_user_id: provider_user_id
+        id: id
+        provider_tenant_id: provider_tenant_id
+      properties:
+        id:
+          type: string
+        organization_id:
+          type: string
+        provider:
+          type: string
+        provider_tenant_id:
+          type: string
+        provider_user_id:
+          type: string
+        user_id:
+          type: string
+      type: object
+    commons.VCSIntegrationLean:
+      example:
+        account_id: account_id
+        connection_status: connection_status
+        target_type: target_type
+        installation_id: installation_id
+        id: id
+        account_owner: account_owner
+      properties:
+        account_id:
+          type: string
+        account_owner:
+          type: string
+        connection_status:
+          type: string
+        id:
+          type: string
+        installation_id:
+          type: string
+        target_type:
+          type: string
+      required:
+      - connection_status
+      - id
+      - target_type
+      type: object
+    debugger.PublishEventInput:
+      properties:
+        data:
+          type: object
+        id:
+          type: string
+        publisher:
+          type: string
+        topic:
+          type: string
+      type: object
+    types.GenericSuccessMessage:
+      example:
+        message: message
+      properties:
+        message:
+          type: string
+      type: object
+  securitySchemes:
+    JWTKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+    WarpBuildAdminSecretAuth:
+      in: header
+      name: X-Warp-Build-Admin-Secret
+      type: apiKey
+x-extension-openapi:
+  example: value on a json format
+x-original-swagger-version: "2.0"
