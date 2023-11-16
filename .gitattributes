@@ -1,0 +1,2 @@
+otel-contrib* filter=lfs diff=lfs merge=lfs -text
+pkg/telemetry/binaries/**/otelcol-contrib* filter=lfs diff=lfs merge=lfs -text
