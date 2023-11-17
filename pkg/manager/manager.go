@@ -1,6 +1,8 @@
 package manager
 
-import "context"
+import (
+	"context"
+)
 
 type IManager interface {
 	StartRunner(ctx context.Context, opts *StartRunnerOptions) error
