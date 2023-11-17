@@ -14,7 +14,7 @@ builds:
       - linux
     goarch:
       - amd64
-    main: ./cmd/daemon
+    main: ./cmd/agentd
 
 archives:
   - id: agentd

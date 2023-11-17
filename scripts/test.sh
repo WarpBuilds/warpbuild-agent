@@ -1,6 +1,6 @@
 #!/bin/bash
 
-go build -o bin/warpbuild-agentd cmd/daemon/main.go
+go build -o bin/warpbuild-agentd cmd/agentd/main.go
 cp bin/warpbuild-agentd /usr/local/bin/warpbuild-agentd
 cp tools/systemd/warpbuild-agentd.service /etc/systemd/system/warpbuild-agentd.service
 systemctl daemon-reload
