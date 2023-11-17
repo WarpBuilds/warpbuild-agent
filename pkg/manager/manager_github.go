@@ -17,6 +17,7 @@ type GithubOptions struct {
 	StdoutFile string `json:"stdout_file"`
 	StderrFile string `json:"stderr_file"`
 	RunnerDir  string `json:"runner_dir"`
+	Script     string `json:"script"`
 }
 
 var _ IManager = (*ghManager)(nil)
@@ -28,7 +29,7 @@ func newGithubManager(opts *ManagerOptions) IManager {
 }
 
 func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) error {
-	cmd := exec.CommandContext(ctx, "runner.sh", "--jitToken", opts.JitToken)
+	cmd := exec.CommandContext(ctx, m.Script, "--jitToken", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -41,6 +42,20 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 	if err != nil {
 		log.Logger().Errorf("error creating stderr pipe: %v", err)
 		return err
+	}
+
+	for _, hook := range GetHooks[IPreStartHook]() {
+		err := hook.PreStartHook(ctx, &PreStartHookOptions{
+			StartRunnerOptions: opts,
+			ManagerOptions: &ManagerOptions{
+				Provider: ProviderGithub,
+				Github:   m.GithubOptions,
+			},
+		})
+		if err != nil {
+			log.Logger().Errorf("error running pre-start hook %s: %v", hook.HookID(), err)
+			return err
+		}
 	}
 
 	if err := cmd.Start(); err != nil {
@@ -88,6 +103,20 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 			// Handle output every second
 		case <-doneChan:
 			// Exit the loop when command completes
+			// Run all the post-end hooks
+			for _, hook := range GetHooks[IPostEndHook]() {
+				err := hook.PostEndHook(ctx, &PostEndHookOptions{
+					StartRunnerOptions: opts,
+					ManagerOptions: &ManagerOptions{
+						Provider: ProviderGithub,
+						Github:   m.GithubOptions,
+					},
+				})
+				if err != nil {
+					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
+					return err
+				}
+			}
 			return nil
 		}
 	}
