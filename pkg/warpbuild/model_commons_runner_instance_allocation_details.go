@@ -20,7 +20,8 @@ var _ MappedNullable = &CommonsRunnerInstanceAllocationDetails{}
 
 // CommonsRunnerInstanceAllocationDetails struct for CommonsRunnerInstanceAllocationDetails
 type CommonsRunnerInstanceAllocationDetails struct {
-	RunnerApplicationDetails map[string]interface{} `json:"runner_application_details,omitempty"`
+	GhRunnerApplicationDetails *CommonsGithubRunnerApplicationDetails `json:"gh_runner_application_details,omitempty"`
+	RunnerApplication *string `json:"runner_application,omitempty"`
 	RunnerInstance *CommonsRunnerInstance `json:"runner_instance,omitempty"`
 	Status *string `json:"status,omitempty"`
 	AdditionalProperties map[string]interface{}
@@ -45,36 +46,68 @@ func NewCommonsRunnerInstanceAllocationDetailsWithDefaults() *CommonsRunnerInsta
 	return &this
 }
 
-// GetRunnerApplicationDetails returns the RunnerApplicationDetails field value if set, zero value otherwise.
-func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationDetails() map[string]interface{} {
-	if o == nil || IsNil(o.RunnerApplicationDetails) {
-		var ret map[string]interface{}
+// GetGhRunnerApplicationDetails returns the GhRunnerApplicationDetails field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetGhRunnerApplicationDetails() CommonsGithubRunnerApplicationDetails {
+	if o == nil || IsNil(o.GhRunnerApplicationDetails) {
+		var ret CommonsGithubRunnerApplicationDetails
 		return ret
 	}
-	return o.RunnerApplicationDetails
+	return *o.GhRunnerApplicationDetails
 }
 
-// GetRunnerApplicationDetailsOk returns a tuple with the RunnerApplicationDetails field value if set, nil otherwise
+// GetGhRunnerApplicationDetailsOk returns a tuple with the GhRunnerApplicationDetails field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationDetailsOk() (map[string]interface{}, bool) {
-	if o == nil || IsNil(o.RunnerApplicationDetails) {
-		return map[string]interface{}{}, false
+func (o *CommonsRunnerInstanceAllocationDetails) GetGhRunnerApplicationDetailsOk() (*CommonsGithubRunnerApplicationDetails, bool) {
+	if o == nil || IsNil(o.GhRunnerApplicationDetails) {
+		return nil, false
 	}
-	return o.RunnerApplicationDetails, true
+	return o.GhRunnerApplicationDetails, true
 }
 
-// HasRunnerApplicationDetails returns a boolean if a field has been set.
-func (o *CommonsRunnerInstanceAllocationDetails) HasRunnerApplicationDetails() bool {
-	if o != nil && !IsNil(o.RunnerApplicationDetails) {
+// HasGhRunnerApplicationDetails returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasGhRunnerApplicationDetails() bool {
+	if o != nil && !IsNil(o.GhRunnerApplicationDetails) {
 		return true
 	}
 
 	return false
 }
 
-// SetRunnerApplicationDetails gets a reference to the given map[string]interface{} and assigns it to the RunnerApplicationDetails field.
-func (o *CommonsRunnerInstanceAllocationDetails) SetRunnerApplicationDetails(v map[string]interface{}) {
-	o.RunnerApplicationDetails = v
+// SetGhRunnerApplicationDetails gets a reference to the given CommonsGithubRunnerApplicationDetails and assigns it to the GhRunnerApplicationDetails field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetGhRunnerApplicationDetails(v CommonsGithubRunnerApplicationDetails) {
+	o.GhRunnerApplicationDetails = &v
+}
+
+// GetRunnerApplication returns the RunnerApplication field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplication() string {
+	if o == nil || IsNil(o.RunnerApplication) {
+		var ret string
+		return ret
+	}
+	return *o.RunnerApplication
+}
+
+// GetRunnerApplicationOk returns a tuple with the RunnerApplication field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationOk() (*string, bool) {
+	if o == nil || IsNil(o.RunnerApplication) {
+		return nil, false
+	}
+	return o.RunnerApplication, true
+}
+
+// HasRunnerApplication returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasRunnerApplication() bool {
+	if o != nil && !IsNil(o.RunnerApplication) {
+		return true
+	}
+
+	return false
+}
+
+// SetRunnerApplication gets a reference to the given string and assigns it to the RunnerApplication field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetRunnerApplication(v string) {
+	o.RunnerApplication = &v
 }
 
 // GetRunnerInstance returns the RunnerInstance field value if set, zero value otherwise.
@@ -151,8 +184,11 @@ func (o CommonsRunnerInstanceAllocationDetails) MarshalJSON() ([]byte, error) {
 
 func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.RunnerApplicationDetails) {
-		toSerialize["runner_application_details"] = o.RunnerApplicationDetails
+	if !IsNil(o.GhRunnerApplicationDetails) {
+		toSerialize["gh_runner_application_details"] = o.GhRunnerApplicationDetails
+	}
+	if !IsNil(o.RunnerApplication) {
+		toSerialize["runner_application"] = o.RunnerApplication
 	}
 	if !IsNil(o.RunnerInstance) {
 		toSerialize["runner_instance"] = o.RunnerInstance
@@ -182,7 +218,8 @@ func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (er
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
-		delete(additionalProperties, "runner_application_details")
+		delete(additionalProperties, "gh_runner_application_details")
+		delete(additionalProperties, "runner_application")
 		delete(additionalProperties, "runner_instance")
 		delete(additionalProperties, "status")
 		o.AdditionalProperties = additionalProperties

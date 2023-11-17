@@ -129,6 +129,7 @@ Class | Method | HTTP request | Description
  - [CommonsBalance](docs/CommonsBalance.md)
  - [CommonsBalanceDetails](docs/CommonsBalanceDetails.md)
  - [CommonsCreateRepoOptions](docs/CommonsCreateRepoOptions.md)
+ - [CommonsGithubRunnerApplicationDetails](docs/CommonsGithubRunnerApplicationDetails.md)
  - [CommonsListTokensOptions](docs/CommonsListTokensOptions.md)
  - [CommonsListUsersOptions](docs/CommonsListUsersOptions.md)
  - [CommonsListUsersResponse](docs/CommonsListUsersResponse.md)

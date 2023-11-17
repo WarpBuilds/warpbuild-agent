@@ -2014,6 +2014,29 @@ components:
       - name
       - owner
       type: object
+    commons.GithubRunnerApplicationDetails:
+      example:
+        variables:
+          key: variables
+        jit: jit
+        runner_name: runner_name
+        labels:
+        - labels
+        - labels
+      properties:
+        jit:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        runner_name:
+          type: string
+        variables:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
     commons.ListTokensOptions:
       properties:
         organization_id:
@@ -2339,7 +2362,15 @@ components:
       type: object
     commons.RunnerInstanceAllocationDetails:
       example:
-        runner_application_details: "{}"
+        gh_runner_application_details:
+          variables:
+            key: variables
+          jit: jit
+          runner_name: runner_name
+          labels:
+          - labels
+          - labels
+        runner_application: github
         runner_instance:
           cluster: cluster
           last_job_processed_id: last_job_processed_id
@@ -2358,13 +2389,21 @@ components:
           vcs_integration_id: vcs_integration_id
           id: id
           status: status
-        status: status
+        status: unassigned
       properties:
-        runner_application_details:
-          type: object
+        gh_runner_application_details:
+          $ref: '#/components/schemas/commons.GithubRunnerApplicationDetails'
+        runner_application:
+          enum:
+          - github
+          type: string
         runner_instance:
           $ref: '#/components/schemas/commons.RunnerInstance'
         status:
+          enum:
+          - unassigned
+          - assigned
+          - invalidated
           type: string
       type: object
     commons.Runtime:

@@ -1,5 +1,4 @@
 .gitignore
-.openapi-generator-ignore
 .travis.yml
 README.md
 api/openapi.yaml
@@ -20,6 +19,7 @@ docs/AuthUserResponse.md
 docs/CommonsBalance.md
 docs/CommonsBalanceDetails.md
 docs/CommonsCreateRepoOptions.md
+docs/CommonsGithubRunnerApplicationDetails.md
 docs/CommonsListTokensOptions.md
 docs/CommonsListUsersOptions.md
 docs/CommonsListUsersResponse.md
@@ -82,6 +82,7 @@ model_auth_user_response.go
 model_commons_balance.go
 model_commons_balance_details.go
 model_commons_create_repo_options.go
+model_commons_github_runner_application_details.go
 model_commons_list_tokens_options.go
 model_commons_list_users_options.go
 model_commons_list_users_response.go
