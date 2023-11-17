@@ -11,7 +11,8 @@ echo "Using agent id: $AGENT_ID"
 cat <<EOF > /var/lib/warpbuild-agentd/settings.json
 {
   "agent": {
-    "id": "$AGENT_ID"
+    "id": "$AGENT_ID",
+    "polling_secret: "$POLLING_SECRET"
   },
   "runner": {
     "provider": "github",
