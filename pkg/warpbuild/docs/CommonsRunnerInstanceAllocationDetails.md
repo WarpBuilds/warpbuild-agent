@@ -4,7 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**RunnerApplicationDetails** | Pointer to **map[string]interface{}** |  | [optional] 
+**GhRunnerApplicationDetails** | Pointer to [**CommonsGithubRunnerApplicationDetails**](CommonsGithubRunnerApplicationDetails.md) |  | [optional] 
+**RunnerApplication** | Pointer to **string** |  | [optional] 
 **RunnerInstance** | Pointer to [**CommonsRunnerInstance**](CommonsRunnerInstance.md) |  | [optional] 
 **Status** | Pointer to **string** |  | [optional] 
 
@@ -27,30 +28,55 @@ NewCommonsRunnerInstanceAllocationDetailsWithDefaults instantiates a new Commons
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetRunnerApplicationDetails
+### GetGhRunnerApplicationDetails
 
-`func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationDetails() map[string]interface{}`
+`func (o *CommonsRunnerInstanceAllocationDetails) GetGhRunnerApplicationDetails() CommonsGithubRunnerApplicationDetails`
 
-GetRunnerApplicationDetails returns the RunnerApplicationDetails field if non-nil, zero value otherwise.
+GetGhRunnerApplicationDetails returns the GhRunnerApplicationDetails field if non-nil, zero value otherwise.
 
-### GetRunnerApplicationDetailsOk
+### GetGhRunnerApplicationDetailsOk
 
-`func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationDetailsOk() (*map[string]interface{}, bool)`
+`func (o *CommonsRunnerInstanceAllocationDetails) GetGhRunnerApplicationDetailsOk() (*CommonsGithubRunnerApplicationDetails, bool)`
 
-GetRunnerApplicationDetailsOk returns a tuple with the RunnerApplicationDetails field if it's non-nil, zero value otherwise
+GetGhRunnerApplicationDetailsOk returns a tuple with the GhRunnerApplicationDetails field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRunnerApplicationDetails
+### SetGhRunnerApplicationDetails
 
-`func (o *CommonsRunnerInstanceAllocationDetails) SetRunnerApplicationDetails(v map[string]interface{})`
+`func (o *CommonsRunnerInstanceAllocationDetails) SetGhRunnerApplicationDetails(v CommonsGithubRunnerApplicationDetails)`
 
-SetRunnerApplicationDetails sets RunnerApplicationDetails field to given value.
+SetGhRunnerApplicationDetails sets GhRunnerApplicationDetails field to given value.
 
-### HasRunnerApplicationDetails
+### HasGhRunnerApplicationDetails
 
-`func (o *CommonsRunnerInstanceAllocationDetails) HasRunnerApplicationDetails() bool`
+`func (o *CommonsRunnerInstanceAllocationDetails) HasGhRunnerApplicationDetails() bool`
 
-HasRunnerApplicationDetails returns a boolean if a field has been set.
+HasGhRunnerApplicationDetails returns a boolean if a field has been set.
+
+### GetRunnerApplication
+
+`func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplication() string`
+
+GetRunnerApplication returns the RunnerApplication field if non-nil, zero value otherwise.
+
+### GetRunnerApplicationOk
+
+`func (o *CommonsRunnerInstanceAllocationDetails) GetRunnerApplicationOk() (*string, bool)`
+
+GetRunnerApplicationOk returns a tuple with the RunnerApplication field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRunnerApplication
+
+`func (o *CommonsRunnerInstanceAllocationDetails) SetRunnerApplication(v string)`
+
+SetRunnerApplication sets RunnerApplication field to given value.
+
+### HasRunnerApplication
+
+`func (o *CommonsRunnerInstanceAllocationDetails) HasRunnerApplication() bool`
+
+HasRunnerApplication returns a boolean if a field has been set.
 
 ### GetRunnerInstance
 
