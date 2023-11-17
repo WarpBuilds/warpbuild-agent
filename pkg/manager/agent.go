@@ -18,20 +18,23 @@ type IAgent interface {
 
 type AgentOptions struct {
 	// ID is the warpbuild assigned id.
-	ID string `json:"id"`
+	ID            string `json:"id"`
+	PollingSecret string `json:"pollingSecret"`
 }
 
 func NewAgent(opts *AgentOptions) (IAgent, error) {
 	wb := warpbuild.NewAPIClient(&warpbuild.Configuration{})
 	return &agentImpl{
-		client: wb,
-		id:     opts.ID,
+		client:        wb,
+		id:            opts.ID,
+		pollingSecret: opts.PollingSecret,
 	}, nil
 }
 
 type agentImpl struct {
-	client *warpbuild.APIClient
-	id     string
+	client        *warpbuild.APIClient
+	id            string
+	pollingSecret string
 }
 
 func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) error {
@@ -42,6 +45,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 		case <-ticker.C:
 			allocationDetails, _, err := a.client.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
+				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
 			if err != nil {
 				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
