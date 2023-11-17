@@ -26,7 +26,8 @@ type Settings struct {
 }
 
 type AgentSettings struct {
-	ID string `json:"id"`
+	ID            string `json:"id"`
+	PollingSecret string `json:"polling_secret"`
 }
 
 type RunnerSettings struct {
@@ -103,7 +104,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	}
 
 	agent, err := manager.NewAgent(&manager.AgentOptions{
-		ID: settings.Agent.ID,
+		ID:            settings.Agent.ID,
+		PollingSecret: settings.Agent.PollingSecret,
 	})
 	if err != nil {
 		log.Logger().Errorf("failed to create agent: %v", err)
