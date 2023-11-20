@@ -52,11 +52,11 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				Execute()
 			if err != nil {
 				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
-				return err
+				continue
 			}
 
 			// TODO: verify the correct status
-			if *allocationDetails.RunnerInstance.Status == "allocated" {
+			if *allocationDetails.Status == "assigned" {
 				m := NewManager(opts.Manager)
 				err := m.StartRunner(ctx, &StartRunnerOptions{
 					JitToken: *allocationDetails.GhRunnerApplicationDetails.Jit,
