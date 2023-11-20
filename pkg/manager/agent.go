@@ -9,6 +9,10 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
+const (
+	Interval = 1 * time.Second
+)
+
 type StartAgentOptions struct {
 	Manager *ManagerOptions `json:"manager"`
 }
@@ -51,7 +55,7 @@ type agentImpl struct {
 
 func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) error {
 
-	ticker := time.NewTicker(200 * time.Millisecond)
+	ticker := time.NewTicker(Interval)
 	for {
 		select {
 		case <-ticker.C:
@@ -80,6 +84,9 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 					log.Logger().Errorf("failed to start runner: %v", err)
 					return err
 				}
+			} else {
+				log.Logger().Infof("runner instance allocation details status: %s", *allocationDetails.Status)
+				log.Logger().Infof("Retrying in %s", Interval)
 			}
 
 		case <-ctx.Done():
