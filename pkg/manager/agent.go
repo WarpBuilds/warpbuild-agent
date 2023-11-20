@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -32,13 +31,7 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 		return nil, fmt.Errorf("host url is required")
 	}
 
-	u, err := url.Parse(opts.HostURL)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg.Servers[0].URL = u.Host
-	cfg.Scheme = u.Scheme
+	cfg.Servers[0].URL = opts.HostURL
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
@@ -71,6 +64,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
 			if err != nil {
+				// get url from resp
 				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
 				log.Logger().Errorf("Response: %+v", resp)
 				continue
