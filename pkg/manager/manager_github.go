@@ -31,7 +31,7 @@ func newGithubManager(opts *ManagerOptions) IManager {
 }
 
 func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) error {
-	cmd := exec.CommandContext(ctx, m.Script, "--jitToken", opts.JitToken)
+	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
