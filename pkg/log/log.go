@@ -1,5 +1,10 @@
 package log
 
+type ILoggerManager interface {
+	Logger() ILogger
+	Sync() error
+}
+
 type ILogger interface {
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -7,21 +12,28 @@ type ILogger interface {
 	Errorf(format string, args ...interface{})
 }
 
-var logger ILogger
+var loggerManager ILoggerManager
 
-func Init() error {
-	if logger == nil {
-		l, err := NewZapLogger()
+type InitOptions struct {
+	StdoutFile string
+	StderrFile string
+}
+
+func Init(opts *InitOptions) (ILoggerManager, error) {
+	if loggerManager == nil {
+		l, err := NewZapLogger(opts)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		logger = l.Sugar()
+		lm := NewZapLoggerManager(l)
+
+		loggerManager = lm
 	}
 
-	return nil
+	return loggerManager, nil
 }
 
 func Logger() ILogger {
-	return logger
+	return loggerManager.Logger()
 }

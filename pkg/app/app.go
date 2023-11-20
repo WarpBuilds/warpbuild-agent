@@ -12,6 +12,8 @@ import (
 
 type ApplicationOptions struct {
 	SettingsFile string `json:"settings_file"`
+	StdoutFile   string `json:"stdout_file"`
+	StderrFile   string `json:"stderr_file"`
 }
 
 func (opts *ApplicationOptions) Default() {
@@ -50,13 +52,20 @@ const (
 
 func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
-	err := log.Init()
+	lm, err := log.Init(&log.InitOptions{
+		StdoutFile: opts.StdoutFile,
+		StderrFile: opts.StderrFile,
+	})
 	if err != nil {
 		return err
 	}
 
-	log.Logger().Infof("starting warpbuild agent")
+	defer lm.Sync()
 
+	log.Logger().Infof("starting warpbuild agent")
+	log.Logger().Infof("settings file: %s", opts.SettingsFile)
+
+	var elapsedTime time.Duration
 	var settings Settings
 	var foundSettings bool
 	// read the settings file every 200ms
@@ -66,6 +75,9 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	for {
 		select {
 		case <-ticker.C:
+
+			log.Logger().Infof("checking for settings file at %s", opts.SettingsFile)
+			log.Logger().Infof("elapsed time: %v", elapsedTime)
 
 			// read the settings file
 			settingsData, err := os.ReadFile(opts.SettingsFile)
@@ -90,7 +102,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			foundSettings = true
 
 		case <-timeout:
-			log.Logger().Errorf("timed out waiting for settings file")
+			log.Logger().Errorf("timed out waiting for settings file at %s", opts.SettingsFile)
 			return nil
 
 		case <-ctx.Done():
