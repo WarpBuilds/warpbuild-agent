@@ -97,7 +97,7 @@ Class | Method | HTTP request | Description
 *V1OrganizationAPI* | [**ListOrgUsers**](docs/V1OrganizationAPI.md#listorgusers) | **Get** /organization/users | ListOrgUsers list the users for the current organization
 *V1OrganizationAPI* | [**ListUserOrganizations**](docs/V1OrganizationAPI.md#listuserorganizations) | **Get** /organizations | ListUserOrganizations lists all the organization user has access to.
 *V1OrganizationAPI* | [**UpdateOrganization**](docs/V1OrganizationAPI.md#updateorganization) | **Patch** /organization | Updates existing organization based on the fields provided.
-*V1RunnerInstanceAPI* | [**GetRunnerInstanceAllocationDetails**](docs/V1RunnerInstanceAPI.md#getrunnerinstanceallocationdetails) | **Get** /runner_instance/{id}/allocation_details | Get runner instance allocation details for the id
+*V1RunnerInstanceAPI* | [**RunnerInstanceCleanupHook**](docs/V1RunnerInstanceAPI.md#runnerinstancecleanuphook) | **Get** /runner_instance/{id}/allocation_details | Get runner instance allocation details for the id
 *V1RunnersAPI* | [**DeleteRunner**](docs/V1RunnersAPI.md#deleterunner) | **Delete** /runners/{id} | delete runner for the id. Current organization is figured from the authorization token
 *V1RunnersAPI* | [**GetRunner**](docs/V1RunnersAPI.md#getrunner) | **Get** /runners/{id} | Get runner details for the id. Current organization is figured from the authorization token
 *V1RunnersAPI* | [**GetRuntimes**](docs/V1RunnersAPI.md#getruntimes) | **Get** /runners/runtimes | Get runtimes for runners of the organisation

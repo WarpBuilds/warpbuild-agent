@@ -734,7 +734,7 @@ paths:
       - v1 organization
   /runner_instance/{id}/allocation_details:
     get:
-      operationId: GetRunnerInstanceAllocationDetails
+      operationId: RunnerInstanceCleanupHook
       parameters:
       - description: runner instance id
         in: path
@@ -753,7 +753,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/commons.RunnerInstanceAllocationDetails'
+                additionalProperties: true
+                type: object
           description: OK
         "400":
           content:
@@ -2015,14 +2016,6 @@ components:
       - owner
       type: object
     commons.GithubRunnerApplicationDetails:
-      example:
-        variables:
-          key: variables
-        jit: jit
-        runner_name: runner_name
-        labels:
-        - labels
-        - labels
       properties:
         jit:
           type: string
@@ -2314,24 +2307,6 @@ components:
           type: integer
       type: object
     commons.RunnerInstance:
-      example:
-        cluster: cluster
-        last_job_processed_id: last_job_processed_id
-        configuration:
-          image: image
-          cores: 0
-          memory: 6
-          arch: arch
-        created_at: created_at
-        runner_for: runner_for
-        created_by: created_by
-        runner_set_id: runner_set_id
-        last_polled: last_polled
-        updated_at: updated_at
-        organization_id: organization_id
-        vcs_integration_id: vcs_integration_id
-        id: id
-        status: status
       properties:
         cluster:
           type: string
@@ -2361,35 +2336,6 @@ components:
           type: string
       type: object
     commons.RunnerInstanceAllocationDetails:
-      example:
-        gh_runner_application_details:
-          variables:
-            key: variables
-          jit: jit
-          runner_name: runner_name
-          labels:
-          - labels
-          - labels
-        runner_application: github
-        runner_instance:
-          cluster: cluster
-          last_job_processed_id: last_job_processed_id
-          configuration:
-            image: image
-            cores: 0
-            memory: 6
-            arch: arch
-          created_at: created_at
-          runner_for: runner_for
-          created_by: created_by
-          runner_set_id: runner_set_id
-          last_polled: last_polled
-          updated_at: updated_at
-          organization_id: organization_id
-          vcs_integration_id: vcs_integration_id
-          id: id
-          status: status
-        status: unassigned
       properties:
         gh_runner_application_details:
           $ref: '#/components/schemas/commons.GithubRunnerApplicationDetails'
