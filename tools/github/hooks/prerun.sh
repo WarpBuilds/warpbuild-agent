@@ -7,8 +7,8 @@ echo $GITHUB_RUN_ID
 echo $GITHUB_RUN_ATTEMPT
 echo $GITHUB_JOB
 echo $GITHUB_REPOSITORY
-echo $WARPBUILD_RUNNER_NAME
-echo $WARPBUILD_RUNNER_OS
+echo $RUNNER_NAME
+echo $RUNNER_OS
 
 if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
     echo "WARPBUILD_SCOPE_TOKEN is not set."
@@ -18,7 +18,7 @@ fi
 cat <<EOF > warpbuild_body.json
 {
   "runner_id": "$WARPBUILD_RUNNER_SET_ID",
-  "runner_name": "$WARPBUILD_RUNNER_NAME",
+  "runner_name": "$RUNNER_NAME",
   "orchestrator_job_id": "$GITHUB_JOB_ID",
   "orchestrator_job_group_id": "$GITHUB_RUN_ID",
   "orchestrator_job_group_attempt": "$GITHUB_RUN_ATTEMPT",

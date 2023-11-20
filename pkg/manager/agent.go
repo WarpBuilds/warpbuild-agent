@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -76,6 +77,15 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
+
+				log.Logger().Infof("Setting additonal environment variables")
+				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+					os.Setenv(key, val)
+				}
+
+				os.Setenv("ACTIONS_RUNNER_HOOK_JOB_STARTED", "/home/prashant/temp/pre-run.sh")
+
+				log.Logger().Infof("Starting runner")
 				m := NewManager(opts.Manager)
 				err := m.StartRunner(ctx, &StartRunnerOptions{
 					JitToken: *allocationDetails.GhRunnerApplicationDetails.Jit,
