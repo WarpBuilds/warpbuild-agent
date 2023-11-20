@@ -14,38 +14,38 @@ definitions:
       state:
         type: string
     required:
-      - code
-      - state
+    - code
+    - state
     type: object
   AuthUserResponse:
     properties:
       access_token:
         type: string
       organization:
-        $ref: "#/definitions/V1Organization"
+        $ref: '#/definitions/V1Organization'
       refresh_token:
         type: string
       should_show_vcs_integration:
         type: boolean
       user:
-        $ref: "#/definitions/V1User"
+        $ref: '#/definitions/V1User'
     required:
-      - access_token
-      - organization
-      - refresh_token
-      - should_show_vcs_integration
-      - user
+    - access_token
+    - organization
+    - refresh_token
+    - should_show_vcs_integration
+    - user
     type: object
   CreateInviteRequest:
     properties:
       role_kind:
         enum:
-          - owner
-          - admin
-          - member
+        - owner
+        - admin
+        - member
         type: string
     required:
-      - role_kind
+    - role_kind
     type: object
   CreateVCSIntegrationRequest:
     properties:
@@ -63,7 +63,7 @@ definitions:
       vcs_url:
         type: string
     required:
-      - provider
+    - provider
     type: object
   EstimatedCost:
     properties:
@@ -75,15 +75,15 @@ definitions:
   MeResponse:
     properties:
       organization:
-        $ref: "#/definitions/V1Organization"
+        $ref: '#/definitions/V1Organization'
       user:
-        $ref: "#/definitions/V1User"
+        $ref: '#/definitions/V1User'
       vcs_integration:
-        $ref: "#/definitions/commons.VCSIntegrationLean"
+        $ref: '#/definitions/commons.VCSIntegrationLean'
     required:
-      - organization
-      - user
-      - vcs_integration
+    - organization
+    - user
+    - vcs_integration
     type: object
   SwitchOrganizationRequest:
     properties:
@@ -92,32 +92,32 @@ definitions:
       refresh_token:
         type: string
     required:
-      - organization_id
-      - refresh_token
+    - organization_id
+    - refresh_token
     type: object
   SwitchOrganizationResponse:
     properties:
       access_token:
         type: string
       organization:
-        $ref: "#/definitions/V1Organization"
+        $ref: '#/definitions/V1Organization'
     required:
-      - access_token
-      - organization
+    - access_token
+    - organization
     type: object
   TokenRefreshRequest:
     properties:
       refresh_token:
         type: string
     required:
-      - refresh_token
+    - refresh_token
     type: object
   TokenRefreshResponse:
     properties:
       access_token:
         type: string
     required:
-      - access_token
+    - access_token
     type: object
   UpdateInviteRequest:
     properties:
@@ -154,14 +154,14 @@ definitions:
           - 'setup_action' param from github installation
         type: string
     required:
-      - id
+    - id
     type: object
   UpdateVCSIntegrationResponse:
     properties:
       new_session:
-        $ref: "#/definitions/AuthUserResponse"
+        $ref: '#/definitions/AuthUserResponse'
       vcs_integration:
-        $ref: "#/definitions/VCSIntegration"
+        $ref: '#/definitions/VCSIntegration'
     type: object
   V1Invite:
     properties:
@@ -204,9 +204,9 @@ definitions:
       name:
         type: string
     required:
-      - created_by
-      - id
-      - name
+    - created_by
+    - id
+    - name
     type: object
   V1SendInviteRequest:
     properties:
@@ -215,8 +215,8 @@ definitions:
       invite_id:
         type: string
     required:
-      - email
-      - invite_id
+    - email
+    - invite_id
     type: object
   V1User:
     properties:
@@ -270,11 +270,11 @@ definitions:
       web_url:
         type: string
     required:
-      - display_name
-      - entity_type
-      - external_id
-      - name
-      - provider
+    - display_name
+    - entity_type
+    - external_id
+    - name
+    - provider
     type: object
   VCSIntegration:
     properties:
@@ -318,14 +318,14 @@ definitions:
       vcs_url:
         type: string
     required:
-      - connection_status
-      - created_at
-      - id
-      - integration_type
-      - integration_url
-      - provider
-      - target_type
-      - updated_at
+    - connection_status
+    - created_at
+    - id
+    - integration_type
+    - integration_url
+    - provider
+    - target_type
+    - updated_at
     type: object
   WarpBuildAPIError:
     properties:
@@ -354,9 +354,9 @@ definitions:
   commons.BalanceDetails:
     properties:
       free_balance:
-        $ref: "#/definitions/commons.Balance"
+        $ref: '#/definitions/commons.Balance'
       paid_balance:
-        $ref: "#/definitions/commons.Balance"
+        $ref: '#/definitions/commons.Balance'
     type: object
   commons.CreateRepoOptions:
     properties:
@@ -377,9 +377,9 @@ definitions:
       upsert:
         type: boolean
     required:
-      - integration_id
-      - name
-      - owner
+    - integration_id
+    - name
+    - owner
     type: object
   commons.GithubRunnerApplicationDetails:
     properties:
@@ -424,7 +424,7 @@ definitions:
         type: integer
       users:
         items:
-          $ref: "#/definitions/V1User"
+          $ref: '#/definitions/V1User'
         type: array
     type: object
   commons.Organization:
@@ -516,8 +516,8 @@ definitions:
       success_url:
         type: string
     required:
-      - cancel_url
-      - success_url
+    - cancel_url
+    - success_url
     type: object
   commons.ReqSetupIntentInit:
     properties:
@@ -526,8 +526,8 @@ definitions:
       success_url:
         type: string
     required:
-      - cancel_url
-      - success_url
+    - cancel_url
+    - success_url
     type: object
   commons.ResCheckoutSession:
     properties:
@@ -549,7 +549,7 @@ definitions:
       cluster_id:
         type: string
       configuration:
-        $ref: "#/definitions/commons.RunnerConfiguration"
+        $ref: '#/definitions/commons.RunnerConfiguration'
       created_at:
         type: string
       external_reference_id:
@@ -584,7 +584,7 @@ definitions:
       cluster:
         type: string
       configuration:
-        $ref: "#/definitions/commons.RunnerConfiguration"
+        $ref: '#/definitions/commons.RunnerConfiguration'
       created_at:
         type: string
       created_by:
@@ -611,18 +611,18 @@ definitions:
   commons.RunnerInstanceAllocationDetails:
     properties:
       gh_runner_application_details:
-        $ref: "#/definitions/commons.GithubRunnerApplicationDetails"
+        $ref: '#/definitions/commons.GithubRunnerApplicationDetails'
       runner_application:
         enum:
-          - github
+        - github
         type: string
       runner_instance:
-        $ref: "#/definitions/commons.RunnerInstance"
+        $ref: '#/definitions/commons.RunnerInstance'
       status:
         enum:
-          - unassigned
-          - assigned
-          - invalidated
+        - unassigned
+        - assigned
+        - invalidated
         type: string
     type: object
   commons.Runtime:
@@ -637,7 +637,7 @@ definitions:
       Active:
         type: boolean
       configuration:
-        $ref: "#/definitions/commons.RunnerConfiguration"
+        $ref: '#/definitions/commons.RunnerConfiguration'
       labels:
         additionalProperties: true
         type: object
@@ -649,7 +649,7 @@ definitions:
   commons.SubscriptionDetails:
     properties:
       balance_details:
-        $ref: "#/definitions/commons.BalanceDetails"
+        $ref: '#/definitions/commons.BalanceDetails'
       created_at:
         type: string
       id:
@@ -657,12 +657,12 @@ definitions:
       last_payment_at:
         type: string
       last_payment_details:
-        $ref: "#/definitions/commons.PaymentDetails"
+        $ref: '#/definitions/commons.PaymentDetails'
       organization_id:
         type: string
       payment_methods:
         items:
-          $ref: "#/definitions/commons.PaymentMethod"
+          $ref: '#/definitions/commons.PaymentMethod'
         type: array
       pg_customer_id:
         type: string
@@ -673,7 +673,7 @@ definitions:
       subscribed_at:
         type: string
       upcoming_bill:
-        $ref: "#/definitions/commons.UpcomingBill"
+        $ref: '#/definitions/commons.UpcomingBill'
       updated_at:
         type: string
     type: object
@@ -691,7 +691,7 @@ definitions:
       Active:
         type: boolean
       configuration:
-        $ref: "#/definitions/commons.RunnerConfiguration"
+        $ref: '#/definitions/commons.RunnerConfiguration'
       labels:
         additionalProperties: true
         type: object
@@ -726,9 +726,9 @@ definitions:
       target_type:
         type: string
     required:
-      - connection_status
-      - id
-      - target_type
+    - connection_status
+    - id
+    - target_type
     type: object
   debugger.PublishEventInput:
     properties:
@@ -761,54 +761,54 @@ paths:
   /auth:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Logs in or signs up the userm
       operationId: AuthUser
       parameters:
-        - description: Auth request body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/AuthUserRequest"
+      - description: Auth request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/AuthUserRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/AuthUserResponse"
+            $ref: '#/definitions/AuthUserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       summary: Auth user
       tags:
-        - v1 auth
+      - v1 auth
   /auth/login/{provider}:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Get auth url
       operationId: GetAuthURL
       parameters:
-        - description: Provider
-          in: path
-          name: provider
-          required: true
-          type: string
-        - description: Invite code if any
-          in: query
-          name: invite_code
-          type: string
+      - description: Provider
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Invite code if any
+        in: query
+        name: invite_code
+        type: string
       responses:
         "302":
           description: Redirects to auth url
@@ -817,952 +817,945 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       summary: Get auth url
       tags:
-        - v1 auth
+      - v1 auth
   /auth/logout:
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Logs out the user
       operationId: Logout
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Logout
       tags:
-        - v1 auth
+      - v1 auth
   /auth/me:
     get:
       consumes:
-        - application/json
+      - application/json
       description: Gets the currently logged in user
       operationId: GetMe
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/MeResponse"
+            $ref: '#/definitions/MeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Auth user
       tags:
-        - v1 auth
+      - v1 auth
   /auth/switch:
     patch:
       consumes:
-        - application/json
+      - application/json
       operationId: SwitchOrganization
       parameters:
-        - description: Switch organization
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/SwitchOrganizationRequest"
+      - description: Switch organization
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SwitchOrganizationRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/SwitchOrganizationResponse"
+            $ref: '#/definitions/SwitchOrganizationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Switch organization
       tags:
-        - v1 auth
+      - v1 auth
   /auth/token/refresh:
     patch:
       consumes:
-        - application/json
+      - application/json
       description: Refreshes the access token
       operationId: RefreshToken
       parameters:
-        - description: Refresh token
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/TokenRefreshRequest"
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TokenRefreshRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/TokenRefreshResponse"
+            $ref: '#/definitions/TokenRefreshResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       summary: Refresh token
       tags:
-        - v1 auth
+      - v1 auth
   /auth/tokens:
     get:
       consumes:
-        - application/json
+      - application/json
       description: List user tokens
       parameters:
-        - description: ListTokenOptions
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.ListTokensOptions"
+      - description: ListTokenOptions
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.ListTokensOptions'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/commons.UserToken"
+              $ref: '#/definitions/commons.UserToken'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - WarpBuildAdminSecretAuth: []
+      - WarpBuildAdminSecretAuth: []
       summary: List user tokens
       tags:
-        - v1 auth
+      - v1 auth
   /auth/users:
     get:
       consumes:
-        - application/json
+      - application/json
       description: List users from authentication provider
       parameters:
-        - description: ListUsersOptions
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.ListUsersOptions"
+      - description: ListUsersOptions
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.ListUsersOptions'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/commons.ListUsersResponse"
+              $ref: '#/definitions/commons.ListUsersResponse'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - WarpBuildAdminSecretAuth: []
+      - WarpBuildAdminSecretAuth: []
       summary: List users
       tags:
-        - v1 auth
+      - v1 auth
   /billing/checkout:
     post:
       consumes:
-        - application/json
+      - application/json
       operationId: InitateSubscriptionCheckout
       parameters:
-        - description: initiate checkout session input
-          in: body
-          name: Body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.ReqCheckoutSession"
+      - description: initiate checkout session input
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.ReqCheckoutSession'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.ResCheckoutSession"
+            $ref: '#/definitions/commons.ResCheckoutSession'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "503":
           description: Service Unavailable
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Initiate Checkout for subscription with PG
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
   /billing/setup_intent/init:
     post:
       consumes:
-        - application/json
+      - application/json
       operationId: InitiateSetupIntent
       parameters:
-        - description: initiate setup intent session input
-          in: body
-          name: Body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.ReqSetupIntentInit"
+      - description: initiate setup intent session input
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.ReqSetupIntentInit'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.ResSetupIntentInit"
+            $ref: '#/definitions/commons.ResSetupIntentInit'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "503":
           description: Service Unavailable
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Initiate Checkout for subscription with PG
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
   /debugger/events/publish:
     post:
       consumes:
-        - application/json
+      - application/json
       operationId: DebugPublishEvent
       parameters:
-        - description: Event to publish
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/debugger.PublishEventInput"
+      - description: Event to publish
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/debugger.PublishEventInput'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: JSON response
           schema:
-            $ref: "#/definitions/types.GenericSuccessMessage"
+            $ref: '#/definitions/types.GenericSuccessMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "401":
           description: Unauthorized
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "403":
           description: Forbidden
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - WarpBuildAdminSecretAuth: []
+      - WarpBuildAdminSecretAuth: []
       summary: Publish an event to the event bus
       tags:
-        - v1 debugger
+      - v1 debugger
   /invite:
     patch:
-      description:
-        Invite is figured out from the auth token since tokens are specific
+      description: Invite is figured out from the auth token since tokens are specific
         to invites.
       operationId: UpdateInvite
       parameters:
-        - description: Update existing invite body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/UpdateInviteRequest"
+      - description: Update existing invite body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateInviteRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/V1Invite"
+            $ref: '#/definitions/V1Invite'
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Updates existing invite based on the fields provided.
       tags:
-        - v1 invite
+      - v1 invite
     post:
-      description:
-        User can manage multiple tenanats from one account, this api provides
+      description: User can manage multiple tenanats from one account, this api provides
         user a functionality to add a new tenant/org to the user.
       operationId: CreateInvite
       parameters:
-        - description: Create new invite body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/CreateInviteRequest"
+      - description: Create new invite body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateInviteRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/V1Invite"
+            $ref: '#/definitions/V1Invite'
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Adds a new organisation for a current user
       tags:
-        - v1 invite
+      - v1 invite
   /invite/send/email:
     post:
       description: Sending email invite to the user.
       operationId: SendInvite
       parameters:
-        - description: Send invite body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/V1SendInviteRequest"
+      - description: Send invite body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/V1SendInviteRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Adds a new organisation for a current user
       tags:
-        - v1 invite
+      - v1 invite
   /invites:
     get:
       operationId: ListOrgInvites
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/V1Invite"
+              $ref: '#/definitions/V1Invite'
             type: array
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: ListOrgInvites lists all the invite user has access to.
       tags:
-        - v1 invite
+      - v1 invite
   /jobs/estimated-costs:
     get:
       consumes:
-        - application/json
+      - application/json
       description: GetEstimatedCosts
       operationId: GetEstimatedCosts
       parameters:
-        - description: Date range start
-          in: query
-          name: start_date
-          required: true
-          type: string
-        - description: Date range end
-          in: query
-          name: end_date
-          required: true
-          type: string
+      - description: Date range start
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        type: string
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/EstimatedCost"
+              $ref: '#/definitions/EstimatedCost'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: GetEstimatedCosts
       tags:
-        - v1 jobs
+      - v1 jobs
   /organization:
     get:
       consumes:
-        - application/json
+      - application/json
       operationId: GetOrganization
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Organization"
+            $ref: '#/definitions/commons.Organization'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
-      summary:
-        Get organization details for the current organization. Current organization
+      - JWTKeyAuth: []
+      summary: Get organization details for the current organization. Current organization
         is figured from the authorization token
       tags:
-        - v1 organization
+      - v1 organization
     patch:
-      description:
-        Organization is figured out from the auth token since tokens are
+      description: Organization is figured out from the auth token since tokens are
         specific to organizations.
       operationId: UpdateOrganization
       parameters:
-        - description: Update existing organization body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/UpdateOrganizationRequest"
+      - description: Update existing organization body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateOrganizationRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Organization"
+            $ref: '#/definitions/commons.Organization'
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Updates existing organization based on the fields provided.
       tags:
-        - v1 organization
+      - v1 organization
     post:
-      description:
-        User can manage multiple tenanats from one account, this api provides
+      description: User can manage multiple tenanats from one account, this api provides
         user a functionality to add a new tenant/org to the user.
       operationId: CreateOrganization
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/SwitchOrganizationResponse"
+            $ref: '#/definitions/SwitchOrganizationResponse'
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Adds a new organisation for a current user
       tags:
-        - v1 organization
+      - v1 organization
   /organization/users:
     get:
       operationId: ListOrgUsers
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/V1ListUsersForOrganizationResult"
+              $ref: '#/definitions/V1ListUsersForOrganizationResult'
             type: array
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: ListOrgUsers list the users for the current organization
       tags:
-        - v1 organization
+      - v1 organization
   /organizations:
     get:
       operationId: ListUserOrganizations
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/V1Organization"
+              $ref: '#/definitions/V1Organization'
             type: array
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
-        - v1 organization
+      - v1 organization
   /runner_instance/{id}/allocation_details:
     get:
-      operationId: GetRunnerInstanceAllocationDetails
+      operationId: RunnerInstanceCleanupHook
       parameters:
-        - description: runner instance id
-          in: path
-          name: id
-          required: true
-          type: string
-        - description: polling secret for validation
-          in: header
-          name: X-POLLING-SECRET
-          required: true
-          type: string
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.RunnerInstanceAllocationDetails"
+            additionalProperties: true
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       summary: Get runner instance allocation details for the id
       tags:
-        - v1 RunnerInstance
+      - v1 RunnerInstance
   /runners:
     get:
       operationId: ListRunners
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/commons.Runner"
+              $ref: '#/definitions/commons.Runner'
             type: array
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: ListRunners lists all the runners for an org.
       tags:
-        - v1 Runners
+      - v1 Runners
     post:
       description: User can request a runner setup by passing different name.
       operationId: SetupRunner
       parameters:
-        - description: Create new runner body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.SetupRunnerInput"
+      - description: Create new runner body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.SetupRunnerInput'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Runner"
+            $ref: '#/definitions/commons.Runner'
         default:
           description: ""
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Adds a new runner for a current organization
       tags:
-        - v1 Runners
+      - v1 Runners
   /runners/{id}:
     delete:
       consumes:
-        - application/json
+      - application/json
       operationId: DeleteRunner
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Runner"
+            $ref: '#/definitions/commons.Runner'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
-      summary:
-        delete runner for the id. Current organization is figured from the
+      - JWTKeyAuth: []
+      summary: delete runner for the id. Current organization is figured from the
         authorization token
       tags:
-        - v1 Runners
+      - v1 Runners
     get:
       consumes:
-        - application/json
+      - application/json
       operationId: GetRunner
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Runner"
+            $ref: '#/definitions/commons.Runner'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
-      summary:
-        Get runner details for the id. Current organization is figured from
+      - JWTKeyAuth: []
+      summary: Get runner details for the id. Current organization is figured from
         the authorization token
       tags:
-        - v1 Runners
+      - v1 Runners
     patch:
       consumes:
-        - application/json
+      - application/json
       operationId: UpdateRunner
       parameters:
-        - description: update runner body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.UpdateRunnerInput"
+      - description: update runner body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.UpdateRunnerInput'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Runner"
+            $ref: '#/definitions/commons.Runner'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
-      summary:
-        Get runner details for the id. Current organization is figured from
+      - JWTKeyAuth: []
+      summary: Get runner details for the id. Current organization is figured from
         the authorization token
       tags:
-        - v1 Runners
+      - v1 Runners
   /runners/runtimes:
     get:
       consumes:
-        - application/json
+      - application/json
       operationId: GetRuntimes
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/commons.Runtime"
+              $ref: '#/definitions/commons.Runtime'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Get runtimes for runners of the organisation
       tags:
-        - v1 Runners
+      - v1 Runners
   /subscription:
     delete:
       operationId: DeleteCurrentSubscription
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.SubscriptionDetails"
+            $ref: '#/definitions/commons.SubscriptionDetails'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Cancel Org current Subscription
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
     get:
       operationId: GetSubscriptionDetails
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.SubscriptionDetails"
+            $ref: '#/definitions/commons.SubscriptionDetails'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Get Current Org Subscription Details
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
   /subscription/{gateway}/webhook:
     post:
       operationId: SubscriptionPGWebhook
       parameters:
-        - description: gateway name, current only stripe
-          in: path
-          name: gateway
-          required: true
-          type: string
+      - description: gateway name, current only stripe
+        in: path
+        name: gateway
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "503":
           description: Service Unavailable
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: S2S Webhook received from PG
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
   /subscription/stripe/payment_method/{payment_method_id}:
     delete:
       operationId: DeleteStripePaymentMethod
       parameters:
-        - description: ID for the stripe payment method
-          in: path
-          name: payment_method_id
-          required: true
-          type: string
+      - description: ID for the stripe payment method
+        in: path
+        name: payment_method_id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.SubscriptionDetails"
+            $ref: '#/definitions/commons.SubscriptionDetails'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: delete stripe setup intent payment method
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
     patch:
       operationId: StripePaymentMethodDefault
       parameters:
-        - description: ID for the stripe payment method
-          in: path
-          name: payment_method_id
-          required: true
-          type: string
+      - description: ID for the stripe payment method
+        in: path
+        name: payment_method_id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.SubscriptionDetails"
+            $ref: '#/definitions/commons.SubscriptionDetails'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: update stripe payment method to default
       tags:
-        - v1 subscriptions
+      - v1 subscriptions
   /vcs/approve-integration:
     put:
       consumes:
-        - application/json
+      - application/json
       operationId: ApproveVCSIntegration
       parameters:
-        - description: Approve vcs integration app installation
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/ApproveVCSIntegrationRequest"
+      - description: Approve vcs integration app installation
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ApproveVCSIntegrationRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/AuthUserResponse"
+            $ref: '#/definitions/AuthUserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       summary: This handles the callback for approving an installation
       tags:
-        - v1 vcs
+      - v1 vcs
   /vcs/entities:
     get:
       consumes:
-        - application/json
+      - application/json
       description: |-
         VCS Entities refers to git entites like git repos, git branches, etc.
         This endpoint is a commons endpoint to fetch these.
@@ -1777,257 +1770,257 @@ paths:
         For the most top level entity there is no parent_id.
       operationId: ListVCSEntites
       parameters:
-        - description: Git provider
-          in: query
-          name: provider
-          type: string
-        - description: Filter using organization name
-          in: query
-          name: name
-          type: string
-        - description: IntegrationID used by the git provider
-          in: query
-          name: integration_id
-          type: string
-        - description: VCS Entity that should be returned
-          enum:
-            - organization
-            - repository
-            - branch
-          in: query
-          name: entity_type
-          required: true
-          type: string
-        - description: VCS Entity Parent ID
-          in: query
-          name: parent_id
-          type: string
+      - description: Git provider
+        in: query
+        name: provider
+        type: string
+      - description: Filter using organization name
+        in: query
+        name: name
+        type: string
+      - description: IntegrationID used by the git provider
+        in: query
+        name: integration_id
+        type: string
+      - description: VCS Entity that should be returned
+        enum:
+        - organization
+        - repository
+        - branch
+        in: query
+        name: entity_type
+        required: true
+        type: string
+      - description: VCS Entity Parent ID
+        in: query
+        name: parent_id
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/VCSEntity"
+              $ref: '#/definitions/VCSEntity'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Lists all vcs entities for vcs integration
       tags:
-        - v1 vcs
+      - v1 vcs
   /vcs/integrations:
     get:
       consumes:
-        - application/json
+      - application/json
       operationId: ListVCSIntegration
       parameters:
-        - description: vcs integration provider filter
-          in: query
-          name: provider
-          type: string
-        - description: vcs integration provider filter
-          in: query
-          name: status
-          type: string
+      - description: vcs integration provider filter
+        in: query
+        name: provider
+        type: string
+      - description: vcs integration provider filter
+        in: query
+        name: status
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
             items:
-              $ref: "#/definitions/VCSIntegration"
+              $ref: '#/definitions/VCSIntegration'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Lists all vcs integration for provider
       tags:
-        - v1 vcs
+      - v1 vcs
     post:
       consumes:
-        - application/json
+      - application/json
       operationId: CreateVCSIntegration
       parameters:
-        - description: Create new vcs integration body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/CreateVCSIntegrationRequest"
+      - description: Create new vcs integration body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateVCSIntegrationRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/VCSIntegration"
+            $ref: '#/definitions/VCSIntegration'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Create a new vcs integration
       tags:
-        - v1 vcs
+      - v1 vcs
   /vcs/integrations/{integration_id}:
     delete:
       consumes:
-        - application/json
+      - application/json
       operationId: DeleteVCSIntegration
       parameters:
-        - description: ID for the vcs integration
-          in: path
-          name: integration_id
-          required: true
-          type: string
-        - description: ID for the vcs integration
-          in: query
-          name: provider
-          required: true
-          type: string
+      - description: ID for the vcs integration
+        in: path
+        name: integration_id
+        required: true
+        type: string
+      - description: ID for the vcs integration
+        in: query
+        name: provider
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/types.GenericSuccessMessage"
+            $ref: '#/definitions/types.GenericSuccessMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Delete an existing vcs integration
       tags:
-        - v1 vcs
+      - v1 vcs
     put:
       consumes:
-        - application/json
+      - application/json
       operationId: UpdateVCSIntegration
       parameters:
-        - description: ID for the vcs integration
-          in: path
-          name: integration_id
-          required: true
-          type: string
-        - description: Update vcs integration body
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/UpdateVCSIntegrationRequest"
+      - description: ID for the vcs integration
+        in: path
+        name: integration_id
+        required: true
+        type: string
+      - description: Update vcs integration body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateVCSIntegrationRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/UpdateVCSIntegrationResponse"
+            $ref: '#/definitions/UpdateVCSIntegrationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: Update an existing vcs integration
       tags:
-        - v1 vcs
+      - v1 vcs
   /vcs/repos:
     post:
       consumes:
-        - application/json
+      - application/json
       operationId: CreateVCSGitRepo
       parameters:
-        - description: create repo options
-          in: body
-          name: body
-          required: true
-          schema:
-            $ref: "#/definitions/commons.CreateRepoOptions"
+      - description: create repo options
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.CreateRepoOptions'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Repo"
+            $ref: '#/definitions/commons.Repo'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth | WarpBuildAdminSecretAuth: []
+      - JWTKeyAuth | WarpBuildAdminSecretAuth: []
       summary: create vcs repo based on repo internal id
       tags:
-        - v1 vcs
+      - v1 vcs
   /vcs/repos/{id}:
     get:
       consumes:
-        - application/json
+      - application/json
       operationId: GetVCSGitRepo
       parameters:
-        - description: internal id for the vcs git repo
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: internal id for the vcs git repo
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/commons.Repo"
+            $ref: '#/definitions/commons.Repo'
         "400":
           description: Bad Request
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
         "404":
           description: Not Found
           schema:
-            $ref: "#/definitions/WarpBuildAPIError"
+            $ref: '#/definitions/WarpBuildAPIError'
       security:
-        - JWTKeyAuth: []
+      - JWTKeyAuth: []
       summary: get vcs repo based on repo internal id
       tags:
-        - v1 vcs
+      - v1 vcs
 schemes:
-  - https
+- https
 securityDefinitions:
   JWTKeyAuth:
     in: header

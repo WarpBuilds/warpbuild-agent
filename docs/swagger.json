@@ -1,3081 +1,3082 @@
 {
-	"schemes": [
-		"https"
-	],
-	"swagger": "2.0",
-	"info": {
-		"description": "This is the docs for warp builds api for argonaut",
-		"title": "Warp Builds API Docs",
-		"contact": {
-			"name": "API Support",
-			"url": "http://www.swagger.io/support",
-			"email": "support@swagger.io"
-		},
-		"license": {
-			"name": "Apache 2.0",
-			"url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-		},
-		"version": "0.4.0"
-	},
-	"host": "backend.warpbuild.com",
-	"basePath": "/api/v1",
-	"paths": {
-		"/auth": {
-			"post": {
-				"description": "Logs in or signs up the userm",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Auth user",
-				"operationId": "AuthUser",
-				"parameters": [
-					{
-						"description": "Auth request body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/AuthUserRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/AuthUserResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/login/{provider}": {
-			"get": {
-				"description": "Get auth url",
-				"consumes": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Get auth url",
-				"operationId": "GetAuthURL",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "Provider",
-						"name": "provider",
-						"in": "path",
-						"required": true
-					},
-					{
-						"type": "string",
-						"description": "Invite code if any",
-						"name": "invite_code",
-						"in": "query"
-					}
-				],
-				"responses": {
-					"302": {
-						"description": "Redirects to auth url",
-						"schema": {
-							"type": "string"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/logout": {
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "Logs out the user",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Logout",
-				"operationId": "Logout",
-				"responses": {
-					"200": {
-						"description": "OK"
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/me": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "Gets the currently logged in user",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Auth user",
-				"operationId": "GetMe",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/MeResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/switch": {
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Switch organization",
-				"operationId": "SwitchOrganization",
-				"parameters": [
-					{
-						"description": "Switch organization",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/SwitchOrganizationRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/SwitchOrganizationResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/token/refresh": {
-			"patch": {
-				"description": "Refreshes the access token",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "Refresh token",
-				"operationId": "RefreshToken",
-				"parameters": [
-					{
-						"description": "Refresh token",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/TokenRefreshRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/TokenRefreshResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/tokens": {
-			"get": {
-				"security": [
-					{
-						"WarpBuildAdminSecretAuth": []
-					}
-				],
-				"description": "List user tokens",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "List user tokens",
-				"parameters": [
-					{
-						"description": "ListTokenOptions",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.ListTokensOptions"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/commons.UserToken"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/auth/users": {
-			"get": {
-				"security": [
-					{
-						"WarpBuildAdminSecretAuth": []
-					}
-				],
-				"description": "List users from authentication provider",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 auth"
-				],
-				"summary": "List users",
-				"parameters": [
-					{
-						"description": "ListUsersOptions",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.ListUsersOptions"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/commons.ListUsersResponse"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/billing/checkout": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "Initiate Checkout for subscription with PG",
-				"operationId": "InitateSubscriptionCheckout",
-				"parameters": [
-					{
-						"description": "initiate checkout session input",
-						"name": "Body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.ReqCheckoutSession"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.ResCheckoutSession"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"503": {
-						"description": "Service Unavailable",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/billing/setup_intent/init": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "Initiate Checkout for subscription with PG",
-				"operationId": "InitiateSetupIntent",
-				"parameters": [
-					{
-						"description": "initiate setup intent session input",
-						"name": "Body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.ReqSetupIntentInit"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.ResSetupIntentInit"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"503": {
-						"description": "Service Unavailable",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/debugger/events/publish": {
-			"post": {
-				"security": [
-					{
-						"WarpBuildAdminSecretAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 debugger"
-				],
-				"summary": "Publish an event to the event bus",
-				"operationId": "DebugPublishEvent",
-				"parameters": [
-					{
-						"description": "Event to publish",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/debugger.PublishEventInput"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "JSON response",
-						"schema": {
-							"$ref": "#/definitions/types.GenericSuccessMessage"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/invite": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "User can manage multiple tenanats from one account, this api provides user a functionality to add a new tenant/org to the user.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 invite"
-				],
-				"summary": "Adds a new organisation for a current user",
-				"operationId": "CreateInvite",
-				"parameters": [
-					{
-						"description": "Create new invite body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/CreateInviteRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/V1Invite"
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "Invite is figured out from the auth token since tokens are specific to invites.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 invite"
-				],
-				"summary": "Updates existing invite based on the fields provided.",
-				"operationId": "UpdateInvite",
-				"parameters": [
-					{
-						"description": "Update existing invite body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/UpdateInviteRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/V1Invite"
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/invite/send/email": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "Sending email invite to the user.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 invite"
-				],
-				"summary": "Adds a new organisation for a current user",
-				"operationId": "SendInvite",
-				"parameters": [
-					{
-						"description": "Send invite body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/V1SendInviteRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK"
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/invites": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 invite"
-				],
-				"summary": "ListOrgInvites lists all the invite user has access to.",
-				"operationId": "ListOrgInvites",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/V1Invite"
-							}
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/jobs/estimated-costs": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "GetEstimatedCosts",
-				"consumes": [
-					"application/json"
-				],
-				"tags": [
-					"v1 jobs"
-				],
-				"summary": "GetEstimatedCosts",
-				"operationId": "GetEstimatedCosts",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "Date range start",
-						"name": "start_date",
-						"in": "query",
-						"required": true
-					},
-					{
-						"type": "string",
-						"description": "Date range end",
-						"name": "end_date",
-						"in": "query",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/EstimatedCost"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/organization": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 organization"
-				],
-				"summary": "Get organization details for the current organization. Current organization is figured from the authorization token",
-				"operationId": "GetOrganization",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Organization"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "User can manage multiple tenanats from one account, this api provides user a functionality to add a new tenant/org to the user.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 organization"
-				],
-				"summary": "Adds a new organisation for a current user",
-				"operationId": "CreateOrganization",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/SwitchOrganizationResponse"
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "Organization is figured out from the auth token since tokens are specific to organizations.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 organization"
-				],
-				"summary": "Updates existing organization based on the fields provided.",
-				"operationId": "UpdateOrganization",
-				"parameters": [
-					{
-						"description": "Update existing organization body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/UpdateOrganizationRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Organization"
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/organization/users": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 organization"
-				],
-				"summary": "ListOrgUsers list the users for the current organization",
-				"operationId": "ListOrgUsers",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/V1ListUsersForOrganizationResult"
-							}
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/organizations": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 organization"
-				],
-				"summary": "ListUserOrganizations lists all the organization user has access to.",
-				"operationId": "ListUserOrganizations",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/V1Organization"
-							}
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/runner_instance/{id}/allocation_details": {
-			"get": {
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 RunnerInstance"
-				],
-				"summary": "Get runner instance allocation details for the id",
-				"operationId": "GetRunnerInstanceAllocationDetails",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "runner instance id",
-						"name": "id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"type": "string",
-						"description": "polling secret for validation",
-						"name": "X-POLLING-SECRET",
-						"in": "header",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.RunnerInstanceAllocationDetails"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/runners": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "ListRunners lists all the runners for an org.",
-				"operationId": "ListRunners",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/commons.Runner"
-							}
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "User can request a runner setup by passing different name.",
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "Adds a new runner for a current organization",
-				"operationId": "SetupRunner",
-				"parameters": [
-					{
-						"description": "Create new runner body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.SetupRunnerInput"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Runner"
-						}
-					},
-					"default": {
-						"description": "",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/runners/runtimes": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "Get runtimes for runners of the organisation",
-				"operationId": "GetRuntimes",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/commons.Runtime"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/runners/{id}": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "Get runner details for the id. Current organization is figured from the authorization token",
-				"operationId": "GetRunner",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Runner"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"delete": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "delete runner for the id. Current organization is figured from the authorization token",
-				"operationId": "DeleteRunner",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Runner"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 Runners"
-				],
-				"summary": "Get runner details for the id. Current organization is figured from the authorization token",
-				"operationId": "UpdateRunner",
-				"parameters": [
-					{
-						"description": "update runner body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.UpdateRunnerInput"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Runner"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/subscription": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "Get Current Org Subscription Details",
-				"operationId": "GetSubscriptionDetails",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.SubscriptionDetails"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"delete": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "Cancel Org current Subscription",
-				"operationId": "DeleteCurrentSubscription",
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.SubscriptionDetails"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/subscription/stripe/payment_method/{payment_method_id}": {
-			"delete": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "delete stripe setup intent payment method",
-				"operationId": "DeleteStripePaymentMethod",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "ID for the stripe payment method",
-						"name": "payment_method_id",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.SubscriptionDetails"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"patch": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "update stripe payment method to default",
-				"operationId": "StripePaymentMethodDefault",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "ID for the stripe payment method",
-						"name": "payment_method_id",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.SubscriptionDetails"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/subscription/{gateway}/webhook": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 subscriptions"
-				],
-				"summary": "S2S Webhook received from PG",
-				"operationId": "SubscriptionPGWebhook",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "gateway name, current only stripe",
-						"name": "gateway",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK"
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"500": {
-						"description": "Internal Server Error",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"503": {
-						"description": "Service Unavailable",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/approve-integration": {
-			"put": {
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "This handles the callback for approving an installation",
-				"operationId": "ApproveVCSIntegration",
-				"parameters": [
-					{
-						"description": "Approve vcs integration app installation",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/ApproveVCSIntegrationRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/AuthUserResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/entities": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"description": "VCS Entities refers to git entites like git repos, git branches, etc.\nThis endpoint is a commons endpoint to fetch these.\nParentID is required depending on what git entity you are fetching.\n\nGit entity heirchary:\nGit Organization \u003e Git Repository \u003e Git Branch\n\nWhen fetching an entity the parent id is the id of git entity one level above\nSo for example, fetching repository will be\nhttp://backend.warpbuild.com/api/v1/vcs/entities?provider=gitlab\u0026entity_type=repository\u0026parent_id=organization_external_id\nFor the most top level entity there is no parent_id.",
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "Lists all vcs entities for vcs integration",
-				"operationId": "ListVCSEntites",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "Git provider",
-						"name": "provider",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "Filter using organization name",
-						"name": "name",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "IntegrationID used by the git provider",
-						"name": "integration_id",
-						"in": "query"
-					},
-					{
-						"enum": [
-							"organization",
-							"repository",
-							"branch"
-						],
-						"type": "string",
-						"description": "VCS Entity that should be returned",
-						"name": "entity_type",
-						"in": "query",
-						"required": true
-					},
-					{
-						"type": "string",
-						"description": "VCS Entity Parent ID",
-						"name": "parent_id",
-						"in": "query"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/VCSEntity"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/integrations": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "Lists all vcs integration for provider",
-				"operationId": "ListVCSIntegration",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "vcs integration provider filter",
-						"name": "provider",
-						"in": "query"
-					},
-					{
-						"type": "string",
-						"description": "vcs integration provider filter",
-						"name": "status",
-						"in": "query"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/VCSIntegration"
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "Create a new vcs integration",
-				"operationId": "CreateVCSIntegration",
-				"parameters": [
-					{
-						"description": "Create new vcs integration body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/CreateVCSIntegrationRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/VCSIntegration"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/integrations/{integration_id}": {
-			"put": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "Update an existing vcs integration",
-				"operationId": "UpdateVCSIntegration",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "ID for the vcs integration",
-						"name": "integration_id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"description": "Update vcs integration body",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/UpdateVCSIntegrationRequest"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/UpdateVCSIntegrationResponse"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			},
-			"delete": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "Delete an existing vcs integration",
-				"operationId": "DeleteVCSIntegration",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "ID for the vcs integration",
-						"name": "integration_id",
-						"in": "path",
-						"required": true
-					},
-					{
-						"type": "string",
-						"description": "ID for the vcs integration",
-						"name": "provider",
-						"in": "query",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/types.GenericSuccessMessage"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/repos": {
-			"post": {
-				"security": [
-					{
-						"JWTKeyAuth | WarpBuildAdminSecretAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "create vcs repo based on repo internal id",
-				"operationId": "CreateVCSGitRepo",
-				"parameters": [
-					{
-						"description": "create repo options",
-						"name": "body",
-						"in": "body",
-						"required": true,
-						"schema": {
-							"$ref": "#/definitions/commons.CreateRepoOptions"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Repo"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		},
-		"/vcs/repos/{id}": {
-			"get": {
-				"security": [
-					{
-						"JWTKeyAuth": []
-					}
-				],
-				"consumes": [
-					"application/json"
-				],
-				"produces": [
-					"application/json"
-				],
-				"tags": [
-					"v1 vcs"
-				],
-				"summary": "get vcs repo based on repo internal id",
-				"operationId": "GetVCSGitRepo",
-				"parameters": [
-					{
-						"type": "string",
-						"description": "internal id for the vcs git repo",
-						"name": "id",
-						"in": "path",
-						"required": true
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"$ref": "#/definitions/commons.Repo"
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"schema": {
-							"$ref": "#/definitions/WarpBuildAPIError"
-						}
-					}
-				}
-			}
-		}
-	},
-	"definitions": {
-		"ApproveVCSIntegrationRequest": {
-			"type": "object",
-			"properties": {
-				"code": {
-					"type": "string"
-				},
-				"installation_id": {
-					"type": "string"
-				}
-			}
-		},
-		"AuthUserRequest": {
-			"type": "object",
-			"required": [
-				"code",
-				"state"
-			],
-			"properties": {
-				"code": {
-					"type": "string"
-				},
-				"state": {
-					"type": "string"
-				}
-			}
-		},
-		"AuthUserResponse": {
-			"type": "object",
-			"required": [
-				"access_token",
-				"organization",
-				"refresh_token",
-				"should_show_vcs_integration",
-				"user"
-			],
-			"properties": {
-				"access_token": {
-					"type": "string"
-				},
-				"organization": {
-					"$ref": "#/definitions/V1Organization"
-				},
-				"refresh_token": {
-					"type": "string"
-				},
-				"should_show_vcs_integration": {
-					"type": "boolean"
-				},
-				"user": {
-					"$ref": "#/definitions/V1User"
-				}
-			}
-		},
-		"CreateInviteRequest": {
-			"type": "object",
-			"required": [
-				"role_kind"
-			],
-			"properties": {
-				"role_kind": {
-					"type": "string",
-					"enum": [
-						"owner",
-						"admin",
-						"member"
-					]
-				}
-			}
-		},
-		"CreateVCSIntegrationRequest": {
-			"type": "object",
-			"required": [
-				"provider"
-			],
-			"properties": {
-				"additional_state": {
-					"type": "object",
-					"additionalProperties": true
-				},
-				"application_callback_url": {
-					"type": "string"
-				},
-				"application_id": {
-					"type": "string"
-				},
-				"application_secret": {
-					"type": "string"
-				},
-				"provider": {
-					"type": "string"
-				},
-				"vcs_url": {
-					"type": "string"
-				}
-			}
-		},
-		"EstimatedCost": {
-			"type": "object",
-			"properties": {
-				"amount": {
-					"type": "number"
-				},
-				"date": {
-					"type": "string"
-				}
-			}
-		},
-		"MeResponse": {
-			"type": "object",
-			"required": [
-				"organization",
-				"user",
-				"vcs_integration"
-			],
-			"properties": {
-				"organization": {
-					"$ref": "#/definitions/V1Organization"
-				},
-				"user": {
-					"$ref": "#/definitions/V1User"
-				},
-				"vcs_integration": {
-					"$ref": "#/definitions/commons.VCSIntegrationLean"
-				}
-			}
-		},
-		"SwitchOrganizationRequest": {
-			"type": "object",
-			"required": [
-				"organization_id",
-				"refresh_token"
-			],
-			"properties": {
-				"organization_id": {
-					"type": "string"
-				},
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"SwitchOrganizationResponse": {
-			"type": "object",
-			"required": [
-				"access_token",
-				"organization"
-			],
-			"properties": {
-				"access_token": {
-					"type": "string"
-				},
-				"organization": {
-					"$ref": "#/definitions/V1Organization"
-				}
-			}
-		},
-		"TokenRefreshRequest": {
-			"type": "object",
-			"required": [
-				"refresh_token"
-			],
-			"properties": {
-				"refresh_token": {
-					"type": "string"
-				}
-			}
-		},
-		"TokenRefreshResponse": {
-			"type": "object",
-			"required": [
-				"access_token"
-			],
-			"properties": {
-				"access_token": {
-					"type": "string"
-				}
-			}
-		},
-		"UpdateInviteRequest": {
-			"type": "object",
-			"properties": {
-				"Status": {
-					"type": "string"
-				}
-			}
-		},
-		"UpdateOrganizationRequest": {
-			"type": "object",
-			"properties": {
-				"avatar_url": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				}
-			}
-		},
-		"UpdateVCSIntegrationRequest": {
-			"type": "object",
-			"required": [
-				"id"
-			],
-			"properties": {
-				"code": {
-					"description": "Code is\n\n- 'code' param in the callback from gitlab",
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"installation_id": {
-					"description": "InstallationID\n\n- 'installation_id' param from github installation",
-					"type": "string"
-				},
-				"setup_action": {
-					"description": "SetupAction\n\n- 'setup_action' param from github installation",
-					"type": "string"
-				}
-			}
-		},
-		"UpdateVCSIntegrationResponse": {
-			"type": "object",
-			"properties": {
-				"new_session": {
-					"$ref": "#/definitions/AuthUserResponse"
-				},
-				"vcs_integration": {
-					"$ref": "#/definitions/VCSIntegration"
-				}
-			}
-		},
-		"V1Invite": {
-			"type": "object",
-			"properties": {
-				"code": {
-					"type": "string"
-				},
-				"expires_at": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"role": {
-					"type": "string"
-				},
-				"status": {
-					"type": "string"
-				}
-			}
-		},
-		"V1ListUsersForOrganizationResult": {
-			"type": "object",
-			"properties": {
-				"avatar_url": {
-					"type": "string"
-				},
-				"email": {
-					"type": "string"
-				},
-				"id": {
-					"type": "integer"
-				},
-				"joined_at": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"role": {
-					"type": "string"
-				}
-			}
-		},
-		"V1Organization": {
-			"type": "object",
-			"required": [
-				"created_by",
-				"id",
-				"name"
-			],
-			"properties": {
-				"avatar_url": {
-					"type": "string"
-				},
-				"created_by": {
-					"type": "integer"
-				},
-				"id": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				}
-			}
-		},
-		"V1SendInviteRequest": {
-			"type": "object",
-			"required": [
-				"email",
-				"invite_id"
-			],
-			"properties": {
-				"email": {
-					"type": "string"
-				},
-				"invite_id": {
-					"type": "string"
-				}
-			}
-		},
-		"V1User": {
-			"type": "object",
-			"properties": {
-				"avatar_url": {
-					"type": "string"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"email": {
-					"type": "string"
-				},
-				"id": {
-					"type": "integer"
-				},
-				"login": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"signup_provider": {
-					"type": "string"
-				},
-				"signup_provider_user_id": {
-					"type": "string"
-				},
-				"updated_at": {
-					"type": "string"
-				}
-			}
-		},
-		"VCSEntity": {
-			"type": "object",
-			"required": [
-				"display_name",
-				"entity_type",
-				"external_id",
-				"name",
-				"provider"
-			],
-			"properties": {
-				"account_id": {
-					"description": "AccountID is the github account\n\nTODO: AccountID should be group id in case of gitlab",
-					"type": "string"
-				},
-				"commit_id": {
-					"type": "string"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"display_name": {
-					"type": "string"
-				},
-				"entity_type": {
-					"type": "string"
-				},
-				"external_id": {
-					"type": "string"
-				},
-				"integration_id": {
-					"type": "string"
-				},
-				"internal_id": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"provider": {
-					"type": "string"
-				},
-				"updated_at": {
-					"type": "string"
-				},
-				"web_url": {
-					"type": "string"
-				}
-			}
-		},
-		"VCSIntegration": {
-			"type": "object",
-			"required": [
-				"connection_status",
-				"created_at",
-				"id",
-				"integration_type",
-				"integration_url",
-				"provider",
-				"target_type",
-				"updated_at"
-			],
-			"properties": {
-				"account_id": {
-					"type": "string"
-				},
-				"account_owner": {
-					"type": "string"
-				},
-				"application_id": {
-					"type": "string"
-				},
-				"configuration_url": {
-					"description": "ConfigurationURL\n\nGithub\n- Is the installation's settings page on the github account.\n- This field is only populated after the github account is successfully connected.\n\nGitlab\n- \u003cno-equivalent-exists\u003e",
-					"type": "string"
-				},
-				"connection_status": {
-					"type": "string"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"installation_id": {
-					"type": "string"
-				},
-				"integration_type": {
-					"type": "string"
-				},
-				"integration_url": {
-					"type": "string"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"provider": {
-					"type": "string"
-				},
-				"target_type": {
-					"type": "string"
-				},
-				"updated_at": {
-					"type": "string"
-				},
-				"vcs_url": {
-					"type": "string"
-				}
-			}
-		},
-		"WarpBuildAPIError": {
-			"type": "object",
-			"properties": {
-				"code": {
-					"type": "string"
-				},
-				"description": {
-					"type": "string"
-				},
-				"message": {
-					"type": "string"
-				},
-				"sub_code": {
-					"type": "string"
-				},
-				"sub_message": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.Balance": {
-			"type": "object",
-			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"limit": {
-					"type": "number"
-				},
-				"percentage": {
-					"type": "number"
-				},
-				"used": {
-					"type": "number"
-				}
-			}
-		},
-		"commons.BalanceDetails": {
-			"type": "object",
-			"properties": {
-				"free_balance": {
-					"$ref": "#/definitions/commons.Balance"
-				},
-				"paid_balance": {
-					"$ref": "#/definitions/commons.Balance"
-				}
-			}
-		},
-		"commons.CreateRepoOptions": {
-			"type": "object",
-			"required": [
-				"integration_id",
-				"name",
-				"owner"
-			],
-			"properties": {
-				"description": {
-					"type": "string"
-				},
-				"display_name": {
-					"type": "string"
-				},
-				"integration_id": {
-					"type": "string"
-				},
-				"is_private": {
-					"type": "boolean"
-				},
-				"name": {
-					"type": "string"
-				},
-				"owner": {
-					"type": "string"
-				},
-				"should_auto_init": {
-					"type": "boolean"
-				},
-				"upsert": {
-					"type": "boolean"
-				}
-			}
-		},
-		"commons.GithubRunnerApplicationDetails": {
-			"type": "object",
-			"properties": {
-				"jit": {
-					"type": "string"
-				},
-				"labels": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				},
-				"runner_name": {
-					"type": "string"
-				},
-				"variables": {
-					"type": "object",
-					"additionalProperties": {
-						"type": "string"
-					}
-				}
-			}
-		},
-		"commons.ListTokensOptions": {
-			"type": "object",
-			"properties": {
-				"organization_id": {
-					"type": "string"
-				},
-				"user_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.ListUsersOptions": {
-			"type": "object",
-			"properties": {
-				"page": {
-					"type": "integer"
-				},
-				"per_page": {
-					"type": "integer"
-				}
-			}
-		},
-		"commons.ListUsersResponse": {
-			"type": "object",
-			"properties": {
-				"next": {
-					"type": "integer"
-				},
-				"page": {
-					"type": "integer"
-				},
-				"per_page": {
-					"type": "integer"
-				},
-				"total_pages": {
-					"type": "integer"
-				},
-				"total_rows": {
-					"type": "integer"
-				},
-				"users": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/V1User"
-					}
-				}
-			}
-		},
-		"commons.Organization": {
-			"type": "object",
-			"properties": {
-				"avatar_url": {
-					"type": "string"
-				},
-				"created_by": {
-					"type": "integer"
-				},
-				"id": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.PaymentDetails": {
-			"type": "object",
-			"properties": {
-				"amount": {
-					"type": "integer"
-				},
-				"billing_email": {
-					"type": "string"
-				},
-				"currency": {
-					"type": "string"
-				},
-				"method": {
-					"type": "string"
-				},
-				"method_meta": {
-					"type": "string"
-				},
-				"ref": {
-					"type": "string"
-				},
-				"status": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.PaymentMethod": {
-			"type": "object",
-			"properties": {
-				"country_code": {
-					"type": "string"
-				},
-				"exp_month": {
-					"type": "integer"
-				},
-				"exp_year": {
-					"type": "integer"
-				},
-				"external_id": {
-					"type": "string"
-				},
-				"iin": {
-					"type": "string"
-				},
-				"is_default": {
-					"type": "boolean"
-				},
-				"issuer": {
-					"type": "string"
-				},
-				"last4": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"network": {
-					"type": "string"
-				},
-				"type": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.Repo": {
-			"type": "object",
-			"properties": {
-				"AccountID": {
-					"type": "string"
-				},
-				"CreatedAt": {
-					"type": "string"
-				},
-				"DefaultBranch": {
-					"type": "string"
-				},
-				"DisplayName": {
-					"type": "string"
-				},
-				"IntegrationID": {
-					"type": "string"
-				},
-				"SSHURL": {
-					"type": "string"
-				},
-				"UpdatedAt": {
-					"type": "string"
-				},
-				"WebURL": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"name": {
-					"type": "string"
-				},
-				"owner": {
-					"type": "string"
-				},
-				"provider": {
-					"type": "string"
-				},
-				"vcs_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.ReqCheckoutSession": {
-			"type": "object",
-			"required": [
-				"cancel_url",
-				"success_url"
-			],
-			"properties": {
-				"cancel_url": {
-					"type": "string"
-				},
-				"success_url": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.ReqSetupIntentInit": {
-			"type": "object",
-			"required": [
-				"cancel_url",
-				"success_url"
-			],
-			"properties": {
-				"cancel_url": {
-					"type": "string"
-				},
-				"success_url": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.ResCheckoutSession": {
-			"type": "object",
-			"properties": {
-				"redirect_url": {
-					"type": "string"
-				},
-				"session_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.ResSetupIntentInit": {
-			"type": "object",
-			"properties": {
-				"data": {},
-				"gateway": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.Runner": {
-			"type": "object",
-			"properties": {
-				"active": {
-					"type": "boolean"
-				},
-				"cluster_id": {
-					"type": "string"
-				},
-				"configuration": {
-					"$ref": "#/definitions/commons.RunnerConfiguration"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"external_reference_id": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"labels": {
-					"type": "object",
-					"additionalProperties": true
-				},
-				"name": {
-					"type": "string"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"updated_at": {
-					"type": "string"
-				},
-				"vcs_integration_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.RunnerConfiguration": {
-			"type": "object",
-			"properties": {
-				"arch": {
-					"type": "string"
-				},
-				"cores": {
-					"type": "integer"
-				},
-				"image": {
-					"type": "string"
-				},
-				"memory": {
-					"type": "integer"
-				}
-			}
-		},
-		"commons.RunnerInstance": {
-			"type": "object",
-			"properties": {
-				"cluster": {
-					"type": "string"
-				},
-				"configuration": {
-					"$ref": "#/definitions/commons.RunnerConfiguration"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"created_by": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"last_job_processed_id": {
-					"type": "string"
-				},
-				"last_polled": {
-					"type": "string"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"runner_for": {
-					"type": "string"
-				},
-				"runner_set_id": {
-					"type": "string"
-				},
-				"status": {
-					"type": "string"
-				},
-				"updated_at": {
-					"type": "string"
-				},
-				"vcs_integration_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.RunnerInstanceAllocationDetails": {
-			"type": "object",
-			"properties": {
-				"gh_runner_application_details": {
-					"$ref": "#/definitions/commons.GithubRunnerApplicationDetails"
-				},
-				"runner_application": {
-					"type": "string",
-					"enum": [
-						"github"
-					]
-				},
-				"runner_instance": {
-					"$ref": "#/definitions/commons.RunnerInstance"
-				},
-				"status": {
-					"type": "string",
-					"enum": [
-						"unassigned",
-						"assigned",
-						"invalidated"
-					]
-				}
-			}
-		},
-		"commons.Runtime": {
-			"type": "object",
-			"properties": {
-				"duration_seconds": {
-					"type": "integer"
-				},
-				"runner_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.SetupRunnerInput": {
-			"type": "object",
-			"properties": {
-				"Active": {
-					"type": "boolean"
-				},
-				"configuration": {
-					"$ref": "#/definitions/commons.RunnerConfiguration"
-				},
-				"labels": {
-					"type": "object",
-					"additionalProperties": true
-				},
-				"name": {
-					"type": "string"
-				},
-				"vcs_integration_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.SubscriptionDetails": {
-			"type": "object",
-			"properties": {
-				"balance_details": {
-					"$ref": "#/definitions/commons.BalanceDetails"
-				},
-				"created_at": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"last_payment_at": {
-					"type": "string"
-				},
-				"last_payment_details": {
-					"$ref": "#/definitions/commons.PaymentDetails"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"payment_methods": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/commons.PaymentMethod"
-					}
-				},
-				"pg_customer_id": {
-					"type": "string"
-				},
-				"pg_subscription_id": {
-					"type": "string"
-				},
-				"status": {
-					"type": "string"
-				},
-				"subscribed_at": {
-					"type": "string"
-				},
-				"upcoming_bill": {
-					"$ref": "#/definitions/commons.UpcomingBill"
-				},
-				"updated_at": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.UpcomingBill": {
-			"type": "object",
-			"properties": {
-				"amount": {
-					"type": "integer"
-				},
-				"currency": {
-					"type": "string"
-				},
-				"date": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.UpdateRunnerInput": {
-			"type": "object",
-			"properties": {
-				"Active": {
-					"type": "boolean"
-				},
-				"configuration": {
-					"$ref": "#/definitions/commons.RunnerConfiguration"
-				},
-				"labels": {
-					"type": "object",
-					"additionalProperties": true
-				}
-			}
-		},
-		"commons.UserToken": {
-			"type": "object",
-			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"organization_id": {
-					"type": "string"
-				},
-				"provider": {
-					"type": "string"
-				},
-				"provider_tenant_id": {
-					"type": "string"
-				},
-				"provider_user_id": {
-					"type": "string"
-				},
-				"user_id": {
-					"type": "string"
-				}
-			}
-		},
-		"commons.VCSIntegrationLean": {
-			"type": "object",
-			"required": [
-				"connection_status",
-				"id",
-				"target_type"
-			],
-			"properties": {
-				"account_id": {
-					"type": "string"
-				},
-				"account_owner": {
-					"type": "string"
-				},
-				"connection_status": {
-					"type": "string"
-				},
-				"id": {
-					"type": "string"
-				},
-				"installation_id": {
-					"type": "string"
-				},
-				"target_type": {
-					"type": "string"
-				}
-			}
-		},
-		"debugger.PublishEventInput": {
-			"type": "object",
-			"properties": {
-				"data": {},
-				"id": {
-					"type": "string"
-				},
-				"publisher": {
-					"type": "string"
-				},
-				"topic": {
-					"type": "string"
-				}
-			}
-		},
-		"types.GenericSuccessMessage": {
-			"type": "object",
-			"properties": {
-				"message": {
-					"type": "string"
-				}
-			}
-		}
-	},
-	"securityDefinitions": {
-		"JWTKeyAuth": {
-			"type": "apiKey",
-			"name": "Authorization",
-			"in": "header"
-		},
-		"WarpBuildAdminSecretAuth": {
-			"type": "apiKey",
-			"name": "X-Warp-Build-Admin-Secret",
-			"in": "header"
-		}
-	},
-	"x-extension-openapi": {
-		"example": "value on a json format"
-	}
+    "schemes": [
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the docs for warp builds api for argonaut",
+        "title": "Warp Builds API Docs",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.4.0"
+    },
+    "host": "backend.warpbuild.com",
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth": {
+            "post": {
+                "description": "Logs in or signs up the userm",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Auth user",
+                "operationId": "AuthUser",
+                "parameters": [
+                    {
+                        "description": "Auth request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AuthUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login/{provider}": {
+            "get": {
+                "description": "Get auth url",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Get auth url",
+                "operationId": "GetAuthURL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Invite code if any",
+                        "name": "invite_code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirects to auth url",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Logs out the user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Logout",
+                "operationId": "Logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Gets the currently logged in user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Auth user",
+                "operationId": "GetMe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/MeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/switch": {
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Switch organization",
+                "operationId": "SwitchOrganization",
+                "parameters": [
+                    {
+                        "description": "Switch organization",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SwitchOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SwitchOrganizationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/token/refresh": {
+            "patch": {
+                "description": "Refreshes the access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "Refresh token",
+                "operationId": "RefreshToken",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TokenRefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/TokenRefreshResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/tokens": {
+            "get": {
+                "security": [
+                    {
+                        "WarpBuildAdminSecretAuth": []
+                    }
+                ],
+                "description": "List user tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "List user tokens",
+                "parameters": [
+                    {
+                        "description": "ListTokenOptions",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListTokensOptions"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.UserToken"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/users": {
+            "get": {
+                "security": [
+                    {
+                        "WarpBuildAdminSecretAuth": []
+                    }
+                ],
+                "description": "List users from authentication provider",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 auth"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "description": "ListUsersOptions",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListUsersOptions"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.ListUsersResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/checkout": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Initiate Checkout for subscription with PG",
+                "operationId": "InitateSubscriptionCheckout",
+                "parameters": [
+                    {
+                        "description": "initiate checkout session input",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.ReqCheckoutSession"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ResCheckoutSession"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/setup_intent/init": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Initiate Checkout for subscription with PG",
+                "operationId": "InitiateSetupIntent",
+                "parameters": [
+                    {
+                        "description": "initiate setup intent session input",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.ReqSetupIntentInit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ResSetupIntentInit"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/debugger/events/publish": {
+            "post": {
+                "security": [
+                    {
+                        "WarpBuildAdminSecretAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 debugger"
+                ],
+                "summary": "Publish an event to the event bus",
+                "operationId": "DebugPublishEvent",
+                "parameters": [
+                    {
+                        "description": "Event to publish",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/debugger.PublishEventInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JSON response",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericSuccessMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/invite": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "User can manage multiple tenanats from one account, this api provides user a functionality to add a new tenant/org to the user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 invite"
+                ],
+                "summary": "Adds a new organisation for a current user",
+                "operationId": "CreateInvite",
+                "parameters": [
+                    {
+                        "description": "Create new invite body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/V1Invite"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Invite is figured out from the auth token since tokens are specific to invites.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 invite"
+                ],
+                "summary": "Updates existing invite based on the fields provided.",
+                "operationId": "UpdateInvite",
+                "parameters": [
+                    {
+                        "description": "Update existing invite body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/V1Invite"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/invite/send/email": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Sending email invite to the user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 invite"
+                ],
+                "summary": "Adds a new organisation for a current user",
+                "operationId": "SendInvite",
+                "parameters": [
+                    {
+                        "description": "Send invite body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/V1SendInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/invites": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 invite"
+                ],
+                "summary": "ListOrgInvites lists all the invite user has access to.",
+                "operationId": "ListOrgInvites",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/V1Invite"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/estimated-costs": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "GetEstimatedCosts",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 jobs"
+                ],
+                "summary": "GetEstimatedCosts",
+                "operationId": "GetEstimatedCosts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date range start",
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date range end",
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/EstimatedCost"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 organization"
+                ],
+                "summary": "Get organization details for the current organization. Current organization is figured from the authorization token",
+                "operationId": "GetOrganization",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Organization"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "User can manage multiple tenanats from one account, this api provides user a functionality to add a new tenant/org to the user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 organization"
+                ],
+                "summary": "Adds a new organisation for a current user",
+                "operationId": "CreateOrganization",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SwitchOrganizationResponse"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Organization is figured out from the auth token since tokens are specific to organizations.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 organization"
+                ],
+                "summary": "Updates existing organization based on the fields provided.",
+                "operationId": "UpdateOrganization",
+                "parameters": [
+                    {
+                        "description": "Update existing organization body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Organization"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/users": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 organization"
+                ],
+                "summary": "ListOrgUsers list the users for the current organization",
+                "operationId": "ListOrgUsers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/V1ListUsersForOrganizationResult"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 organization"
+                ],
+                "summary": "ListUserOrganizations lists all the organization user has access to.",
+                "operationId": "ListUserOrganizations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/V1Organization"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner_instance/{id}/allocation_details": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Get runner instance allocation details for the id",
+                "operationId": "RunnerInstanceCleanupHook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "runner instance id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "polling secret for validation",
+                        "name": "X-POLLING-SECRET",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "ListRunners lists all the runners for an org.",
+                "operationId": "ListRunners",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.Runner"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "User can request a runner setup by passing different name.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Adds a new runner for a current organization",
+                "operationId": "SetupRunner",
+                "parameters": [
+                    {
+                        "description": "Create new runner body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.SetupRunnerInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners/runtimes": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Get runtimes for runners of the organisation",
+                "operationId": "GetRuntimes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.Runtime"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Get runner details for the id. Current organization is figured from the authorization token",
+                "operationId": "GetRunner",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "delete runner for the id. Current organization is figured from the authorization token",
+                "operationId": "DeleteRunner",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Get runner details for the id. Current organization is figured from the authorization token",
+                "operationId": "UpdateRunner",
+                "parameters": [
+                    {
+                        "description": "update runner body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.UpdateRunnerInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Get Current Org Subscription Details",
+                "operationId": "GetSubscriptionDetails",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.SubscriptionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Cancel Org current Subscription",
+                "operationId": "DeleteCurrentSubscription",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.SubscriptionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/stripe/payment_method/{payment_method_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "delete stripe setup intent payment method",
+                "operationId": "DeleteStripePaymentMethod",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID for the stripe payment method",
+                        "name": "payment_method_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.SubscriptionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "update stripe payment method to default",
+                "operationId": "StripePaymentMethodDefault",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID for the stripe payment method",
+                        "name": "payment_method_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.SubscriptionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/{gateway}/webhook": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "S2S Webhook received from PG",
+                "operationId": "SubscriptionPGWebhook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "gateway name, current only stripe",
+                        "name": "gateway",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/approve-integration": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "This handles the callback for approving an installation",
+                "operationId": "ApproveVCSIntegration",
+                "parameters": [
+                    {
+                        "description": "Approve vcs integration app installation",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ApproveVCSIntegrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AuthUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/entities": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "VCS Entities refers to git entites like git repos, git branches, etc.\nThis endpoint is a commons endpoint to fetch these.\nParentID is required depending on what git entity you are fetching.\n\nGit entity heirchary:\nGit Organization \u003e Git Repository \u003e Git Branch\n\nWhen fetching an entity the parent id is the id of git entity one level above\nSo for example, fetching repository will be\nhttp://backend.warpbuild.com/api/v1/vcs/entities?provider=gitlab\u0026entity_type=repository\u0026parent_id=organization_external_id\nFor the most top level entity there is no parent_id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Lists all vcs entities for vcs integration",
+                "operationId": "ListVCSEntites",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Git provider",
+                        "name": "provider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter using organization name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "IntegrationID used by the git provider",
+                        "name": "integration_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "organization",
+                            "repository",
+                            "branch"
+                        ],
+                        "type": "string",
+                        "description": "VCS Entity that should be returned",
+                        "name": "entity_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "VCS Entity Parent ID",
+                        "name": "parent_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/VCSEntity"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/integrations": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Lists all vcs integration for provider",
+                "operationId": "ListVCSIntegration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "vcs integration provider filter",
+                        "name": "provider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "vcs integration provider filter",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/VCSIntegration"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Create a new vcs integration",
+                "operationId": "CreateVCSIntegration",
+                "parameters": [
+                    {
+                        "description": "Create new vcs integration body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateVCSIntegrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/VCSIntegration"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/integrations/{integration_id}": {
+            "put": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Update an existing vcs integration",
+                "operationId": "UpdateVCSIntegration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID for the vcs integration",
+                        "name": "integration_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update vcs integration body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateVCSIntegrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/UpdateVCSIntegrationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Delete an existing vcs integration",
+                "operationId": "DeleteVCSIntegration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID for the vcs integration",
+                        "name": "integration_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID for the vcs integration",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericSuccessMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/repos": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth | WarpBuildAdminSecretAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "create vcs repo based on repo internal id",
+                "operationId": "CreateVCSGitRepo",
+                "parameters": [
+                    {
+                        "description": "create repo options",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.CreateRepoOptions"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Repo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/vcs/repos/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "get vcs repo based on repo internal id",
+                "operationId": "GetVCSGitRepo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "internal id for the vcs git repo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.Repo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ApproveVCSIntegrationRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "installation_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "AuthUserRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "state"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "AuthUserResponse": {
+            "type": "object",
+            "required": [
+                "access_token",
+                "organization",
+                "refresh_token",
+                "should_show_vcs_integration",
+                "user"
+            ],
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/V1Organization"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "should_show_vcs_integration": {
+                    "type": "boolean"
+                },
+                "user": {
+                    "$ref": "#/definitions/V1User"
+                }
+            }
+        },
+        "CreateInviteRequest": {
+            "type": "object",
+            "required": [
+                "role_kind"
+            ],
+            "properties": {
+                "role_kind": {
+                    "type": "string",
+                    "enum": [
+                        "owner",
+                        "admin",
+                        "member"
+                    ]
+                }
+            }
+        },
+        "CreateVCSIntegrationRequest": {
+            "type": "object",
+            "required": [
+                "provider"
+            ],
+            "properties": {
+                "additional_state": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "application_callback_url": {
+                    "type": "string"
+                },
+                "application_id": {
+                    "type": "string"
+                },
+                "application_secret": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "vcs_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "EstimatedCost": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
+        "MeResponse": {
+            "type": "object",
+            "required": [
+                "organization",
+                "user",
+                "vcs_integration"
+            ],
+            "properties": {
+                "organization": {
+                    "$ref": "#/definitions/V1Organization"
+                },
+                "user": {
+                    "$ref": "#/definitions/V1User"
+                },
+                "vcs_integration": {
+                    "$ref": "#/definitions/commons.VCSIntegrationLean"
+                }
+            }
+        },
+        "SwitchOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "organization_id",
+                "refresh_token"
+            ],
+            "properties": {
+                "organization_id": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "SwitchOrganizationResponse": {
+            "type": "object",
+            "required": [
+                "access_token",
+                "organization"
+            ],
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/V1Organization"
+                }
+            }
+        },
+        "TokenRefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "TokenRefreshResponse": {
+            "type": "object",
+            "required": [
+                "access_token"
+            ],
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "UpdateInviteRequest": {
+            "type": "object",
+            "properties": {
+                "Status": {
+                    "type": "string"
+                }
+            }
+        },
+        "UpdateOrganizationRequest": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "UpdateVCSIntegrationRequest": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "code": {
+                    "description": "Code is\n\n- 'code' param in the callback from gitlab",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "installation_id": {
+                    "description": "InstallationID\n\n- 'installation_id' param from github installation",
+                    "type": "string"
+                },
+                "setup_action": {
+                    "description": "SetupAction\n\n- 'setup_action' param from github installation",
+                    "type": "string"
+                }
+            }
+        },
+        "UpdateVCSIntegrationResponse": {
+            "type": "object",
+            "properties": {
+                "new_session": {
+                    "$ref": "#/definitions/AuthUserResponse"
+                },
+                "vcs_integration": {
+                    "$ref": "#/definitions/VCSIntegration"
+                }
+            }
+        },
+        "V1Invite": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "V1ListUsersForOrganizationResult": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joined_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "V1Organization": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "id",
+                "name"
+            ],
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "V1SendInviteRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "invite_id"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "invite_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "V1User": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "signup_provider": {
+                    "type": "string"
+                },
+                "signup_provider_user_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "VCSEntity": {
+            "type": "object",
+            "required": [
+                "display_name",
+                "entity_type",
+                "external_id",
+                "name",
+                "provider"
+            ],
+            "properties": {
+                "account_id": {
+                    "description": "AccountID is the github account\n\nTODO: AccountID should be group id in case of gitlab",
+                    "type": "string"
+                },
+                "commit_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "type": "string"
+                },
+                "external_id": {
+                    "type": "string"
+                },
+                "integration_id": {
+                    "type": "string"
+                },
+                "internal_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "web_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "VCSIntegration": {
+            "type": "object",
+            "required": [
+                "connection_status",
+                "created_at",
+                "id",
+                "integration_type",
+                "integration_url",
+                "provider",
+                "target_type",
+                "updated_at"
+            ],
+            "properties": {
+                "account_id": {
+                    "type": "string"
+                },
+                "account_owner": {
+                    "type": "string"
+                },
+                "application_id": {
+                    "type": "string"
+                },
+                "configuration_url": {
+                    "description": "ConfigurationURL\n\nGithub\n- Is the installation's settings page on the github account.\n- This field is only populated after the github account is successfully connected.\n\nGitlab\n- \u003cno-equivalent-exists\u003e",
+                    "type": "string"
+                },
+                "connection_status": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "installation_id": {
+                    "type": "string"
+                },
+                "integration_type": {
+                    "type": "string"
+                },
+                "integration_url": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "target_type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "vcs_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "WarpBuildAPIError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sub_code": {
+                    "type": "string"
+                },
+                "sub_message": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.Balance": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "limit": {
+                    "type": "number"
+                },
+                "percentage": {
+                    "type": "number"
+                },
+                "used": {
+                    "type": "number"
+                }
+            }
+        },
+        "commons.BalanceDetails": {
+            "type": "object",
+            "properties": {
+                "free_balance": {
+                    "$ref": "#/definitions/commons.Balance"
+                },
+                "paid_balance": {
+                    "$ref": "#/definitions/commons.Balance"
+                }
+            }
+        },
+        "commons.CreateRepoOptions": {
+            "type": "object",
+            "required": [
+                "integration_id",
+                "name",
+                "owner"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "integration_id": {
+                    "type": "string"
+                },
+                "is_private": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "should_auto_init": {
+                    "type": "boolean"
+                },
+                "upsert": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "commons.GithubRunnerApplicationDetails": {
+            "type": "object",
+            "properties": {
+                "jit": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "runner_name": {
+                    "type": "string"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "commons.ListTokensOptions": {
+            "type": "object",
+            "properties": {
+                "organization_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ListUsersOptions": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.ListUsersResponse": {
+            "type": "object",
+            "properties": {
+                "next": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                },
+                "total_rows": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/V1User"
+                    }
+                }
+            }
+        },
+        "commons.Organization": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.PaymentDetails": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "billing_email": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "method_meta": {
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.PaymentMethod": {
+            "type": "object",
+            "properties": {
+                "country_code": {
+                    "type": "string"
+                },
+                "exp_month": {
+                    "type": "integer"
+                },
+                "exp_year": {
+                    "type": "integer"
+                },
+                "external_id": {
+                    "type": "string"
+                },
+                "iin": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "issuer": {
+                    "type": "string"
+                },
+                "last4": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.Repo": {
+            "type": "object",
+            "properties": {
+                "AccountID": {
+                    "type": "string"
+                },
+                "CreatedAt": {
+                    "type": "string"
+                },
+                "DefaultBranch": {
+                    "type": "string"
+                },
+                "DisplayName": {
+                    "type": "string"
+                },
+                "IntegrationID": {
+                    "type": "string"
+                },
+                "SSHURL": {
+                    "type": "string"
+                },
+                "UpdatedAt": {
+                    "type": "string"
+                },
+                "WebURL": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "vcs_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ReqCheckoutSession": {
+            "type": "object",
+            "required": [
+                "cancel_url",
+                "success_url"
+            ],
+            "properties": {
+                "cancel_url": {
+                    "type": "string"
+                },
+                "success_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ReqSetupIntentInit": {
+            "type": "object",
+            "required": [
+                "cancel_url",
+                "success_url"
+            ],
+            "properties": {
+                "cancel_url": {
+                    "type": "string"
+                },
+                "success_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ResCheckoutSession": {
+            "type": "object",
+            "properties": {
+                "redirect_url": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ResSetupIntentInit": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "gateway": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.Runner": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "cluster_id": {
+                    "type": "string"
+                },
+                "configuration": {
+                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "external_reference_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "vcs_integration_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerConfiguration": {
+            "type": "object",
+            "properties": {
+                "arch": {
+                    "type": "string"
+                },
+                "cores": {
+                    "type": "integer"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "memory": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.RunnerInstance": {
+            "type": "object",
+            "properties": {
+                "cluster": {
+                    "type": "string"
+                },
+                "configuration": {
+                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_job_processed_id": {
+                    "type": "string"
+                },
+                "last_polled": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "runner_for": {
+                    "type": "string"
+                },
+                "runner_set_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "vcs_integration_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerInstanceAllocationDetails": {
+            "type": "object",
+            "properties": {
+                "gh_runner_application_details": {
+                    "$ref": "#/definitions/commons.GithubRunnerApplicationDetails"
+                },
+                "runner_application": {
+                    "type": "string",
+                    "enum": [
+                        "github"
+                    ]
+                },
+                "runner_instance": {
+                    "$ref": "#/definitions/commons.RunnerInstance"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "unassigned",
+                        "assigned",
+                        "invalidated"
+                    ]
+                }
+            }
+        },
+        "commons.Runtime": {
+            "type": "object",
+            "properties": {
+                "duration_seconds": {
+                    "type": "integer"
+                },
+                "runner_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.SetupRunnerInput": {
+            "type": "object",
+            "properties": {
+                "Active": {
+                    "type": "boolean"
+                },
+                "configuration": {
+                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vcs_integration_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.SubscriptionDetails": {
+            "type": "object",
+            "properties": {
+                "balance_details": {
+                    "$ref": "#/definitions/commons.BalanceDetails"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_payment_at": {
+                    "type": "string"
+                },
+                "last_payment_details": {
+                    "$ref": "#/definitions/commons.PaymentDetails"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "payment_methods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.PaymentMethod"
+                    }
+                },
+                "pg_customer_id": {
+                    "type": "string"
+                },
+                "pg_subscription_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subscribed_at": {
+                    "type": "string"
+                },
+                "upcoming_bill": {
+                    "$ref": "#/definitions/commons.UpcomingBill"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.UpcomingBill": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.UpdateRunnerInput": {
+            "type": "object",
+            "properties": {
+                "Active": {
+                    "type": "boolean"
+                },
+                "configuration": {
+                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "commons.UserToken": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_tenant_id": {
+                    "type": "string"
+                },
+                "provider_user_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.VCSIntegrationLean": {
+            "type": "object",
+            "required": [
+                "connection_status",
+                "id",
+                "target_type"
+            ],
+            "properties": {
+                "account_id": {
+                    "type": "string"
+                },
+                "account_owner": {
+                    "type": "string"
+                },
+                "connection_status": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "installation_id": {
+                    "type": "string"
+                },
+                "target_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "debugger.PublishEventInput": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "id": {
+                    "type": "string"
+                },
+                "publisher": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericSuccessMessage": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "JWTKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "WarpBuildAdminSecretAuth": {
+            "type": "apiKey",
+            "name": "X-Warp-Build-Admin-Secret",
+            "in": "header"
+        }
+    },
+    "x-extension-openapi": {
+        "example": "value on a json format"
+    }
 }
