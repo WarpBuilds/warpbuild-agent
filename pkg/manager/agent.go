@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -27,6 +28,10 @@ type AgentOptions struct {
 func NewAgent(opts *AgentOptions) (IAgent, error) {
 	cfg := warpbuild.NewConfiguration()
 
+	if opts.HostURL == "" {
+		return nil, fmt.Errorf("host url is required")
+	}
+
 	u, err := url.Parse(opts.HostURL)
 	if err != nil {
 		return nil, err
@@ -40,6 +45,7 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 		client:        wb,
 		id:            opts.ID,
 		pollingSecret: opts.PollingSecret,
+		hostURL:       opts.HostURL,
 	}, nil
 }
 
@@ -47,6 +53,7 @@ type agentImpl struct {
 	client        *warpbuild.APIClient
 	id            string
 	pollingSecret string
+	hostURL       string
 }
 
 func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) error {
