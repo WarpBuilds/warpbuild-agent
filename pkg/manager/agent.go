@@ -62,7 +62,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 	for {
 		select {
 		case <-ticker.C:
-			log.Logger().Infof("sending request to host %s using scheme %s", a.client.GetConfig().Host, a.client.GetConfig().Scheme)
+			log.Logger().Errorf("host url: %s", a.hostURL)
 			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
 			log.Logger().Infof("polling secret: %s", a.pollingSecret)
 
