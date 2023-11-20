@@ -34,6 +34,8 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 	cmd := exec.CommandContext(ctx, m.Script, "--jitToken", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
+	log.Logger().Infof("starting runner with command: %s", cmd.String())
+
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Logger().Errorf("error creating stdout pipe: %v", err)
