@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -20,10 +21,21 @@ type AgentOptions struct {
 	// ID is the warpbuild assigned id.
 	ID            string `json:"id"`
 	PollingSecret string `json:"pollingSecret"`
+	HostURL       string `json:"hostURL"`
 }
 
 func NewAgent(opts *AgentOptions) (IAgent, error) {
-	wb := warpbuild.NewAPIClient(&warpbuild.Configuration{})
+	cfg := warpbuild.NewConfiguration()
+
+	u, err := url.Parse(opts.HostURL)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.Servers[0].URL = u.Host
+	cfg.Scheme = u.Scheme
+
+	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
 		client:        wb,
 		id:            opts.ID,
