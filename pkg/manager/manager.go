@@ -9,7 +9,8 @@ type IManager interface {
 }
 
 type StartRunnerOptions struct {
-	JitToken string `json:"jit_token"`
+	JitToken     string        `json:"jit_token"`
+	AgentOptions *AgentOptions `json:""agent_options`
 }
 
 type ManagerOptions struct {

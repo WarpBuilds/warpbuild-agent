@@ -44,6 +44,7 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 		id:            opts.ID,
 		pollingSecret: opts.PollingSecret,
 		hostURL:       opts.HostURL,
+		opts:          opts,
 	}, nil
 }
 
@@ -52,6 +53,7 @@ type agentImpl struct {
 	id            string
 	pollingSecret string
 	hostURL       string
+	opts          *AgentOptions
 }
 
 func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) error {
@@ -88,7 +90,8 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				log.Logger().Infof("Starting runner")
 				m := NewManager(opts.Manager)
 				err := m.StartRunner(ctx, &StartRunnerOptions{
-					JitToken: *allocationDetails.GhRunnerApplicationDetails.Jit,
+					JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
+					AgentOptions: a.opts,
 				})
 				if err != nil {
 					log.Logger().Errorf("failed to start runner: %v", err)
