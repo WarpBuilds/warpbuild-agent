@@ -3,7 +3,7 @@ Description=Systemd service to manage warpbuild-agent lifecycle
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/warpbuild-agent
+ExecStart=/usr/local/bin/warpbuild-agentd
 WorkingDirectory=/
 Restart=always
 RestartSec=5

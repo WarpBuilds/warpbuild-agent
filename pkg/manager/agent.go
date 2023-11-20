@@ -43,6 +43,8 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 	for {
 		select {
 		case <-ticker.C:
+			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
+
 			allocationDetails, _, err := a.client.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
