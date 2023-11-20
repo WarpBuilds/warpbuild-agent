@@ -1395,39 +1395,6 @@ paths:
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
       - v1 organization
-  /runner_instance/{id}/allocation_details:
-    get:
-      operationId: RunnerInstanceCleanupHook
-      parameters:
-      - description: runner instance id
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: polling secret for validation
-        in: header
-        name: X-POLLING-SECRET
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
-      summary: Get runner instance allocation details for the id
-      tags:
-      - v1 RunnerInstance
   /runners:
     get:
       operationId: ListRunners
@@ -1585,6 +1552,71 @@ paths:
       summary: Get runtimes for runners of the organisation
       tags:
       - v1 Runners
+  /runners_instance/{id}/allocation_details:
+    get:
+      operationId: GetRunnerInstanceAllocationDetails
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerInstanceAllocationDetails'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      summary: Get runner instance allocation details for the id
+      tags:
+      - v1 RunnerInstance
+  /runners_instance/{id}/cleanup_hook:
+    post:
+      operationId: RunnerInstanceCleanupHook
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      summary: Get runner instance allocation details for the id
+      tags:
+      - v1 RunnerInstance
   /subscription:
     delete:
       operationId: DeleteCurrentSubscription

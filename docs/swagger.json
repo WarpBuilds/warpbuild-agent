@@ -1013,55 +1013,6 @@
                 }
             }
         },
-        "/runner_instance/{id}/allocation_details": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "v1 RunnerInstance"
-                ],
-                "summary": "Get runner instance allocation details for the id",
-                "operationId": "RunnerInstanceCleanupHook",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "runner instance id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "polling secret for validation",
-                        "name": "X-POLLING-SECRET",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
-                        }
-                    }
-                }
-            }
-        },
         "/runners": {
             "get": {
                 "security": [
@@ -1290,6 +1241,103 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners_instance/{id}/allocation_details": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Get runner instance allocation details for the id",
+                "operationId": "GetRunnerInstanceAllocationDetails",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "runner instance id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "polling secret for validation",
+                        "name": "X-POLLING-SECRET",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerInstanceAllocationDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners_instance/{id}/cleanup_hook": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Get runner instance allocation details for the id",
+                "operationId": "RunnerInstanceCleanupHook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "runner instance id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "polling secret for validation",
+                        "name": "X-POLLING-SECRET",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
