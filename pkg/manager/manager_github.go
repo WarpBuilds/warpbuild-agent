@@ -3,7 +3,9 @@ package manager
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -85,8 +87,11 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 	}
 	defer stderrFile.Close()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	// Goroutine to wait for the command to finish
 	go func() {
+		defer wg.Done()
 		cmd.Wait()
 		doneChan <- true
 	}()
@@ -97,11 +102,15 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 		select {
 		case out := <-stdoutChan:
 			fmt.Fprintln(stdoutFile, out)
+			fmt.Fprintln(os.Stdout, out)
 		case err := <-stderrChan:
 			fmt.Fprintln(stderrFile, err)
+			fmt.Fprintln(os.Stderr, err)
 		case <-ticker.C:
 			// Handle output every second
 		case <-doneChan:
+
+			wg.Wait()
 			// Exit the loop when command completes
 			// Run all the post-end hooks
 			for _, hook := range GetHooks[IPostEndHook]() {
