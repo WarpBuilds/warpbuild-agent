@@ -16,7 +16,7 @@ type ApplicationOptions struct {
 	StderrFile   string `json:"stderr_file"`
 }
 
-func (opts *ApplicationOptions) Default() {
+func (opts *ApplicationOptions) ApplyDefaults() {
 	if opts.SettingsFile == "" {
 		opts.SettingsFile = "/var/lib/warpbuild-agent/settings.json"
 	}
@@ -51,6 +51,8 @@ const (
 )
 
 func NewApp(ctx context.Context, opts *ApplicationOptions) error {
+
+	opts.ApplyDefaults()
 
 	lm, err := log.Init(&log.InitOptions{
 		StdoutFile: opts.StdoutFile,
