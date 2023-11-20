@@ -31,3 +31,5 @@ curl -X POST --silent --show-error --fail \
      -H "X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
      -d @warpbuild_body.json \
      $WARPBUILD_HOST_URL/api/v1/job
+
+rm warpbuild_body.json
