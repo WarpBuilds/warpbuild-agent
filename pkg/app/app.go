@@ -18,7 +18,7 @@ type ApplicationOptions struct {
 
 func (opts *ApplicationOptions) ApplyDefaults() {
 	if opts.SettingsFile == "" {
-		opts.SettingsFile = "/var/lib/warpbuild-agent/settings.json"
+		opts.SettingsFile = "/var/lib/warpbuild-agentd/settings.json"
 	}
 }
 
