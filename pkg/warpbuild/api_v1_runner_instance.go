@@ -24,23 +24,23 @@ import (
 type V1RunnerInstanceAPI interface {
 
 	/*
-	GetRunnerInstanceAllocationDetails Get runner instance allocation details for the id
+	RunnerInstanceCleanupHook Get runner instance allocation details for the id
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param id runner instance id
-	@return ApiGetRunnerInstanceAllocationDetailsRequest
+	@return ApiRunnerInstanceCleanupHookRequest
 	*/
-	GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest
+	RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest
 
-	// GetRunnerInstanceAllocationDetailsExecute executes the request
-	//  @return CommonsRunnerInstanceAllocationDetails
-	GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error)
+	// RunnerInstanceCleanupHookExecute executes the request
+	//  @return map[string]interface{}
+	RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error)
 }
 
 // V1RunnerInstanceAPIService V1RunnerInstanceAPI service
 type V1RunnerInstanceAPIService service
 
-type ApiGetRunnerInstanceAllocationDetailsRequest struct {
+type ApiRunnerInstanceCleanupHookRequest struct {
 	ctx context.Context
 	ApiService V1RunnerInstanceAPI
 	id string
@@ -48,24 +48,24 @@ type ApiGetRunnerInstanceAllocationDetailsRequest struct {
 }
 
 // polling secret for validation
-func (r ApiGetRunnerInstanceAllocationDetailsRequest) XPOLLINGSECRET(xPOLLINGSECRET string) ApiGetRunnerInstanceAllocationDetailsRequest {
+func (r ApiRunnerInstanceCleanupHookRequest) XPOLLINGSECRET(xPOLLINGSECRET string) ApiRunnerInstanceCleanupHookRequest {
 	r.xPOLLINGSECRET = &xPOLLINGSECRET
 	return r
 }
 
-func (r ApiGetRunnerInstanceAllocationDetailsRequest) Execute() (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
-	return r.ApiService.GetRunnerInstanceAllocationDetailsExecute(r)
+func (r ApiRunnerInstanceCleanupHookRequest) Execute() (map[string]interface{}, *http.Response, error) {
+	return r.ApiService.RunnerInstanceCleanupHookExecute(r)
 }
 
 /*
-GetRunnerInstanceAllocationDetails Get runner instance allocation details for the id
+RunnerInstanceCleanupHook Get runner instance allocation details for the id
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param id runner instance id
- @return ApiGetRunnerInstanceAllocationDetailsRequest
+ @return ApiRunnerInstanceCleanupHookRequest
 */
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest {
-	return ApiGetRunnerInstanceAllocationDetailsRequest{
+func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest {
+	return ApiRunnerInstanceCleanupHookRequest{
 		ApiService: a,
 		ctx: ctx,
 		id: id,
@@ -73,16 +73,16 @@ func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetails(ctx cont
 }
 
 // Execute executes the request
-//  @return CommonsRunnerInstanceAllocationDetails
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
+//  @return map[string]interface{}
+func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *CommonsRunnerInstanceAllocationDetails
+		localVarReturnValue  map[string]interface{}
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.GetRunnerInstanceAllocationDetails")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.RunnerInstanceCleanupHook")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

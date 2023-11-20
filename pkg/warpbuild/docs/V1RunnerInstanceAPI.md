@@ -4,13 +4,13 @@ All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetRunnerInstanceAllocationDetails**](V1RunnerInstanceAPI.md#GetRunnerInstanceAllocationDetails) | **Get** /runner_instance/{id}/allocation_details | Get runner instance allocation details for the id
+[**RunnerInstanceCleanupHook**](V1RunnerInstanceAPI.md#RunnerInstanceCleanupHook) | **Get** /runner_instance/{id}/allocation_details | Get runner instance allocation details for the id
 
 
 
-## GetRunnerInstanceAllocationDetails
+## RunnerInstanceCleanupHook
 
-> CommonsRunnerInstanceAllocationDetails GetRunnerInstanceAllocationDetails(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
+> map[string]interface{} RunnerInstanceCleanupHook(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
 
 Get runner instance allocation details for the id
 
@@ -32,13 +32,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
+    resp, r, err := apiClient.V1RunnerInstanceAPI.RunnerInstanceCleanupHook(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceAPI.RunnerInstanceCleanupHook``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `GetRunnerInstanceAllocationDetails`: CommonsRunnerInstanceAllocationDetails
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails`: %v\n", resp)
+    // response from `RunnerInstanceCleanupHook`: map[string]interface{}
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceAPI.RunnerInstanceCleanupHook`: %v\n", resp)
 }
 ```
 
@@ -52,7 +52,7 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiGetRunnerInstanceAllocationDetailsRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiRunnerInstanceCleanupHookRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
@@ -62,7 +62,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**CommonsRunnerInstanceAllocationDetails**](CommonsRunnerInstanceAllocationDetails.md)
+**map[string]interface{}**
 
 ### Authorization
 
