@@ -35,6 +35,7 @@ archives:
       # - LICENSE
       - README.md
       - tools/systemd/warpbuild-agentd.service
+      - tools/github/hooks/prerun.sh
 
 checksum:
   name_template: "checksums.txt"
