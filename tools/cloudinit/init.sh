@@ -25,6 +25,9 @@ export RUNNER_MANUALLY_TRAP_SIG=1
 export ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT=1
 
 # gh auth login
+# install go 1.21 using snap
+# sudo snap install go --classic --channel=1.21/stable
+
 
 git clone https://github.com/WarpBuilds/warpbuild-agent.git
 cd warpbuild-agent

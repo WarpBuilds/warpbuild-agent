@@ -74,7 +74,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	// read the settings file every 200ms
 	// the settings file might not be present at startup
 	ticker := time.NewTicker(200 * time.Millisecond)
-	timeout := time.After(120 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
@@ -103,10 +102,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			log.Logger().Debugf("settings: %v", settings)
 
 			foundSettings = true
-
-		case <-timeout:
-			log.Logger().Errorf("timed out waiting for settings file at %s", opts.SettingsFile)
-			return nil
 
 		case <-ctx.Done():
 			log.Logger().Infof("context cancelled")
