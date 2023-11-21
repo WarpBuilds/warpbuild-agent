@@ -3,12 +3,12 @@
 echo 'Running cloudinit script...'
 
 cd ~
-mkdir temp
-cd temp
+mkdir runner
+cd runner
 
 export TARGETARCH=${TARGETARCH:-amd64}
 export TARGETOS=${TARGETOS:-linux}
-export RUNNER_VERSION=${RUNNER_VERSION:-2.309.0}
+export RUNNER_VERSION=${RUNNER_VERSION:-2.311.0}
 export RUNNER_CONTAINER_HOOKS_VERSION=${RUNNER_CONTAINER_HOOKS_VERSION:-0.3.2}
 export RUNNER_ARCH=$TARGETARCH \
 	&& if [ "$RUNNER_ARCH" = "amd64" ]; then export RUNNER_ARCH=x64 ; fi \
@@ -40,20 +40,26 @@ sudo systemctl daemon-reload
 sudo systemctl enable warpbuild-agentd
 sudo systemctl start warpbuild-agentd
 
+sudo cp tools/github/hooks/prerun.sh ~/runner/prerun.sh
+
+# ? set agent id and polling secret in settings.json
+# ? you might need to replace the host url as well
+#
 echo "Using agent id: $AGENT_ID"
 
 cat <<EOF > /var/lib/warpbuild-agentd/settings.json
 {
   "agent": {
     "id": "$(echo $AGENT_ID)",
-    "polling_secret: "$(echo $POLLING_SECRET)",
-		"host_url": "$(echo $HOST_URL)"
+    "polling_secret": "$(echo $POLLING_SECRET)",
+    "host_url": "https://api.dev.warpbuild.dev/api/v1",
+    "exit_file_location": "/var/log/warpbuild-agentd/exit.json"
   },
   "runner": {
     "provider": "github",
     "github": {
-      "runner_dir": "/runner",
-      "script": "run.sh",
+      "runner_dir": "/home/prashant/runner",
+      "script": "./run.sh",
       "stdout_file": "/var/log/warpbuild-agentd/runner.github.stdout.log",  
       "stderr_file": "/var/log/warpbuild-agentd/runner.github.stderr.log"
     }

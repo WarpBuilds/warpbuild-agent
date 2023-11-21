@@ -17,10 +17,18 @@ type ghManager struct {
 }
 
 type GithubOptions struct {
-	StdoutFile string `json:"stdout_file"`
-	StderrFile string `json:"stderr_file"`
-	RunnerDir  string `json:"runner_dir"`
-	Script     string `json:"script"`
+	StdoutFile string               `json:"stdout_file"`
+	StderrFile string               `json:"stderr_file"`
+	RunnerDir  string               `json:"runner_dir"`
+	Script     string               `json:"script"`
+	Envs       EnvironmentVariables `json:"envs"`
+}
+
+type EnvironmentVariables []EnvironmentVariable
+
+type EnvironmentVariable struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 var _ IManager = (*ghManager)(nil)
@@ -37,10 +45,11 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		return nil, err
 	}
 
-	os.Setenv("RUNNER_ALLOW_RUNASROOT", "1")
-
 	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
+	for _, env := range m.Envs {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
 
