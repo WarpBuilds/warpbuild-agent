@@ -1,0 +1,3 @@
+pkg/warpbuild/** linguist-generated=true
+docs/swagger.json linguist-generated=true
+docs/swagger.yaml linguist-generated=true

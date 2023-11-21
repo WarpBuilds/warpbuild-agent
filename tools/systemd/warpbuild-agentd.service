@@ -1,0 +1,12 @@
+[Unit]
+Description=Systemd service to manage warpbuild-agent lifecycle
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/warpbuild-agentd
+WorkingDirectory=/
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+openapitools.json
+bin
+dist/
+.DS_Store
