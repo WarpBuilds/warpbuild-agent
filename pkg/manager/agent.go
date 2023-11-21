@@ -111,8 +111,6 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 					os.Setenv(key, val)
 				}
 
-				os.Setenv("ACTIONS_RUNNER_HOOK_JOB_STARTED", "/home/prashant/temp/pre-run.sh")
-
 				log.Logger().Infof("Starting runner")
 				m := NewManager(opts.Manager)
 				startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
