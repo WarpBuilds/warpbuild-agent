@@ -45,11 +45,12 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		return nil, err
 	}
 
+	for _, env := range m.Envs {
+		os.Setenv(env.Key, env.Value)
+	}
+
 	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
-	for _, env := range m.Envs {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
-	}
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
 
