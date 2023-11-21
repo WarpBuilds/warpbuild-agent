@@ -40,10 +40,11 @@ type RunnerSettings struct {
 }
 
 type GithubSettings struct {
-	RunnerDir  string `json:"runner_dir"`
-	Script     string `json:"script"`
-	StdoutFile string `json:"stdout_file"`
-	StderrFile string `json:"stderr_file"`
+	RunnerDir  string                       `json:"runner_dir"`
+	Script     string                       `json:"script"`
+	StdoutFile string                       `json:"stdout_file"`
+	StderrFile string                       `json:"stderr_file"`
+	Envs       manager.EnvironmentVariables `json:"envs"`
 }
 
 type Provider string
@@ -133,6 +134,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 				Script:     settings.Runner.Github.Script,
 				StdoutFile: settings.Runner.Github.StdoutFile,
 				StderrFile: settings.Runner.Github.StderrFile,
+				Envs:       settings.Runner.Github.Envs,
 			},
 		},
 	})

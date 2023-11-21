@@ -45,6 +45,8 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		return nil, err
 	}
 
+	log.Logger().Infof("All environment variables: %v", m.Envs)
+
 	for _, env := range m.Envs {
 		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		os.Setenv(env.Key, env.Value)
