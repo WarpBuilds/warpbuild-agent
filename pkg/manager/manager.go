@@ -4,13 +4,17 @@ import (
 	"context"
 )
 
+type StartRunnerOutput struct {
+	RunCompletedSuccessfully bool `json:"run_completed_successfully"`
+}
+
 type IManager interface {
-	StartRunner(ctx context.Context, opts *StartRunnerOptions) error
+	StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error)
 }
 
 type StartRunnerOptions struct {
 	JitToken     string        `json:"jit_token"`
-	AgentOptions *AgentOptions `json:""agent_options`
+	AgentOptions *AgentOptions `json:"agent_options"`
 }
 
 type ManagerOptions struct {
