@@ -181,6 +181,8 @@ func (a *agentImpl) writeExitFile(ctx context.Context, opts *StartRunnerOutput) 
 
 func (a *agentImpl) verifyExitFile() error {
 	// read the exit file
+	log.Logger().Infof("Verifying exit file at %s", a.exitFileLocation)
+
 	f, err := os.Open(a.exitFileLocation)
 	if err != nil && os.IsNotExist(err) {
 		log.Logger().Infof("exit file does not exist. VM is clean. Continuing with agent startup...")
