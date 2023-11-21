@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -30,6 +31,11 @@ func newGithubManager(opts *ManagerOptions) IManager {
 }
 
 func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error) {
+	err := m.init(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
@@ -128,4 +134,51 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		}
 	}
 
+}
+
+func (m *ghManager) init(ctx context.Context) error {
+
+	err := m.createFiles(ctx)
+	if err != nil {
+		log.Logger().Errorf("error creating files: %v", err)
+		return err
+	}
+
+	return nil
+
+}
+
+func (m *ghManager) createFiles(ctx context.Context) error {
+
+	fullPaths := []string{
+		m.StderrFile,
+		m.StdoutFile,
+	}
+
+	// Iterate over the full paths
+	for _, fullPath := range fullPaths {
+		// Get the base directory from the full path
+		baseDir := filepath.Dir(fullPath)
+
+		// Ensure the base directory exists
+		if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+			err := os.MkdirAll(baseDir, 0755)
+			if err != nil {
+				log.Logger().Errorf("Failed to create base directory %s: %v", baseDir, err)
+				return err
+			}
+		}
+
+		// Create the file if it doesn't exist
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			f, err := os.Create(fullPath)
+			if err != nil {
+				log.Logger().Errorf("Failed to create file %s: %v", fullPath, err)
+				return err
+			}
+			f.Close()
+		}
+	}
+
+	return nil
 }
