@@ -28,9 +28,10 @@ type Settings struct {
 }
 
 type AgentSettings struct {
-	ID            string `json:"id"`
-	PollingSecret string `json:"polling_secret"`
-	HostURL       string `json:"host_url"`
+	ID               string `json:"id"`
+	PollingSecret    string `json:"polling_secret"`
+	HostURL          string `json:"host_url"`
+	ExitFileLocation string `json:"exit_file_location"`
 }
 
 type RunnerSettings struct {
@@ -114,9 +115,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	}
 
 	agent, err := manager.NewAgent(&manager.AgentOptions{
-		ID:            settings.Agent.ID,
-		PollingSecret: settings.Agent.PollingSecret,
-		HostURL:       settings.Agent.HostURL,
+		ID:               settings.Agent.ID,
+		PollingSecret:    settings.Agent.PollingSecret,
+		HostURL:          settings.Agent.HostURL,
+		ExitFileLocation: settings.Agent.ExitFileLocation,
 	})
 	if err != nil {
 		log.Logger().Errorf("failed to create agent: %v", err)
