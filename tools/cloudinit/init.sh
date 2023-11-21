@@ -39,3 +39,24 @@ sudo cp tools/systemd/warpbuild-agentd.service /etc/systemd/system/warpbuild-age
 sudo systemctl daemon-reload
 sudo systemctl enable warpbuild-agentd
 sudo systemctl start warpbuild-agentd
+
+echo "Using agent id: $AGENT_ID"
+
+cat <<EOF > /var/lib/warpbuild-agentd/settings.json
+{
+  "agent": {
+    "id": "$(echo $AGENT_ID)",
+    "polling_secret: "$(echo $POLLING_SECRET)",
+		"host_url": "$(echo $HOST_URL)"
+  },
+  "runner": {
+    "provider": "github",
+    "github": {
+      "runner_dir": "/runner",
+      "script": "run.sh",
+      "stdout_file": "/var/log/warpbuild-agentd/runner.github.stdout.log",  
+      "stderr_file": "/var/log/warpbuild-agentd/runner.github.stderr.log"
+    }
+  }
+}
+EOF
