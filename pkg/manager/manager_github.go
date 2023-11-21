@@ -37,6 +37,8 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		return nil, err
 	}
 
+	os.Setenv("RUNNER_ALLOW_RUNASROOT", "1")
+
 	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
