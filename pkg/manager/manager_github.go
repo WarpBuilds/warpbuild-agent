@@ -95,6 +95,7 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 	defer stderrFile.Close()
 
 	go func() {
+		cmd.Wait()
 		doneChan <- true
 	}()
 
