@@ -42,8 +42,8 @@ func (*CleanupCallbackHook) PostEndHook(ctx context.Context, opts *manager.PostE
 				XPOLLINGSECRET(opts.StartRunnerOptions.AgentOptions.PollingSecret).
 				Execute()
 			if err != nil {
-				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
-				return err
+				log.Logger().Errorf("failed to call cleanup hook runner instance: %v", err)
+				continue
 			}
 			if res.StatusCode == http.StatusOK {
 				return nil
