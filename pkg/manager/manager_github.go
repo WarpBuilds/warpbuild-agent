@@ -46,6 +46,7 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 	}
 
 	for _, env := range m.Envs {
+		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		os.Setenv(env.Key, env.Value)
 	}
 
