@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sync"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -30,7 +29,7 @@ func newGithubManager(opts *ManagerOptions) IManager {
 	}
 }
 
-func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) error {
+func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error) {
 	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
@@ -39,13 +38,13 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Logger().Errorf("error creating stdout pipe: %v", err)
-		return err
+		return nil, err
 	}
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
 		log.Logger().Errorf("error creating stderr pipe: %v", err)
-		return err
+		return nil, err
 	}
 
 	for _, hook := range GetHooks[IPreStartHook]() {
@@ -58,13 +57,13 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 		})
 		if err != nil {
 			log.Logger().Errorf("error running pre-start hook %s: %v", hook.HookID(), err)
-			return err
+			return nil, err
 		}
 	}
 
 	if err := cmd.Start(); err != nil {
 		log.Logger().Errorf("error starting command: %v", err)
-		return err
+		return nil, err
 	}
 
 	stdoutChan := make(chan string)
@@ -78,23 +77,18 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 	stdoutFile, err := openFile(m.StdoutFile)
 	if err != nil {
 		log.Logger().Errorf("error opening stdout file: %v", err)
-		return err
+		return nil, err
 	}
 	defer stdoutFile.Close()
 
 	stderrFile, err := openFile(m.StderrFile)
 	if err != nil {
 		log.Logger().Errorf("error opening stderr file: %v", err)
-		return err
+		return nil, err
 	}
 	defer stderrFile.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	// Goroutine to wait for the command to finish
 	go func() {
-		defer wg.Done()
-		cmd.Wait()
 		doneChan <- true
 	}()
 
@@ -112,7 +106,6 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 			// Handle output every second
 		case <-doneChan:
 
-			wg.Wait()
 			// Exit the loop when command completes
 			// Run all the post-end hooks
 			for _, hook := range GetHooks[IPostEndHook]() {
@@ -125,10 +118,13 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) e
 				})
 				if err != nil {
 					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
-					return err
+					return nil, err
 				}
 			}
-			return nil
+
+			return &StartRunnerOutput{
+				RunCompletedSuccessfully: true,
+			}, nil
 		}
 	}
 

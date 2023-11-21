@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -24,9 +25,10 @@ type IAgent interface {
 
 type AgentOptions struct {
 	// ID is the warpbuild assigned id.
-	ID            string `json:"id"`
-	PollingSecret string `json:"pollingSecret"`
-	HostURL       string `json:"hostURL"`
+	ID               string `json:"id"`
+	PollingSecret    string `json:"polling_secret"`
+	HostURL          string `json:"host_url"`
+	ExitFileLocation string `json:"exit_file_location"`
 }
 
 func NewAgent(opts *AgentOptions) (IAgent, error) {
@@ -40,28 +42,52 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
-		client:        wb,
-		id:            opts.ID,
-		pollingSecret: opts.PollingSecret,
-		hostURL:       opts.HostURL,
-		opts:          opts,
+		client:           wb,
+		id:               opts.ID,
+		pollingSecret:    opts.PollingSecret,
+		hostURL:          opts.HostURL,
+		exitFileLocation: opts.ExitFileLocation,
+		opts:             opts,
 	}, nil
 }
 
 type agentImpl struct {
-	client        *warpbuild.APIClient
-	id            string
-	pollingSecret string
-	hostURL       string
-	opts          *AgentOptions
+	client           *warpbuild.APIClient
+	id               string
+	pollingSecret    string
+	hostURL          string
+	exitFileLocation string
+	opts             *AgentOptions
 }
 
+type ExitFile struct {
+	ExitCode     int                `json:"exit_code"`
+	MachineState RunnerMachineState `json:"machine_state"`
+}
+
+type RunnerMachineState string
+
+const (
+	RunnerMachineStateDirty RunnerMachineState = "dirty"
+)
+
 func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) error {
+
+	if a.exitFileLocation == "" {
+		return fmt.Errorf("exit file location is required")
+	}
 
 	ticker := time.NewTicker(Interval)
 	for {
 		select {
 		case <-ticker.C:
+
+			if err := a.verifyExitFile(); err != nil {
+				log.Logger().Errorf("exit file verification failed: %v", err)
+				log.Logger().Infof("Runner will not be started and polling will not happen.")
+				continue
+			}
+
 			log.Logger().Infof("host url: %s", a.hostURL)
 			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
 			log.Logger().Infof("polling secret: %s", a.pollingSecret)
@@ -89,7 +115,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 				log.Logger().Infof("Starting runner")
 				m := NewManager(opts.Manager)
-				err := m.StartRunner(ctx, &StartRunnerOptions{
+				startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
 					JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
 					AgentOptions: a.opts,
 				})
@@ -97,6 +123,15 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 					log.Logger().Errorf("failed to start runner: %v", err)
 					return err
 				}
+
+				if startRunnerOutput.RunCompletedSuccessfully {
+					err := a.writeExitFile(ctx, startRunnerOutput)
+					if err != nil {
+						log.Logger().Errorf("failed to write exit file: %v", err)
+						return err
+					}
+				}
+
 			} else {
 				log.Logger().Infof("runner instance allocation details status: %s", *allocationDetails.Status)
 				log.Logger().Infof("Retrying in %s", Interval)
@@ -109,4 +144,69 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 	}
 
 	return nil
+}
+
+func (a *agentImpl) writeExitFile(ctx context.Context, opts *StartRunnerOutput) error {
+	log.Logger().Infof("Runner completed successfully. Marking vm as dirty")
+
+	ef := &ExitFile{
+		ExitCode:     0,
+		MachineState: RunnerMachineStateDirty,
+	}
+
+	data, err := json.Marshal(ef)
+	if err != nil {
+		log.Logger().Errorf("failed to marshal exit file: %v", err)
+		return err
+	}
+
+	f, err := os.Create(a.exitFileLocation)
+	if err != nil && !os.IsExist(err) {
+		log.Logger().Errorf("failed to create exit file: %v", err)
+		return err
+	}
+
+	defer f.Close()
+
+	_, err = f.Write(data)
+	if err != nil {
+		log.Logger().Errorf("failed to write exit file: %v", err)
+		return err
+	}
+
+	log.Logger().Infof("Exiting...")
+	return nil
+
+}
+
+func (a *agentImpl) verifyExitFile() error {
+	// read the exit file
+	f, err := os.Open(a.exitFileLocation)
+	if err != nil && os.IsNotExist(err) {
+		log.Logger().Infof("exit file does not exist. VM is clean. Continuing with agent startup...")
+		// the exit file does not exist which means the vm is clean
+		return nil
+	} else if err != nil {
+		log.Logger().Errorf("failed to open exit file: %v", err)
+		return err
+	}
+	defer f.Close()
+
+	// read the exit file
+	var ef ExitFile
+	err = json.NewDecoder(f).Decode(&ef)
+	if err != nil {
+		log.Logger().Errorf("failed to decode exit file: %v", err)
+		return err
+	}
+
+	if ef.MachineState == RunnerMachineStateDirty {
+		log.Logger().Errorf("exit file exists and machine state is dirty. Exiting...")
+		return fmt.Errorf("exit file exists and machine state is dirty. VMs must be clean before starting the agent")
+	} else {
+		log.Logger().Infof("exit file exists and machine state is '%s'. Continuing with agent startup...", ef.MachineState)
+	}
+
+	return nil
+
 }
