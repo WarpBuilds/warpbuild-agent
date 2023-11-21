@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -94,7 +95,11 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 	}
 	defer stderrFile.Close()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
+		defer wg.Done()
 		cmd.Wait()
 		doneChan <- true
 	}()
@@ -112,6 +117,8 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		case <-ticker.C:
 			// Handle output every second
 		case <-doneChan:
+
+			wg.Wait()
 
 			// Exit the loop when command completes
 			// Run all the post-end hooks
