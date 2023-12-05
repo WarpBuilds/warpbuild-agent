@@ -7,6 +7,8 @@ ExecStart=/usr/local/bin/warpbuild-agentd
 WorkingDirectory=/
 Restart=always
 RestartSec=5
+User=runner
+Group=sudo
 
 [Install]
 WantedBy=multi-user.target
