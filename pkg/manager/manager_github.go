@@ -52,7 +52,7 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		os.Setenv(env.Key, env.Value)
 	}
 
-	cmd := exec.CommandContext(ctx, "sudo", "-H", "-u", "runner", "-c", fmt.Sprintf("'cd %s && %s --jitconfig %s'", m.RunnerDir, m.Script, opts.JitToken))
+	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	cmd.Dir = m.RunnerDir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
