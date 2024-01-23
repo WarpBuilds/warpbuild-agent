@@ -39,6 +39,7 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 	}
 
 	cfg.Servers[0].URL = opts.HostURL
+	cfg.UserAgent = "warpbuild-agent"
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
