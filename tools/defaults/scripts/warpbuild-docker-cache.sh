@@ -13,9 +13,8 @@ docker() {
     fi
 
     # Define cache locations
-    local cache_from=$WARPBUILD_DOCKER_S3_CACHE_FROM
-    local cache_to=$WARPBUILD_DOCKER_S3_CACHE_TO
-    local builder=$WARPBUILD_DOCKER_BUILDER
+    local cache_from="type=s3,bucket=$WARPBUILD_DOCKER_S3_BUCKET,region=$WARPBUILD_DOCKER_S3_REGION,prefix=$WARPBUILD_DOCKER_S3_CACHE_PREFIX"
+    local cache_to="type=s3,bucket=$WARPBUILD_DOCKER_S3_BUCKET,region=$WARPBUILD_DOCKER_S3_REGION,prefix=$WARPBUILD_DOCKER_S3_CACHE_PREFIX,mode=max"
 
     # Check if the first argument is "build" or the first two are "buildx build"
     if [[ "$1" == "build" ]] || [[ "$1 $2" == "buildx build" ]]; then

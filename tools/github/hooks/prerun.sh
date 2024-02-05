@@ -34,3 +34,6 @@ wget --tries=5 --waitretry=2 --retry-connrefused --retry-on-host-error --no-chec
   "$WARPBUILD_HOST_URL/api/v1/job" || exit 1
 
 rm warpbuild_body.json
+
+echo "Creating $WARPBUILD_DOCKER_BUILDER builder for docker buildx"
+docker buildx create --name $WARPBUILD_DOCKER_BUILDER
