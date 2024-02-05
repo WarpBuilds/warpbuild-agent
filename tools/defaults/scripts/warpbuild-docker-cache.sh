@@ -18,7 +18,7 @@ docker() {
     local builder=$WARPBUILD_DOCKER_BUILDER
 
     # Check if the first argument is "build" or the first two are "buildx build"
-    if [[ "$1 $2" == "buildx build" ]]; then
+    if [[ "$1" == "build" ]] || [[ "$1 $2" == "buildx build" ]]; then
         local add_cache_from=true
         local add_cache_to=true
         local add_builder=true
