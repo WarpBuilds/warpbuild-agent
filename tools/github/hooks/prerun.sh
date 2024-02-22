@@ -26,10 +26,11 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
-curl -X POST --silent --show-error --fail \
-     -H "Content-Type: application/json" \
-     -H "X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-     -d @warpbuild_body.json \
-     $WARPBUILD_HOST_URL/api/v1/job
+# Use wget with retries, retry interval, no certificate check, and exit on failure
+wget --tries=5 --waitretry=2 --retry-connrefused --retry-on-host-error --no-check-certificate --continue --no-verbose \
+  --header="Content-Type: application/json" \
+  --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
+  -O - --post-file=warpbuild_body.json \
+  "$WARPBUILD_HOST_URL/api/v1/job" || exit 1
 
 rm warpbuild_body.json
