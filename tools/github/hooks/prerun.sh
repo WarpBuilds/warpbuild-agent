@@ -29,6 +29,7 @@ EOF
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
   --retry-on-host-error --retry-on-http-error=502 \
+  --retry-on-http-error=400 \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
