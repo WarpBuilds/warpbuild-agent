@@ -40,7 +40,10 @@ exit_code=$?
 if [ $exit_code -ne 0 ]; then
     echo "Failed to send job request to warpbuild. Logging response..."
     cat warpbuild_response.json
-    exit 1
+    exit $exit_code
+else
+    echo "Job request sent to warpbuild. Logging response..."
+    cat warpbuild_response.json
 fi
 
 rm warpbuild_body.json
