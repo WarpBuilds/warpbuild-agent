@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: remove this only used for debug
+echo "Script ID: 0"
 echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
 echo "Logging environment variables..."
 
