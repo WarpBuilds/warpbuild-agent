@@ -5,6 +5,7 @@ echo "Script ID: 0"
 echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
 echo "Logging environment variables..."
 
+echo -e "\n"
 echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
 echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
 echo "GITHUB_JOB=$GITHUB_JOB"
@@ -28,6 +29,8 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
+echo -e "\n"
+
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
   --retry-on-host-error --retry-on-http-error=502 \
@@ -39,8 +42,13 @@ wget --tries=5 --waitretry=2 --retry-connrefused \
   "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
 if [ -n "$exit_code" ]; then
-    echo "Failed to send request to warpbuild. Logging response. Exiting..."
-    cat warpbuild_response.json
+    echo -e "\nFailed to send request to warpbuild. Logging response. Exiting..."
+    # check if jq is installed if so then pretty print the json response
+    if ! command -v jq &> /dev/null; then
+        cat warpbuild_response.json
+    else
+        jq . warpbuild_response.json
+    fi
     exit 1
 fi
 
