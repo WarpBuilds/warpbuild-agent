@@ -1,14 +1,14 @@
 #!/bin/bash
 
-export TEST_VAR="Hello from $WARPBUILD_RUNNER_SET_ID's pre processor!"
-echo "$TEST_VAR"
+echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
+echo "Logging environment variables..."
 
-echo $GITHUB_RUN_ID
-echo $GITHUB_RUN_ATTEMPT
-echo $GITHUB_JOB
-echo $GITHUB_REPOSITORY
-echo $RUNNER_NAME
-echo $RUNNER_OS
+echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
+echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
+echo "GITHUB_JOB=$GITHUB_JOB"
+echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+echo "RUNNER_NAME=$RUNNER_NAME"
+echo "RUNNER_OS=$RUNNER_OS"
 
 if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
     echo "WARPBUILD_SCOPE_TOKEN is not set."
@@ -32,7 +32,17 @@ wget --tries=5 --waitretry=2 --retry-connrefused \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-  -O - --post-file=warpbuild_body.json \
-  "$WARPBUILD_HOST_URL/api/v1/job" || exit 1
+  -O warpbuild_response.json --post-file=warpbuild_body.json \
+  "$WARPBUILD_HOST_URL/api/v1/job"
+
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo "Failed to send job request to warpbuild. Logging response..."
+    cat warpbuild_response.json
+    exit 1
+fi
 
 rm warpbuild_body.json
+
+echo "Prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID' completed."
