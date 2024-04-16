@@ -35,7 +35,7 @@ exit_code=$(wget --tries=5 --waitretry=2 --retry-connrefused \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
   -O warpbuild_response.json --post-file=warpbuild_body.json \
-  "$WARPBUILD_HOST_URL/api/v1/job")
+  "$WARPBUILD_HOST_URL/api/v1/job") || true
 
 exit_code=$?
 
