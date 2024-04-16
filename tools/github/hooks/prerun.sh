@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # TODO: remove this only used for debug
-echo "Script ID: 1"
+echo "Script ID: 2"
 echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
 echo "Logging environment variables..."
 
@@ -29,7 +29,7 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
-echo -e ""
+echo -e "\nMaking a request to warpbuild..."
 
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
