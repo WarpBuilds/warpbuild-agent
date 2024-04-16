@@ -1,11 +1,10 @@
 #!/bin/bash
 
 # TODO: remove this only used for debug
-echo "Script ID: 2"
+echo "Script ID: 3"
 echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
-echo "Logging environment variables..."
+echo -e "\nLogging environment variables..."
 
-echo ""
 echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
 echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
 echo "GITHUB_JOB=$GITHUB_JOB"
@@ -42,7 +41,6 @@ wget --tries=5 --waitretry=2 --retry-connrefused \
   "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
 if [ -n "$exit_code" ]; then
-    echo ""
     echo "Failed to send request to warpbuild. Logging response. Exiting..."
     # check if jq is installed if so then pretty print the json response
     if ! command -v jq &> /dev/null; then
@@ -55,5 +53,4 @@ fi
 
 rm warpbuild_body.json
 
-echo ""
-echo "Prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID' completed."
+echo -e "\nPrehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID' completed."
