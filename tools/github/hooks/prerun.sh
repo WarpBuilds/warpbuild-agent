@@ -35,7 +35,7 @@ wget --tries=5 --waitretry=2 --retry-connrefused \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-  -O warpbuild_response.json --post-file=warpbuild_body.json \
+  -O - --post-file=warpbuild_body.json --append-output=warpbuild_response.json \
   "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
 if [ -n "$exit_code" ]; then
