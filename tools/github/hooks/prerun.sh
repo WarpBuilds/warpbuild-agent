@@ -29,20 +29,18 @@ cat <<EOF > warpbuild_body.json
 EOF
 
 # Use wget with retries, retry interval, no certificate check, and exit on failure
-exit_code=$(wget --tries=5 --waitretry=2 --retry-connrefused \
+wget --tries=5 --waitretry=2 --retry-connrefused \
   --retry-on-host-error --retry-on-http-error=502 \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
   -O warpbuild_response.json --post-file=warpbuild_body.json \
-  "$WARPBUILD_HOST_URL/api/v1/job") || true
+  "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
-exit_code=$?
-
-if [ $exit_code -ne 0 ]; then
-    echo "Failed to send job request to warpbuild. Logging response..."
+if [ -n "$exit_code" ]; then
+    echo "Failed to send request to warpbuild. Logging response. Exiting..."
     cat warpbuild_response.json
-    exit $exit_code
+    exit 1
 fi
 
 rm warpbuild_body.json
