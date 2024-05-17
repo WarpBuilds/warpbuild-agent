@@ -1,14 +1,7 @@
 #!/bin/bash
 
-export TEST_VAR="Hello from $WARPBUILD_RUNNER_SET_ID's pre processor!"
-echo "$TEST_VAR"
-
-echo $GITHUB_RUN_ID
-echo $GITHUB_RUN_ATTEMPT
-echo $GITHUB_JOB
-echo $GITHUB_REPOSITORY
-echo $RUNNER_NAME
-echo $RUNNER_OS
+echo "Setting up WarpBuild runner for job: $GITHUB_JOB_ID"
+echo "Job will be run on $RUNNER_NAME with image version: $(cat /.warp_image_version)"
 
 if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
     echo "WARPBUILD_SCOPE_TOKEN is not set."
