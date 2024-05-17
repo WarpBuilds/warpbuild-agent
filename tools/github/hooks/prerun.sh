@@ -53,4 +53,4 @@ fi
 
 rm warpbuild_body.json
 
-echo -e "\nPrehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID' completed succesfully."
+echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed succesfully."
