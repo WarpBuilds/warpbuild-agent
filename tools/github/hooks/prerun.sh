@@ -28,7 +28,7 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
-echo -e "\nMaking a request to warpbuild..."
+echo -e "\nMaking a request to WarpBuild..."
 
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
