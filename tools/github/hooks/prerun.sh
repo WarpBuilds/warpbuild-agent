@@ -2,7 +2,7 @@
 
 # this only used for script debug (uncomment if needed)
 # echo "Script ID: 3"
-echo "Running prehook for warpbuild runner instance '$WARPBUILD_RUNNER_SET_ID'..."
+echo "Running prehook for WarpBuild runner instance '$RUNNER_NAME'..."
 echo -e "\nLogging environment variables..."
 
 echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
