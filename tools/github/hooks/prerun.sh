@@ -1,14 +1,16 @@
 #!/bin/bash
 
-export TEST_VAR="Hello from $WARPBUILD_RUNNER_SET_ID's pre processor!"
-echo "$TEST_VAR"
+# this only used for script debug (uncomment if needed)
+# echo "Script ID: 3"
+echo "Running prehook for WarpBuild runner instance '$RUNNER_NAME'..."
+echo -e "\nLogging environment variables..."
 
-echo $GITHUB_RUN_ID
-echo $GITHUB_RUN_ATTEMPT
-echo $GITHUB_JOB
-echo $GITHUB_REPOSITORY
-echo $RUNNER_NAME
-echo $RUNNER_OS
+echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
+echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
+echo "GITHUB_JOB=$GITHUB_JOB"
+echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+echo "RUNNER_NAME=$RUNNER_NAME"
+echo "RUNNER_OS=$RUNNER_OS"
 
 if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
     echo "WARPBUILD_SCOPE_TOKEN is not set."
@@ -26,13 +28,29 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
+echo -e "\nMaking a request to WarpBuild..."
+
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
   --retry-on-host-error --retry-on-http-error=502 \
+  --content-on-error \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-  -O - --post-file=warpbuild_body.json \
-  "$WARPBUILD_HOST_URL/api/v1/job" || exit 1
+  -O warpbuild_response.json --post-file=warpbuild_body.json \
+  "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
+
+if [ -n "$exit_code" ]; then
+    echo "Failed to send request to warpbuild. Logging response. Exiting..."
+    # check if jq is installed if so then pretty print the json response
+    if ! command -v jq &> /dev/null; then
+        cat warpbuild_response.json
+    else
+        jq . warpbuild_response.json
+    fi
+    exit 1
+fi
 
 rm warpbuild_body.json
+
+echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed succesfully."
