@@ -9,6 +9,11 @@ echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
 echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
 echo "GITHUB_JOB=$GITHUB_JOB"
 echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
+echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
+echo "GITHUB_REF_TYPE=$GITHUB_REF_TYPE"
+echo "GITHUB_REF=$GITHUB_REF"
+echo "GITHUB_REF_TYPE=$GITHUB_REF_TYPE"
 echo "RUNNER_NAME=$RUNNER_NAME"
 echo "RUNNER_OS=$RUNNER_OS"
 
@@ -24,7 +29,12 @@ cat <<EOF > warpbuild_body.json
   "orchestrator_job_id": "$GITHUB_JOB_ID",
   "orchestrator_job_group_id": "$GITHUB_RUN_ID",
   "orchestrator_job_group_attempt": "$GITHUB_RUN_ATTEMPT",
-  "repo_entity": "$GITHUB_REPOSITORY"
+  "repo_entity": "$GITHUB_REPOSITORY",
+  "repo_base_ref": "$GITHUB_BASE_REF",
+  "repo_head_ref": "$GITHUB_HEAD_REF",
+  "repo_ref_type": "$GITHUB_REF_TYPE",
+  "repo_ref": "$GITHUB_REF",
+  "repo_ref_type": "$GITHUB_REF_TYPE",
 }
 EOF
 
