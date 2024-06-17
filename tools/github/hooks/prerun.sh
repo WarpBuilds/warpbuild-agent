@@ -42,8 +42,6 @@ cat <<EOF > warpbuild_body.json
 }
 EOF
 
-echo "Contents of warpbuild_body.json:"
-cat warpbuild_body.json
 
 echo -e "\nMaking a request to WarpBuild..."
 
