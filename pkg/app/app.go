@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"time"
 
@@ -35,8 +36,15 @@ type AgentSettings struct {
 }
 
 type RunnerSettings struct {
-	Provider Provider        `json:"provider"`
-	Github   *GithubSettings `json:"github"`
+	Provider  Provider                  `json:"provider"`
+	Github    *GithubSettings           `json:"github"`
+	GithubCRI *manager.GithubCRIOptions `json:"github_cri"`
+}
+
+type ContainerOptionsVolume struct {
+	HostPath      string `json:"host_path"`
+	ContainerPath string `json:"container_path"`
+	AccessMode    string `json:"access_mode"`
 }
 
 type GithubSettings struct {
@@ -51,6 +59,8 @@ type Provider string
 
 const (
 	ProviderGithub Provider = "github"
+	// ProviderGithubCRI is the provider for the github custom runner image.
+	ProviderGithubCRI Provider = "github-cri"
 )
 
 func NewApp(ctx context.Context, opts *ApplicationOptions) error {
@@ -126,18 +136,33 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		return err
 	}
 
-	err = agent.StartAgent(ctx, &manager.StartAgentOptions{
+	startAgentOpts := manager.StartAgentOptions{
 		Manager: &manager.ManagerOptions{
 			Provider: manager.Provider(string(settings.Runner.Provider)),
-			Github: &manager.GithubOptions{
-				RunnerDir:  settings.Runner.Github.RunnerDir,
-				Script:     settings.Runner.Github.Script,
-				StdoutFile: settings.Runner.Github.StdoutFile,
-				StderrFile: settings.Runner.Github.StderrFile,
-				Envs:       settings.Runner.Github.Envs,
-			},
 		},
-	})
+	}
+	switch startAgentOpts.Manager.Provider {
+	case manager.ProviderGithub:
+		startAgentOpts.Manager.Github = &manager.GithubOptions{
+			RunnerDir:  settings.Runner.Github.RunnerDir,
+			Script:     settings.Runner.Github.Script,
+			StdoutFile: settings.Runner.Github.StdoutFile,
+			StderrFile: settings.Runner.Github.StderrFile,
+			Envs:       settings.Runner.Github.Envs,
+		}
+	case manager.ProviderGithubCRI:
+		startAgentOpts.Manager.GithubCRI = &manager.GithubCRIOptions{
+			StdoutFile:       settings.Runner.Github.StdoutFile,
+			StderrFile:       settings.Runner.Github.StderrFile,
+			RunnerDir:        settings.Runner.Github.RunnerDir,
+			ContainerOptions: settings.Runner.GithubCRI.ContainerOptions,
+		}
+	default:
+		log.Logger().Errorf("unknown provider: %s", startAgentOpts.Manager.Provider)
+		return errors.New("unknown provider")
+	}
+
+	err = agent.StartAgent(ctx, &startAgentOpts)
 	if err != nil {
 		log.Logger().Errorf("failed to start agent: %v", err)
 		return err
