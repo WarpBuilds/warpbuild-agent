@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AccountID** | Pointer to **string** |  | [optional] 
+**AccountId** | Pointer to **string** |  | [optional] 
 **CreatedAt** | Pointer to **string** |  | [optional] 
 **DefaultBranch** | Pointer to **string** |  | [optional] 
 **DisplayName** | Pointer to **string** |  | [optional] 
-**IntegrationID** | Pointer to **string** |  | [optional] 
-**SSHURL** | Pointer to **string** |  | [optional] 
-**UpdatedAt** | Pointer to **string** |  | [optional] 
-**WebURL** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **string** |  | [optional] 
+**IntegrationId** | Pointer to **string** |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
 **Owner** | Pointer to **string** |  | [optional] 
 **Provider** | Pointer to **string** |  | [optional] 
+**Sshurl** | Pointer to **string** |  | [optional] 
+**UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsId** | Pointer to **string** |  | [optional] 
+**WebUrl** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -37,30 +37,30 @@ NewCommonsRepoWithDefaults instantiates a new CommonsRepo object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetAccountID
+### GetAccountId
 
-`func (o *CommonsRepo) GetAccountID() string`
+`func (o *CommonsRepo) GetAccountId() string`
 
-GetAccountID returns the AccountID field if non-nil, zero value otherwise.
+GetAccountId returns the AccountId field if non-nil, zero value otherwise.
 
-### GetAccountIDOk
+### GetAccountIdOk
 
-`func (o *CommonsRepo) GetAccountIDOk() (*string, bool)`
+`func (o *CommonsRepo) GetAccountIdOk() (*string, bool)`
 
-GetAccountIDOk returns a tuple with the AccountID field if it's non-nil, zero value otherwise
+GetAccountIdOk returns a tuple with the AccountId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetAccountID
+### SetAccountId
 
-`func (o *CommonsRepo) SetAccountID(v string)`
+`func (o *CommonsRepo) SetAccountId(v string)`
 
-SetAccountID sets AccountID field to given value.
+SetAccountId sets AccountId field to given value.
 
-### HasAccountID
+### HasAccountId
 
-`func (o *CommonsRepo) HasAccountID() bool`
+`func (o *CommonsRepo) HasAccountId() bool`
 
-HasAccountID returns a boolean if a field has been set.
+HasAccountId returns a boolean if a field has been set.
 
 ### GetCreatedAt
 
@@ -137,106 +137,6 @@ SetDisplayName sets DisplayName field to given value.
 
 HasDisplayName returns a boolean if a field has been set.
 
-### GetIntegrationID
-
-`func (o *CommonsRepo) GetIntegrationID() string`
-
-GetIntegrationID returns the IntegrationID field if non-nil, zero value otherwise.
-
-### GetIntegrationIDOk
-
-`func (o *CommonsRepo) GetIntegrationIDOk() (*string, bool)`
-
-GetIntegrationIDOk returns a tuple with the IntegrationID field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIntegrationID
-
-`func (o *CommonsRepo) SetIntegrationID(v string)`
-
-SetIntegrationID sets IntegrationID field to given value.
-
-### HasIntegrationID
-
-`func (o *CommonsRepo) HasIntegrationID() bool`
-
-HasIntegrationID returns a boolean if a field has been set.
-
-### GetSSHURL
-
-`func (o *CommonsRepo) GetSSHURL() string`
-
-GetSSHURL returns the SSHURL field if non-nil, zero value otherwise.
-
-### GetSSHURLOk
-
-`func (o *CommonsRepo) GetSSHURLOk() (*string, bool)`
-
-GetSSHURLOk returns a tuple with the SSHURL field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetSSHURL
-
-`func (o *CommonsRepo) SetSSHURL(v string)`
-
-SetSSHURL sets SSHURL field to given value.
-
-### HasSSHURL
-
-`func (o *CommonsRepo) HasSSHURL() bool`
-
-HasSSHURL returns a boolean if a field has been set.
-
-### GetUpdatedAt
-
-`func (o *CommonsRepo) GetUpdatedAt() string`
-
-GetUpdatedAt returns the UpdatedAt field if non-nil, zero value otherwise.
-
-### GetUpdatedAtOk
-
-`func (o *CommonsRepo) GetUpdatedAtOk() (*string, bool)`
-
-GetUpdatedAtOk returns a tuple with the UpdatedAt field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetUpdatedAt
-
-`func (o *CommonsRepo) SetUpdatedAt(v string)`
-
-SetUpdatedAt sets UpdatedAt field to given value.
-
-### HasUpdatedAt
-
-`func (o *CommonsRepo) HasUpdatedAt() bool`
-
-HasUpdatedAt returns a boolean if a field has been set.
-
-### GetWebURL
-
-`func (o *CommonsRepo) GetWebURL() string`
-
-GetWebURL returns the WebURL field if non-nil, zero value otherwise.
-
-### GetWebURLOk
-
-`func (o *CommonsRepo) GetWebURLOk() (*string, bool)`
-
-GetWebURLOk returns a tuple with the WebURL field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetWebURL
-
-`func (o *CommonsRepo) SetWebURL(v string)`
-
-SetWebURL sets WebURL field to given value.
-
-### HasWebURL
-
-`func (o *CommonsRepo) HasWebURL() bool`
-
-HasWebURL returns a boolean if a field has been set.
-
 ### GetId
 
 `func (o *CommonsRepo) GetId() string`
@@ -261,6 +161,31 @@ SetId sets Id field to given value.
 `func (o *CommonsRepo) HasId() bool`
 
 HasId returns a boolean if a field has been set.
+
+### GetIntegrationId
+
+`func (o *CommonsRepo) GetIntegrationId() string`
+
+GetIntegrationId returns the IntegrationId field if non-nil, zero value otherwise.
+
+### GetIntegrationIdOk
+
+`func (o *CommonsRepo) GetIntegrationIdOk() (*string, bool)`
+
+GetIntegrationIdOk returns a tuple with the IntegrationId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIntegrationId
+
+`func (o *CommonsRepo) SetIntegrationId(v string)`
+
+SetIntegrationId sets IntegrationId field to given value.
+
+### HasIntegrationId
+
+`func (o *CommonsRepo) HasIntegrationId() bool`
+
+HasIntegrationId returns a boolean if a field has been set.
 
 ### GetName
 
@@ -337,6 +262,56 @@ SetProvider sets Provider field to given value.
 
 HasProvider returns a boolean if a field has been set.
 
+### GetSshurl
+
+`func (o *CommonsRepo) GetSshurl() string`
+
+GetSshurl returns the Sshurl field if non-nil, zero value otherwise.
+
+### GetSshurlOk
+
+`func (o *CommonsRepo) GetSshurlOk() (*string, bool)`
+
+GetSshurlOk returns a tuple with the Sshurl field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSshurl
+
+`func (o *CommonsRepo) SetSshurl(v string)`
+
+SetSshurl sets Sshurl field to given value.
+
+### HasSshurl
+
+`func (o *CommonsRepo) HasSshurl() bool`
+
+HasSshurl returns a boolean if a field has been set.
+
+### GetUpdatedAt
+
+`func (o *CommonsRepo) GetUpdatedAt() string`
+
+GetUpdatedAt returns the UpdatedAt field if non-nil, zero value otherwise.
+
+### GetUpdatedAtOk
+
+`func (o *CommonsRepo) GetUpdatedAtOk() (*string, bool)`
+
+GetUpdatedAtOk returns a tuple with the UpdatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUpdatedAt
+
+`func (o *CommonsRepo) SetUpdatedAt(v string)`
+
+SetUpdatedAt sets UpdatedAt field to given value.
+
+### HasUpdatedAt
+
+`func (o *CommonsRepo) HasUpdatedAt() bool`
+
+HasUpdatedAt returns a boolean if a field has been set.
+
 ### GetVcsId
 
 `func (o *CommonsRepo) GetVcsId() string`
@@ -361,6 +336,31 @@ SetVcsId sets VcsId field to given value.
 `func (o *CommonsRepo) HasVcsId() bool`
 
 HasVcsId returns a boolean if a field has been set.
+
+### GetWebUrl
+
+`func (o *CommonsRepo) GetWebUrl() string`
+
+GetWebUrl returns the WebUrl field if non-nil, zero value otherwise.
+
+### GetWebUrlOk
+
+`func (o *CommonsRepo) GetWebUrlOk() (*string, bool)`
+
+GetWebUrlOk returns a tuple with the WebUrl field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetWebUrl
+
+`func (o *CommonsRepo) SetWebUrl(v string)`
+
+SetWebUrl sets WebUrl field to given value.
+
+### HasWebUrl
+
+`func (o *CommonsRepo) HasWebUrl() bool`
+
+HasWebUrl returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

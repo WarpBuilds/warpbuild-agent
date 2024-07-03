@@ -64,11 +64,6 @@ paths:
         required: true
         schema:
           type: string
-      - description: Invite code if any
-        in: query
-        name: invite_code
-        schema:
-          type: string
       responses:
         "302":
           content:
@@ -358,6 +353,91 @@ paths:
       tags:
       - v1 subscriptions
       x-codegen-request-body-name: Body
+  /billing/info:
+    get:
+      operationId: GetBillingInfo
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.BillingInfo'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: Get Billing Info
+      tags:
+      - v1 subscriptions
+    patch:
+      operationId: UpdateBillingInfo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.UpdateBillingInfoInput'
+        description: billing info update input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.BillingInfo'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: Update Billing Info
+      tags:
+      - v1 subscriptions
+      x-codegen-request-body-name: Body
   /billing/setup_intent/init:
     post:
       operationId: InitiateSetupIntent
@@ -404,6 +484,100 @@ paths:
       summary: Initiate Checkout for subscription with PG
       tags:
       - v1 subscriptions
+      x-codegen-request-body-name: Body
+  /billing/setup_intent/post_processor:
+    post:
+      operationId: PostSetupIntent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.PostPaymentMethodSetupInput'
+        description: post setup intent session input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.PostPaymentMethodSetupInput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - JWTKeyAuth: []
+      summary: Post Checkout processing for subscription with PG
+      tags:
+      - v1 subscriptions
+      x-codegen-request-body-name: Body
+  /billing/usage/internal:
+    post:
+      operationId: PostUsageForInternalService
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.InternalPostUsageInput'
+        description: post usage input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.InternalPostUsageOutput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Service Unavailable
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Post Usage for internal service
+      tags:
+      - v1 billing
       x-codegen-request-body-name: Body
   /debugger/events/publish:
     post:
@@ -452,121 +626,75 @@ paths:
       tags:
       - v1 debugger
       x-codegen-request-body-name: body
-  /invite:
-    patch:
-      description: Invite is figured out from the auth token since tokens are specific
-        to invites.
-      operationId: UpdateInvite
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/UpdateInviteRequest'
-        description: Update existing invite body
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/V1Invite'
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: Updates existing invite based on the fields provided.
-      tags:
-      - v1 invite
-      x-codegen-request-body-name: body
+  /insights/integrations/github/callback:
     post:
-      description: "User can manage multiple tenanats from one account, this api provides\
-        \ user a functionality to add a new tenant/org to the user."
-      operationId: CreateInvite
+      description: Callback for verifying insights integration
+      operationId: GitHubCallback
       requestBody:
         content:
-          '*/*':
+          application/json:
             schema:
-              $ref: '#/components/schemas/CreateInviteRequest'
-        description: Create new invite body
+              $ref: '#/components/schemas/insights.callbackInput'
+        description: Callback input
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/V1Invite'
+                $ref: '#/components/schemas/AuthUserResponse'
           description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
       security:
       - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
+      summary: GitHub callback for insights
       tags:
-      - v1 invite
+      - v1 insights integrations
       x-codegen-request-body-name: body
-  /invite/send/email:
-    post:
-      description: Sending email invite to the user.
-      operationId: SendInvite
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/V1SendInviteRequest'
-        description: Send invite body
+  /jobs/cost-summary:
+    get:
+      description: GetCostSummary
+      operationId: GetCostSummary
+      parameters:
+      - description: Date range start
+        in: query
+        name: start_date
         required: true
-      responses:
-        "200":
-          content: {}
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
-      tags:
-      - v1 invite
-      x-codegen-request-body-name: body
-  /invites:
-    get:
-      operationId: ListOrgInvites
+        schema:
+          type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
-            application/json:
+            '*/*':
               schema:
-                items:
-                  $ref: '#/components/schemas/V1Invite'
-                type: array
+                $ref: '#/components/schemas/commons.CostSummary'
           description: OK
-        default:
+        "400":
           content:
-            application/json:
+            '*/*':
               schema:
                 $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
+          description: Bad Request
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
       security:
       - JWTKeyAuth: []
-      summary: ListOrgInvites lists all the invite user has access to.
+      summary: GetCostSummary
       tags:
-      - v1 invite
-  /jobs/estimated-costs:
+      - v1 jobs
+  /jobs/daywise-costs:
     get:
-      description: GetEstimatedCosts
-      operationId: GetEstimatedCosts
+      description: GetDaywiseCosts
+      operationId: GetDaywiseCosts
       parameters:
       - description: Date range start
         in: query
@@ -586,7 +714,7 @@ paths:
             '*/*':
               schema:
                 items:
-                  $ref: '#/components/schemas/EstimatedCost'
+                  $ref: '#/components/schemas/commons.DaywiseCost'
                 type: array
           description: OK
         "400":
@@ -603,7 +731,7 @@ paths:
           description: Not Found
       security:
       - JWTKeyAuth: []
-      summary: GetEstimatedCosts
+      summary: GetDaywiseCosts
       tags:
       - v1 jobs
   /organization:
@@ -732,6 +860,40 @@ paths:
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
       - v1 organization
+  /runner_instance/internal/{id}/last_job_processed_meta:
+    get:
+      operationId: GetRunnerLastJobProcessedMeta
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.LastJobProcessedMeta'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Get runner last used job meta
+      tags:
+      - v1 RunnerInstance
   /runners:
     get:
       operationId: ListRunners
@@ -784,17 +946,188 @@ paths:
       tags:
       - v1 Runners
       x-codegen-request-body-name: body
-  /runners/runtimes:
-    get:
-      operationId: GetRuntimes
+  /runners/cost/calculator:
+    post:
+      operationId: ComputeCustomRunnerRate
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/commons.RateCalculationInput'
+        description: Compute custom runner rate
+        required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/commons.Runtime'
-                type: array
+                $ref: '#/components/schemas/commons.RateCalculationOutput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get ComputeCustomRunnerRate details
+      tags:
+      - v1 runners
+      x-codegen-request-body-name: body
+  /runners/default-group:
+    get:
+      operationId: GetRunnerSetDefaultGroup
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerSetDefaultGroup'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get default group for runner set
+      tags:
+      - v1 Runners
+    patch:
+      operationId: SetRunnerSetDefaultGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.SetRunnerSetDefaultGroupInput'
+        description: Set default group for runner set body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerSetDefaultGroup'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Set default group for runner set
+      tags:
+      - v1 Runners
+      x-codegen-request-body-name: body
+  /runners/usage:
+    get:
+      operationId: GetRunnersUsage
+      parameters:
+      - description: Date range start
+        in: query
+        name: start_date
+        required: true
+        schema:
+          type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        schema:
+          type: string
+      - description: Capacity types
+        explode: true
+        in: query
+        name: capacity_types
+        schema:
+          items:
+            enum:
+            - ondemand
+            - spot
+            type: string
+          type: array
+        style: form
+      - description: Architectures
+        explode: true
+        in: query
+        name: archs
+        schema:
+          items:
+            enum:
+            - x64
+            - arm64
+            type: string
+          type: array
+        style: form
+      - description: Images
+        explode: true
+        in: query
+        name: images
+        schema:
+          items:
+            enum:
+            - macos-13
+            - ubuntu-2204
+            - macos-14
+            - ubuntu-2404
+            type: string
+          type: array
+        style: form
+      - description: Cores
+        explode: true
+        in: query
+        name: cores
+        schema:
+          items:
+            type: integer
+          type: array
+        style: form
+      - description: Runner types
+        explode: true
+        in: query
+        name: runner_types
+        schema:
+          items:
+            enum:
+            - stock
+            - custom
+            type: string
+          type: array
+        style: form
+      - description: Search term
+        in: query
+        name: search_term
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnersUsage'
           description: OK
         "400":
           content:
@@ -816,6 +1149,13 @@ paths:
   /runners/{id}:
     delete:
       operationId: DeleteRunner
+      parameters:
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -843,6 +1183,13 @@ paths:
       - v1 Runners
     get:
       operationId: GetRunner
+      parameters:
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -870,6 +1217,13 @@ paths:
       - v1 Runners
     patch:
       operationId: UpdateRunner
+      parameters:
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -962,7 +1316,6 @@ paths:
           content:
             application/json:
               schema:
-                additionalProperties: true
                 type: object
           description: OK
         "400":
@@ -980,6 +1333,173 @@ paths:
       summary: Get runner instance allocation details for the id
       tags:
       - v1 RunnerInstance
+  /runners_instance/{id}/presigned_log_upload_url:
+    get:
+      operationId: GetRunnerInstancePresignedLogUploadURL
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        schema:
+          type: string
+      - description: Log file name
+        in: query
+        name: log-file-name
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: presigned url
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      summary: Gets a presigned url for uploading logs for a runner instance
+      tags:
+      - v1 RunnerInstance
+  /sku:
+    get:
+      operationId: ListSku
+      parameters:
+      - description: list of sku id's
+        explode: true
+        in: query
+        name: ids
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: cores
+        in: query
+        name: cores
+        schema:
+          type: integer
+      - description: memory
+        in: query
+        name: memory
+        schema:
+          type: integer
+      - description: Architectures
+        in: query
+        name: arch
+        schema:
+          enum:
+          - x64
+          - arm64
+          type: string
+      - description: operating system
+        explode: true
+        in: query
+        name: os
+        schema:
+          items:
+            enum:
+            - ubuntu
+            - mac
+            type: string
+          type: array
+        style: form
+      - description: Images
+        in: query
+        name: manufacturer
+        schema:
+          enum:
+          - any
+          - amd
+          - intel
+          - arm
+          type: string
+      - description: performance category
+        in: query
+        name: performance_category
+        schema:
+          enum:
+          - small
+          - medium
+          - large
+          type: string
+      - description: has gpu
+        in: query
+        name: has_gpu
+        schema:
+          type: boolean
+      - description: burstable
+        in: query
+        name: burstable
+        schema:
+          type: boolean
+      - description: include internal skus
+        in: query
+        name: include_internal
+        schema:
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.InstanceSku'
+                type: array
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: ""
+      security:
+      - JWTKeyAuth: []
+      summary: ListAllSku lists all the runners sku for an org.
+      tags:
+      - v1 Sku
+  /sku/{id}:
+    get:
+      operationId: GetSku
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.InstanceSku'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get default group for runner set
+      tags:
+      - v1 Sku
   /subscription:
     delete:
       operationId: DeleteCurrentSubscription
@@ -1031,6 +1551,33 @@ paths:
       security:
       - JWTKeyAuth: []
       summary: Get Current Org Subscription Details
+      tags:
+      - v1 subscriptions
+  /subscription/customer_portal_url:
+    post:
+      operationId: GetCustomerPortalUrl
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get customer portal url
       tags:
       - v1 subscriptions
   /subscription/stripe/payment_method/{payment_method_id}:
@@ -1143,6 +1690,41 @@ paths:
       summary: S2S Webhook received from PG
       tags:
       - v1 subscriptions
+  /ui/banner-messages:
+    get:
+      operationId: GetBannerMessages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.BannerMessage'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Internal Server Error
+      security:
+      - JWTKeyAuth: []
+      summary: Get specific banner messages for UI/Org or all
+      tags:
+      - v1 ui
   /vcs/approve-integration:
     put:
       operationId: ApproveVCSIntegration
@@ -1403,7 +1985,70 @@ paths:
       tags:
       - v1 vcs
       x-codegen-request-body-name: body
+  /vcs/list-runner-groups:
+    post:
+      operationId: ListVCSRunnerGroups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.ListVCSRunnerGroupsInput'
+        description: List runner groups input
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ListVCSRunnerGroupsResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs runner groups
+      tags:
+      - v1 vcs
+      x-codegen-request-body-name: body
   /vcs/repos:
+    get:
+      operationId: ListVCSRepos
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/commons.Repo'
+                type: array
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs repos for vcs integration
+      tags:
+      - v1 vcs
     post:
       operationId: CreateVCSGitRepo
       requestBody:
@@ -1472,6 +2117,126 @@ paths:
       summary: get vcs repo based on repo internal id
       tags:
       - v1 vcs
+  /workflows:
+    get:
+      description: Workflows (workflows)
+      operationId: ListWorkflows
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkflowsResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all workflows (workflows) for organization according to repo
+      tags:
+      - v1 workflows
+  /workflows/pr-auth-url:
+    get:
+      description: Get auth url required for GH PR
+      operationId: GetPullRequestAuthURL
+      responses:
+        "200":
+          content:
+            '*/*':
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: OK
+        "400":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get auth url required for GH PR
+      tags:
+      - v1 workflows
+  /workflows/pull:
+    patch:
+      description: Workflows (workflows)
+      operationId: PullWorkflows
+      responses:
+        "200":
+          content: {}
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Pulls all workflows from the provider to the database
+      tags:
+      - v1 workflows
+  /workflows/warp:
+    patch:
+      description: Warps workflows
+      operationId: WarpWorkflows
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarpWorkflowsRequest'
+        description: Warp workflows options
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpWorkflowsResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Warps workflows for organization according to given internal workflow
+        ids
+      tags:
+      - v1 workflows
+      x-codegen-request-body-name: body
 components:
   schemas:
     ApproveVCSIntegrationRequest:
@@ -1501,12 +2266,12 @@ components:
       example:
         access_token: access_token
         refresh_token: refresh_token
+        is_different_org: true
         organization:
           avatar_url: avatar_url
           name: name
           id: id
           created_by: 0
-        should_show_vcs_integration: true
         user:
           avatar_url: avatar_url
           updated_at: updated_at
@@ -1520,46 +2285,32 @@ components:
       properties:
         access_token:
           type: string
+        is_different_org:
+          type: boolean
         organization:
           $ref: '#/components/schemas/V1Organization'
         refresh_token:
           type: string
-        should_show_vcs_integration:
-          type: boolean
         user:
           $ref: '#/components/schemas/V1User'
       required:
       - access_token
+      - is_different_org
       - organization
       - refresh_token
-      - should_show_vcs_integration
       - user
-      type: object
-    CreateInviteRequest:
-      example:
-        role_kind: owner
-      properties:
-        role_kind:
-          enum:
-          - owner
-          - admin
-          - member
-          type: string
-      required:
-      - role_kind
       type: object
     CreateVCSIntegrationRequest:
       example:
         provider: provider
         vcs_url: vcs_url
-        additional_state:
-          key: ""
+        additional_state: "{}"
         application_secret: application_secret
         application_callback_url: application_callback_url
         application_id: application_id
       properties:
         additional_state:
-          additionalProperties: true
+          properties: {}
           type: object
         application_callback_url:
           type: string
@@ -1574,15 +2325,96 @@ components:
       required:
       - provider
       type: object
-    EstimatedCost:
+    ListWorkflowsResponse:
       example:
-        date: date
-        amount: 0.8008281904610115
+        last_synced_at: last_synced_at
+        is_pulling: true
+        workflows:
+        - provider_integration_id: provider_integration_id
+          runner_info:
+            os: os
+            host: host
+            arch: arch
+          jobs_runner_info:
+          - runner_id: runner_id
+            warp_added_at: warp_added_at
+            warp_removed_at: warp_removed_at
+            runner_arch: runner_arch
+            job_id: job_id
+            runner_name: runner_name
+            runner_os: runner_os
+            runner_host: runner_host
+          - runner_id: runner_id
+            warp_added_at: warp_added_at
+            warp_removed_at: warp_removed_at
+            runner_arch: runner_arch
+            job_id: job_id
+            runner_name: runner_name
+            runner_os: runner_os
+            runner_host: runner_host
+          external_id: external_id
+          warp_pr_runner: warp_pr_runner
+          external_repo_id: external_repo_id
+          warp_pr_id: warp_pr_id
+          url: url
+          is_repo_public: true
+          warp_status: warp_status
+          provider: provider
+          stats:
+            run_duration: 6
+            run_count: 0
+          organization_id: organization_id
+          name: name
+          id: id
+          external_repo_entity: external_repo_entity
+          warp_pr_link: warp_pr_link
+        - provider_integration_id: provider_integration_id
+          runner_info:
+            os: os
+            host: host
+            arch: arch
+          jobs_runner_info:
+          - runner_id: runner_id
+            warp_added_at: warp_added_at
+            warp_removed_at: warp_removed_at
+            runner_arch: runner_arch
+            job_id: job_id
+            runner_name: runner_name
+            runner_os: runner_os
+            runner_host: runner_host
+          - runner_id: runner_id
+            warp_added_at: warp_added_at
+            warp_removed_at: warp_removed_at
+            runner_arch: runner_arch
+            job_id: job_id
+            runner_name: runner_name
+            runner_os: runner_os
+            runner_host: runner_host
+          external_id: external_id
+          warp_pr_runner: warp_pr_runner
+          external_repo_id: external_repo_id
+          warp_pr_id: warp_pr_id
+          url: url
+          is_repo_public: true
+          warp_status: warp_status
+          provider: provider
+          stats:
+            run_duration: 6
+            run_count: 0
+          organization_id: organization_id
+          name: name
+          id: id
+          external_repo_entity: external_repo_entity
+          warp_pr_link: warp_pr_link
       properties:
-        amount:
-          type: number
-        date:
+        is_pulling:
+          type: boolean
+        last_synced_at:
           type: string
+        workflows:
+          items:
+            $ref: '#/components/schemas/commons.Workflow'
+          type: array
       type: object
     MeResponse:
       example:
@@ -1598,6 +2430,8 @@ components:
           installation_id: installation_id
           id: id
           account_owner: account_owner
+        extras:
+          key: extras
         user:
           avatar_url: avatar_url
           updated_at: updated_at
@@ -1609,6 +2443,10 @@ components:
           email: email
           signup_provider_user_id: signup_provider_user_id
       properties:
+        extras:
+          additionalProperties:
+            type: string
+          type: object
         organization:
           $ref: '#/components/schemas/V1Organization'
         user:
@@ -1667,13 +2505,6 @@ components:
           type: string
       required:
       - access_token
-      type: object
-    UpdateInviteRequest:
-      example:
-        Status: Status
-      properties:
-        Status:
-          type: string
       type: object
     UpdateOrganizationRequest:
       example:
@@ -1736,12 +2567,12 @@ components:
         new_session:
           access_token: access_token
           refresh_token: refresh_token
+          is_different_org: true
           organization:
             avatar_url: avatar_url
             name: name
             id: id
             created_by: 0
-          should_show_vcs_integration: true
           user:
             avatar_url: avatar_url
             updated_at: updated_at
@@ -1757,28 +2588,6 @@ components:
           $ref: '#/components/schemas/AuthUserResponse'
         vcs_integration:
           $ref: '#/components/schemas/VCSIntegration'
-      type: object
-    V1Invite:
-      example:
-        code: code
-        expires_at: expires_at
-        role: role
-        organization_id: organization_id
-        id: id
-        status: status
-      properties:
-        code:
-          type: string
-        expires_at:
-          type: string
-        id:
-          type: string
-        organization_id:
-          type: string
-        role:
-          type: string
-        status:
-          type: string
       type: object
     V1ListUsersForOrganizationResult:
       example:
@@ -1821,19 +2630,6 @@ components:
       - created_by
       - id
       - name
-      type: object
-    V1SendInviteRequest:
-      example:
-        invite_id: invite_id
-        email: email
-      properties:
-        email:
-          type: string
-        invite_id:
-          type: string
-      required:
-      - email
-      - invite_id
       type: object
     V1User:
       example:
@@ -1996,6 +2792,37 @@ components:
         sub_message:
           type: string
       type: object
+    WarpWorkflowsRequest:
+      example:
+        authorization:
+          key: authorization
+        runner_id: runner_id
+        workflow_ids:
+        - workflow_ids
+        - workflow_ids
+      properties:
+        authorization:
+          additionalProperties:
+            type: string
+          description: for github oauth flow
+          type: object
+        runner_id:
+          type: string
+        workflow_ids:
+          items:
+            type: string
+          type: array
+      required:
+      - runner_id
+      - workflow_ids
+      type: object
+    WarpWorkflowsResponse:
+      example:
+        pr_link: pr_link
+      properties:
+        pr_link:
+          type: string
+      type: object
     commons.Balance:
       example:
         percentage: 6.027456183070403
@@ -2030,6 +2857,96 @@ components:
         paid_balance:
           $ref: '#/components/schemas/commons.Balance'
       type: object
+    commons.BannerMessage:
+      example:
+        closeable: true
+        id: 0
+        message: message
+        priority: 6
+        type: type
+      properties:
+        closeable:
+          type: boolean
+        id:
+          type: integer
+        message:
+          type: string
+        priority:
+          type: integer
+        type:
+          type: string
+      type: object
+    commons.BillingInfo:
+      example:
+        email: email
+        applied_coupon:
+          redeemed_at: redeemed_at
+          duration_months: 6
+          name: name
+          currency: currency
+          percent_off: 1.4658129805029452
+          id: id
+          amount_off: 0
+      properties:
+        applied_coupon:
+          $ref: '#/components/schemas/commons.Coupon'
+        email:
+          type: string
+      type: object
+    commons.CacheCostSummary:
+      example:
+        cache_storage_size_bytes: 0.8008281904610115
+        total_cost: 1.4658129805029452
+        num_cache_operations: 6
+      properties:
+        cache_storage_size_bytes:
+          type: number
+        num_cache_operations:
+          type: integer
+        total_cost:
+          type: number
+      type: object
+    commons.CostSummary:
+      example:
+        cache:
+          cache_storage_size_bytes: 0.8008281904610115
+          total_cost: 1.4658129805029452
+          num_cache_operations: 6
+        runners:
+          total_cost: 5.637376656633329
+          arm64_billed_minutes: 5
+          x64_billed_minutes: 2
+      properties:
+        cache:
+          $ref: '#/components/schemas/commons.CacheCostSummary'
+        runners:
+          $ref: '#/components/schemas/commons.RunnersCostSummary'
+      type: object
+    commons.Coupon:
+      example:
+        redeemed_at: redeemed_at
+        duration_months: 6
+        name: name
+        currency: currency
+        percent_off: 1.4658129805029452
+        id: id
+        amount_off: 0
+      properties:
+        amount_off:
+          type: integer
+        currency:
+          type: string
+        duration_months:
+          type: integer
+        id:
+          type: string
+        name:
+          type: string
+        percent_off:
+          type: number
+        redeemed_at:
+          type: string
+      type: object
     commons.CreateRepoOptions:
       properties:
         description:
@@ -2053,6 +2970,29 @@ components:
       - name
       - owner
       type: object
+    commons.DaywiseCost:
+      example:
+        date: date
+        amount: 0.8008281904610115
+        cumulative_amount: 6.027456183070403
+      properties:
+        amount:
+          type: number
+        cumulative_amount:
+          type: number
+        date:
+          type: string
+      type: object
+    commons.DaywiseRuntime:
+      example:
+        date: date
+        runtime_seconds: 0
+      properties:
+        date:
+          type: string
+        runtime_seconds:
+          type: integer
+      type: object
     commons.GithubRunnerApplicationDetails:
       example:
         variables:
@@ -2075,6 +3015,159 @@ components:
           additionalProperties:
             type: string
           type: object
+      type: object
+    commons.InstanceSku:
+      example:
+        cores: 6
+        memory: 1
+        os:
+        - ubuntu
+        - ubuntu
+        arch: x64
+        id: id
+        display_name: display_name
+        properties:
+          generation: generation
+          burstable_speed: 5.962133916683182
+          performance_category: small
+          performance_rating: 2
+          gpu: 5
+          speed: 7.061401241503109
+          manufacturer: any
+      properties:
+        arch:
+          enum:
+          - x64
+          - arm64
+          type: string
+        cores:
+          type: integer
+        display_name:
+          type: string
+        id:
+          type: string
+        memory:
+          type: integer
+        os:
+          items:
+            enum:
+            - ubuntu
+            - mac
+            type: string
+          type: array
+        properties:
+          $ref: '#/components/schemas/commons.InstanceSkuProperties'
+      type: object
+    commons.InstanceSkuProperties:
+      example:
+        generation: generation
+        burstable_speed: 5.962133916683182
+        performance_category: small
+        performance_rating: 2
+        gpu: 5
+        speed: 7.061401241503109
+        manufacturer: any
+      properties:
+        burstable_speed:
+          type: number
+        generation:
+          type: string
+        gpu:
+          type: integer
+        manufacturer:
+          enum:
+          - any
+          - amd
+          - intel
+          - arm
+          type: string
+        performance_category:
+          enum:
+          - small
+          - medium
+          - large
+          type: string
+        performance_rating:
+          type: integer
+        speed:
+          type: number
+      type: object
+    commons.InternalPostUsageInput:
+      properties:
+        pricing_id:
+          type: string
+        product_category:
+          type: string
+        product_id:
+          type: string
+        product_name:
+          type: string
+        timestamp:
+          type: string
+        transaction_id:
+          type: string
+        usage_count:
+          type: integer
+      type: object
+    commons.InternalPostUsageOutput:
+      example:
+        ledger_id: ledger_id
+        usage_id: usage_id
+      properties:
+        ledger_id:
+          type: string
+        usage_id:
+          type: string
+      type: object
+    commons.JobRunnerInfo:
+      example:
+        runner_id: runner_id
+        warp_added_at: warp_added_at
+        warp_removed_at: warp_removed_at
+        runner_arch: runner_arch
+        job_id: job_id
+        runner_name: runner_name
+        runner_os: runner_os
+        runner_host: runner_host
+      properties:
+        job_id:
+          type: string
+        runner_arch:
+          type: string
+        runner_host:
+          type: string
+        runner_id:
+          type: string
+        runner_name:
+          type: string
+        runner_os:
+          type: string
+        warp_added_at:
+          type: string
+        warp_removed_at:
+          type: string
+      type: object
+    commons.LastJobProcessedMeta:
+      example:
+        vcs_base_ref: vcs_base_ref
+        vcs_head_ref: vcs_head_ref
+        vcs_ref: vcs_ref
+        vcs_org: vcs_org
+        vcs_repo: vcs_repo
+        vcs_ref_type: vcs_ref_type
+      properties:
+        vcs_base_ref:
+          type: string
+        vcs_head_ref:
+          type: string
+        vcs_org:
+          type: string
+        vcs_ref:
+          type: string
+        vcs_ref_type:
+          type: string
+        vcs_repo:
+          type: string
       type: object
     commons.ListTokensOptions:
       properties:
@@ -2130,6 +3223,39 @@ components:
         users:
           items:
             $ref: '#/components/schemas/V1User'
+          type: array
+      type: object
+    commons.ListVCSRunnerGroupsInput:
+      properties:
+        fetch_from_remote:
+          type: boolean
+        integration_id:
+          type: string
+        owner:
+          type: string
+      type: object
+    commons.ListVCSRunnerGroupsResponse:
+      example:
+        last_synced_at: last_synced_at
+        runner_groups:
+        - runners_url: runners_url
+          visibility: visibility
+          inherited: true
+          name: name
+          id: 0
+          is_default: true
+        - runners_url: runners_url
+          visibility: visibility
+          inherited: true
+          name: name
+          id: 0
+          is_default: true
+      properties:
+        last_synced_at:
+          type: string
+        runner_groups:
+          items:
+            $ref: '#/components/schemas/commons.RunnerGroup'
           type: array
       type: object
     commons.Organization:
@@ -2210,39 +3336,93 @@ components:
         type:
           type: string
       type: object
+    commons.PostPaymentMethodSetupInput:
+      example:
+        payment_method_id: payment_method_id
+        organization_id: organization_id
+        customer_id: customer_id
+        setup_intent_id: setup_intent_id
+      properties:
+        customer_id:
+          type: string
+        organization_id:
+          type: string
+        payment_method_id:
+          type: string
+        setup_intent_id:
+          type: string
+      type: object
+    commons.ProviderInstanceSkuMapping:
+      example:
+        provider_sku_meta: "{}"
+        provider: provider
+        provider_sku: provider_sku
+        sku_id: sku_id
+        id: id
+        priority: 0
+      properties:
+        id:
+          type: string
+        priority:
+          type: integer
+        provider:
+          type: string
+        provider_sku:
+          type: string
+        provider_sku_meta:
+          type: object
+        sku_id:
+          type: string
+      type: object
+    commons.ProviderSkuMeta:
+      type: object
+    commons.RateCalculationInput:
+      properties:
+        configuration:
+          $ref: '#/components/schemas/commons.RunnerSetConfiguration'
+        product_type:
+          enum:
+          - runner
+          - cache
+          type: string
+      type: object
+    commons.RateCalculationOutput:
+      example:
+        rate: 0.8008281904610115
+        currency: currency
+      properties:
+        currency:
+          type: string
+        rate:
+          type: number
+      type: object
     commons.Repo:
       example:
-        DefaultBranch: DefaultBranch
         owner: owner
-        AccountID: AccountID
-        CreatedAt: CreatedAt
-        WebURL: WebURL
-        IntegrationID: IntegrationID
-        UpdatedAt: UpdatedAt
+        integration_id: integration_id
+        sshurl: sshurl
+        created_at: created_at
+        display_name: display_name
         vcs_id: vcs_id
-        SSHURL: SSHURL
+        account_id: account_id
+        updated_at: updated_at
+        web_url: web_url
         provider: provider
-        DisplayName: DisplayName
         name: name
+        default_branch: default_branch
         id: id
       properties:
-        AccountID:
+        account_id:
           type: string
-        CreatedAt:
+        created_at:
           type: string
-        DefaultBranch:
+        default_branch:
           type: string
-        DisplayName:
-          type: string
-        IntegrationID:
-          type: string
-        SSHURL:
-          type: string
-        UpdatedAt:
-          type: string
-        WebURL:
+        display_name:
           type: string
         id:
+          type: string
+        integration_id:
           type: string
         name:
           type: string
@@ -2250,7 +3430,13 @@ components:
           type: string
         provider:
           type: string
+        sshurl:
+          type: string
+        updated_at:
+          type: string
         vcs_id:
+          type: string
+        web_url:
           type: string
       type: object
     commons.ReqCheckoutSession:
@@ -2295,102 +3481,213 @@ components:
       type: object
     commons.Runner:
       example:
-        cluster_id: cluster_id
         updated_at: updated_at
         configuration:
+          capacity_type: spot
           image: image
-          cores: 0
-          memory: 6
-          arch: arch
+          storage:
+            size: 6
+            tier: low
+            iops: 0
+            throughput: 1
+          sku: sku
+        stock_runner_id: stock_runner_id
         organization_id: organization_id
         name: name
         vcs_integration_id: vcs_integration_id
         active: true
         created_at: created_at
-        external_reference_id: external_reference_id
+        provider_id: provider_id
         id: id
         labels:
-          key: ""
+        - labels
+        - labels
       properties:
         active:
           type: boolean
-        cluster_id:
-          type: string
         configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
+          $ref: '#/components/schemas/commons.RunnerSetConfiguration'
         created_at:
-          type: string
-        external_reference_id:
           type: string
         id:
           type: string
         labels:
-          additionalProperties: true
-          type: object
+          items:
+            type: string
+          type: array
         name:
           type: string
         organization_id:
+          type: string
+        provider_id:
+          type: string
+        stock_runner_id:
           type: string
         updated_at:
           type: string
         vcs_integration_id:
           type: string
       type: object
-    commons.RunnerConfiguration:
+    commons.RunnerGroup:
       example:
-        image: image
-        cores: 0
-        memory: 6
+        runners_url: runners_url
+        visibility: visibility
+        inherited: true
+        name: name
+        id: 0
+        is_default: true
+      properties:
+        id:
+          type: integer
+        inherited:
+          type: boolean
+        is_default:
+          type: boolean
+        name:
+          type: string
+        runners_url:
+          type: string
+        visibility:
+          type: string
+      type: object
+    commons.RunnerInfo:
+      example:
+        os: os
+        host: host
         arch: arch
       properties:
         arch:
           type: string
-        cores:
-          type: integer
-        image:
+        host:
           type: string
-        memory:
-          type: integer
+        os:
+          type: string
       type: object
     commons.RunnerInstance:
       example:
         cluster: cluster
+        running_started_at: running_started_at
         last_job_processed_id: last_job_processed_id
         configuration:
+          capacity_type: spot
           image: image
-          cores: 0
-          memory: 6
-          arch: arch
+          stock_runner_set_id: stock_runner_set_id
+          provider_sku_mapping:
+          - provider_sku_meta: "{}"
+            provider: provider
+            provider_sku: provider_sku
+            sku_id: sku_id
+            id: id
+            priority: 0
+          - provider_sku_meta: "{}"
+            provider: provider
+            provider_sku: provider_sku
+            sku_id: sku_id
+            id: id
+            priority: 0
+          storage:
+            size: 6
+            tier: low
+            iops: 0
+            throughput: 1
+          sku:
+            cores: 6
+            memory: 1
+            os:
+            - ubuntu
+            - ubuntu
+            arch: x64
+            id: id
+            display_name: display_name
+            properties:
+              generation: generation
+              burstable_speed: 5.962133916683182
+              performance_category: small
+              performance_rating: 2
+              gpu: 5
+              speed: 7.061401241503109
+              manufacturer: any
+        allocation_requested_at: allocation_requested_at
         created_at: created_at
+        external_id: external_id
+        first_polled_at: first_polled_at
         runner_for: runner_for
-        created_by: created_by
         runner_set_id: runner_set_id
-        last_polled: last_polled
         updated_at: updated_at
-        organization_id: organization_id
+        host: host
         vcs_integration_id: vcs_integration_id
         id: id
+        allocation_requested_event_at: allocation_requested_event_at
+        allocated_at: allocated_at
+        provider_kind: provider_kind
+        last_polled_at: last_polled_at
+        created_by: created_by
+        last_job_processed_meta:
+          vcs_base_ref: vcs_base_ref
+          vcs_head_ref: vcs_head_ref
+          vcs_ref: vcs_ref
+          vcs_org: vcs_org
+          vcs_repo: vcs_repo
+          vcs_ref_type: vcs_ref_type
+        labels:
+        - labels
+        - labels
+        allocation_for: allocation_for
+        organization_id: organization_id
+        provider_kind_id: provider_kind_id
+        purged_at: purged_at
+        purged_reason: purged_reason
         status: status
       properties:
+        allocated_at:
+          type: string
+        allocation_for:
+          type: string
+        allocation_requested_at:
+          type: string
+        allocation_requested_event_at:
+          type: string
         cluster:
           type: string
         configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
+          $ref: '#/components/schemas/commons.RunnerInstanceConfiguration'
         created_at:
           type: string
         created_by:
           type: string
+        external_id:
+          type: string
+        first_polled_at:
+          type: string
+        host:
+          type: string
         id:
           type: string
+        labels:
+          items:
+            type: string
+          type: array
         last_job_processed_id:
           type: string
-        last_polled:
+        last_job_processed_meta:
+          $ref: '#/components/schemas/commons.LastJobProcessedMeta'
+        last_polled_at:
           type: string
         organization_id:
+          type: string
+        provider_kind:
+          type: string
+        provider_kind_id:
+          type: string
+        purged_at:
+          type: string
+        purged_reason:
           type: string
         runner_for:
           type: string
         runner_set_id:
+          type: string
+        running_started_at:
           type: string
         status:
           type: string
@@ -2412,21 +3709,77 @@ components:
         runner_application: github
         runner_instance:
           cluster: cluster
+          running_started_at: running_started_at
           last_job_processed_id: last_job_processed_id
           configuration:
+            capacity_type: spot
             image: image
-            cores: 0
-            memory: 6
-            arch: arch
+            stock_runner_set_id: stock_runner_set_id
+            provider_sku_mapping:
+            - provider_sku_meta: "{}"
+              provider: provider
+              provider_sku: provider_sku
+              sku_id: sku_id
+              id: id
+              priority: 0
+            - provider_sku_meta: "{}"
+              provider: provider
+              provider_sku: provider_sku
+              sku_id: sku_id
+              id: id
+              priority: 0
+            storage:
+              size: 6
+              tier: low
+              iops: 0
+              throughput: 1
+            sku:
+              cores: 6
+              memory: 1
+              os:
+              - ubuntu
+              - ubuntu
+              arch: x64
+              id: id
+              display_name: display_name
+              properties:
+                generation: generation
+                burstable_speed: 5.962133916683182
+                performance_category: small
+                performance_rating: 2
+                gpu: 5
+                speed: 7.061401241503109
+                manufacturer: any
+          allocation_requested_at: allocation_requested_at
           created_at: created_at
+          external_id: external_id
+          first_polled_at: first_polled_at
           runner_for: runner_for
-          created_by: created_by
           runner_set_id: runner_set_id
-          last_polled: last_polled
           updated_at: updated_at
-          organization_id: organization_id
+          host: host
           vcs_integration_id: vcs_integration_id
           id: id
+          allocation_requested_event_at: allocation_requested_event_at
+          allocated_at: allocated_at
+          provider_kind: provider_kind
+          last_polled_at: last_polled_at
+          created_by: created_by
+          last_job_processed_meta:
+            vcs_base_ref: vcs_base_ref
+            vcs_head_ref: vcs_head_ref
+            vcs_ref: vcs_ref
+            vcs_org: vcs_org
+            vcs_repo: vcs_repo
+            vcs_ref_type: vcs_ref_type
+          labels:
+          - labels
+          - labels
+          allocation_for: allocation_for
+          organization_id: organization_id
+          provider_kind_id: provider_kind_id
+          purged_at: purged_at
+          purged_reason: purged_reason
           status: status
         status: unassigned
       properties:
@@ -2445,28 +3798,187 @@ components:
           - invalidated
           type: string
       type: object
-    commons.Runtime:
+    commons.RunnerInstanceConfiguration:
       example:
-        duration_seconds: 0
-        runner_id: runner_id
+        capacity_type: spot
+        image: image
+        stock_runner_set_id: stock_runner_set_id
+        provider_sku_mapping:
+        - provider_sku_meta: "{}"
+          provider: provider
+          provider_sku: provider_sku
+          sku_id: sku_id
+          id: id
+          priority: 0
+        - provider_sku_meta: "{}"
+          provider: provider
+          provider_sku: provider_sku
+          sku_id: sku_id
+          id: id
+          priority: 0
+        storage:
+          size: 6
+          tier: low
+          iops: 0
+          throughput: 1
+        sku:
+          cores: 6
+          memory: 1
+          os:
+          - ubuntu
+          - ubuntu
+          arch: x64
+          id: id
+          display_name: display_name
+          properties:
+            generation: generation
+            burstable_speed: 5.962133916683182
+            performance_category: small
+            performance_rating: 2
+            gpu: 5
+            speed: 7.061401241503109
+            manufacturer: any
       properties:
-        duration_seconds:
+        capacity_type:
+          enum:
+          - spot
+          - ondemand
+          type: string
+        image:
+          type: string
+        provider_sku_mapping:
+          items:
+            $ref: '#/components/schemas/commons.ProviderInstanceSkuMapping'
+          type: array
+        sku:
+          $ref: '#/components/schemas/commons.InstanceSku'
+        stock_runner_set_id:
+          type: string
+        storage:
+          $ref: '#/components/schemas/commons.Storage'
+      type: object
+    commons.RunnerSetConfiguration:
+      example:
+        capacity_type: spot
+        image: image
+        storage:
+          size: 6
+          tier: low
+          iops: 0
+          throughput: 1
+        sku: sku
+      properties:
+        capacity_type:
+          enum:
+          - spot
+          - ondemand
+          type: string
+        image:
+          type: string
+        sku:
+          type: string
+        storage:
+          $ref: '#/components/schemas/commons.Storage'
+      type: object
+    commons.RunnerSetDefaultGroup:
+      example:
+        group_id: 0
+      properties:
+        group_id:
           type: integer
+      type: object
+    commons.RunnersCostSummary:
+      example:
+        total_cost: 5.637376656633329
+        arm64_billed_minutes: 5
+        x64_billed_minutes: 2
+      properties:
+        arm64_billed_minutes:
+          type: integer
+        total_cost:
+          type: number
+        x64_billed_minutes:
+          type: integer
+      type: object
+    commons.RunnersUsage:
+      example:
+        total_job_count: 1
+        total_runtime_seconds: 5
+        runnerwise:
+        - runner_id: runner_id
+          runtime_seconds: 6
+        - runner_id: runner_id
+          runtime_seconds: 6
+        daywise:
+        - date: date
+          runtime_seconds: 0
+        - date: date
+          runtime_seconds: 0
+      properties:
+        daywise:
+          items:
+            $ref: '#/components/schemas/commons.DaywiseRuntime'
+          type: array
+        runnerwise:
+          items:
+            $ref: '#/components/schemas/commons.RunnerwiseRuntime'
+          type: array
+        total_job_count:
+          type: integer
+        total_runtime_seconds:
+          type: integer
+      type: object
+    commons.RunnerwiseRuntime:
+      example:
+        runner_id: runner_id
+        runtime_seconds: 6
+      properties:
         runner_id:
           type: string
+        runtime_seconds:
+          type: integer
+      type: object
+    commons.SetRunnerSetDefaultGroupInput:
+      properties:
+        group_id:
+          type: integer
       type: object
     commons.SetupRunnerInput:
       properties:
         Active:
           type: boolean
         configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
+          $ref: '#/components/schemas/commons.RunnerSetConfiguration'
         labels:
-          additionalProperties: true
-          type: object
+          items:
+            type: string
+          type: array
         name:
           type: string
+        stock_runner_id:
+          type: string
         vcs_integration_id:
+          type: string
+      type: object
+    commons.Storage:
+      example:
+        size: 6
+        tier: low
+        iops: 0
+        throughput: 1
+      properties:
+        iops:
+          type: integer
+        size:
+          type: integer
+        throughput:
+          type: integer
+        tier:
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
           type: string
       type: object
     commons.SubscriptionDetails:
@@ -2569,15 +4081,23 @@ components:
         date:
           type: string
       type: object
+    commons.UpdateBillingInfoInput:
+      properties:
+        email:
+          type: string
+      type: object
     commons.UpdateRunnerInput:
       properties:
         Active:
           type: boolean
         configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
+          $ref: '#/components/schemas/commons.RunnerSetConfiguration'
         labels:
-          additionalProperties: true
-          type: object
+          items:
+            type: string
+          type: array
+        name:
+          type: string
       type: object
     commons.UserToken:
       example:
@@ -2627,6 +4147,94 @@ components:
       - id
       - target_type
       type: object
+    commons.Workflow:
+      example:
+        provider_integration_id: provider_integration_id
+        runner_info:
+          os: os
+          host: host
+          arch: arch
+        jobs_runner_info:
+        - runner_id: runner_id
+          warp_added_at: warp_added_at
+          warp_removed_at: warp_removed_at
+          runner_arch: runner_arch
+          job_id: job_id
+          runner_name: runner_name
+          runner_os: runner_os
+          runner_host: runner_host
+        - runner_id: runner_id
+          warp_added_at: warp_added_at
+          warp_removed_at: warp_removed_at
+          runner_arch: runner_arch
+          job_id: job_id
+          runner_name: runner_name
+          runner_os: runner_os
+          runner_host: runner_host
+        external_id: external_id
+        warp_pr_runner: warp_pr_runner
+        external_repo_id: external_repo_id
+        warp_pr_id: warp_pr_id
+        url: url
+        is_repo_public: true
+        warp_status: warp_status
+        provider: provider
+        stats:
+          run_duration: 6
+          run_count: 0
+        organization_id: organization_id
+        name: name
+        id: id
+        external_repo_entity: external_repo_entity
+        warp_pr_link: warp_pr_link
+      properties:
+        external_id:
+          type: string
+        external_repo_entity:
+          type: string
+        external_repo_id:
+          type: string
+        id:
+          type: string
+        is_repo_public:
+          type: boolean
+        jobs_runner_info:
+          items:
+            $ref: '#/components/schemas/commons.JobRunnerInfo'
+          type: array
+        name:
+          type: string
+        organization_id:
+          type: string
+        provider:
+          type: string
+        provider_integration_id:
+          type: string
+        runner_info:
+          $ref: '#/components/schemas/commons.RunnerInfo'
+        stats:
+          $ref: '#/components/schemas/commons.WorkflowStats'
+        url:
+          type: string
+        warp_pr_id:
+          type: string
+        warp_pr_link:
+          type: string
+        warp_pr_runner:
+          type: string
+        warp_status:
+          type: string
+      type: object
+    commons.WorkflowStats:
+      example:
+        run_duration: 6
+        run_count: 0
+      properties:
+        run_count:
+          type: integer
+        run_duration:
+          type: integer
+      type: object
     debugger.PublishEventInput:
       properties:
         data:
@@ -2637,6 +4245,18 @@ components:
           type: string
         topic:
           type: string
+      type: object
+    insights.callbackInput:
+      properties:
+        code:
+          type: string
+        installation_id:
+          type: string
+        setup_action:
+          type: string
+      required:
+      - code
+      - setup_action
       type: object
     types.GenericSuccessMessage:
       example:
@@ -2653,6 +4273,10 @@ components:
     WarpBuildAdminSecretAuth:
       in: header
       name: X-Warp-Build-Admin-Secret
+      type: apiKey
+    WarpBuildServiceSecretAuth:
+      in: header
+      name: x-warpbuild-service-secret
       type: apiKey
 x-extension-openapi:
   example: value on a json format

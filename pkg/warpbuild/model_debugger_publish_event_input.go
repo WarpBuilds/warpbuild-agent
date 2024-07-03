@@ -207,13 +207,9 @@ func (o DebuggerPublishEventInput) ToMap() (map[string]interface{}, error) {
 func (o *DebuggerPublishEventInput) UnmarshalJSON(bytes []byte) (err error) {
 	varDebuggerPublishEventInput := _DebuggerPublishEventInput{}
 
-	err = json.Unmarshal(bytes, &varDebuggerPublishEventInput)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varDebuggerPublishEventInput); err == nil {
+		*o = DebuggerPublishEventInput(varDebuggerPublishEventInput)
 	}
-
-	*o = DebuggerPublishEventInput(varDebuggerPublishEventInput)
 
 	additionalProperties := make(map[string]interface{})
 

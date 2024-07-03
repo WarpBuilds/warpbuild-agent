@@ -207,13 +207,9 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerInstanceAllocationDetails := _CommonsRunnerInstanceAllocationDetails{}
 
-	err = json.Unmarshal(bytes, &varCommonsRunnerInstanceAllocationDetails)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsRunnerInstanceAllocationDetails); err == nil {
+		*o = CommonsRunnerInstanceAllocationDetails(varCommonsRunnerInstanceAllocationDetails)
 	}
-
-	*o = CommonsRunnerInstanceAllocationDetails(varCommonsRunnerInstanceAllocationDetails)
 
 	additionalProperties := make(map[string]interface{})
 

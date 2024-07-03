@@ -21,14 +21,14 @@ var _ MappedNullable = &CommonsRunner{}
 // CommonsRunner struct for CommonsRunner
 type CommonsRunner struct {
 	Active *bool `json:"active,omitempty"`
-	ClusterId *string `json:"cluster_id,omitempty"`
-	Configuration *CommonsRunnerConfiguration `json:"configuration,omitempty"`
+	Configuration *CommonsRunnerSetConfiguration `json:"configuration,omitempty"`
 	CreatedAt *string `json:"created_at,omitempty"`
-	ExternalReferenceId *string `json:"external_reference_id,omitempty"`
 	Id *string `json:"id,omitempty"`
-	Labels map[string]interface{} `json:"labels,omitempty"`
+	Labels []string `json:"labels,omitempty"`
 	Name *string `json:"name,omitempty"`
 	OrganizationId *string `json:"organization_id,omitempty"`
+	ProviderId *string `json:"provider_id,omitempty"`
+	StockRunnerId *string `json:"stock_runner_id,omitempty"`
 	UpdatedAt *string `json:"updated_at,omitempty"`
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
 	AdditionalProperties map[string]interface{}
@@ -85,42 +85,10 @@ func (o *CommonsRunner) SetActive(v bool) {
 	o.Active = &v
 }
 
-// GetClusterId returns the ClusterId field value if set, zero value otherwise.
-func (o *CommonsRunner) GetClusterId() string {
-	if o == nil || IsNil(o.ClusterId) {
-		var ret string
-		return ret
-	}
-	return *o.ClusterId
-}
-
-// GetClusterIdOk returns a tuple with the ClusterId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRunner) GetClusterIdOk() (*string, bool) {
-	if o == nil || IsNil(o.ClusterId) {
-		return nil, false
-	}
-	return o.ClusterId, true
-}
-
-// HasClusterId returns a boolean if a field has been set.
-func (o *CommonsRunner) HasClusterId() bool {
-	if o != nil && !IsNil(o.ClusterId) {
-		return true
-	}
-
-	return false
-}
-
-// SetClusterId gets a reference to the given string and assigns it to the ClusterId field.
-func (o *CommonsRunner) SetClusterId(v string) {
-	o.ClusterId = &v
-}
-
 // GetConfiguration returns the Configuration field value if set, zero value otherwise.
-func (o *CommonsRunner) GetConfiguration() CommonsRunnerConfiguration {
+func (o *CommonsRunner) GetConfiguration() CommonsRunnerSetConfiguration {
 	if o == nil || IsNil(o.Configuration) {
-		var ret CommonsRunnerConfiguration
+		var ret CommonsRunnerSetConfiguration
 		return ret
 	}
 	return *o.Configuration
@@ -128,7 +96,7 @@ func (o *CommonsRunner) GetConfiguration() CommonsRunnerConfiguration {
 
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsRunner) GetConfigurationOk() (*CommonsRunnerConfiguration, bool) {
+func (o *CommonsRunner) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -144,8 +112,8 @@ func (o *CommonsRunner) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given CommonsRunnerConfiguration and assigns it to the Configuration field.
-func (o *CommonsRunner) SetConfiguration(v CommonsRunnerConfiguration) {
+// SetConfiguration gets a reference to the given CommonsRunnerSetConfiguration and assigns it to the Configuration field.
+func (o *CommonsRunner) SetConfiguration(v CommonsRunnerSetConfiguration) {
 	o.Configuration = &v
 }
 
@@ -181,38 +149,6 @@ func (o *CommonsRunner) SetCreatedAt(v string) {
 	o.CreatedAt = &v
 }
 
-// GetExternalReferenceId returns the ExternalReferenceId field value if set, zero value otherwise.
-func (o *CommonsRunner) GetExternalReferenceId() string {
-	if o == nil || IsNil(o.ExternalReferenceId) {
-		var ret string
-		return ret
-	}
-	return *o.ExternalReferenceId
-}
-
-// GetExternalReferenceIdOk returns a tuple with the ExternalReferenceId field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRunner) GetExternalReferenceIdOk() (*string, bool) {
-	if o == nil || IsNil(o.ExternalReferenceId) {
-		return nil, false
-	}
-	return o.ExternalReferenceId, true
-}
-
-// HasExternalReferenceId returns a boolean if a field has been set.
-func (o *CommonsRunner) HasExternalReferenceId() bool {
-	if o != nil && !IsNil(o.ExternalReferenceId) {
-		return true
-	}
-
-	return false
-}
-
-// SetExternalReferenceId gets a reference to the given string and assigns it to the ExternalReferenceId field.
-func (o *CommonsRunner) SetExternalReferenceId(v string) {
-	o.ExternalReferenceId = &v
-}
-
 // GetId returns the Id field value if set, zero value otherwise.
 func (o *CommonsRunner) GetId() string {
 	if o == nil || IsNil(o.Id) {
@@ -246,9 +182,9 @@ func (o *CommonsRunner) SetId(v string) {
 }
 
 // GetLabels returns the Labels field value if set, zero value otherwise.
-func (o *CommonsRunner) GetLabels() map[string]interface{} {
+func (o *CommonsRunner) GetLabels() []string {
 	if o == nil || IsNil(o.Labels) {
-		var ret map[string]interface{}
+		var ret []string
 		return ret
 	}
 	return o.Labels
@@ -256,9 +192,9 @@ func (o *CommonsRunner) GetLabels() map[string]interface{} {
 
 // GetLabelsOk returns a tuple with the Labels field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsRunner) GetLabelsOk() (map[string]interface{}, bool) {
+func (o *CommonsRunner) GetLabelsOk() ([]string, bool) {
 	if o == nil || IsNil(o.Labels) {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
 	return o.Labels, true
 }
@@ -272,8 +208,8 @@ func (o *CommonsRunner) HasLabels() bool {
 	return false
 }
 
-// SetLabels gets a reference to the given map[string]interface{} and assigns it to the Labels field.
-func (o *CommonsRunner) SetLabels(v map[string]interface{}) {
+// SetLabels gets a reference to the given []string and assigns it to the Labels field.
+func (o *CommonsRunner) SetLabels(v []string) {
 	o.Labels = v
 }
 
@@ -339,6 +275,70 @@ func (o *CommonsRunner) HasOrganizationId() bool {
 // SetOrganizationId gets a reference to the given string and assigns it to the OrganizationId field.
 func (o *CommonsRunner) SetOrganizationId(v string) {
 	o.OrganizationId = &v
+}
+
+// GetProviderId returns the ProviderId field value if set, zero value otherwise.
+func (o *CommonsRunner) GetProviderId() string {
+	if o == nil || IsNil(o.ProviderId) {
+		var ret string
+		return ret
+	}
+	return *o.ProviderId
+}
+
+// GetProviderIdOk returns a tuple with the ProviderId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunner) GetProviderIdOk() (*string, bool) {
+	if o == nil || IsNil(o.ProviderId) {
+		return nil, false
+	}
+	return o.ProviderId, true
+}
+
+// HasProviderId returns a boolean if a field has been set.
+func (o *CommonsRunner) HasProviderId() bool {
+	if o != nil && !IsNil(o.ProviderId) {
+		return true
+	}
+
+	return false
+}
+
+// SetProviderId gets a reference to the given string and assigns it to the ProviderId field.
+func (o *CommonsRunner) SetProviderId(v string) {
+	o.ProviderId = &v
+}
+
+// GetStockRunnerId returns the StockRunnerId field value if set, zero value otherwise.
+func (o *CommonsRunner) GetStockRunnerId() string {
+	if o == nil || IsNil(o.StockRunnerId) {
+		var ret string
+		return ret
+	}
+	return *o.StockRunnerId
+}
+
+// GetStockRunnerIdOk returns a tuple with the StockRunnerId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunner) GetStockRunnerIdOk() (*string, bool) {
+	if o == nil || IsNil(o.StockRunnerId) {
+		return nil, false
+	}
+	return o.StockRunnerId, true
+}
+
+// HasStockRunnerId returns a boolean if a field has been set.
+func (o *CommonsRunner) HasStockRunnerId() bool {
+	if o != nil && !IsNil(o.StockRunnerId) {
+		return true
+	}
+
+	return false
+}
+
+// SetStockRunnerId gets a reference to the given string and assigns it to the StockRunnerId field.
+func (o *CommonsRunner) SetStockRunnerId(v string) {
+	o.StockRunnerId = &v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
@@ -418,17 +418,11 @@ func (o CommonsRunner) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Active) {
 		toSerialize["active"] = o.Active
 	}
-	if !IsNil(o.ClusterId) {
-		toSerialize["cluster_id"] = o.ClusterId
-	}
 	if !IsNil(o.Configuration) {
 		toSerialize["configuration"] = o.Configuration
 	}
 	if !IsNil(o.CreatedAt) {
 		toSerialize["created_at"] = o.CreatedAt
-	}
-	if !IsNil(o.ExternalReferenceId) {
-		toSerialize["external_reference_id"] = o.ExternalReferenceId
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
@@ -441,6 +435,12 @@ func (o CommonsRunner) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.OrganizationId) {
 		toSerialize["organization_id"] = o.OrganizationId
+	}
+	if !IsNil(o.ProviderId) {
+		toSerialize["provider_id"] = o.ProviderId
+	}
+	if !IsNil(o.StockRunnerId) {
+		toSerialize["stock_runner_id"] = o.StockRunnerId
 	}
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updated_at"] = o.UpdatedAt
@@ -459,26 +459,22 @@ func (o CommonsRunner) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunner) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunner := _CommonsRunner{}
 
-	err = json.Unmarshal(bytes, &varCommonsRunner)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsRunner); err == nil {
+		*o = CommonsRunner(varCommonsRunner)
 	}
-
-	*o = CommonsRunner(varCommonsRunner)
 
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
 		delete(additionalProperties, "active")
-		delete(additionalProperties, "cluster_id")
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "created_at")
-		delete(additionalProperties, "external_reference_id")
 		delete(additionalProperties, "id")
 		delete(additionalProperties, "labels")
 		delete(additionalProperties, "name")
 		delete(additionalProperties, "organization_id")
+		delete(additionalProperties, "provider_id")
+		delete(additionalProperties, "stock_runner_id")
 		delete(additionalProperties, "updated_at")
 		delete(additionalProperties, "vcs_integration_id")
 		o.AdditionalProperties = additionalProperties

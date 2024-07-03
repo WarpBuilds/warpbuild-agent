@@ -1,17 +1,19 @@
-# \V1VcsAPI
+# \V1VcsApi
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApproveVCSIntegration**](V1VcsAPI.md#ApproveVCSIntegration) | **Put** /vcs/approve-integration | This handles the callback for approving an installation
-[**CreateVCSGitRepo**](V1VcsAPI.md#CreateVCSGitRepo) | **Post** /vcs/repos | create vcs repo based on repo internal id
-[**CreateVCSIntegration**](V1VcsAPI.md#CreateVCSIntegration) | **Post** /vcs/integrations | Create a new vcs integration
-[**DeleteVCSIntegration**](V1VcsAPI.md#DeleteVCSIntegration) | **Delete** /vcs/integrations/{integration_id} | Delete an existing vcs integration
-[**GetVCSGitRepo**](V1VcsAPI.md#GetVCSGitRepo) | **Get** /vcs/repos/{id} | get vcs repo based on repo internal id
-[**ListVCSEntites**](V1VcsAPI.md#ListVCSEntites) | **Get** /vcs/entities | Lists all vcs entities for vcs integration
-[**ListVCSIntegration**](V1VcsAPI.md#ListVCSIntegration) | **Get** /vcs/integrations | Lists all vcs integration for provider
-[**UpdateVCSIntegration**](V1VcsAPI.md#UpdateVCSIntegration) | **Put** /vcs/integrations/{integration_id} | Update an existing vcs integration
+[**ApproveVCSIntegration**](V1VcsApi.md#ApproveVCSIntegration) | **Put** /vcs/approve-integration | This handles the callback for approving an installation
+[**CreateVCSGitRepo**](V1VcsApi.md#CreateVCSGitRepo) | **Post** /vcs/repos | create vcs repo based on repo internal id
+[**CreateVCSIntegration**](V1VcsApi.md#CreateVCSIntegration) | **Post** /vcs/integrations | Create a new vcs integration
+[**DeleteVCSIntegration**](V1VcsApi.md#DeleteVCSIntegration) | **Delete** /vcs/integrations/{integration_id} | Delete an existing vcs integration
+[**GetVCSGitRepo**](V1VcsApi.md#GetVCSGitRepo) | **Get** /vcs/repos/{id} | get vcs repo based on repo internal id
+[**ListVCSEntites**](V1VcsApi.md#ListVCSEntites) | **Get** /vcs/entities | Lists all vcs entities for vcs integration
+[**ListVCSIntegration**](V1VcsApi.md#ListVCSIntegration) | **Get** /vcs/integrations | Lists all vcs integration for provider
+[**ListVCSRepos**](V1VcsApi.md#ListVCSRepos) | **Get** /vcs/repos | Lists all vcs repos for vcs integration
+[**ListVCSRunnerGroups**](V1VcsApi.md#ListVCSRunnerGroups) | **Post** /vcs/list-runner-groups | Lists all vcs runner groups
+[**UpdateVCSIntegration**](V1VcsApi.md#UpdateVCSIntegration) | **Put** /vcs/integrations/{integration_id} | Update an existing vcs integration
 
 
 
@@ -38,13 +40,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.ApproveVCSIntegration(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1VcsApi.ApproveVCSIntegration(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.ApproveVCSIntegration``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.ApproveVCSIntegration``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ApproveVCSIntegration`: AuthUserResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.ApproveVCSIntegration`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.ApproveVCSIntegration`: %v\n", resp)
 }
 ```
 
@@ -102,13 +104,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.CreateVCSGitRepo(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1VcsApi.CreateVCSGitRepo(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.CreateVCSGitRepo``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.CreateVCSGitRepo``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `CreateVCSGitRepo`: CommonsRepo
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.CreateVCSGitRepo`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.CreateVCSGitRepo`: %v\n", resp)
 }
 ```
 
@@ -166,13 +168,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.CreateVCSIntegration(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1VcsApi.CreateVCSIntegration(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.CreateVCSIntegration``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.CreateVCSIntegration``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `CreateVCSIntegration`: VCSIntegration
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.CreateVCSIntegration`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.CreateVCSIntegration`: %v\n", resp)
 }
 ```
 
@@ -231,13 +233,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.DeleteVCSIntegration(context.Background(), integrationId).Provider(provider).Execute()
+    resp, r, err := apiClient.V1VcsApi.DeleteVCSIntegration(context.Background(), integrationId).Provider(provider).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.DeleteVCSIntegration``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.DeleteVCSIntegration``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `DeleteVCSIntegration`: TypesGenericSuccessMessage
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.DeleteVCSIntegration`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.DeleteVCSIntegration`: %v\n", resp)
 }
 ```
 
@@ -300,13 +302,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.GetVCSGitRepo(context.Background(), id).Execute()
+    resp, r, err := apiClient.V1VcsApi.GetVCSGitRepo(context.Background(), id).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.GetVCSGitRepo``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.GetVCSGitRepo``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetVCSGitRepo`: CommonsRepo
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.GetVCSGitRepo`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.GetVCSGitRepo`: %v\n", resp)
 }
 ```
 
@@ -374,13 +376,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.ListVCSEntites(context.Background()).EntityType(entityType).Provider(provider).Name(name).IntegrationId(integrationId).ParentId(parentId).Execute()
+    resp, r, err := apiClient.V1VcsApi.ListVCSEntites(context.Background()).EntityType(entityType).Provider(provider).Name(name).IntegrationId(integrationId).ParentId(parentId).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.ListVCSEntites``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.ListVCSEntites``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListVCSEntites`: []VCSEntity
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.ListVCSEntites`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.ListVCSEntites`: %v\n", resp)
 }
 ```
 
@@ -443,13 +445,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.ListVCSIntegration(context.Background()).Provider(provider).Status(status).Execute()
+    resp, r, err := apiClient.V1VcsApi.ListVCSIntegration(context.Background()).Provider(provider).Status(status).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.ListVCSIntegration``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.ListVCSIntegration``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListVCSIntegration`: []VCSIntegration
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.ListVCSIntegration`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.ListVCSIntegration`: %v\n", resp)
 }
 ```
 
@@ -485,6 +487,129 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+## ListVCSRepos
+
+> []CommonsRepo ListVCSRepos(ctx).Execute()
+
+Lists all vcs repos for vcs integration
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1VcsApi.ListVCSRepos(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.ListVCSRepos``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `ListVCSRepos`: []CommonsRepo
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.ListVCSRepos`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiListVCSReposRequest struct via the builder pattern
+
+
+### Return type
+
+[**[]CommonsRepo**](CommonsRepo.md)
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## ListVCSRunnerGroups
+
+> CommonsListVCSRunnerGroupsResponse ListVCSRunnerGroups(ctx).Body(body).Execute()
+
+Lists all vcs runner groups
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+    body := *openapiclient.NewCommonsListVCSRunnerGroupsInput() // CommonsListVCSRunnerGroupsInput | List runner groups input
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1VcsApi.ListVCSRunnerGroups(context.Background()).Body(body).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.ListVCSRunnerGroups``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `ListVCSRunnerGroups`: CommonsListVCSRunnerGroupsResponse
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.ListVCSRunnerGroups`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiListVCSRunnerGroupsRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**CommonsListVCSRunnerGroupsInput**](CommonsListVCSRunnerGroupsInput.md) | List runner groups input | 
+
+### Return type
+
+[**CommonsListVCSRunnerGroupsResponse**](CommonsListVCSRunnerGroupsResponse.md)
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
 ## UpdateVCSIntegration
 
 > UpdateVCSIntegrationResponse UpdateVCSIntegration(ctx, integrationId).Body(body).Execute()
@@ -509,13 +634,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1VcsAPI.UpdateVCSIntegration(context.Background(), integrationId).Body(body).Execute()
+    resp, r, err := apiClient.V1VcsApi.UpdateVCSIntegration(context.Background(), integrationId).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsAPI.UpdateVCSIntegration``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1VcsApi.UpdateVCSIntegration``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `UpdateVCSIntegration`: UpdateVCSIntegrationResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1VcsAPI.UpdateVCSIntegration`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1VcsApi.UpdateVCSIntegration`: %v\n", resp)
 }
 ```
 
