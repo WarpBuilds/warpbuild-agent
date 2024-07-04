@@ -83,7 +83,7 @@ No authorization required
 
 ## GetRunnerInstancePresignedLogUploadURL
 
-> string GetRunnerInstancePresignedLogUploadURL(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).LogFileName(logFileName).Execute()
+> CommonsGetPresignedLogUploadURLOutput GetRunnerInstancePresignedLogUploadURL(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).LogFileName(logFileName).Execute()
 
 Gets a presigned url for uploading logs for a runner instance
 
@@ -111,7 +111,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceApi.GetRunnerInstancePresignedLogUploadURL``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `GetRunnerInstancePresignedLogUploadURL`: string
+    // response from `GetRunnerInstancePresignedLogUploadURL`: CommonsGetPresignedLogUploadURLOutput
     fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceApi.GetRunnerInstancePresignedLogUploadURL`: %v\n", resp)
 }
 ```
@@ -137,7 +137,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**string**
+[**CommonsGetPresignedLogUploadURLOutput**](CommonsGetPresignedLogUploadURLOutput.md)
 
 ### Authorization
 

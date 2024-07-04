@@ -154,6 +154,7 @@ Class | Method | HTTP request | Description
  - [CommonsCreateRepoOptions](docs/CommonsCreateRepoOptions.md)
  - [CommonsDaywiseCost](docs/CommonsDaywiseCost.md)
  - [CommonsDaywiseRuntime](docs/CommonsDaywiseRuntime.md)
+ - [CommonsGetPresignedLogUploadURLOutput](docs/CommonsGetPresignedLogUploadURLOutput.md)
  - [CommonsGithubRunnerApplicationDetails](docs/CommonsGithubRunnerApplicationDetails.md)
  - [CommonsInstanceSku](docs/CommonsInstanceSku.md)
  - [CommonsInstanceSkuProperties](docs/CommonsInstanceSkuProperties.md)

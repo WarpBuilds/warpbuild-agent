@@ -1359,8 +1359,8 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-          description: presigned url
+                $ref: '#/components/schemas/commons.GetPresignedLogUploadURLOutput'
+          description: OK
         "400":
           content:
             application/json:
@@ -2992,6 +2992,13 @@ components:
           type: string
         runtime_seconds:
           type: integer
+      type: object
+    commons.GetPresignedLogUploadURLOutput:
+      example:
+        url: url
+      properties:
+        url:
+          type: string
       type: object
     commons.GithubRunnerApplicationDetails:
       example:

@@ -30,6 +30,7 @@ docs/CommonsCoupon.md
 docs/CommonsCreateRepoOptions.md
 docs/CommonsDaywiseCost.md
 docs/CommonsDaywiseRuntime.md
+docs/CommonsGetPresignedLogUploadURLOutput.md
 docs/CommonsGithubRunnerApplicationDetails.md
 docs/CommonsInstanceSku.md
 docs/CommonsInstanceSkuProperties.md
@@ -126,6 +127,7 @@ model_commons_coupon.go
 model_commons_create_repo_options.go
 model_commons_daywise_cost.go
 model_commons_daywise_runtime.go
+model_commons_get_presigned_log_upload_url_output.go
 model_commons_github_runner_application_details.go
 model_commons_instance_sku.go
 model_commons_instance_sku_properties.go

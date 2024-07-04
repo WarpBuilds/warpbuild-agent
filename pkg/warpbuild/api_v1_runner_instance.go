@@ -46,8 +46,8 @@ type V1RunnerInstanceApi interface {
 	GetRunnerInstancePresignedLogUploadURL(ctx context.Context, id string) ApiGetRunnerInstancePresignedLogUploadURLRequest
 
 	// GetRunnerInstancePresignedLogUploadURLExecute executes the request
-	//  @return string
-	GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (string, *http.Response, error)
+	//  @return CommonsGetPresignedLogUploadURLOutput
+	GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error)
 
 	/*
 	GetRunnerLastJobProcessedMeta Get runner last used job meta
@@ -232,7 +232,7 @@ func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) LogFileName(logFileNam
 	return r
 }
 
-func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) Execute() (string, *http.Response, error) {
+func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) Execute() (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error) {
 	return r.ApiService.GetRunnerInstancePresignedLogUploadURLExecute(r)
 }
 
@@ -252,13 +252,13 @@ func (a *V1RunnerInstanceApiService) GetRunnerInstancePresignedLogUploadURL(ctx 
 }
 
 // Execute executes the request
-//  @return string
-func (a *V1RunnerInstanceApiService) GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (string, *http.Response, error) {
+//  @return CommonsGetPresignedLogUploadURLOutput
+func (a *V1RunnerInstanceApiService) GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  string
+		localVarReturnValue  *CommonsGetPresignedLogUploadURLOutput
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.GetRunnerInstancePresignedLogUploadURL")
