@@ -20,18 +20,6 @@ var _ MappedNullable = &CommonsRunnerInstance{}
 
 // CommonsRunnerInstance struct for CommonsRunnerInstance
 type CommonsRunnerInstance struct {
-<<<<<<< HEAD
-	Cluster *string `json:"cluster,omitempty"`
-	Configuration *CommonsRunnerConfiguration `json:"configuration,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	CreatedBy *string `json:"created_by,omitempty"`
-	Id *string `json:"id,omitempty"`
-	LastJobProcessedId *string `json:"last_job_processed_id,omitempty"`
-	LastPolled *string `json:"last_polled,omitempty"`
-	OrganizationId *string `json:"organization_id,omitempty"`
-	RunnerFor *string `json:"runner_for,omitempty"`
-	RunnerSetId *string `json:"runner_set_id,omitempty"`
-=======
 	AllocatedAt *string `json:"allocated_at,omitempty"`
 	AllocationFor *string `json:"allocation_for,omitempty"`
 	AllocationRequestedAt *string `json:"allocation_requested_at,omitempty"`
@@ -56,7 +44,6 @@ type CommonsRunnerInstance struct {
 	RunnerFor *string `json:"runner_for,omitempty"`
 	RunnerSetId *string `json:"runner_set_id,omitempty"`
 	RunningStartedAt *string `json:"running_started_at,omitempty"`
->>>>>>> prajjwal-warp-323
 	Status *string `json:"status,omitempty"`
 	UpdatedAt *string `json:"updated_at,omitempty"`
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
@@ -82,8 +69,6 @@ func NewCommonsRunnerInstanceWithDefaults() *CommonsRunnerInstance {
 	return &this
 }
 
-<<<<<<< HEAD
-=======
 // GetAllocatedAt returns the AllocatedAt field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetAllocatedAt() string {
 	if o == nil || IsNil(o.AllocatedAt) {
@@ -212,7 +197,6 @@ func (o *CommonsRunnerInstance) SetAllocationRequestedEventAt(v string) {
 	o.AllocationRequestedEventAt = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetCluster returns the Cluster field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetCluster() string {
 	if o == nil || IsNil(o.Cluster) {
@@ -246,15 +230,9 @@ func (o *CommonsRunnerInstance) SetCluster(v string) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise.
-<<<<<<< HEAD
-func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerConfiguration {
-	if o == nil || IsNil(o.Configuration) {
-		var ret CommonsRunnerConfiguration
-=======
 func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerInstanceConfiguration {
 	if o == nil || IsNil(o.Configuration) {
 		var ret CommonsRunnerInstanceConfiguration
->>>>>>> prajjwal-warp-323
 		return ret
 	}
 	return *o.Configuration
@@ -262,11 +240,7 @@ func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerInstanceConfigur
 
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-<<<<<<< HEAD
-func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerConfiguration, bool) {
-=======
 func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerInstanceConfiguration, bool) {
->>>>>>> prajjwal-warp-323
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -282,13 +256,8 @@ func (o *CommonsRunnerInstance) HasConfiguration() bool {
 	return false
 }
 
-<<<<<<< HEAD
-// SetConfiguration gets a reference to the given CommonsRunnerConfiguration and assigns it to the Configuration field.
-func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerConfiguration) {
-=======
 // SetConfiguration gets a reference to the given CommonsRunnerInstanceConfiguration and assigns it to the Configuration field.
 func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerInstanceConfiguration) {
->>>>>>> prajjwal-warp-323
 	o.Configuration = &v
 }
 
@@ -356,8 +325,6 @@ func (o *CommonsRunnerInstance) SetCreatedBy(v string) {
 	o.CreatedBy = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetExternalId returns the ExternalId field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetExternalId() string {
 	if o == nil || IsNil(o.ExternalId) {
@@ -454,7 +421,6 @@ func (o *CommonsRunnerInstance) SetHost(v string) {
 	o.Host = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetId returns the Id field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetId() string {
 	if o == nil || IsNil(o.Id) {
@@ -487,8 +453,6 @@ func (o *CommonsRunnerInstance) SetId(v string) {
 	o.Id = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetLabels returns the Labels field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetLabels() []string {
 	if o == nil || IsNil(o.Labels) {
@@ -521,7 +485,6 @@ func (o *CommonsRunnerInstance) SetLabels(v []string) {
 	o.Labels = v
 }
 
->>>>>>> prajjwal-warp-323
 // GetLastJobProcessedId returns the LastJobProcessedId field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetLastJobProcessedId() string {
 	if o == nil || IsNil(o.LastJobProcessedId) {
@@ -554,29 +517,6 @@ func (o *CommonsRunnerInstance) SetLastJobProcessedId(v string) {
 	o.LastJobProcessedId = &v
 }
 
-<<<<<<< HEAD
-// GetLastPolled returns the LastPolled field value if set, zero value otherwise.
-func (o *CommonsRunnerInstance) GetLastPolled() string {
-	if o == nil || IsNil(o.LastPolled) {
-		var ret string
-		return ret
-	}
-	return *o.LastPolled
-}
-
-// GetLastPolledOk returns a tuple with the LastPolled field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRunnerInstance) GetLastPolledOk() (*string, bool) {
-	if o == nil || IsNil(o.LastPolled) {
-		return nil, false
-	}
-	return o.LastPolled, true
-}
-
-// HasLastPolled returns a boolean if a field has been set.
-func (o *CommonsRunnerInstance) HasLastPolled() bool {
-	if o != nil && !IsNil(o.LastPolled) {
-=======
 // GetLastJobProcessedMeta returns the LastJobProcessedMeta field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetLastJobProcessedMeta() CommonsLastJobProcessedMeta {
 	if o == nil || IsNil(o.LastJobProcessedMeta) {
@@ -598,18 +538,12 @@ func (o *CommonsRunnerInstance) GetLastJobProcessedMetaOk() (*CommonsLastJobProc
 // HasLastJobProcessedMeta returns a boolean if a field has been set.
 func (o *CommonsRunnerInstance) HasLastJobProcessedMeta() bool {
 	if o != nil && !IsNil(o.LastJobProcessedMeta) {
->>>>>>> prajjwal-warp-323
 		return true
 	}
 
 	return false
 }
 
-<<<<<<< HEAD
-// SetLastPolled gets a reference to the given string and assigns it to the LastPolled field.
-func (o *CommonsRunnerInstance) SetLastPolled(v string) {
-	o.LastPolled = &v
-=======
 // SetLastJobProcessedMeta gets a reference to the given CommonsLastJobProcessedMeta and assigns it to the LastJobProcessedMeta field.
 func (o *CommonsRunnerInstance) SetLastJobProcessedMeta(v CommonsLastJobProcessedMeta) {
 	o.LastJobProcessedMeta = &v
@@ -645,7 +579,6 @@ func (o *CommonsRunnerInstance) HasLastPolledAt() bool {
 // SetLastPolledAt gets a reference to the given string and assigns it to the LastPolledAt field.
 func (o *CommonsRunnerInstance) SetLastPolledAt(v string) {
 	o.LastPolledAt = &v
->>>>>>> prajjwal-warp-323
 }
 
 // GetOrganizationId returns the OrganizationId field value if set, zero value otherwise.
@@ -680,8 +613,6 @@ func (o *CommonsRunnerInstance) SetOrganizationId(v string) {
 	o.OrganizationId = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetProviderKind returns the ProviderKind field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetProviderKind() string {
 	if o == nil || IsNil(o.ProviderKind) {
@@ -810,7 +741,6 @@ func (o *CommonsRunnerInstance) SetPurgedReason(v string) {
 	o.PurgedReason = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetRunnerFor returns the RunnerFor field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetRunnerFor() string {
 	if o == nil || IsNil(o.RunnerFor) {
@@ -875,8 +805,6 @@ func (o *CommonsRunnerInstance) SetRunnerSetId(v string) {
 	o.RunnerSetId = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetRunningStartedAt returns the RunningStartedAt field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetRunningStartedAt() string {
 	if o == nil || IsNil(o.RunningStartedAt) {
@@ -909,7 +837,6 @@ func (o *CommonsRunnerInstance) SetRunningStartedAt(v string) {
 	o.RunningStartedAt = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetStatus returns the Status field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetStatus() string {
 	if o == nil || IsNil(o.Status) {
@@ -1016,8 +943,6 @@ func (o CommonsRunnerInstance) MarshalJSON() ([]byte, error) {
 
 func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-<<<<<<< HEAD
-=======
 	if !IsNil(o.AllocatedAt) {
 		toSerialize["allocated_at"] = o.AllocatedAt
 	}
@@ -1030,7 +955,6 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.AllocationRequestedEventAt) {
 		toSerialize["allocation_requested_event_at"] = o.AllocationRequestedEventAt
 	}
->>>>>>> prajjwal-warp-323
 	if !IsNil(o.Cluster) {
 		toSerialize["cluster"] = o.Cluster
 	}
@@ -1043,16 +967,6 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.CreatedBy) {
 		toSerialize["created_by"] = o.CreatedBy
 	}
-<<<<<<< HEAD
-	if !IsNil(o.Id) {
-		toSerialize["id"] = o.Id
-	}
-	if !IsNil(o.LastJobProcessedId) {
-		toSerialize["last_job_processed_id"] = o.LastJobProcessedId
-	}
-	if !IsNil(o.LastPolled) {
-		toSerialize["last_polled"] = o.LastPolled
-=======
 	if !IsNil(o.ExternalId) {
 		toSerialize["external_id"] = o.ExternalId
 	}
@@ -1076,13 +990,10 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.LastPolledAt) {
 		toSerialize["last_polled_at"] = o.LastPolledAt
->>>>>>> prajjwal-warp-323
 	}
 	if !IsNil(o.OrganizationId) {
 		toSerialize["organization_id"] = o.OrganizationId
 	}
-<<<<<<< HEAD
-=======
 	if !IsNil(o.ProviderKind) {
 		toSerialize["provider_kind"] = o.ProviderKind
 	}
@@ -1095,19 +1006,15 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.PurgedReason) {
 		toSerialize["purged_reason"] = o.PurgedReason
 	}
->>>>>>> prajjwal-warp-323
 	if !IsNil(o.RunnerFor) {
 		toSerialize["runner_for"] = o.RunnerFor
 	}
 	if !IsNil(o.RunnerSetId) {
 		toSerialize["runner_set_id"] = o.RunnerSetId
 	}
-<<<<<<< HEAD
-=======
 	if !IsNil(o.RunningStartedAt) {
 		toSerialize["running_started_at"] = o.RunningStartedAt
 	}
->>>>>>> prajjwal-warp-323
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
 	}
@@ -1128,19 +1035,6 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunnerInstance) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerInstance := _CommonsRunnerInstance{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsRunnerInstance)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsRunnerInstance(varCommonsRunnerInstance)
-
-	additionalProperties := make(map[string]interface{})
-
-	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
-=======
 	if err = json.Unmarshal(bytes, &varCommonsRunnerInstance); err == nil {
 		*o = CommonsRunnerInstance(varCommonsRunnerInstance)
 	}
@@ -1152,19 +1046,10 @@ func (o *CommonsRunnerInstance) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "allocation_for")
 		delete(additionalProperties, "allocation_requested_at")
 		delete(additionalProperties, "allocation_requested_event_at")
->>>>>>> prajjwal-warp-323
 		delete(additionalProperties, "cluster")
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "created_at")
 		delete(additionalProperties, "created_by")
-<<<<<<< HEAD
-		delete(additionalProperties, "id")
-		delete(additionalProperties, "last_job_processed_id")
-		delete(additionalProperties, "last_polled")
-		delete(additionalProperties, "organization_id")
-		delete(additionalProperties, "runner_for")
-		delete(additionalProperties, "runner_set_id")
-=======
 		delete(additionalProperties, "external_id")
 		delete(additionalProperties, "first_polled_at")
 		delete(additionalProperties, "host")
@@ -1181,7 +1066,6 @@ func (o *CommonsRunnerInstance) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "runner_for")
 		delete(additionalProperties, "runner_set_id")
 		delete(additionalProperties, "running_started_at")
->>>>>>> prajjwal-warp-323
 		delete(additionalProperties, "status")
 		delete(additionalProperties, "updated_at")
 		delete(additionalProperties, "vcs_integration_id")

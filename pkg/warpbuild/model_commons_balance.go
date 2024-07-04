@@ -207,21 +207,10 @@ func (o CommonsBalance) ToMap() (map[string]interface{}, error) {
 func (o *CommonsBalance) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsBalance := _CommonsBalance{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsBalance)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsBalance(varCommonsBalance)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsBalance); err == nil {
 		*o = CommonsBalance(varCommonsBalance)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

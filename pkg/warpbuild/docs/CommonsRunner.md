@@ -5,16 +5,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Active** | Pointer to **bool** |  | [optional] 
-<<<<<<< HEAD
-**ClusterId** | Pointer to **string** |  | [optional] 
-**Configuration** | Pointer to [**CommonsRunnerConfiguration**](CommonsRunnerConfiguration.md) |  | [optional] 
-**CreatedAt** | Pointer to **string** |  | [optional] 
-**ExternalReferenceId** | Pointer to **string** |  | [optional] 
-**Id** | Pointer to **string** |  | [optional] 
-**Labels** | Pointer to **map[string]interface{}** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-**OrganizationId** | Pointer to **string** |  | [optional] 
-=======
 **Configuration** | Pointer to [**CommonsRunnerSetConfiguration**](CommonsRunnerSetConfiguration.md) |  | [optional] 
 **CreatedAt** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **string** |  | [optional] 
@@ -23,7 +13,6 @@ Name | Type | Description | Notes
 **OrganizationId** | Pointer to **string** |  | [optional] 
 **ProviderId** | Pointer to **string** |  | [optional] 
 **StockRunnerId** | Pointer to **string** |  | [optional] 
->>>>>>> prajjwal-warp-323
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
 
@@ -71,61 +60,22 @@ SetActive sets Active field to given value.
 
 HasActive returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-### GetClusterId
-
-`func (o *CommonsRunner) GetClusterId() string`
-
-GetClusterId returns the ClusterId field if non-nil, zero value otherwise.
-
-### GetClusterIdOk
-
-`func (o *CommonsRunner) GetClusterIdOk() (*string, bool)`
-
-GetClusterIdOk returns a tuple with the ClusterId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetClusterId
-
-`func (o *CommonsRunner) SetClusterId(v string)`
-
-SetClusterId sets ClusterId field to given value.
-
-### HasClusterId
-
-`func (o *CommonsRunner) HasClusterId() bool`
-
-HasClusterId returns a boolean if a field has been set.
-
-### GetConfiguration
-
-`func (o *CommonsRunner) GetConfiguration() CommonsRunnerConfiguration`
-=======
 ### GetConfiguration
 
 `func (o *CommonsRunner) GetConfiguration() CommonsRunnerSetConfiguration`
->>>>>>> prajjwal-warp-323
 
 GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
 
 ### GetConfigurationOk
 
-<<<<<<< HEAD
-`func (o *CommonsRunner) GetConfigurationOk() (*CommonsRunnerConfiguration, bool)`
-=======
 `func (o *CommonsRunner) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool)`
->>>>>>> prajjwal-warp-323
 
 GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetConfiguration
 
-<<<<<<< HEAD
-`func (o *CommonsRunner) SetConfiguration(v CommonsRunnerConfiguration)`
-=======
 `func (o *CommonsRunner) SetConfiguration(v CommonsRunnerSetConfiguration)`
->>>>>>> prajjwal-warp-323
 
 SetConfiguration sets Configuration field to given value.
 
@@ -160,34 +110,6 @@ SetCreatedAt sets CreatedAt field to given value.
 
 HasCreatedAt returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-### GetExternalReferenceId
-
-`func (o *CommonsRunner) GetExternalReferenceId() string`
-
-GetExternalReferenceId returns the ExternalReferenceId field if non-nil, zero value otherwise.
-
-### GetExternalReferenceIdOk
-
-`func (o *CommonsRunner) GetExternalReferenceIdOk() (*string, bool)`
-
-GetExternalReferenceIdOk returns a tuple with the ExternalReferenceId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetExternalReferenceId
-
-`func (o *CommonsRunner) SetExternalReferenceId(v string)`
-
-SetExternalReferenceId sets ExternalReferenceId field to given value.
-
-### HasExternalReferenceId
-
-`func (o *CommonsRunner) HasExternalReferenceId() bool`
-
-HasExternalReferenceId returns a boolean if a field has been set.
-
-=======
->>>>>>> prajjwal-warp-323
 ### GetId
 
 `func (o *CommonsRunner) GetId() string`
@@ -215,32 +137,20 @@ HasId returns a boolean if a field has been set.
 
 ### GetLabels
 
-<<<<<<< HEAD
-`func (o *CommonsRunner) GetLabels() map[string]interface{}`
-=======
 `func (o *CommonsRunner) GetLabels() []string`
->>>>>>> prajjwal-warp-323
 
 GetLabels returns the Labels field if non-nil, zero value otherwise.
 
 ### GetLabelsOk
 
-<<<<<<< HEAD
-`func (o *CommonsRunner) GetLabelsOk() (*map[string]interface{}, bool)`
-=======
 `func (o *CommonsRunner) GetLabelsOk() (*[]string, bool)`
->>>>>>> prajjwal-warp-323
 
 GetLabelsOk returns a tuple with the Labels field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLabels
 
-<<<<<<< HEAD
-`func (o *CommonsRunner) SetLabels(v map[string]interface{})`
-=======
 `func (o *CommonsRunner) SetLabels(v []string)`
->>>>>>> prajjwal-warp-323
 
 SetLabels sets Labels field to given value.
 
@@ -300,8 +210,6 @@ SetOrganizationId sets OrganizationId field to given value.
 
 HasOrganizationId returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetProviderId
 
 `func (o *CommonsRunner) GetProviderId() string`
@@ -352,7 +260,6 @@ SetStockRunnerId sets StockRunnerId field to given value.
 
 HasStockRunnerId returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetUpdatedAt
 
 `func (o *CommonsRunner) GetUpdatedAt() string`

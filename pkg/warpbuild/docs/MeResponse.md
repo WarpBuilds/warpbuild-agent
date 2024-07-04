@@ -4,10 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-<<<<<<< HEAD
-=======
 **Extras** | Pointer to **map[string]string** |  | [optional] 
->>>>>>> prajjwal-warp-323
 **Organization** | [**V1Organization**](V1Organization.md) |  | 
 **User** | [**V1User**](V1User.md) |  | 
 **VcsIntegration** | [**CommonsVCSIntegrationLean**](CommonsVCSIntegrationLean.md) |  | 
@@ -31,8 +28,6 @@ NewMeResponseWithDefaults instantiates a new MeResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-<<<<<<< HEAD
-=======
 ### GetExtras
 
 `func (o *MeResponse) GetExtras() map[string]string`
@@ -58,7 +53,6 @@ SetExtras sets Extras field to given value.
 
 HasExtras returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetOrganization
 
 `func (o *MeResponse) GetOrganization() V1Organization`

@@ -90,21 +90,10 @@ func (o TokenRefreshResponse) ToMap() (map[string]interface{}, error) {
 func (o *TokenRefreshResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varTokenRefreshResponse := _TokenRefreshResponse{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varTokenRefreshResponse)
-
-	if err != nil {
-		return err
-	}
-
-	*o = TokenRefreshResponse(varTokenRefreshResponse)
-
-=======
 	if err = json.Unmarshal(bytes, &varTokenRefreshResponse); err == nil {
 		*o = TokenRefreshResponse(varTokenRefreshResponse)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

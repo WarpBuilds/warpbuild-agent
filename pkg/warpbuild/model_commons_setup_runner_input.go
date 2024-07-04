@@ -21,16 +21,10 @@ var _ MappedNullable = &CommonsSetupRunnerInput{}
 // CommonsSetupRunnerInput struct for CommonsSetupRunnerInput
 type CommonsSetupRunnerInput struct {
 	Active *bool `json:"Active,omitempty"`
-<<<<<<< HEAD
-	Configuration *CommonsRunnerConfiguration `json:"configuration,omitempty"`
-	Labels map[string]interface{} `json:"labels,omitempty"`
-	Name *string `json:"name,omitempty"`
-=======
 	Configuration *CommonsRunnerSetConfiguration `json:"configuration,omitempty"`
 	Labels []string `json:"labels,omitempty"`
 	Name *string `json:"name,omitempty"`
 	StockRunnerId *string `json:"stock_runner_id,omitempty"`
->>>>>>> prajjwal-warp-323
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -87,15 +81,9 @@ func (o *CommonsSetupRunnerInput) SetActive(v bool) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise.
-<<<<<<< HEAD
-func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerConfiguration {
-	if o == nil || IsNil(o.Configuration) {
-		var ret CommonsRunnerConfiguration
-=======
 func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerSetConfiguration {
 	if o == nil || IsNil(o.Configuration) {
 		var ret CommonsRunnerSetConfiguration
->>>>>>> prajjwal-warp-323
 		return ret
 	}
 	return *o.Configuration
@@ -103,11 +91,7 @@ func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerSetConfigurati
 
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-<<<<<<< HEAD
-func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerConfiguration, bool) {
-=======
 func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool) {
->>>>>>> prajjwal-warp-323
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -123,26 +107,15 @@ func (o *CommonsSetupRunnerInput) HasConfiguration() bool {
 	return false
 }
 
-<<<<<<< HEAD
-// SetConfiguration gets a reference to the given CommonsRunnerConfiguration and assigns it to the Configuration field.
-func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerConfiguration) {
-=======
 // SetConfiguration gets a reference to the given CommonsRunnerSetConfiguration and assigns it to the Configuration field.
 func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerSetConfiguration) {
->>>>>>> prajjwal-warp-323
 	o.Configuration = &v
 }
 
 // GetLabels returns the Labels field value if set, zero value otherwise.
-<<<<<<< HEAD
-func (o *CommonsSetupRunnerInput) GetLabels() map[string]interface{} {
-	if o == nil || IsNil(o.Labels) {
-		var ret map[string]interface{}
-=======
 func (o *CommonsSetupRunnerInput) GetLabels() []string {
 	if o == nil || IsNil(o.Labels) {
 		var ret []string
->>>>>>> prajjwal-warp-323
 		return ret
 	}
 	return o.Labels
@@ -150,15 +123,9 @@ func (o *CommonsSetupRunnerInput) GetLabels() []string {
 
 // GetLabelsOk returns a tuple with the Labels field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-<<<<<<< HEAD
-func (o *CommonsSetupRunnerInput) GetLabelsOk() (map[string]interface{}, bool) {
-	if o == nil || IsNil(o.Labels) {
-		return map[string]interface{}{}, false
-=======
 func (o *CommonsSetupRunnerInput) GetLabelsOk() ([]string, bool) {
 	if o == nil || IsNil(o.Labels) {
 		return nil, false
->>>>>>> prajjwal-warp-323
 	}
 	return o.Labels, true
 }
@@ -172,13 +139,8 @@ func (o *CommonsSetupRunnerInput) HasLabels() bool {
 	return false
 }
 
-<<<<<<< HEAD
-// SetLabels gets a reference to the given map[string]interface{} and assigns it to the Labels field.
-func (o *CommonsSetupRunnerInput) SetLabels(v map[string]interface{}) {
-=======
 // SetLabels gets a reference to the given []string and assigns it to the Labels field.
 func (o *CommonsSetupRunnerInput) SetLabels(v []string) {
->>>>>>> prajjwal-warp-323
 	o.Labels = v
 }
 
@@ -214,8 +176,6 @@ func (o *CommonsSetupRunnerInput) SetName(v string) {
 	o.Name = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetStockRunnerId returns the StockRunnerId field value if set, zero value otherwise.
 func (o *CommonsSetupRunnerInput) GetStockRunnerId() string {
 	if o == nil || IsNil(o.StockRunnerId) {
@@ -248,7 +208,6 @@ func (o *CommonsSetupRunnerInput) SetStockRunnerId(v string) {
 	o.StockRunnerId = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetVcsIntegrationId returns the VcsIntegrationId field value if set, zero value otherwise.
 func (o *CommonsSetupRunnerInput) GetVcsIntegrationId() string {
 	if o == nil || IsNil(o.VcsIntegrationId) {
@@ -303,12 +262,9 @@ func (o CommonsSetupRunnerInput) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
-<<<<<<< HEAD
-=======
 	if !IsNil(o.StockRunnerId) {
 		toSerialize["stock_runner_id"] = o.StockRunnerId
 	}
->>>>>>> prajjwal-warp-323
 	if !IsNil(o.VcsIntegrationId) {
 		toSerialize["vcs_integration_id"] = o.VcsIntegrationId
 	}
@@ -323,21 +279,10 @@ func (o CommonsSetupRunnerInput) ToMap() (map[string]interface{}, error) {
 func (o *CommonsSetupRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsSetupRunnerInput := _CommonsSetupRunnerInput{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsSetupRunnerInput)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsSetupRunnerInput(varCommonsSetupRunnerInput)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsSetupRunnerInput); err == nil {
 		*o = CommonsSetupRunnerInput(varCommonsSetupRunnerInput)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
@@ -345,10 +290,7 @@ func (o *CommonsSetupRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "labels")
 		delete(additionalProperties, "name")
-<<<<<<< HEAD
-=======
 		delete(additionalProperties, "stock_runner_id")
->>>>>>> prajjwal-warp-323
 		delete(additionalProperties, "vcs_integration_id")
 		o.AdditionalProperties = additionalProperties
 	}

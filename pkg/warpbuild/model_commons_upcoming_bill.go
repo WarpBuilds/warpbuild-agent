@@ -171,21 +171,10 @@ func (o CommonsUpcomingBill) ToMap() (map[string]interface{}, error) {
 func (o *CommonsUpcomingBill) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsUpcomingBill := _CommonsUpcomingBill{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsUpcomingBill)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsUpcomingBill(varCommonsUpcomingBill)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsUpcomingBill); err == nil {
 		*o = CommonsUpcomingBill(varCommonsUpcomingBill)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

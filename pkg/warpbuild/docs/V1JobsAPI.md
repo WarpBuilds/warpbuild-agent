@@ -1,24 +1,9 @@
-<<<<<<< HEAD
-# \V1JobsAPI
-=======
 # \V1JobsApi
->>>>>>> prajjwal-warp-323
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-<<<<<<< HEAD
-[**GetEstimatedCosts**](V1JobsAPI.md#GetEstimatedCosts) | **Get** /jobs/estimated-costs | GetEstimatedCosts
-
-
-
-## GetEstimatedCosts
-
-> []EstimatedCost GetEstimatedCosts(ctx).StartDate(startDate).EndDate(endDate).Execute()
-
-GetEstimatedCosts
-=======
 [**GetCostSummary**](V1JobsApi.md#GetCostSummary) | **Get** /jobs/cost-summary | GetCostSummary
 [**GetDaywiseCosts**](V1JobsApi.md#GetDaywiseCosts) | **Get** /jobs/daywise-costs | GetDaywiseCosts
 
@@ -29,7 +14,6 @@ GetEstimatedCosts
 > CommonsCostSummary GetCostSummary(ctx).StartDate(startDate).EndDate(endDate).Execute()
 
 GetCostSummary
->>>>>>> prajjwal-warp-323
 
 
 
@@ -51,15 +35,6 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-<<<<<<< HEAD
-    resp, r, err := apiClient.V1JobsAPI.GetEstimatedCosts(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1JobsAPI.GetEstimatedCosts``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-    }
-    // response from `GetEstimatedCosts`: []EstimatedCost
-    fmt.Fprintf(os.Stdout, "Response from `V1JobsAPI.GetEstimatedCosts`: %v\n", resp)
-=======
     resp, r, err := apiClient.V1JobsApi.GetCostSummary(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1JobsApi.GetCostSummary``: %v\n", err)
@@ -67,7 +42,6 @@ func main() {
     }
     // response from `GetCostSummary`: CommonsCostSummary
     fmt.Fprintf(os.Stdout, "Response from `V1JobsApi.GetCostSummary`: %v\n", resp)
->>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -77,11 +51,7 @@ func main() {
 
 ### Other Parameters
 
-<<<<<<< HEAD
-Other parameters are passed through a pointer to a apiGetEstimatedCostsRequest struct via the builder pattern
-=======
 Other parameters are passed through a pointer to a apiGetCostSummaryRequest struct via the builder pattern
->>>>>>> prajjwal-warp-323
 
 
 Name | Type | Description  | Notes
@@ -91,9 +61,6 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-<<<<<<< HEAD
-[**[]EstimatedCost**](EstimatedCost.md)
-=======
 [**CommonsCostSummary**](CommonsCostSummary.md)
 
 ### Authorization
@@ -163,7 +130,6 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**[]CommonsDaywiseCost**](CommonsDaywiseCost.md)
->>>>>>> prajjwal-warp-323
 
 ### Authorization
 

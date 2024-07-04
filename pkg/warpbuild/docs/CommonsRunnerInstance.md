@@ -4,18 +4,6 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-<<<<<<< HEAD
-**Cluster** | Pointer to **string** |  | [optional] 
-**Configuration** | Pointer to [**CommonsRunnerConfiguration**](CommonsRunnerConfiguration.md) |  | [optional] 
-**CreatedAt** | Pointer to **string** |  | [optional] 
-**CreatedBy** | Pointer to **string** |  | [optional] 
-**Id** | Pointer to **string** |  | [optional] 
-**LastJobProcessedId** | Pointer to **string** |  | [optional] 
-**LastPolled** | Pointer to **string** |  | [optional] 
-**OrganizationId** | Pointer to **string** |  | [optional] 
-**RunnerFor** | Pointer to **string** |  | [optional] 
-**RunnerSetId** | Pointer to **string** |  | [optional] 
-=======
 **AllocatedAt** | Pointer to **string** |  | [optional] 
 **AllocationFor** | Pointer to **string** |  | [optional] 
 **AllocationRequestedAt** | Pointer to **string** |  | [optional] 
@@ -40,7 +28,6 @@ Name | Type | Description | Notes
 **RunnerFor** | Pointer to **string** |  | [optional] 
 **RunnerSetId** | Pointer to **string** |  | [optional] 
 **RunningStartedAt** | Pointer to **string** |  | [optional] 
->>>>>>> prajjwal-warp-323
 **Status** | Pointer to **string** |  | [optional] 
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
@@ -64,8 +51,6 @@ NewCommonsRunnerInstanceWithDefaults instantiates a new CommonsRunnerInstance ob
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-<<<<<<< HEAD
-=======
 ### GetAllocatedAt
 
 `func (o *CommonsRunnerInstance) GetAllocatedAt() string`
@@ -166,7 +151,6 @@ SetAllocationRequestedEventAt sets AllocationRequestedEventAt field to given val
 
 HasAllocationRequestedEventAt returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetCluster
 
 `func (o *CommonsRunnerInstance) GetCluster() string`
@@ -194,32 +178,20 @@ HasCluster returns a boolean if a field has been set.
 
 ### GetConfiguration
 
-<<<<<<< HEAD
-`func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerConfiguration`
-=======
 `func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerInstanceConfiguration`
->>>>>>> prajjwal-warp-323
 
 GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
 
 ### GetConfigurationOk
 
-<<<<<<< HEAD
-`func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerConfiguration, bool)`
-=======
 `func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerInstanceConfiguration, bool)`
->>>>>>> prajjwal-warp-323
 
 GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetConfiguration
 
-<<<<<<< HEAD
-`func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerConfiguration)`
-=======
 `func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerInstanceConfiguration)`
->>>>>>> prajjwal-warp-323
 
 SetConfiguration sets Configuration field to given value.
 
@@ -279,8 +251,6 @@ SetCreatedBy sets CreatedBy field to given value.
 
 HasCreatedBy returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetExternalId
 
 `func (o *CommonsRunnerInstance) GetExternalId() string`
@@ -356,7 +326,6 @@ SetHost sets Host field to given value.
 
 HasHost returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetId
 
 `func (o *CommonsRunnerInstance) GetId() string`
@@ -382,8 +351,6 @@ SetId sets Id field to given value.
 
 HasId returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetLabels
 
 `func (o *CommonsRunnerInstance) GetLabels() []string`
@@ -409,7 +376,6 @@ SetLabels sets Labels field to given value.
 
 HasLabels returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetLastJobProcessedId
 
 `func (o *CommonsRunnerInstance) GetLastJobProcessedId() string`
@@ -435,32 +401,6 @@ SetLastJobProcessedId sets LastJobProcessedId field to given value.
 
 HasLastJobProcessedId returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-### GetLastPolled
-
-`func (o *CommonsRunnerInstance) GetLastPolled() string`
-
-GetLastPolled returns the LastPolled field if non-nil, zero value otherwise.
-
-### GetLastPolledOk
-
-`func (o *CommonsRunnerInstance) GetLastPolledOk() (*string, bool)`
-
-GetLastPolledOk returns a tuple with the LastPolled field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetLastPolled
-
-`func (o *CommonsRunnerInstance) SetLastPolled(v string)`
-
-SetLastPolled sets LastPolled field to given value.
-
-### HasLastPolled
-
-`func (o *CommonsRunnerInstance) HasLastPolled() bool`
-
-HasLastPolled returns a boolean if a field has been set.
-=======
 ### GetLastJobProcessedMeta
 
 `func (o *CommonsRunnerInstance) GetLastJobProcessedMeta() CommonsLastJobProcessedMeta`
@@ -510,7 +450,6 @@ SetLastPolledAt sets LastPolledAt field to given value.
 `func (o *CommonsRunnerInstance) HasLastPolledAt() bool`
 
 HasLastPolledAt returns a boolean if a field has been set.
->>>>>>> prajjwal-warp-323
 
 ### GetOrganizationId
 
@@ -537,8 +476,6 @@ SetOrganizationId sets OrganizationId field to given value.
 
 HasOrganizationId returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetProviderKind
 
 `func (o *CommonsRunnerInstance) GetProviderKind() string`
@@ -639,7 +576,6 @@ SetPurgedReason sets PurgedReason field to given value.
 
 HasPurgedReason returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetRunnerFor
 
 `func (o *CommonsRunnerInstance) GetRunnerFor() string`
@@ -690,8 +626,6 @@ SetRunnerSetId sets RunnerSetId field to given value.
 
 HasRunnerSetId returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetRunningStartedAt
 
 `func (o *CommonsRunnerInstance) GetRunningStartedAt() string`
@@ -717,7 +651,6 @@ SetRunningStartedAt sets RunningStartedAt field to given value.
 
 HasRunningStartedAt returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetStatus
 
 `func (o *CommonsRunnerInstance) GetStatus() string`

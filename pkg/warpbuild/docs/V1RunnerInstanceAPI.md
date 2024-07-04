@@ -1,22 +1,13 @@
-<<<<<<< HEAD
-# \V1RunnerInstanceAPI
-=======
 # \V1RunnerInstanceApi
->>>>>>> prajjwal-warp-323
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-<<<<<<< HEAD
-[**GetRunnerInstanceAllocationDetails**](V1RunnerInstanceAPI.md#GetRunnerInstanceAllocationDetails) | **Get** /runners_instance/{id}/allocation_details | Get runner instance allocation details for the id
-[**RunnerInstanceCleanupHook**](V1RunnerInstanceAPI.md#RunnerInstanceCleanupHook) | **Post** /runners_instance/{id}/cleanup_hook | Get runner instance allocation details for the id
-=======
 [**GetRunnerInstanceAllocationDetails**](V1RunnerInstanceApi.md#GetRunnerInstanceAllocationDetails) | **Get** /runners_instance/{id}/allocation_details | Get runner instance allocation details for the id
 [**GetRunnerInstancePresignedLogUploadURL**](V1RunnerInstanceApi.md#GetRunnerInstancePresignedLogUploadURL) | **Get** /runners_instance/{id}/presigned_log_upload_url | Gets a presigned url for uploading logs for a runner instance
 [**GetRunnerLastJobProcessedMeta**](V1RunnerInstanceApi.md#GetRunnerLastJobProcessedMeta) | **Get** /runner_instance/internal/{id}/last_job_processed_meta | Get runner last used job meta
 [**RunnerInstanceCleanupHook**](V1RunnerInstanceApi.md#RunnerInstanceCleanupHook) | **Post** /runners_instance/{id}/cleanup_hook | Get runner instance allocation details for the id
->>>>>>> prajjwal-warp-323
 
 
 
@@ -44,15 +35,6 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-<<<<<<< HEAD
-    resp, r, err := apiClient.V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-    }
-    // response from `GetRunnerInstanceAllocationDetails`: CommonsRunnerInstanceAllocationDetails
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceAPI.GetRunnerInstanceAllocationDetails`: %v\n", resp)
-=======
     resp, r, err := apiClient.V1RunnerInstanceApi.GetRunnerInstanceAllocationDetails(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceApi.GetRunnerInstanceAllocationDetails``: %v\n", err)
@@ -60,7 +42,6 @@ func main() {
     }
     // response from `GetRunnerInstanceAllocationDetails`: CommonsRunnerInstanceAllocationDetails
     fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceApi.GetRunnerInstanceAllocationDetails`: %v\n", resp)
->>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -100,8 +81,6 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-<<<<<<< HEAD
-=======
 ## GetRunnerInstancePresignedLogUploadURL
 
 > string GetRunnerInstancePresignedLogUploadURL(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).LogFileName(logFileName).Execute()
@@ -242,7 +221,6 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
->>>>>>> prajjwal-warp-323
 ## RunnerInstanceCleanupHook
 
 > map[string]interface{} RunnerInstanceCleanupHook(ctx, id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
@@ -267,15 +245,6 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-<<<<<<< HEAD
-    resp, r, err := apiClient.V1RunnerInstanceAPI.RunnerInstanceCleanupHook(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceAPI.RunnerInstanceCleanupHook``: %v\n", err)
-        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-    }
-    // response from `RunnerInstanceCleanupHook`: map[string]interface{}
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceAPI.RunnerInstanceCleanupHook`: %v\n", resp)
-=======
     resp, r, err := apiClient.V1RunnerInstanceApi.RunnerInstanceCleanupHook(context.Background(), id).XPOLLINGSECRET(xPOLLINGSECRET).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1RunnerInstanceApi.RunnerInstanceCleanupHook``: %v\n", err)
@@ -283,7 +252,6 @@ func main() {
     }
     // response from `RunnerInstanceCleanupHook`: map[string]interface{}
     fmt.Fprintf(os.Stdout, "Response from `V1RunnerInstanceApi.RunnerInstanceCleanupHook`: %v\n", resp)
->>>>>>> prajjwal-warp-323
 }
 ```
 

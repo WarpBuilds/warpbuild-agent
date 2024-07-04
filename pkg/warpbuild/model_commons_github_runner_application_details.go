@@ -207,21 +207,10 @@ func (o CommonsGithubRunnerApplicationDetails) ToMap() (map[string]interface{}, 
 func (o *CommonsGithubRunnerApplicationDetails) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsGithubRunnerApplicationDetails := _CommonsGithubRunnerApplicationDetails{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsGithubRunnerApplicationDetails)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsGithubRunnerApplicationDetails(varCommonsGithubRunnerApplicationDetails)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsGithubRunnerApplicationDetails); err == nil {
 		*o = CommonsGithubRunnerApplicationDetails(varCommonsGithubRunnerApplicationDetails)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

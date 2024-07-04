@@ -99,21 +99,10 @@ func (o TypesGenericSuccessMessage) ToMap() (map[string]interface{}, error) {
 func (o *TypesGenericSuccessMessage) UnmarshalJSON(bytes []byte) (err error) {
 	varTypesGenericSuccessMessage := _TypesGenericSuccessMessage{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varTypesGenericSuccessMessage)
-
-	if err != nil {
-		return err
-	}
-
-	*o = TypesGenericSuccessMessage(varTypesGenericSuccessMessage)
-
-=======
 	if err = json.Unmarshal(bytes, &varTypesGenericSuccessMessage); err == nil {
 		*o = TypesGenericSuccessMessage(varTypesGenericSuccessMessage)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

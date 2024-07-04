@@ -387,21 +387,10 @@ func (o V1User) ToMap() (map[string]interface{}, error) {
 func (o *V1User) UnmarshalJSON(bytes []byte) (err error) {
 	varV1User := _V1User{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varV1User)
-
-	if err != nil {
-		return err
-	}
-
-	*o = V1User(varV1User)
-
-=======
 	if err = json.Unmarshal(bytes, &varV1User); err == nil {
 		*o = V1User(varV1User)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

@@ -20,21 +20,6 @@ var _ MappedNullable = &CommonsRepo{}
 
 // CommonsRepo struct for CommonsRepo
 type CommonsRepo struct {
-<<<<<<< HEAD
-	AccountID *string `json:"AccountID,omitempty"`
-	CreatedAt *string `json:"CreatedAt,omitempty"`
-	DefaultBranch *string `json:"DefaultBranch,omitempty"`
-	DisplayName *string `json:"DisplayName,omitempty"`
-	IntegrationID *string `json:"IntegrationID,omitempty"`
-	SSHURL *string `json:"SSHURL,omitempty"`
-	UpdatedAt *string `json:"UpdatedAt,omitempty"`
-	WebURL *string `json:"WebURL,omitempty"`
-	Id *string `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
-	Owner *string `json:"owner,omitempty"`
-	Provider *string `json:"provider,omitempty"`
-	VcsId *string `json:"vcs_id,omitempty"`
-=======
 	AccountId *string `json:"account_id,omitempty"`
 	CreatedAt *string `json:"created_at,omitempty"`
 	DefaultBranch *string `json:"default_branch,omitempty"`
@@ -48,7 +33,6 @@ type CommonsRepo struct {
 	UpdatedAt *string `json:"updated_at,omitempty"`
 	VcsId *string `json:"vcs_id,omitempty"`
 	WebUrl *string `json:"web_url,omitempty"`
->>>>>>> prajjwal-warp-323
 	AdditionalProperties map[string]interface{}
 }
 
@@ -71,29 +55,6 @@ func NewCommonsRepoWithDefaults() *CommonsRepo {
 	return &this
 }
 
-<<<<<<< HEAD
-// GetAccountID returns the AccountID field value if set, zero value otherwise.
-func (o *CommonsRepo) GetAccountID() string {
-	if o == nil || IsNil(o.AccountID) {
-		var ret string
-		return ret
-	}
-	return *o.AccountID
-}
-
-// GetAccountIDOk returns a tuple with the AccountID field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRepo) GetAccountIDOk() (*string, bool) {
-	if o == nil || IsNil(o.AccountID) {
-		return nil, false
-	}
-	return o.AccountID, true
-}
-
-// HasAccountID returns a boolean if a field has been set.
-func (o *CommonsRepo) HasAccountID() bool {
-	if o != nil && !IsNil(o.AccountID) {
-=======
 // GetAccountId returns the AccountId field value if set, zero value otherwise.
 func (o *CommonsRepo) GetAccountId() string {
 	if o == nil || IsNil(o.AccountId) {
@@ -115,22 +76,15 @@ func (o *CommonsRepo) GetAccountIdOk() (*string, bool) {
 // HasAccountId returns a boolean if a field has been set.
 func (o *CommonsRepo) HasAccountId() bool {
 	if o != nil && !IsNil(o.AccountId) {
->>>>>>> prajjwal-warp-323
 		return true
 	}
 
 	return false
 }
 
-<<<<<<< HEAD
-// SetAccountID gets a reference to the given string and assigns it to the AccountID field.
-func (o *CommonsRepo) SetAccountID(v string) {
-	o.AccountID = &v
-=======
 // SetAccountId gets a reference to the given string and assigns it to the AccountId field.
 func (o *CommonsRepo) SetAccountId(v string) {
 	o.AccountId = &v
->>>>>>> prajjwal-warp-323
 }
 
 // GetCreatedAt returns the CreatedAt field value if set, zero value otherwise.
@@ -229,137 +183,6 @@ func (o *CommonsRepo) SetDisplayName(v string) {
 	o.DisplayName = &v
 }
 
-<<<<<<< HEAD
-// GetIntegrationID returns the IntegrationID field value if set, zero value otherwise.
-func (o *CommonsRepo) GetIntegrationID() string {
-	if o == nil || IsNil(o.IntegrationID) {
-		var ret string
-		return ret
-	}
-	return *o.IntegrationID
-}
-
-// GetIntegrationIDOk returns a tuple with the IntegrationID field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRepo) GetIntegrationIDOk() (*string, bool) {
-	if o == nil || IsNil(o.IntegrationID) {
-		return nil, false
-	}
-	return o.IntegrationID, true
-}
-
-// HasIntegrationID returns a boolean if a field has been set.
-func (o *CommonsRepo) HasIntegrationID() bool {
-	if o != nil && !IsNil(o.IntegrationID) {
-		return true
-	}
-
-	return false
-}
-
-// SetIntegrationID gets a reference to the given string and assigns it to the IntegrationID field.
-func (o *CommonsRepo) SetIntegrationID(v string) {
-	o.IntegrationID = &v
-}
-
-// GetSSHURL returns the SSHURL field value if set, zero value otherwise.
-func (o *CommonsRepo) GetSSHURL() string {
-	if o == nil || IsNil(o.SSHURL) {
-		var ret string
-		return ret
-	}
-	return *o.SSHURL
-}
-
-// GetSSHURLOk returns a tuple with the SSHURL field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRepo) GetSSHURLOk() (*string, bool) {
-	if o == nil || IsNil(o.SSHURL) {
-		return nil, false
-	}
-	return o.SSHURL, true
-}
-
-// HasSSHURL returns a boolean if a field has been set.
-func (o *CommonsRepo) HasSSHURL() bool {
-	if o != nil && !IsNil(o.SSHURL) {
-		return true
-	}
-
-	return false
-}
-
-// SetSSHURL gets a reference to the given string and assigns it to the SSHURL field.
-func (o *CommonsRepo) SetSSHURL(v string) {
-	o.SSHURL = &v
-}
-
-// GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
-func (o *CommonsRepo) GetUpdatedAt() string {
-	if o == nil || IsNil(o.UpdatedAt) {
-		var ret string
-		return ret
-	}
-	return *o.UpdatedAt
-}
-
-// GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRepo) GetUpdatedAtOk() (*string, bool) {
-	if o == nil || IsNil(o.UpdatedAt) {
-		return nil, false
-	}
-	return o.UpdatedAt, true
-}
-
-// HasUpdatedAt returns a boolean if a field has been set.
-func (o *CommonsRepo) HasUpdatedAt() bool {
-	if o != nil && !IsNil(o.UpdatedAt) {
-		return true
-	}
-
-	return false
-}
-
-// SetUpdatedAt gets a reference to the given string and assigns it to the UpdatedAt field.
-func (o *CommonsRepo) SetUpdatedAt(v string) {
-	o.UpdatedAt = &v
-}
-
-// GetWebURL returns the WebURL field value if set, zero value otherwise.
-func (o *CommonsRepo) GetWebURL() string {
-	if o == nil || IsNil(o.WebURL) {
-		var ret string
-		return ret
-	}
-	return *o.WebURL
-}
-
-// GetWebURLOk returns a tuple with the WebURL field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRepo) GetWebURLOk() (*string, bool) {
-	if o == nil || IsNil(o.WebURL) {
-		return nil, false
-	}
-	return o.WebURL, true
-}
-
-// HasWebURL returns a boolean if a field has been set.
-func (o *CommonsRepo) HasWebURL() bool {
-	if o != nil && !IsNil(o.WebURL) {
-		return true
-	}
-
-	return false
-}
-
-// SetWebURL gets a reference to the given string and assigns it to the WebURL field.
-func (o *CommonsRepo) SetWebURL(v string) {
-	o.WebURL = &v
-}
-
-=======
->>>>>>> prajjwal-warp-323
 // GetId returns the Id field value if set, zero value otherwise.
 func (o *CommonsRepo) GetId() string {
 	if o == nil || IsNil(o.Id) {
@@ -392,8 +215,6 @@ func (o *CommonsRepo) SetId(v string) {
 	o.Id = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetIntegrationId returns the IntegrationId field value if set, zero value otherwise.
 func (o *CommonsRepo) GetIntegrationId() string {
 	if o == nil || IsNil(o.IntegrationId) {
@@ -426,7 +247,6 @@ func (o *CommonsRepo) SetIntegrationId(v string) {
 	o.IntegrationId = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetName returns the Name field value if set, zero value otherwise.
 func (o *CommonsRepo) GetName() string {
 	if o == nil || IsNil(o.Name) {
@@ -523,8 +343,6 @@ func (o *CommonsRepo) SetProvider(v string) {
 	o.Provider = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetSshurl returns the Sshurl field value if set, zero value otherwise.
 func (o *CommonsRepo) GetSshurl() string {
 	if o == nil || IsNil(o.Sshurl) {
@@ -589,7 +407,6 @@ func (o *CommonsRepo) SetUpdatedAt(v string) {
 	o.UpdatedAt = &v
 }
 
->>>>>>> prajjwal-warp-323
 // GetVcsId returns the VcsId field value if set, zero value otherwise.
 func (o *CommonsRepo) GetVcsId() string {
 	if o == nil || IsNil(o.VcsId) {
@@ -622,8 +439,6 @@ func (o *CommonsRepo) SetVcsId(v string) {
 	o.VcsId = &v
 }
 
-<<<<<<< HEAD
-=======
 // GetWebUrl returns the WebUrl field value if set, zero value otherwise.
 func (o *CommonsRepo) GetWebUrl() string {
 	if o == nil || IsNil(o.WebUrl) {
@@ -656,7 +471,6 @@ func (o *CommonsRepo) SetWebUrl(v string) {
 	o.WebUrl = &v
 }
 
->>>>>>> prajjwal-warp-323
 func (o CommonsRepo) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -667,31 +481,6 @@ func (o CommonsRepo) MarshalJSON() ([]byte, error) {
 
 func (o CommonsRepo) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-<<<<<<< HEAD
-	if !IsNil(o.AccountID) {
-		toSerialize["AccountID"] = o.AccountID
-	}
-	if !IsNil(o.CreatedAt) {
-		toSerialize["CreatedAt"] = o.CreatedAt
-	}
-	if !IsNil(o.DefaultBranch) {
-		toSerialize["DefaultBranch"] = o.DefaultBranch
-	}
-	if !IsNil(o.DisplayName) {
-		toSerialize["DisplayName"] = o.DisplayName
-	}
-	if !IsNil(o.IntegrationID) {
-		toSerialize["IntegrationID"] = o.IntegrationID
-	}
-	if !IsNil(o.SSHURL) {
-		toSerialize["SSHURL"] = o.SSHURL
-	}
-	if !IsNil(o.UpdatedAt) {
-		toSerialize["UpdatedAt"] = o.UpdatedAt
-	}
-	if !IsNil(o.WebURL) {
-		toSerialize["WebURL"] = o.WebURL
-=======
 	if !IsNil(o.AccountId) {
 		toSerialize["account_id"] = o.AccountId
 	}
@@ -703,17 +492,13 @@ func (o CommonsRepo) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.DisplayName) {
 		toSerialize["display_name"] = o.DisplayName
->>>>>>> prajjwal-warp-323
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
 	}
-<<<<<<< HEAD
-=======
 	if !IsNil(o.IntegrationId) {
 		toSerialize["integration_id"] = o.IntegrationId
 	}
->>>>>>> prajjwal-warp-323
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
@@ -723,11 +508,6 @@ func (o CommonsRepo) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Provider) {
 		toSerialize["provider"] = o.Provider
 	}
-<<<<<<< HEAD
-	if !IsNil(o.VcsId) {
-		toSerialize["vcs_id"] = o.VcsId
-	}
-=======
 	if !IsNil(o.Sshurl) {
 		toSerialize["sshurl"] = o.Sshurl
 	}
@@ -740,7 +520,6 @@ func (o CommonsRepo) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.WebUrl) {
 		toSerialize["web_url"] = o.WebUrl
 	}
->>>>>>> prajjwal-warp-323
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -752,32 +531,6 @@ func (o CommonsRepo) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRepo) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRepo := _CommonsRepo{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsRepo)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsRepo(varCommonsRepo)
-
-	additionalProperties := make(map[string]interface{})
-
-	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
-		delete(additionalProperties, "AccountID")
-		delete(additionalProperties, "CreatedAt")
-		delete(additionalProperties, "DefaultBranch")
-		delete(additionalProperties, "DisplayName")
-		delete(additionalProperties, "IntegrationID")
-		delete(additionalProperties, "SSHURL")
-		delete(additionalProperties, "UpdatedAt")
-		delete(additionalProperties, "WebURL")
-		delete(additionalProperties, "id")
-		delete(additionalProperties, "name")
-		delete(additionalProperties, "owner")
-		delete(additionalProperties, "provider")
-		delete(additionalProperties, "vcs_id")
-=======
 	if err = json.Unmarshal(bytes, &varCommonsRepo); err == nil {
 		*o = CommonsRepo(varCommonsRepo)
 	}
@@ -798,7 +551,6 @@ func (o *CommonsRepo) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "updated_at")
 		delete(additionalProperties, "vcs_id")
 		delete(additionalProperties, "web_url")
->>>>>>> prajjwal-warp-323
 		o.AdditionalProperties = additionalProperties
 	}
 

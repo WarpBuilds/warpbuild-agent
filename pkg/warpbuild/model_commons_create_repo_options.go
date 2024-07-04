@@ -324,21 +324,10 @@ func (o CommonsCreateRepoOptions) ToMap() (map[string]interface{}, error) {
 func (o *CommonsCreateRepoOptions) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsCreateRepoOptions := _CommonsCreateRepoOptions{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsCreateRepoOptions)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsCreateRepoOptions(varCommonsCreateRepoOptions)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsCreateRepoOptions); err == nil {
 		*o = CommonsCreateRepoOptions(varCommonsCreateRepoOptions)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

@@ -64,14 +64,6 @@ paths:
         required: true
         schema:
           type: string
-<<<<<<< HEAD
-      - description: Invite code if any
-        in: query
-        name: invite_code
-        schema:
-          type: string
-=======
->>>>>>> prajjwal-warp-323
       responses:
         "302":
           content:
@@ -361,8 +353,6 @@ paths:
       tags:
       - v1 subscriptions
       x-codegen-request-body-name: Body
-<<<<<<< HEAD
-=======
   /billing/info:
     get:
       operationId: GetBillingInfo
@@ -448,7 +438,6 @@ paths:
       tags:
       - v1 subscriptions
       x-codegen-request-body-name: Body
->>>>>>> prajjwal-warp-323
   /billing/setup_intent/init:
     post:
       operationId: InitiateSetupIntent
@@ -496,8 +485,6 @@ paths:
       tags:
       - v1 subscriptions
       x-codegen-request-body-name: Body
-<<<<<<< HEAD
-=======
   /billing/setup_intent/post_processor:
     post:
       operationId: PostSetupIntent
@@ -592,7 +579,6 @@ paths:
       tags:
       - v1 billing
       x-codegen-request-body-name: Body
->>>>>>> prajjwal-warp-323
   /debugger/events/publish:
     post:
       operationId: DebugPublishEvent
@@ -640,49 +626,6 @@ paths:
       tags:
       - v1 debugger
       x-codegen-request-body-name: body
-<<<<<<< HEAD
-  /invite:
-    patch:
-      description: Invite is figured out from the auth token since tokens are specific
-        to invites.
-      operationId: UpdateInvite
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/UpdateInviteRequest'
-        description: Update existing invite body
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/V1Invite'
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: Updates existing invite based on the fields provided.
-      tags:
-      - v1 invite
-      x-codegen-request-body-name: body
-    post:
-      description: "User can manage multiple tenanats from one account, this api provides\
-        \ user a functionality to add a new tenant/org to the user."
-      operationId: CreateInvite
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/CreateInviteRequest'
-        description: Create new invite body
-=======
   /insights/integrations/github/callback:
     post:
       description: Callback for verifying insights integration
@@ -693,83 +636,12 @@ paths:
             schema:
               $ref: '#/components/schemas/insights.callbackInput'
         description: Callback input
->>>>>>> prajjwal-warp-323
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-<<<<<<< HEAD
-                $ref: '#/components/schemas/V1Invite'
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
-      tags:
-      - v1 invite
-      x-codegen-request-body-name: body
-  /invite/send/email:
-    post:
-      description: Sending email invite to the user.
-      operationId: SendInvite
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/V1SendInviteRequest'
-        description: Send invite body
-        required: true
-      responses:
-        "200":
-          content: {}
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
-      tags:
-      - v1 invite
-      x-codegen-request-body-name: body
-  /invites:
-    get:
-      operationId: ListOrgInvites
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/V1Invite'
-                type: array
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WarpBuildAPIError'
-          description: ""
-      security:
-      - JWTKeyAuth: []
-      summary: ListOrgInvites lists all the invite user has access to.
-      tags:
-      - v1 invite
-  /jobs/estimated-costs:
-    get:
-      description: GetEstimatedCosts
-      operationId: GetEstimatedCosts
-=======
                 $ref: '#/components/schemas/AuthUserResponse'
           description: OK
       security:
@@ -823,7 +695,6 @@ paths:
     get:
       description: GetDaywiseCosts
       operationId: GetDaywiseCosts
->>>>>>> prajjwal-warp-323
       parameters:
       - description: Date range start
         in: query
@@ -843,11 +714,7 @@ paths:
             '*/*':
               schema:
                 items:
-<<<<<<< HEAD
-                  $ref: '#/components/schemas/EstimatedCost'
-=======
                   $ref: '#/components/schemas/commons.DaywiseCost'
->>>>>>> prajjwal-warp-323
                 type: array
           description: OK
         "400":
@@ -864,11 +731,7 @@ paths:
           description: Not Found
       security:
       - JWTKeyAuth: []
-<<<<<<< HEAD
-      summary: GetEstimatedCosts
-=======
       summary: GetDaywiseCosts
->>>>>>> prajjwal-warp-323
       tags:
       - v1 jobs
   /organization:
@@ -997,8 +860,6 @@ paths:
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
       - v1 organization
-<<<<<<< HEAD
-=======
   /runner_instance/internal/{id}/last_job_processed_meta:
     get:
       operationId: GetRunnerLastJobProcessedMeta
@@ -1033,7 +894,6 @@ paths:
       summary: Get runner last used job meta
       tags:
       - v1 RunnerInstance
->>>>>>> prajjwal-warp-323
   /runners:
     get:
       operationId: ListRunners
@@ -1086,11 +946,6 @@ paths:
       tags:
       - v1 Runners
       x-codegen-request-body-name: body
-<<<<<<< HEAD
-  /runners/runtimes:
-    get:
-      operationId: GetRuntimes
-=======
   /runners/cost/calculator:
     post:
       operationId: ComputeCustomRunnerRate
@@ -1101,17 +956,11 @@ paths:
               $ref: '#/components/schemas/commons.RateCalculationInput'
         description: Compute custom runner rate
         required: true
->>>>>>> prajjwal-warp-323
       responses:
         "200":
           content:
             application/json:
               schema:
-<<<<<<< HEAD
-                items:
-                  $ref: '#/components/schemas/commons.Runtime'
-                type: array
-=======
                 $ref: '#/components/schemas/commons.RateCalculationOutput'
           description: OK
         "400":
@@ -1279,7 +1128,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/commons.RunnersUsage'
->>>>>>> prajjwal-warp-323
           description: OK
         "400":
           content:
@@ -1301,8 +1149,6 @@ paths:
   /runners/{id}:
     delete:
       operationId: DeleteRunner
-<<<<<<< HEAD
-=======
       parameters:
       - description: Runner ID
         in: path
@@ -1310,7 +1156,6 @@ paths:
         required: true
         schema:
           type: string
->>>>>>> prajjwal-warp-323
       responses:
         "200":
           content:
@@ -1338,8 +1183,6 @@ paths:
       - v1 Runners
     get:
       operationId: GetRunner
-<<<<<<< HEAD
-=======
       parameters:
       - description: Runner ID
         in: path
@@ -1347,7 +1190,6 @@ paths:
         required: true
         schema:
           type: string
->>>>>>> prajjwal-warp-323
       responses:
         "200":
           content:
@@ -1375,8 +1217,6 @@ paths:
       - v1 Runners
     patch:
       operationId: UpdateRunner
-<<<<<<< HEAD
-=======
       parameters:
       - description: Runner ID
         in: path
@@ -1384,7 +1224,6 @@ paths:
         required: true
         schema:
           type: string
->>>>>>> prajjwal-warp-323
       requestBody:
         content:
           application/json:
@@ -1477,10 +1316,6 @@ paths:
           content:
             application/json:
               schema:
-<<<<<<< HEAD
-                additionalProperties: true
-=======
->>>>>>> prajjwal-warp-323
                 type: object
           description: OK
         "400":
@@ -1498,8 +1333,6 @@ paths:
       summary: Get runner instance allocation details for the id
       tags:
       - v1 RunnerInstance
-<<<<<<< HEAD
-=======
   /runners_instance/{id}/presigned_log_upload_url:
     get:
       operationId: GetRunnerInstancePresignedLogUploadURL
@@ -1667,7 +1500,6 @@ paths:
       summary: Get default group for runner set
       tags:
       - v1 Sku
->>>>>>> prajjwal-warp-323
   /subscription:
     delete:
       operationId: DeleteCurrentSubscription
@@ -1721,8 +1553,6 @@ paths:
       summary: Get Current Org Subscription Details
       tags:
       - v1 subscriptions
-<<<<<<< HEAD
-=======
   /subscription/customer_portal_url:
     post:
       operationId: GetCustomerPortalUrl
@@ -1750,7 +1580,6 @@ paths:
       summary: Get customer portal url
       tags:
       - v1 subscriptions
->>>>>>> prajjwal-warp-323
   /subscription/stripe/payment_method/{payment_method_id}:
     delete:
       operationId: DeleteStripePaymentMethod
@@ -1861,8 +1690,6 @@ paths:
       summary: S2S Webhook received from PG
       tags:
       - v1 subscriptions
-<<<<<<< HEAD
-=======
   /ui/banner-messages:
     get:
       operationId: GetBannerMessages
@@ -1898,7 +1725,6 @@ paths:
       summary: Get specific banner messages for UI/Org or all
       tags:
       - v1 ui
->>>>>>> prajjwal-warp-323
   /vcs/approve-integration:
     put:
       operationId: ApproveVCSIntegration
@@ -2159,9 +1985,6 @@ paths:
       tags:
       - v1 vcs
       x-codegen-request-body-name: body
-<<<<<<< HEAD
-  /vcs/repos:
-=======
   /vcs/list-runner-groups:
     post:
       operationId: ListVCSRunnerGroups
@@ -2226,7 +2049,6 @@ paths:
       summary: Lists all vcs repos for vcs integration
       tags:
       - v1 vcs
->>>>>>> prajjwal-warp-323
     post:
       operationId: CreateVCSGitRepo
       requestBody:
@@ -2295,8 +2117,6 @@ paths:
       summary: get vcs repo based on repo internal id
       tags:
       - v1 vcs
-<<<<<<< HEAD
-=======
   /workflows:
     get:
       description: Workflows (workflows)
@@ -2417,7 +2237,6 @@ paths:
       tags:
       - v1 workflows
       x-codegen-request-body-name: body
->>>>>>> prajjwal-warp-323
 components:
   schemas:
     ApproveVCSIntegrationRequest:
@@ -2447,19 +2266,12 @@ components:
       example:
         access_token: access_token
         refresh_token: refresh_token
-<<<<<<< HEAD
-=======
         is_different_org: true
->>>>>>> prajjwal-warp-323
         organization:
           avatar_url: avatar_url
           name: name
           id: id
           created_by: 0
-<<<<<<< HEAD
-        should_show_vcs_integration: true
-=======
->>>>>>> prajjwal-warp-323
         user:
           avatar_url: avatar_url
           updated_at: updated_at
@@ -2473,70 +2285,32 @@ components:
       properties:
         access_token:
           type: string
-<<<<<<< HEAD
-=======
         is_different_org:
           type: boolean
->>>>>>> prajjwal-warp-323
         organization:
           $ref: '#/components/schemas/V1Organization'
         refresh_token:
           type: string
-<<<<<<< HEAD
-        should_show_vcs_integration:
-          type: boolean
-=======
->>>>>>> prajjwal-warp-323
         user:
           $ref: '#/components/schemas/V1User'
       required:
       - access_token
-<<<<<<< HEAD
-      - organization
-      - refresh_token
-      - should_show_vcs_integration
-      - user
-      type: object
-    CreateInviteRequest:
-      example:
-        role_kind: owner
-      properties:
-        role_kind:
-          enum:
-          - owner
-          - admin
-          - member
-          type: string
-      required:
-      - role_kind
-      type: object
-=======
       - is_different_org
       - organization
       - refresh_token
       - user
       type: object
->>>>>>> prajjwal-warp-323
     CreateVCSIntegrationRequest:
       example:
         provider: provider
         vcs_url: vcs_url
-<<<<<<< HEAD
-        additional_state:
-          key: ""
-=======
         additional_state: "{}"
->>>>>>> prajjwal-warp-323
         application_secret: application_secret
         application_callback_url: application_callback_url
         application_id: application_id
       properties:
         additional_state:
-<<<<<<< HEAD
-          additionalProperties: true
-=======
           properties: {}
->>>>>>> prajjwal-warp-323
           type: object
         application_callback_url:
           type: string
@@ -2551,17 +2325,6 @@ components:
       required:
       - provider
       type: object
-<<<<<<< HEAD
-    EstimatedCost:
-      example:
-        date: date
-        amount: 0.8008281904610115
-      properties:
-        amount:
-          type: number
-        date:
-          type: string
-=======
     ListWorkflowsResponse:
       example:
         last_synced_at: last_synced_at
@@ -2652,7 +2415,6 @@ components:
           items:
             $ref: '#/components/schemas/commons.Workflow'
           type: array
->>>>>>> prajjwal-warp-323
       type: object
     MeResponse:
       example:
@@ -2668,11 +2430,8 @@ components:
           installation_id: installation_id
           id: id
           account_owner: account_owner
-<<<<<<< HEAD
-=======
         extras:
           key: extras
->>>>>>> prajjwal-warp-323
         user:
           avatar_url: avatar_url
           updated_at: updated_at
@@ -2684,13 +2443,10 @@ components:
           email: email
           signup_provider_user_id: signup_provider_user_id
       properties:
-<<<<<<< HEAD
-=======
         extras:
           additionalProperties:
             type: string
           type: object
->>>>>>> prajjwal-warp-323
         organization:
           $ref: '#/components/schemas/V1Organization'
         user:
@@ -2750,16 +2506,6 @@ components:
       required:
       - access_token
       type: object
-<<<<<<< HEAD
-    UpdateInviteRequest:
-      example:
-        Status: Status
-      properties:
-        Status:
-          type: string
-      type: object
-=======
->>>>>>> prajjwal-warp-323
     UpdateOrganizationRequest:
       example:
         avatar_url: avatar_url
@@ -2821,19 +2567,12 @@ components:
         new_session:
           access_token: access_token
           refresh_token: refresh_token
-<<<<<<< HEAD
-=======
           is_different_org: true
->>>>>>> prajjwal-warp-323
           organization:
             avatar_url: avatar_url
             name: name
             id: id
             created_by: 0
-<<<<<<< HEAD
-          should_show_vcs_integration: true
-=======
->>>>>>> prajjwal-warp-323
           user:
             avatar_url: avatar_url
             updated_at: updated_at
@@ -2850,31 +2589,6 @@ components:
         vcs_integration:
           $ref: '#/components/schemas/VCSIntegration'
       type: object
-<<<<<<< HEAD
-    V1Invite:
-      example:
-        code: code
-        expires_at: expires_at
-        role: role
-        organization_id: organization_id
-        id: id
-        status: status
-      properties:
-        code:
-          type: string
-        expires_at:
-          type: string
-        id:
-          type: string
-        organization_id:
-          type: string
-        role:
-          type: string
-        status:
-          type: string
-      type: object
-=======
->>>>>>> prajjwal-warp-323
     V1ListUsersForOrganizationResult:
       example:
         joined_at: joined_at
@@ -2917,22 +2631,6 @@ components:
       - id
       - name
       type: object
-<<<<<<< HEAD
-    V1SendInviteRequest:
-      example:
-        invite_id: invite_id
-        email: email
-      properties:
-        email:
-          type: string
-        invite_id:
-          type: string
-      required:
-      - email
-      - invite_id
-      type: object
-=======
->>>>>>> prajjwal-warp-323
     V1User:
       example:
         avatar_url: avatar_url
@@ -3094,8 +2792,6 @@ components:
         sub_message:
           type: string
       type: object
-<<<<<<< HEAD
-=======
     WarpWorkflowsRequest:
       example:
         authorization:
@@ -3127,7 +2823,6 @@ components:
         pr_link:
           type: string
       type: object
->>>>>>> prajjwal-warp-323
     commons.Balance:
       example:
         percentage: 6.027456183070403
@@ -3162,8 +2857,6 @@ components:
         paid_balance:
           $ref: '#/components/schemas/commons.Balance'
       type: object
-<<<<<<< HEAD
-=======
     commons.BannerMessage:
       example:
         closeable: true
@@ -3254,7 +2947,6 @@ components:
         redeemed_at:
           type: string
       type: object
->>>>>>> prajjwal-warp-323
     commons.CreateRepoOptions:
       properties:
         description:
@@ -3278,8 +2970,6 @@ components:
       - name
       - owner
       type: object
-<<<<<<< HEAD
-=======
     commons.DaywiseCost:
       example:
         date: date
@@ -3303,7 +2993,6 @@ components:
         runtime_seconds:
           type: integer
       type: object
->>>>>>> prajjwal-warp-323
     commons.GithubRunnerApplicationDetails:
       example:
         variables:
@@ -3327,8 +3016,6 @@ components:
             type: string
           type: object
       type: object
-<<<<<<< HEAD
-=======
     commons.InstanceSku:
       example:
         cores: 6
@@ -3482,7 +3169,6 @@ components:
         vcs_repo:
           type: string
       type: object
->>>>>>> prajjwal-warp-323
     commons.ListTokensOptions:
       properties:
         organization_id:
@@ -3539,8 +3225,6 @@ components:
             $ref: '#/components/schemas/V1User'
           type: array
       type: object
-<<<<<<< HEAD
-=======
     commons.ListVCSRunnerGroupsInput:
       properties:
         fetch_from_remote:
@@ -3574,7 +3258,6 @@ components:
             $ref: '#/components/schemas/commons.RunnerGroup'
           type: array
       type: object
->>>>>>> prajjwal-warp-323
     commons.Organization:
       example:
         avatar_url: avatar_url
@@ -3653,42 +3336,6 @@ components:
         type:
           type: string
       type: object
-<<<<<<< HEAD
-    commons.Repo:
-      example:
-        DefaultBranch: DefaultBranch
-        owner: owner
-        AccountID: AccountID
-        CreatedAt: CreatedAt
-        WebURL: WebURL
-        IntegrationID: IntegrationID
-        UpdatedAt: UpdatedAt
-        vcs_id: vcs_id
-        SSHURL: SSHURL
-        provider: provider
-        DisplayName: DisplayName
-        name: name
-        id: id
-      properties:
-        AccountID:
-          type: string
-        CreatedAt:
-          type: string
-        DefaultBranch:
-          type: string
-        DisplayName:
-          type: string
-        IntegrationID:
-          type: string
-        SSHURL:
-          type: string
-        UpdatedAt:
-          type: string
-        WebURL:
-          type: string
-        id:
-          type: string
-=======
     commons.PostPaymentMethodSetupInput:
       example:
         payment_method_id: payment_method_id
@@ -3777,17 +3424,12 @@ components:
           type: string
         integration_id:
           type: string
->>>>>>> prajjwal-warp-323
         name:
           type: string
         owner:
           type: string
         provider:
           type: string
-<<<<<<< HEAD
-        vcs_id:
-          type: string
-=======
         sshurl:
           type: string
         updated_at:
@@ -3796,7 +3438,6 @@ components:
           type: string
         web_url:
           type: string
->>>>>>> prajjwal-warp-323
       type: object
     commons.ReqCheckoutSession:
       properties:
@@ -3840,15 +3481,6 @@ components:
       type: object
     commons.Runner:
       example:
-<<<<<<< HEAD
-        cluster_id: cluster_id
-        updated_at: updated_at
-        configuration:
-          image: image
-          cores: 0
-          memory: 6
-          arch: arch
-=======
         updated_at: updated_at
         configuration:
           capacity_type: spot
@@ -3860,34 +3492,11 @@ components:
             throughput: 1
           sku: sku
         stock_runner_id: stock_runner_id
->>>>>>> prajjwal-warp-323
         organization_id: organization_id
         name: name
         vcs_integration_id: vcs_integration_id
         active: true
         created_at: created_at
-<<<<<<< HEAD
-        external_reference_id: external_reference_id
-        id: id
-        labels:
-          key: ""
-      properties:
-        active:
-          type: boolean
-        cluster_id:
-          type: string
-        configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
-        created_at:
-          type: string
-        external_reference_id:
-          type: string
-        id:
-          type: string
-        labels:
-          additionalProperties: true
-          type: object
-=======
         provider_id: provider_id
         id: id
         labels:
@@ -3906,30 +3515,19 @@ components:
           items:
             type: string
           type: array
->>>>>>> prajjwal-warp-323
         name:
           type: string
         organization_id:
           type: string
-<<<<<<< HEAD
-=======
         provider_id:
           type: string
         stock_runner_id:
           type: string
->>>>>>> prajjwal-warp-323
         updated_at:
           type: string
         vcs_integration_id:
           type: string
       type: object
-<<<<<<< HEAD
-    commons.RunnerConfiguration:
-      example:
-        image: image
-        cores: 0
-        memory: 6
-=======
     commons.RunnerGroup:
       example:
         runners_url: runners_url
@@ -3956,51 +3554,18 @@ components:
       example:
         os: os
         host: host
->>>>>>> prajjwal-warp-323
         arch: arch
       properties:
         arch:
           type: string
-<<<<<<< HEAD
-        cores:
-          type: integer
-        image:
-          type: string
-        memory:
-          type: integer
-=======
         host:
           type: string
         os:
           type: string
->>>>>>> prajjwal-warp-323
       type: object
     commons.RunnerInstance:
       example:
         cluster: cluster
-<<<<<<< HEAD
-        last_job_processed_id: last_job_processed_id
-        configuration:
-          image: image
-          cores: 0
-          memory: 6
-          arch: arch
-        created_at: created_at
-        runner_for: runner_for
-        created_by: created_by
-        runner_set_id: runner_set_id
-        last_polled: last_polled
-        updated_at: updated_at
-        organization_id: organization_id
-        vcs_integration_id: vcs_integration_id
-        id: id
-        status: status
-      properties:
-        cluster:
-          type: string
-        configuration:
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
-=======
         running_started_at: running_started_at
         last_job_processed_id: last_job_processed_id
         configuration:
@@ -4086,21 +3651,10 @@ components:
           type: string
         configuration:
           $ref: '#/components/schemas/commons.RunnerInstanceConfiguration'
->>>>>>> prajjwal-warp-323
         created_at:
           type: string
         created_by:
           type: string
-<<<<<<< HEAD
-        id:
-          type: string
-        last_job_processed_id:
-          type: string
-        last_polled:
-          type: string
-        organization_id:
-          type: string
-=======
         external_id:
           type: string
         first_polled_at:
@@ -4129,16 +3683,12 @@ components:
           type: string
         purged_reason:
           type: string
->>>>>>> prajjwal-warp-323
         runner_for:
           type: string
         runner_set_id:
           type: string
-<<<<<<< HEAD
-=======
         running_started_at:
           type: string
->>>>>>> prajjwal-warp-323
         status:
           type: string
         updated_at:
@@ -4159,23 +3709,6 @@ components:
         runner_application: github
         runner_instance:
           cluster: cluster
-<<<<<<< HEAD
-          last_job_processed_id: last_job_processed_id
-          configuration:
-            image: image
-            cores: 0
-            memory: 6
-            arch: arch
-          created_at: created_at
-          runner_for: runner_for
-          created_by: created_by
-          runner_set_id: runner_set_id
-          last_polled: last_polled
-          updated_at: updated_at
-          organization_id: organization_id
-          vcs_integration_id: vcs_integration_id
-          id: id
-=======
           running_started_at: running_started_at
           last_job_processed_id: last_job_processed_id
           configuration:
@@ -4247,7 +3780,6 @@ components:
           provider_kind_id: provider_kind_id
           purged_at: purged_at
           purged_reason: purged_reason
->>>>>>> prajjwal-warp-323
           status: status
         status: unassigned
       properties:
@@ -4266,17 +3798,6 @@ components:
           - invalidated
           type: string
       type: object
-<<<<<<< HEAD
-    commons.Runtime:
-      example:
-        duration_seconds: 0
-        runner_id: runner_id
-      properties:
-        duration_seconds:
-          type: integer
-        runner_id:
-          type: string
-=======
     commons.RunnerInstanceConfiguration:
       example:
         capacity_type: spot
@@ -4421,24 +3942,12 @@ components:
       properties:
         group_id:
           type: integer
->>>>>>> prajjwal-warp-323
       type: object
     commons.SetupRunnerInput:
       properties:
         Active:
           type: boolean
         configuration:
-<<<<<<< HEAD
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
-        labels:
-          additionalProperties: true
-          type: object
-        name:
-          type: string
-        vcs_integration_id:
-          type: string
-      type: object
-=======
           $ref: '#/components/schemas/commons.RunnerSetConfiguration'
         labels:
           items:
@@ -4472,7 +3981,6 @@ components:
           - extreme
           type: string
       type: object
->>>>>>> prajjwal-warp-323
     commons.SubscriptionDetails:
       example:
         last_payment_at: last_payment_at
@@ -4573,25 +4081,16 @@ components:
         date:
           type: string
       type: object
-<<<<<<< HEAD
-=======
     commons.UpdateBillingInfoInput:
       properties:
         email:
           type: string
       type: object
->>>>>>> prajjwal-warp-323
     commons.UpdateRunnerInput:
       properties:
         Active:
           type: boolean
         configuration:
-<<<<<<< HEAD
-          $ref: '#/components/schemas/commons.RunnerConfiguration'
-        labels:
-          additionalProperties: true
-          type: object
-=======
           $ref: '#/components/schemas/commons.RunnerSetConfiguration'
         labels:
           items:
@@ -4599,7 +4098,6 @@ components:
           type: array
         name:
           type: string
->>>>>>> prajjwal-warp-323
       type: object
     commons.UserToken:
       example:
@@ -4649,8 +4147,6 @@ components:
       - id
       - target_type
       type: object
-<<<<<<< HEAD
-=======
     commons.Workflow:
       example:
         provider_integration_id: provider_integration_id
@@ -4739,7 +4235,6 @@ components:
         run_duration:
           type: integer
       type: object
->>>>>>> prajjwal-warp-323
     debugger.PublishEventInput:
       properties:
         data:
@@ -4751,8 +4246,6 @@ components:
         topic:
           type: string
       type: object
-<<<<<<< HEAD
-=======
     insights.callbackInput:
       properties:
         code:
@@ -4765,7 +4258,6 @@ components:
       - code
       - setup_action
       type: object
->>>>>>> prajjwal-warp-323
     types.GenericSuccessMessage:
       example:
         message: message
@@ -4782,13 +4274,10 @@ components:
       in: header
       name: X-Warp-Build-Admin-Secret
       type: apiKey
-<<<<<<< HEAD
-=======
     WarpBuildServiceSecretAuth:
       in: header
       name: x-warpbuild-service-secret
       type: apiKey
->>>>>>> prajjwal-warp-323
 x-extension-openapi:
   example: value on a json format
 x-original-swagger-version: "2.0"

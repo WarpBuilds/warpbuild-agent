@@ -5,16 +5,10 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Active** | Pointer to **bool** |  | [optional] 
-<<<<<<< HEAD
-**Configuration** | Pointer to [**CommonsRunnerConfiguration**](CommonsRunnerConfiguration.md) |  | [optional] 
-**Labels** | Pointer to **map[string]interface{}** |  | [optional] 
-**Name** | Pointer to **string** |  | [optional] 
-=======
 **Configuration** | Pointer to [**CommonsRunnerSetConfiguration**](CommonsRunnerSetConfiguration.md) |  | [optional] 
 **Labels** | Pointer to **[]string** |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
 **StockRunnerId** | Pointer to **string** |  | [optional] 
->>>>>>> prajjwal-warp-323
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
 
 ## Methods
@@ -63,32 +57,20 @@ HasActive returns a boolean if a field has been set.
 
 ### GetConfiguration
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerConfiguration`
-=======
 `func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerSetConfiguration`
->>>>>>> prajjwal-warp-323
 
 GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
 
 ### GetConfigurationOk
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerConfiguration, bool)`
-=======
 `func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool)`
->>>>>>> prajjwal-warp-323
 
 GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetConfiguration
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerConfiguration)`
-=======
 `func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerSetConfiguration)`
->>>>>>> prajjwal-warp-323
 
 SetConfiguration sets Configuration field to given value.
 
@@ -100,32 +82,20 @@ HasConfiguration returns a boolean if a field has been set.
 
 ### GetLabels
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) GetLabels() map[string]interface{}`
-=======
 `func (o *CommonsSetupRunnerInput) GetLabels() []string`
->>>>>>> prajjwal-warp-323
 
 GetLabels returns the Labels field if non-nil, zero value otherwise.
 
 ### GetLabelsOk
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) GetLabelsOk() (*map[string]interface{}, bool)`
-=======
 `func (o *CommonsSetupRunnerInput) GetLabelsOk() (*[]string, bool)`
->>>>>>> prajjwal-warp-323
 
 GetLabelsOk returns a tuple with the Labels field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLabels
 
-<<<<<<< HEAD
-`func (o *CommonsSetupRunnerInput) SetLabels(v map[string]interface{})`
-=======
 `func (o *CommonsSetupRunnerInput) SetLabels(v []string)`
->>>>>>> prajjwal-warp-323
 
 SetLabels sets Labels field to given value.
 
@@ -160,8 +130,6 @@ SetName sets Name field to given value.
 
 HasName returns a boolean if a field has been set.
 
-<<<<<<< HEAD
-=======
 ### GetStockRunnerId
 
 `func (o *CommonsSetupRunnerInput) GetStockRunnerId() string`
@@ -187,7 +155,6 @@ SetStockRunnerId sets StockRunnerId field to given value.
 
 HasStockRunnerId returns a boolean if a field has been set.
 
->>>>>>> prajjwal-warp-323
 ### GetVcsIntegrationId
 
 `func (o *CommonsSetupRunnerInput) GetVcsIntegrationId() string`

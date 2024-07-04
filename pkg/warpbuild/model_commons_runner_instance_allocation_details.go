@@ -207,21 +207,10 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerInstanceAllocationDetails := _CommonsRunnerInstanceAllocationDetails{}
 
-<<<<<<< HEAD
-	err = json.Unmarshal(bytes, &varCommonsRunnerInstanceAllocationDetails)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CommonsRunnerInstanceAllocationDetails(varCommonsRunnerInstanceAllocationDetails)
-
-=======
 	if err = json.Unmarshal(bytes, &varCommonsRunnerInstanceAllocationDetails); err == nil {
 		*o = CommonsRunnerInstanceAllocationDetails(varCommonsRunnerInstanceAllocationDetails)
 	}
 
->>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

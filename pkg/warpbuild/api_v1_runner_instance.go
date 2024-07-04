@@ -21,11 +21,7 @@ import (
 )
 
 
-<<<<<<< HEAD
-type V1RunnerInstanceAPI interface {
-=======
 type V1RunnerInstanceApi interface {
->>>>>>> prajjwal-warp-323
 
 	/*
 	GetRunnerInstanceAllocationDetails Get runner instance allocation details for the id
@@ -41,8 +37,6 @@ type V1RunnerInstanceApi interface {
 	GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error)
 
 	/*
-<<<<<<< HEAD
-=======
 	GetRunnerInstancePresignedLogUploadURL Gets a presigned url for uploading logs for a runner instance
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -69,7 +63,6 @@ type V1RunnerInstanceApi interface {
 	GetRunnerLastJobProcessedMetaExecute(r ApiGetRunnerLastJobProcessedMetaRequest) (*CommonsLastJobProcessedMeta, *http.Response, error)
 
 	/*
->>>>>>> prajjwal-warp-323
 	RunnerInstanceCleanupHook Get runner instance allocation details for the id
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -83,21 +76,12 @@ type V1RunnerInstanceApi interface {
 	RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error)
 }
 
-<<<<<<< HEAD
-// V1RunnerInstanceAPIService V1RunnerInstanceAPI service
-type V1RunnerInstanceAPIService service
-
-type ApiGetRunnerInstanceAllocationDetailsRequest struct {
-	ctx context.Context
-	ApiService V1RunnerInstanceAPI
-=======
 // V1RunnerInstanceApiService V1RunnerInstanceApi service
 type V1RunnerInstanceApiService service
 
 type ApiGetRunnerInstanceAllocationDetailsRequest struct {
 	ctx context.Context
 	ApiService V1RunnerInstanceApi
->>>>>>> prajjwal-warp-323
 	id string
 	xPOLLINGSECRET *string
 }
@@ -119,11 +103,7 @@ GetRunnerInstanceAllocationDetails Get runner instance allocation details for th
  @param id runner instance id
  @return ApiGetRunnerInstanceAllocationDetailsRequest
 */
-<<<<<<< HEAD
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest {
-=======
 func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest {
->>>>>>> prajjwal-warp-323
 	return ApiGetRunnerInstanceAllocationDetailsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -133,11 +113,7 @@ func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetails(ctx cont
 
 // Execute executes the request
 //  @return CommonsRunnerInstanceAllocationDetails
-<<<<<<< HEAD
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
-=======
 func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -145,11 +121,7 @@ func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetailsExecute(r
 		localVarReturnValue  *CommonsRunnerInstanceAllocationDetails
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.GetRunnerInstanceAllocationDetails")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.GetRunnerInstanceAllocationDetails")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -240,11 +212,6 @@ func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetailsExecute(r
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiRunnerInstanceCleanupHookRequest struct {
-	ctx context.Context
-	ApiService V1RunnerInstanceAPI
-=======
 type ApiGetRunnerInstancePresignedLogUploadURLRequest struct {
 	ctx context.Context
 	ApiService V1RunnerInstanceApi
@@ -527,7 +494,6 @@ func (a *V1RunnerInstanceApiService) GetRunnerLastJobProcessedMetaExecute(r ApiG
 type ApiRunnerInstanceCleanupHookRequest struct {
 	ctx context.Context
 	ApiService V1RunnerInstanceApi
->>>>>>> prajjwal-warp-323
 	id string
 	xPOLLINGSECRET *string
 }
@@ -549,11 +515,7 @@ RunnerInstanceCleanupHook Get runner instance allocation details for the id
  @param id runner instance id
  @return ApiRunnerInstanceCleanupHookRequest
 */
-<<<<<<< HEAD
-func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest {
-=======
 func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest {
->>>>>>> prajjwal-warp-323
 	return ApiRunnerInstanceCleanupHookRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -563,11 +525,7 @@ func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHook(ctx context.Conte
 
 // Execute executes the request
 //  @return map[string]interface{}
-<<<<<<< HEAD
-func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error) {
-=======
 func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -575,11 +533,7 @@ func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHookExecute(r ApiRunne
 		localVarReturnValue  map[string]interface{}
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.RunnerInstanceCleanupHook")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.RunnerInstanceCleanupHook")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

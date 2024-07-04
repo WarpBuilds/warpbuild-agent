@@ -17,12 +17,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-<<<<<<< HEAD
-)
-
-
-type V1RunnersAPI interface {
-=======
 	"strings"
 	"reflect"
 )
@@ -41,22 +35,15 @@ type V1RunnersApi interface {
 	// ComputeCustomRunnerRateExecute executes the request
 	//  @return CommonsRateCalculationOutput
 	ComputeCustomRunnerRateExecute(r ApiComputeCustomRunnerRateRequest) (*CommonsRateCalculationOutput, *http.Response, error)
->>>>>>> prajjwal-warp-323
 
 	/*
 	DeleteRunner delete runner for the id. Current organization is figured from the authorization token
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-<<<<<<< HEAD
-	@return ApiDeleteRunnerRequest
-	*/
-	DeleteRunner(ctx context.Context) ApiDeleteRunnerRequest
-=======
 	@param id Runner ID
 	@return ApiDeleteRunnerRequest
 	*/
 	DeleteRunner(ctx context.Context, id string) ApiDeleteRunnerRequest
->>>>>>> prajjwal-warp-323
 
 	// DeleteRunnerExecute executes the request
 	//  @return CommonsRunner
@@ -66,34 +53,16 @@ type V1RunnersApi interface {
 	GetRunner Get runner details for the id. Current organization is figured from the authorization token
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-<<<<<<< HEAD
-	@return ApiGetRunnerRequest
-	*/
-	GetRunner(ctx context.Context) ApiGetRunnerRequest
-=======
 	@param id Runner ID
 	@return ApiGetRunnerRequest
 	*/
 	GetRunner(ctx context.Context, id string) ApiGetRunnerRequest
->>>>>>> prajjwal-warp-323
 
 	// GetRunnerExecute executes the request
 	//  @return CommonsRunner
 	GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsRunner, *http.Response, error)
 
 	/*
-<<<<<<< HEAD
-	GetRuntimes Get runtimes for runners of the organisation
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiGetRuntimesRequest
-	*/
-	GetRuntimes(ctx context.Context) ApiGetRuntimesRequest
-
-	// GetRuntimesExecute executes the request
-	//  @return []CommonsRuntime
-	GetRuntimesExecute(r ApiGetRuntimesRequest) ([]CommonsRuntime, *http.Response, error)
-=======
 	GetRunnerSetDefaultGroup Get default group for runner set
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -116,7 +85,6 @@ type V1RunnersApi interface {
 	// GetRunnersUsageExecute executes the request
 	//  @return CommonsRunnersUsage
 	GetRunnersUsageExecute(r ApiGetRunnersUsageRequest) (*CommonsRunnersUsage, *http.Response, error)
->>>>>>> prajjwal-warp-323
 
 	/*
 	ListRunners ListRunners lists all the runners for an org.
@@ -131,8 +99,6 @@ type V1RunnersApi interface {
 	ListRunnersExecute(r ApiListRunnersRequest) ([]CommonsRunner, *http.Response, error)
 
 	/*
-<<<<<<< HEAD
-=======
 	SetRunnerSetDefaultGroup Set default group for runner set
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -145,7 +111,6 @@ type V1RunnersApi interface {
 	SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error)
 
 	/*
->>>>>>> prajjwal-warp-323
 	SetupRunner Adds a new runner for a current organization
 
 	User can request a runner setup by passing different name.
@@ -163,30 +128,16 @@ type V1RunnersApi interface {
 	UpdateRunner Get runner details for the id. Current organization is figured from the authorization token
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-<<<<<<< HEAD
-	@return ApiUpdateRunnerRequest
-	*/
-	UpdateRunner(ctx context.Context) ApiUpdateRunnerRequest
-=======
 	@param id Runner ID
 	@return ApiUpdateRunnerRequest
 	*/
 	UpdateRunner(ctx context.Context, id string) ApiUpdateRunnerRequest
->>>>>>> prajjwal-warp-323
 
 	// UpdateRunnerExecute executes the request
 	//  @return CommonsRunner
 	UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*CommonsRunner, *http.Response, error)
 }
 
-<<<<<<< HEAD
-// V1RunnersAPIService V1RunnersAPI service
-type V1RunnersAPIService service
-
-type ApiDeleteRunnerRequest struct {
-	ctx context.Context
-	ApiService V1RunnersAPI
-=======
 // V1RunnersApiService V1RunnersApi service
 type V1RunnersApiService service
 
@@ -338,7 +289,6 @@ type ApiDeleteRunnerRequest struct {
 	ctx context.Context
 	ApiService V1RunnersApi
 	id string
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiDeleteRunnerRequest) Execute() (*CommonsRunner, *http.Response, error) {
@@ -349,14 +299,6 @@ func (r ApiDeleteRunnerRequest) Execute() (*CommonsRunner, *http.Response, error
 DeleteRunner delete runner for the id. Current organization is figured from the authorization token
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-<<<<<<< HEAD
- @return ApiDeleteRunnerRequest
-*/
-func (a *V1RunnersAPIService) DeleteRunner(ctx context.Context) ApiDeleteRunnerRequest {
-	return ApiDeleteRunnerRequest{
-		ApiService: a,
-		ctx: ctx,
-=======
  @param id Runner ID
  @return ApiDeleteRunnerRequest
 */
@@ -365,17 +307,12 @@ func (a *V1RunnersApiService) DeleteRunner(ctx context.Context, id string) ApiDe
 		ApiService: a,
 		ctx: ctx,
 		id: id,
->>>>>>> prajjwal-warp-323
 	}
 }
 
 // Execute executes the request
 //  @return CommonsRunner
-<<<<<<< HEAD
-func (a *V1RunnersAPIService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*CommonsRunner, *http.Response, error) {
-=======
 func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*CommonsRunner, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -383,20 +320,13 @@ func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*Co
 		localVarReturnValue  *CommonsRunner
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.DeleteRunner")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.DeleteRunner")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/runners/{id}"
-<<<<<<< HEAD
-=======
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
->>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -493,12 +423,8 @@ func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*Co
 
 type ApiGetRunnerRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1RunnersAPI
-=======
 	ApiService V1RunnersApi
 	id string
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetRunnerRequest) Execute() (*CommonsRunner, *http.Response, error) {
@@ -509,14 +435,6 @@ func (r ApiGetRunnerRequest) Execute() (*CommonsRunner, *http.Response, error) {
 GetRunner Get runner details for the id. Current organization is figured from the authorization token
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-<<<<<<< HEAD
- @return ApiGetRunnerRequest
-*/
-func (a *V1RunnersAPIService) GetRunner(ctx context.Context) ApiGetRunnerRequest {
-	return ApiGetRunnerRequest{
-		ApiService: a,
-		ctx: ctx,
-=======
  @param id Runner ID
  @return ApiGetRunnerRequest
 */
@@ -525,17 +443,12 @@ func (a *V1RunnersApiService) GetRunner(ctx context.Context, id string) ApiGetRu
 		ApiService: a,
 		ctx: ctx,
 		id: id,
->>>>>>> prajjwal-warp-323
 	}
 }
 
 // Execute executes the request
 //  @return CommonsRunner
-<<<<<<< HEAD
-func (a *V1RunnersAPIService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsRunner, *http.Response, error) {
-=======
 func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsRunner, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -543,20 +456,13 @@ func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsR
 		localVarReturnValue  *CommonsRunner
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.GetRunner")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.GetRunner")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/runners/{id}"
-<<<<<<< HEAD
-=======
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
->>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -651,25 +557,6 @@ func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsR
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiGetRuntimesRequest struct {
-	ctx context.Context
-	ApiService V1RunnersAPI
-}
-
-func (r ApiGetRuntimesRequest) Execute() ([]CommonsRuntime, *http.Response, error) {
-	return r.ApiService.GetRuntimesExecute(r)
-}
-
-/*
-GetRuntimes Get runtimes for runners of the organisation
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetRuntimesRequest
-*/
-func (a *V1RunnersAPIService) GetRuntimes(ctx context.Context) ApiGetRuntimesRequest {
-	return ApiGetRuntimesRequest{
-=======
 type ApiGetRunnerSetDefaultGroupRequest struct {
 	ctx context.Context
 	ApiService V1RunnersApi
@@ -687,44 +574,27 @@ GetRunnerSetDefaultGroup Get default group for runner set
 */
 func (a *V1RunnersApiService) GetRunnerSetDefaultGroup(ctx context.Context) ApiGetRunnerSetDefaultGroupRequest {
 	return ApiGetRunnerSetDefaultGroupRequest{
->>>>>>> prajjwal-warp-323
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-//  @return []CommonsRuntime
-func (a *V1RunnersAPIService) GetRuntimesExecute(r ApiGetRuntimesRequest) ([]CommonsRuntime, *http.Response, error) {
-=======
 //  @return CommonsRunnerSetDefaultGroup
 func (a *V1RunnersApiService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-<<<<<<< HEAD
-		localVarReturnValue  []CommonsRuntime
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.GetRuntimes")
-=======
 		localVarReturnValue  *CommonsRunnerSetDefaultGroup
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.GetRunnerSetDefaultGroup")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-<<<<<<< HEAD
-	localVarPath := localBasePath + "/runners/runtimes"
-=======
 	localVarPath := localBasePath + "/runners/default-group"
->>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -819,11 +689,6 @@ func (a *V1RunnersApiService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetD
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiListRunnersRequest struct {
-	ctx context.Context
-	ApiService V1RunnersAPI
-=======
 type ApiGetRunnersUsageRequest struct {
 	ctx context.Context
 	ApiService V1RunnersApi
@@ -1081,7 +946,6 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 type ApiListRunnersRequest struct {
 	ctx context.Context
 	ApiService V1RunnersApi
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiListRunnersRequest) Execute() ([]CommonsRunner, *http.Response, error) {
@@ -1094,11 +958,7 @@ ListRunners ListRunners lists all the runners for an org.
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListRunnersRequest
 */
-<<<<<<< HEAD
-func (a *V1RunnersAPIService) ListRunners(ctx context.Context) ApiListRunnersRequest {
-=======
 func (a *V1RunnersApiService) ListRunners(ctx context.Context) ApiListRunnersRequest {
->>>>>>> prajjwal-warp-323
 	return ApiListRunnersRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1107,11 +967,7 @@ func (a *V1RunnersApiService) ListRunners(ctx context.Context) ApiListRunnersReq
 
 // Execute executes the request
 //  @return []CommonsRunner
-<<<<<<< HEAD
-func (a *V1RunnersAPIService) ListRunnersExecute(r ApiListRunnersRequest) ([]CommonsRunner, *http.Response, error) {
-=======
 func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]CommonsRunner, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -1119,11 +975,7 @@ func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]Com
 		localVarReturnValue  []CommonsRunner
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.ListRunners")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.ListRunners")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1210,16 +1062,6 @@ func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]Com
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiSetupRunnerRequest struct {
-	ctx context.Context
-	ApiService V1RunnersAPI
-	body *CommonsSetupRunnerInput
-}
-
-// Create new runner body
-func (r ApiSetupRunnerRequest) Body(body CommonsSetupRunnerInput) ApiSetupRunnerRequest {
-=======
 type ApiSetRunnerSetDefaultGroupRequest struct {
 	ctx context.Context
 	ApiService V1RunnersApi
@@ -1228,27 +1070,10 @@ type ApiSetRunnerSetDefaultGroupRequest struct {
 
 // Set default group for runner set body
 func (r ApiSetRunnerSetDefaultGroupRequest) Body(body CommonsSetRunnerSetDefaultGroupInput) ApiSetRunnerSetDefaultGroupRequest {
->>>>>>> prajjwal-warp-323
 	r.body = &body
 	return r
 }
 
-<<<<<<< HEAD
-func (r ApiSetupRunnerRequest) Execute() (*CommonsRunner, *http.Response, error) {
-	return r.ApiService.SetupRunnerExecute(r)
-}
-
-/*
-SetupRunner Adds a new runner for a current organization
-
-User can request a runner setup by passing different name.
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiSetupRunnerRequest
-*/
-func (a *V1RunnersAPIService) SetupRunner(ctx context.Context) ApiSetupRunnerRequest {
-	return ApiSetupRunnerRequest{
-=======
 func (r ApiSetRunnerSetDefaultGroupRequest) Execute() (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
 	return r.ApiService.SetRunnerSetDefaultGroupExecute(r)
 }
@@ -1261,173 +1086,26 @@ SetRunnerSetDefaultGroup Set default group for runner set
 */
 func (a *V1RunnersApiService) SetRunnerSetDefaultGroup(ctx context.Context) ApiSetRunnerSetDefaultGroupRequest {
 	return ApiSetRunnerSetDefaultGroupRequest{
->>>>>>> prajjwal-warp-323
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-//  @return CommonsRunner
-func (a *V1RunnersAPIService) SetupRunnerExecute(r ApiSetupRunnerRequest) (*CommonsRunner, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CommonsRunner
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.SetupRunner")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/runners"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.body == nil {
-		return localVarReturnValue, nil, reportError("body is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.body
-	if r.ctx != nil {
-		// API Key Authentication
-		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
-			if apiKey, ok := auth["JWTKeyAuth"]; ok {
-				var key string
-				if apiKey.Prefix != "" {
-					key = apiKey.Prefix + " " + apiKey.Key
-				} else {
-					key = apiKey.Key
-				}
-				localVarHeaderParams["Authorization"] = key
-			}
-		}
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-			var v WarpBuildAPIError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiUpdateRunnerRequest struct {
-	ctx context.Context
-	ApiService V1RunnersAPI
-	body *CommonsUpdateRunnerInput
-}
-
-// update runner body
-func (r ApiUpdateRunnerRequest) Body(body CommonsUpdateRunnerInput) ApiUpdateRunnerRequest {
-	r.body = &body
-	return r
-}
-
-func (r ApiUpdateRunnerRequest) Execute() (*CommonsRunner, *http.Response, error) {
-	return r.ApiService.UpdateRunnerExecute(r)
-}
-
-/*
-UpdateRunner Get runner details for the id. Current organization is figured from the authorization token
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUpdateRunnerRequest
-*/
-func (a *V1RunnersAPIService) UpdateRunner(ctx context.Context) ApiUpdateRunnerRequest {
-	return ApiUpdateRunnerRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return CommonsRunner
-func (a *V1RunnersAPIService) UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*CommonsRunner, *http.Response, error) {
-=======
 //  @return CommonsRunnerSetDefaultGroup
 func (a *V1RunnersApiService) SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
-<<<<<<< HEAD
-		localVarReturnValue  *CommonsRunner
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.UpdateRunner")
-=======
 		localVarReturnValue  *CommonsRunnerSetDefaultGroup
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.SetRunnerSetDefaultGroup")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-<<<<<<< HEAD
-	localVarPath := localBasePath + "/runners/{id}"
-=======
 	localVarPath := localBasePath + "/runners/default-group"
 
 	localVarHeaderParams := make(map[string]string)
@@ -1710,7 +1388,6 @@ func (a *V1RunnersApiService) UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*Co
 
 	localVarPath := localBasePath + "/runners/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
->>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

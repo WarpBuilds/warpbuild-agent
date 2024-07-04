@@ -20,31 +20,6 @@ import (
 )
 
 
-<<<<<<< HEAD
-type V1JobsAPI interface {
-
-	/*
-	GetEstimatedCosts GetEstimatedCosts
-
-	GetEstimatedCosts
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiGetEstimatedCostsRequest
-	*/
-	GetEstimatedCosts(ctx context.Context) ApiGetEstimatedCostsRequest
-
-	// GetEstimatedCostsExecute executes the request
-	//  @return []EstimatedCost
-	GetEstimatedCostsExecute(r ApiGetEstimatedCostsRequest) ([]EstimatedCost, *http.Response, error)
-}
-
-// V1JobsAPIService V1JobsAPI service
-type V1JobsAPIService service
-
-type ApiGetEstimatedCostsRequest struct {
-	ctx context.Context
-	ApiService V1JobsAPI
-=======
 type V1JobsApi interface {
 
 	/*
@@ -82,47 +57,22 @@ type V1JobsApiService service
 type ApiGetCostSummaryRequest struct {
 	ctx context.Context
 	ApiService V1JobsApi
->>>>>>> prajjwal-warp-323
 	startDate *string
 	endDate *string
 }
 
 // Date range start
-<<<<<<< HEAD
-func (r ApiGetEstimatedCostsRequest) StartDate(startDate string) ApiGetEstimatedCostsRequest {
-=======
 func (r ApiGetCostSummaryRequest) StartDate(startDate string) ApiGetCostSummaryRequest {
->>>>>>> prajjwal-warp-323
 	r.startDate = &startDate
 	return r
 }
 
 // Date range end
-<<<<<<< HEAD
-func (r ApiGetEstimatedCostsRequest) EndDate(endDate string) ApiGetEstimatedCostsRequest {
-=======
 func (r ApiGetCostSummaryRequest) EndDate(endDate string) ApiGetCostSummaryRequest {
->>>>>>> prajjwal-warp-323
 	r.endDate = &endDate
 	return r
 }
 
-<<<<<<< HEAD
-func (r ApiGetEstimatedCostsRequest) Execute() ([]EstimatedCost, *http.Response, error) {
-	return r.ApiService.GetEstimatedCostsExecute(r)
-}
-
-/*
-GetEstimatedCosts GetEstimatedCosts
-
-GetEstimatedCosts
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiGetEstimatedCostsRequest
-*/
-func (a *V1JobsAPIService) GetEstimatedCosts(ctx context.Context) ApiGetEstimatedCostsRequest {
-	return ApiGetEstimatedCostsRequest{
-=======
 func (r ApiGetCostSummaryRequest) Execute() (*CommonsCostSummary, *http.Response, error) {
 	return r.ApiService.GetCostSummaryExecute(r)
 }
@@ -137,42 +87,26 @@ GetCostSummary
 */
 func (a *V1JobsApiService) GetCostSummary(ctx context.Context) ApiGetCostSummaryRequest {
 	return ApiGetCostSummaryRequest{
->>>>>>> prajjwal-warp-323
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-//  @return []EstimatedCost
-func (a *V1JobsAPIService) GetEstimatedCostsExecute(r ApiGetEstimatedCostsRequest) ([]EstimatedCost, *http.Response, error) {
-=======
 //  @return CommonsCostSummary
 func (a *V1JobsApiService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*CommonsCostSummary, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-<<<<<<< HEAD
-		localVarReturnValue  []EstimatedCost
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsAPIService.GetEstimatedCosts")
-=======
 		localVarReturnValue  *CommonsCostSummary
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsApiService.GetCostSummary")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-<<<<<<< HEAD
-	localVarPath := localBasePath + "/jobs/estimated-costs"
-=======
 	localVarPath := localBasePath + "/jobs/cost-summary"
 
 	localVarHeaderParams := make(map[string]string)
@@ -330,7 +264,6 @@ func (a *V1JobsApiService) GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) (
 	}
 
 	localVarPath := localBasePath + "/jobs/daywise-costs"
->>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

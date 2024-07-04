@@ -21,11 +21,7 @@ import (
 )
 
 
-<<<<<<< HEAD
-type V1AuthAPI interface {
-=======
 type V1AuthApi interface {
->>>>>>> prajjwal-warp-323
 
 	/*
 	AuthTokensGet List user tokens
@@ -137,21 +133,12 @@ type V1AuthApi interface {
 	SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error)
 }
 
-<<<<<<< HEAD
-// V1AuthAPIService V1AuthAPI service
-type V1AuthAPIService service
-
-type ApiAuthTokensGetRequest struct {
-	ctx context.Context
-	ApiService V1AuthAPI
-=======
 // V1AuthApiService V1AuthApi service
 type V1AuthApiService service
 
 type ApiAuthTokensGetRequest struct {
 	ctx context.Context
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 	body *CommonsListTokensOptions
 }
 
@@ -173,11 +160,7 @@ List user tokens
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthTokensGetRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRequest {
-=======
 func (a *V1AuthApiService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRequest {
->>>>>>> prajjwal-warp-323
 	return ApiAuthTokensGetRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -186,11 +169,7 @@ func (a *V1AuthApiService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRe
 
 // Execute executes the request
 //  @return []CommonsUserToken
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]CommonsUserToken, *http.Response, error) {
-=======
 func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]CommonsUserToken, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -198,11 +177,7 @@ func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]Co
 		localVarReturnValue  []CommonsUserToken
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthTokensGet")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthTokensGet")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -309,11 +284,7 @@ func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]Co
 
 type ApiAuthUserRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 	body *AuthUserRequest
 }
 
@@ -335,11 +306,7 @@ Logs in or signs up the userm
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthUserRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthUser(ctx context.Context) ApiAuthUserRequest {
-=======
 func (a *V1AuthApiService) AuthUser(ctx context.Context) ApiAuthUserRequest {
->>>>>>> prajjwal-warp-323
 	return ApiAuthUserRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -348,11 +315,7 @@ func (a *V1AuthApiService) AuthUser(ctx context.Context) ApiAuthUserRequest {
 
 // Execute executes the request
 //  @return AuthUserResponse
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserResponse, *http.Response, error) {
-=======
 func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserResponse, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -360,11 +323,7 @@ func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserRespo
 		localVarReturnValue  *AuthUserResponse
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthUser")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthUser")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -468,11 +427,7 @@ func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserRespo
 
 type ApiAuthUsersGetRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 	body *CommonsListUsersOptions
 }
 
@@ -494,11 +449,7 @@ List users from authentication provider
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthUsersGetRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequest {
-=======
 func (a *V1AuthApiService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequest {
->>>>>>> prajjwal-warp-323
 	return ApiAuthUsersGetRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -507,11 +458,7 @@ func (a *V1AuthApiService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequ
 
 // Execute executes the request
 //  @return []CommonsListUsersResponse
-<<<<<<< HEAD
-func (a *V1AuthAPIService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]CommonsListUsersResponse, *http.Response, error) {
-=======
 func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]CommonsListUsersResponse, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -519,11 +466,7 @@ func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]Comm
 		localVarReturnValue  []CommonsListUsersResponse
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthUsersGet")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthUsersGet")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -630,20 +573,8 @@ func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]Comm
 
 type ApiGetAuthURLRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-	provider string
-	inviteCode *string
-}
-
-// Invite code if any
-func (r ApiGetAuthURLRequest) InviteCode(inviteCode string) ApiGetAuthURLRequest {
-	r.inviteCode = &inviteCode
-	return r
-=======
 	ApiService V1AuthApi
 	provider string
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetAuthURLRequest) Execute() (*http.Response, error) {
@@ -659,11 +590,7 @@ Get auth url
  @param provider Provider
  @return ApiGetAuthURLRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) GetAuthURL(ctx context.Context, provider string) ApiGetAuthURLRequest {
-=======
 func (a *V1AuthApiService) GetAuthURL(ctx context.Context, provider string) ApiGetAuthURLRequest {
->>>>>>> prajjwal-warp-323
 	return ApiGetAuthURLRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -672,22 +599,14 @@ func (a *V1AuthApiService) GetAuthURL(ctx context.Context, provider string) ApiG
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-func (a *V1AuthAPIService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Response, error) {
-=======
 func (a *V1AuthApiService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.GetAuthURL")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.GetAuthURL")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -699,12 +618,6 @@ func (a *V1AuthApiService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Resp
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-<<<<<<< HEAD
-	if r.inviteCode != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "invite_code", r.inviteCode, "")
-	}
-=======
->>>>>>> prajjwal-warp-323
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -784,11 +697,7 @@ func (a *V1AuthApiService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Resp
 
 type ApiGetMeRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetMeRequest) Execute() (*MeResponse, *http.Response, error) {
@@ -803,11 +712,7 @@ Gets the currently logged in user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetMeRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) GetMe(ctx context.Context) ApiGetMeRequest {
-=======
 func (a *V1AuthApiService) GetMe(ctx context.Context) ApiGetMeRequest {
->>>>>>> prajjwal-warp-323
 	return ApiGetMeRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -816,11 +721,7 @@ func (a *V1AuthApiService) GetMe(ctx context.Context) ApiGetMeRequest {
 
 // Execute executes the request
 //  @return MeResponse
-<<<<<<< HEAD
-func (a *V1AuthAPIService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.Response, error) {
-=======
 func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -828,11 +729,7 @@ func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.R
 		localVarReturnValue  *MeResponse
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.GetMe")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.GetMe")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -945,11 +842,7 @@ func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.R
 
 type ApiLogoutRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiLogoutRequest) Execute() (*http.Response, error) {
@@ -964,11 +857,7 @@ Logs out the user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiLogoutRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) Logout(ctx context.Context) ApiLogoutRequest {
-=======
 func (a *V1AuthApiService) Logout(ctx context.Context) ApiLogoutRequest {
->>>>>>> prajjwal-warp-323
 	return ApiLogoutRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -976,22 +865,14 @@ func (a *V1AuthApiService) Logout(ctx context.Context) ApiLogoutRequest {
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-func (a *V1AuthAPIService) LogoutExecute(r ApiLogoutRequest) (*http.Response, error) {
-=======
 func (a *V1AuthApiService) LogoutExecute(r ApiLogoutRequest) (*http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.Logout")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.Logout")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1095,11 +976,7 @@ func (a *V1AuthApiService) LogoutExecute(r ApiLogoutRequest) (*http.Response, er
 
 type ApiRefreshTokenRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 	body *TokenRefreshRequest
 }
 
@@ -1121,11 +998,7 @@ Refreshes the access token
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiRefreshTokenRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
-=======
 func (a *V1AuthApiService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
->>>>>>> prajjwal-warp-323
 	return ApiRefreshTokenRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1134,11 +1007,7 @@ func (a *V1AuthApiService) RefreshToken(ctx context.Context) ApiRefreshTokenRequ
 
 // Execute executes the request
 //  @return TokenRefreshResponse
-<<<<<<< HEAD
-func (a *V1AuthAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*TokenRefreshResponse, *http.Response, error) {
-=======
 func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*TokenRefreshResponse, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1146,11 +1015,7 @@ func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*Token
 		localVarReturnValue  *TokenRefreshResponse
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.RefreshToken")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.RefreshToken")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1254,11 +1119,7 @@ func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*Token
 
 type ApiSwitchOrganizationRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1AuthAPI
-=======
 	ApiService V1AuthApi
->>>>>>> prajjwal-warp-323
 	body *SwitchOrganizationRequest
 }
 
@@ -1278,11 +1139,7 @@ SwitchOrganization Switch organization
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSwitchOrganizationRequest
 */
-<<<<<<< HEAD
-func (a *V1AuthAPIService) SwitchOrganization(ctx context.Context) ApiSwitchOrganizationRequest {
-=======
 func (a *V1AuthApiService) SwitchOrganization(ctx context.Context) ApiSwitchOrganizationRequest {
->>>>>>> prajjwal-warp-323
 	return ApiSwitchOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1291,11 +1148,7 @@ func (a *V1AuthApiService) SwitchOrganization(ctx context.Context) ApiSwitchOrga
 
 // Execute executes the request
 //  @return SwitchOrganizationResponse
-<<<<<<< HEAD
-func (a *V1AuthAPIService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
-=======
 func (a *V1AuthApiService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1303,11 +1156,7 @@ func (a *V1AuthApiService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequ
 		localVarReturnValue  *SwitchOrganizationResponse
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.SwitchOrganization")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.SwitchOrganization")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

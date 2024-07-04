@@ -21,11 +21,7 @@ import (
 )
 
 
-<<<<<<< HEAD
-type V1SubscriptionsAPI interface {
-=======
 type V1SubscriptionsApi interface {
->>>>>>> prajjwal-warp-323
 
 	/*
 	DeleteCurrentSubscription Cancel Org current Subscription
@@ -53,8 +49,6 @@ type V1SubscriptionsApi interface {
 	DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error)
 
 	/*
-<<<<<<< HEAD
-=======
 	GetBillingInfo Get Billing Info
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -79,7 +73,6 @@ type V1SubscriptionsApi interface {
 	GetCustomerPortalUrlExecute(r ApiGetCustomerPortalUrlRequest) (string, *http.Response, error)
 
 	/*
->>>>>>> prajjwal-warp-323
 	GetSubscriptionDetails Get Current Org Subscription Details
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -116,8 +109,6 @@ type V1SubscriptionsApi interface {
 	InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error)
 
 	/*
-<<<<<<< HEAD
-=======
 	PostSetupIntent Post Checkout processing for subscription with PG
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -130,7 +121,6 @@ type V1SubscriptionsApi interface {
 	PostSetupIntentExecute(r ApiPostSetupIntentRequest) (*CommonsPostPaymentMethodSetupInput, *http.Response, error)
 
 	/*
->>>>>>> prajjwal-warp-323
 	StripePaymentMethodDefault update stripe payment method to default
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -154,16 +144,6 @@ type V1SubscriptionsApi interface {
 
 	// SubscriptionPGWebhookExecute executes the request
 	SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error)
-<<<<<<< HEAD
-}
-
-// V1SubscriptionsAPIService V1SubscriptionsAPI service
-type V1SubscriptionsAPIService service
-
-type ApiDeleteCurrentSubscriptionRequest struct {
-	ctx context.Context
-	ApiService V1SubscriptionsAPI
-=======
 
 	/*
 	UpdateBillingInfo Update Billing Info
@@ -184,7 +164,6 @@ type V1SubscriptionsApiService service
 type ApiDeleteCurrentSubscriptionRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiDeleteCurrentSubscriptionRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -197,11 +176,7 @@ DeleteCurrentSubscription Cancel Org current Subscription
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDeleteCurrentSubscriptionRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
-=======
 func (a *V1SubscriptionsApiService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
->>>>>>> prajjwal-warp-323
 	return ApiDeleteCurrentSubscriptionRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -210,11 +185,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscription(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -222,11 +193,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteCurrentSubscription")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteCurrentSubscription")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -328,11 +295,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDelete
 
 type ApiDeleteStripePaymentMethodRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1SubscriptionsAPI
-=======
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 	paymentMethodId string
 }
 
@@ -347,11 +310,7 @@ DeleteStripePaymentMethod delete stripe setup intent payment method
  @param paymentMethodId ID for the stripe payment method
  @return ApiDeleteStripePaymentMethodRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
-=======
 func (a *V1SubscriptionsApiService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
->>>>>>> prajjwal-warp-323
 	return ApiDeleteStripePaymentMethodRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -361,11 +320,7 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethod(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -373,11 +328,7 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteStripePaymentMethod")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteStripePaymentMethod")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -478,11 +429,6 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDelete
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiGetSubscriptionDetailsRequest struct {
-	ctx context.Context
-	ApiService V1SubscriptionsAPI
-=======
 type ApiGetBillingInfoRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsApi
@@ -772,7 +718,6 @@ func (a *V1SubscriptionsApiService) GetCustomerPortalUrlExecute(r ApiGetCustomer
 type ApiGetSubscriptionDetailsRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetSubscriptionDetailsRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -785,11 +730,7 @@ GetSubscriptionDetails Get Current Org Subscription Details
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetSubscriptionDetailsRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
-=======
 func (a *V1SubscriptionsApiService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
->>>>>>> prajjwal-warp-323
 	return ApiGetSubscriptionDetailsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -798,11 +739,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetails(ctx context.Context) 
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -810,11 +747,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.GetSubscriptionDetails")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetSubscriptionDetails")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -916,11 +849,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 
 type ApiInitateSubscriptionCheckoutRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1SubscriptionsAPI
-=======
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 	body *CommonsReqCheckoutSession
 }
 
@@ -940,11 +869,7 @@ InitateSubscriptionCheckout Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitateSubscriptionCheckoutRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
-=======
 func (a *V1SubscriptionsApiService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
->>>>>>> prajjwal-warp-323
 	return ApiInitateSubscriptionCheckoutRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -953,11 +878,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckout(ctx context.Cont
 
 // Execute executes the request
 //  @return CommonsResCheckoutSession
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -965,11 +886,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInit
 		localVarReturnValue  *CommonsResCheckoutSession
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitateSubscriptionCheckout")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitateSubscriptionCheckout")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1098,11 +1015,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInit
 
 type ApiInitiateSetupIntentRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1SubscriptionsAPI
-=======
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 	body *CommonsReqSetupIntentInit
 }
 
@@ -1122,11 +1035,7 @@ InitiateSetupIntent Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitiateSetupIntentRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
-=======
 func (a *V1SubscriptionsApiService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
->>>>>>> prajjwal-warp-323
 	return ApiInitiateSetupIntentRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1135,11 +1044,7 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntent(ctx context.Context) Api
 
 // Execute executes the request
 //  @return CommonsResSetupIntentInit
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -1147,11 +1052,7 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetu
 		localVarReturnValue  *CommonsResSetupIntentInit
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitiateSetupIntent")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitiateSetupIntent")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1278,11 +1179,6 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetu
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-<<<<<<< HEAD
-type ApiStripePaymentMethodDefaultRequest struct {
-	ctx context.Context
-	ApiService V1SubscriptionsAPI
-=======
 type ApiPostSetupIntentRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsApi
@@ -1452,7 +1348,6 @@ func (a *V1SubscriptionsApiService) PostSetupIntentExecute(r ApiPostSetupIntentR
 type ApiStripePaymentMethodDefaultRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 	paymentMethodId string
 }
 
@@ -1467,11 +1362,7 @@ StripePaymentMethodDefault update stripe payment method to default
  @param paymentMethodId ID for the stripe payment method
  @return ApiStripePaymentMethodDefaultRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
-=======
 func (a *V1SubscriptionsApiService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
->>>>>>> prajjwal-warp-323
 	return ApiStripePaymentMethodDefaultRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1481,11 +1372,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefault(ctx context.Conte
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1493,11 +1380,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStrip
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.StripePaymentMethodDefault")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.StripePaymentMethodDefault")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1600,11 +1483,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStrip
 
 type ApiSubscriptionPGWebhookRequest struct {
 	ctx context.Context
-<<<<<<< HEAD
-	ApiService V1SubscriptionsAPI
-=======
 	ApiService V1SubscriptionsApi
->>>>>>> prajjwal-warp-323
 	gateway string
 }
 
@@ -1619,11 +1498,7 @@ SubscriptionPGWebhook S2S Webhook received from PG
  @param gateway gateway name, current only stripe
  @return ApiSubscriptionPGWebhookRequest
 */
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
-=======
 func (a *V1SubscriptionsApiService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
->>>>>>> prajjwal-warp-323
 	return ApiSubscriptionPGWebhookRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1632,22 +1507,14 @@ func (a *V1SubscriptionsApiService) SubscriptionPGWebhook(ctx context.Context, g
 }
 
 // Execute executes the request
-<<<<<<< HEAD
-func (a *V1SubscriptionsAPIService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
-=======
 func (a *V1SubscriptionsApiService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
->>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-<<<<<<< HEAD
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.SubscriptionPGWebhook")
-=======
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.SubscriptionPGWebhook")
->>>>>>> prajjwal-warp-323
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1760,8 +1627,6 @@ func (a *V1SubscriptionsApiService) SubscriptionPGWebhookExecute(r ApiSubscripti
 
 	return localVarHTTPResponse, nil
 }
-<<<<<<< HEAD
-=======
 
 type ApiUpdateBillingInfoRequest struct {
 	ctx context.Context
@@ -1928,4 +1793,3 @@ func (a *V1SubscriptionsApiService) UpdateBillingInfoExecute(r ApiUpdateBillingI
 
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
->>>>>>> prajjwal-warp-323
