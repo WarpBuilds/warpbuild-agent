@@ -30,6 +30,8 @@ type TelemetryOptions struct {
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
+	log.Logger().Infof("Starting telemetry collection...")
+
 	cfg := warpbuild.NewConfiguration()
 	if opts.HostURL == "" {
 		return fmt.Errorf("host url is required")
@@ -41,14 +43,21 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	ctx = context.WithValue(ctx, WarpBuildRunnerIDContextKey, opts.ID)
 	ctx = context.WithValue(ctx, WarpBuildRunnerPollingSecretContextKey, opts.PollingSecret)
 
+	log.Logger().Infof("WarpBuild API client initialized with values: [%+v]", wb)
+
 	// Get the appropriate OpenTelemetry Collector Contrib binary
 	collectorPath, err := getOtelCollectorPath()
 	if err != nil {
 		log.Logger().Errorf("Failed to get OpenTelemetry Collector binary: %v", err)
 		return err
 	}
+
+	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
+
 	// Write the OpenTelemetry Collector configuration file
 	writeOtelCollectorConfig()
+
+	log.Logger().Infof("OpenTelemetry Collector configuration file written to: %s", configFilePath)
 
 	url, err := fetchPresignedURL(ctx)
 	if err != nil {
@@ -56,6 +65,8 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		return err
 	}
 	presignedS3URL = url
+
+	log.Logger().Infof("Fetched initial Presigned S3 URL: %s", presignedS3URL)
 
 	// Channel to signal when the application should terminate
 	done := make(chan bool, 1)

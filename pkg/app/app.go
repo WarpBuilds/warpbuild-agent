@@ -118,7 +118,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
-	telemetryCtx, telemetryCtxCancel := context.WithCancel(ctx)
+	telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
 	defer telemetryCtxCancel()
 
 	telemetryDone := make(chan bool, 1)
