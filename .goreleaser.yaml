@@ -41,7 +41,7 @@ archives:
       - tools/launchd/com.warpbuild.warpbuild-agentd.plist
       - tools/systemd/warpbuild-agentd.service
       - tools/github/hooks/prerun.sh
-      - ./pkg/telemetry/binaries/**
+      - pkg/telemetry/binaries/**
 
 checksum:
   name_template: "checksums.txt"
@@ -60,6 +60,8 @@ release:
   github:
     owner: warpbuilds
     name: warpbuild-agent
+  prerelease: auto
+  make_latest: false
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
