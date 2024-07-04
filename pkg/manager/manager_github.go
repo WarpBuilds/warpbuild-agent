@@ -56,12 +56,10 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 	var cmd *exec.Cmd
 
 	switch runtime.GOARCH {
-	case "arm64":
-		cmd = exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	case "amd64":
+		// x64 runners require the command to be run as sudo
 		cmd = exec.CommandContext(ctx, "sudo", "-E", "-H", "-u", "runner", m.Script, "--jitconfig", opts.JitToken)
 	default:
-		// Fallback to default command
 		cmd = exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
 	}
 
