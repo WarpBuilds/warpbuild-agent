@@ -20,7 +20,11 @@ import (
 )
 
 
+<<<<<<< HEAD
 type V1DebuggerAPI interface {
+=======
+type V1DebuggerApi interface {
+>>>>>>> prajjwal-warp-323
 
 	/*
 	DebugPublishEvent Publish an event to the event bus
@@ -35,12 +39,21 @@ type V1DebuggerAPI interface {
 	DebugPublishEventExecute(r ApiDebugPublishEventRequest) (*TypesGenericSuccessMessage, *http.Response, error)
 }
 
+<<<<<<< HEAD
 // V1DebuggerAPIService V1DebuggerAPI service
 type V1DebuggerAPIService service
 
 type ApiDebugPublishEventRequest struct {
 	ctx context.Context
 	ApiService V1DebuggerAPI
+=======
+// V1DebuggerApiService V1DebuggerApi service
+type V1DebuggerApiService service
+
+type ApiDebugPublishEventRequest struct {
+	ctx context.Context
+	ApiService V1DebuggerApi
+>>>>>>> prajjwal-warp-323
 	body *DebuggerPublishEventInput
 }
 
@@ -60,7 +73,11 @@ DebugPublishEvent Publish an event to the event bus
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDebugPublishEventRequest
 */
+<<<<<<< HEAD
 func (a *V1DebuggerAPIService) DebugPublishEvent(ctx context.Context) ApiDebugPublishEventRequest {
+=======
+func (a *V1DebuggerApiService) DebugPublishEvent(ctx context.Context) ApiDebugPublishEventRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiDebugPublishEventRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -69,7 +86,11 @@ func (a *V1DebuggerAPIService) DebugPublishEvent(ctx context.Context) ApiDebugPu
 
 // Execute executes the request
 //  @return TypesGenericSuccessMessage
+<<<<<<< HEAD
 func (a *V1DebuggerAPIService) DebugPublishEventExecute(r ApiDebugPublishEventRequest) (*TypesGenericSuccessMessage, *http.Response, error) {
+=======
+func (a *V1DebuggerApiService) DebugPublishEventExecute(r ApiDebugPublishEventRequest) (*TypesGenericSuccessMessage, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -77,7 +98,11 @@ func (a *V1DebuggerAPIService) DebugPublishEventExecute(r ApiDebugPublishEventRe
 		localVarReturnValue  *TypesGenericSuccessMessage
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1DebuggerAPIService.DebugPublishEvent")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1DebuggerApiService.DebugPublishEvent")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

@@ -21,7 +21,11 @@ import (
 )
 
 
+<<<<<<< HEAD
 type V1SubscriptionsAPI interface {
+=======
+type V1SubscriptionsApi interface {
+>>>>>>> prajjwal-warp-323
 
 	/*
 	DeleteCurrentSubscription Cancel Org current Subscription
@@ -49,6 +53,33 @@ type V1SubscriptionsAPI interface {
 	DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error)
 
 	/*
+<<<<<<< HEAD
+=======
+	GetBillingInfo Get Billing Info
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetBillingInfoRequest
+	*/
+	GetBillingInfo(ctx context.Context) ApiGetBillingInfoRequest
+
+	// GetBillingInfoExecute executes the request
+	//  @return CommonsBillingInfo
+	GetBillingInfoExecute(r ApiGetBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error)
+
+	/*
+	GetCustomerPortalUrl Get customer portal url
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetCustomerPortalUrlRequest
+	*/
+	GetCustomerPortalUrl(ctx context.Context) ApiGetCustomerPortalUrlRequest
+
+	// GetCustomerPortalUrlExecute executes the request
+	//  @return string
+	GetCustomerPortalUrlExecute(r ApiGetCustomerPortalUrlRequest) (string, *http.Response, error)
+
+	/*
+>>>>>>> prajjwal-warp-323
 	GetSubscriptionDetails Get Current Org Subscription Details
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -85,6 +116,21 @@ type V1SubscriptionsAPI interface {
 	InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error)
 
 	/*
+<<<<<<< HEAD
+=======
+	PostSetupIntent Post Checkout processing for subscription with PG
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiPostSetupIntentRequest
+	*/
+	PostSetupIntent(ctx context.Context) ApiPostSetupIntentRequest
+
+	// PostSetupIntentExecute executes the request
+	//  @return CommonsPostPaymentMethodSetupInput
+	PostSetupIntentExecute(r ApiPostSetupIntentRequest) (*CommonsPostPaymentMethodSetupInput, *http.Response, error)
+
+	/*
+>>>>>>> prajjwal-warp-323
 	StripePaymentMethodDefault update stripe payment method to default
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -108,6 +154,7 @@ type V1SubscriptionsAPI interface {
 
 	// SubscriptionPGWebhookExecute executes the request
 	SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error)
+<<<<<<< HEAD
 }
 
 // V1SubscriptionsAPIService V1SubscriptionsAPI service
@@ -116,6 +163,28 @@ type V1SubscriptionsAPIService service
 type ApiDeleteCurrentSubscriptionRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsAPI
+=======
+
+	/*
+	UpdateBillingInfo Update Billing Info
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUpdateBillingInfoRequest
+	*/
+	UpdateBillingInfo(ctx context.Context) ApiUpdateBillingInfoRequest
+
+	// UpdateBillingInfoExecute executes the request
+	//  @return CommonsBillingInfo
+	UpdateBillingInfoExecute(r ApiUpdateBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error)
+}
+
+// V1SubscriptionsApiService V1SubscriptionsApi service
+type V1SubscriptionsApiService service
+
+type ApiDeleteCurrentSubscriptionRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiDeleteCurrentSubscriptionRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -128,7 +197,11 @@ DeleteCurrentSubscription Cancel Org current Subscription
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDeleteCurrentSubscriptionRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
+=======
+func (a *V1SubscriptionsApiService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiDeleteCurrentSubscriptionRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -137,7 +210,11 @@ func (a *V1SubscriptionsAPIService) DeleteCurrentSubscription(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -145,7 +222,11 @@ func (a *V1SubscriptionsAPIService) DeleteCurrentSubscriptionExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteCurrentSubscription")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteCurrentSubscription")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -247,7 +328,11 @@ func (a *V1SubscriptionsAPIService) DeleteCurrentSubscriptionExecute(r ApiDelete
 
 type ApiDeleteStripePaymentMethodRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1SubscriptionsAPI
+=======
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 	paymentMethodId string
 }
 
@@ -262,7 +347,11 @@ DeleteStripePaymentMethod delete stripe setup intent payment method
  @param paymentMethodId ID for the stripe payment method
  @return ApiDeleteStripePaymentMethodRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
+=======
+func (a *V1SubscriptionsApiService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiDeleteStripePaymentMethodRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -272,7 +361,11 @@ func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethod(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -280,7 +373,11 @@ func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethodExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteStripePaymentMethod")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteStripePaymentMethod")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -381,9 +478,301 @@ func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethodExecute(r ApiDelete
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+<<<<<<< HEAD
 type ApiGetSubscriptionDetailsRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsAPI
+=======
+type ApiGetBillingInfoRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+}
+
+func (r ApiGetBillingInfoRequest) Execute() (*CommonsBillingInfo, *http.Response, error) {
+	return r.ApiService.GetBillingInfoExecute(r)
+}
+
+/*
+GetBillingInfo Get Billing Info
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiGetBillingInfoRequest
+*/
+func (a *V1SubscriptionsApiService) GetBillingInfo(ctx context.Context) ApiGetBillingInfoRequest {
+	return ApiGetBillingInfoRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsBillingInfo
+func (a *V1SubscriptionsApiService) GetBillingInfoExecute(r ApiGetBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsBillingInfo
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetBillingInfo")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/billing/info"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetCustomerPortalUrlRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+}
+
+func (r ApiGetCustomerPortalUrlRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.GetCustomerPortalUrlExecute(r)
+}
+
+/*
+GetCustomerPortalUrl Get customer portal url
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiGetCustomerPortalUrlRequest
+*/
+func (a *V1SubscriptionsApiService) GetCustomerPortalUrl(ctx context.Context) ApiGetCustomerPortalUrlRequest {
+	return ApiGetCustomerPortalUrlRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return string
+func (a *V1SubscriptionsApiService) GetCustomerPortalUrlExecute(r ApiGetCustomerPortalUrlRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetCustomerPortalUrl")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/subscription/customer_portal_url"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetSubscriptionDetailsRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetSubscriptionDetailsRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -396,7 +785,11 @@ GetSubscriptionDetails Get Current Org Subscription Details
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetSubscriptionDetailsRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
+=======
+func (a *V1SubscriptionsApiService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiGetSubscriptionDetailsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -405,7 +798,11 @@ func (a *V1SubscriptionsAPIService) GetSubscriptionDetails(ctx context.Context) 
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -413,7 +810,11 @@ func (a *V1SubscriptionsAPIService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.GetSubscriptionDetails")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetSubscriptionDetails")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -515,7 +916,11 @@ func (a *V1SubscriptionsAPIService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 
 type ApiInitateSubscriptionCheckoutRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1SubscriptionsAPI
+=======
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 	body *CommonsReqCheckoutSession
 }
 
@@ -535,7 +940,11 @@ InitateSubscriptionCheckout Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitateSubscriptionCheckoutRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
+=======
+func (a *V1SubscriptionsApiService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiInitateSubscriptionCheckoutRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -544,7 +953,11 @@ func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckout(ctx context.Cont
 
 // Execute executes the request
 //  @return CommonsResCheckoutSession
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -552,7 +965,11 @@ func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckoutExecute(r ApiInit
 		localVarReturnValue  *CommonsResCheckoutSession
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitateSubscriptionCheckout")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitateSubscriptionCheckout")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -681,7 +1098,11 @@ func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckoutExecute(r ApiInit
 
 type ApiInitiateSetupIntentRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1SubscriptionsAPI
+=======
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 	body *CommonsReqSetupIntentInit
 }
 
@@ -701,7 +1122,11 @@ InitiateSetupIntent Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitiateSetupIntentRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
+=======
+func (a *V1SubscriptionsApiService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiInitiateSetupIntentRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -710,7 +1135,11 @@ func (a *V1SubscriptionsAPIService) InitiateSetupIntent(ctx context.Context) Api
 
 // Execute executes the request
 //  @return CommonsResSetupIntentInit
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -718,7 +1147,11 @@ func (a *V1SubscriptionsAPIService) InitiateSetupIntentExecute(r ApiInitiateSetu
 		localVarReturnValue  *CommonsResSetupIntentInit
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitiateSetupIntent")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitiateSetupIntent")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -845,9 +1278,181 @@ func (a *V1SubscriptionsAPIService) InitiateSetupIntentExecute(r ApiInitiateSetu
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+<<<<<<< HEAD
 type ApiStripePaymentMethodDefaultRequest struct {
 	ctx context.Context
 	ApiService V1SubscriptionsAPI
+=======
+type ApiPostSetupIntentRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+	body *CommonsPostPaymentMethodSetupInput
+}
+
+// post setup intent session input
+func (r ApiPostSetupIntentRequest) Body(body CommonsPostPaymentMethodSetupInput) ApiPostSetupIntentRequest {
+	r.body = &body
+	return r
+}
+
+func (r ApiPostSetupIntentRequest) Execute() (*CommonsPostPaymentMethodSetupInput, *http.Response, error) {
+	return r.ApiService.PostSetupIntentExecute(r)
+}
+
+/*
+PostSetupIntent Post Checkout processing for subscription with PG
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiPostSetupIntentRequest
+*/
+func (a *V1SubscriptionsApiService) PostSetupIntent(ctx context.Context) ApiPostSetupIntentRequest {
+	return ApiPostSetupIntentRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsPostPaymentMethodSetupInput
+func (a *V1SubscriptionsApiService) PostSetupIntentExecute(r ApiPostSetupIntentRequest) (*CommonsPostPaymentMethodSetupInput, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsPostPaymentMethodSetupInput
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.PostSetupIntent")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/billing/setup_intent/post_processor"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.body == nil {
+		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.body
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiStripePaymentMethodDefaultRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 	paymentMethodId string
 }
 
@@ -862,7 +1467,11 @@ StripePaymentMethodDefault update stripe payment method to default
  @param paymentMethodId ID for the stripe payment method
  @return ApiStripePaymentMethodDefaultRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
+=======
+func (a *V1SubscriptionsApiService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiStripePaymentMethodDefaultRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -872,7 +1481,11 @@ func (a *V1SubscriptionsAPIService) StripePaymentMethodDefault(ctx context.Conte
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -880,7 +1493,11 @@ func (a *V1SubscriptionsAPIService) StripePaymentMethodDefaultExecute(r ApiStrip
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.StripePaymentMethodDefault")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.StripePaymentMethodDefault")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -983,7 +1600,11 @@ func (a *V1SubscriptionsAPIService) StripePaymentMethodDefaultExecute(r ApiStrip
 
 type ApiSubscriptionPGWebhookRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1SubscriptionsAPI
+=======
+	ApiService V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 	gateway string
 }
 
@@ -998,7 +1619,11 @@ SubscriptionPGWebhook S2S Webhook received from PG
  @param gateway gateway name, current only stripe
  @return ApiSubscriptionPGWebhookRequest
 */
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
+=======
+func (a *V1SubscriptionsApiService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiSubscriptionPGWebhookRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1007,14 +1632,22 @@ func (a *V1SubscriptionsAPIService) SubscriptionPGWebhook(ctx context.Context, g
 }
 
 // Execute executes the request
+<<<<<<< HEAD
 func (a *V1SubscriptionsAPIService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
+=======
+func (a *V1SubscriptionsApiService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.SubscriptionPGWebhook")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.SubscriptionPGWebhook")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1127,3 +1760,172 @@ func (a *V1SubscriptionsAPIService) SubscriptionPGWebhookExecute(r ApiSubscripti
 
 	return localVarHTTPResponse, nil
 }
+<<<<<<< HEAD
+=======
+
+type ApiUpdateBillingInfoRequest struct {
+	ctx context.Context
+	ApiService V1SubscriptionsApi
+	body *CommonsUpdateBillingInfoInput
+}
+
+// billing info update input
+func (r ApiUpdateBillingInfoRequest) Body(body CommonsUpdateBillingInfoInput) ApiUpdateBillingInfoRequest {
+	r.body = &body
+	return r
+}
+
+func (r ApiUpdateBillingInfoRequest) Execute() (*CommonsBillingInfo, *http.Response, error) {
+	return r.ApiService.UpdateBillingInfoExecute(r)
+}
+
+/*
+UpdateBillingInfo Update Billing Info
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiUpdateBillingInfoRequest
+*/
+func (a *V1SubscriptionsApiService) UpdateBillingInfo(ctx context.Context) ApiUpdateBillingInfoRequest {
+	return ApiUpdateBillingInfoRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsBillingInfo
+func (a *V1SubscriptionsApiService) UpdateBillingInfoExecute(r ApiUpdateBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPatch
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsBillingInfo
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.UpdateBillingInfo")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/billing/info"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.body == nil {
+		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.body
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 503 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+>>>>>>> prajjwal-warp-323

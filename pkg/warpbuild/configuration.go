@@ -90,7 +90,11 @@ type Configuration struct {
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
+<<<<<<< HEAD
 		UserAgent:        "OpenAPI-Generator//Users/prashant/warpbuilds/warpbuild-agent/pkg/warpbuild/go",
+=======
+		UserAgent:        "OpenAPI-Generator/./sdk/warpbuild/go",
+>>>>>>> prajjwal-warp-323
 		Debug:            false,
 		Servers:          ServerConfigurations{
 			{

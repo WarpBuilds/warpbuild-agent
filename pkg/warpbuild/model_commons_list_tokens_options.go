@@ -135,6 +135,7 @@ func (o CommonsListTokensOptions) ToMap() (map[string]interface{}, error) {
 func (o *CommonsListTokensOptions) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsListTokensOptions := _CommonsListTokensOptions{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsListTokensOptions)
 
 	if err != nil {
@@ -143,6 +144,12 @@ func (o *CommonsListTokensOptions) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsListTokensOptions(varCommonsListTokensOptions)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsListTokensOptions); err == nil {
+		*o = CommonsListTokensOptions(varCommonsListTokensOptions)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

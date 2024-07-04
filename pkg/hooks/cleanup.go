@@ -37,7 +37,7 @@ func (*CleanupCallbackHook) PostEndHook(ctx context.Context, opts *manager.PostE
 	for {
 		select {
 		case <-ticker.C:
-			_, res, err := NewWarpBuildClient(opts.StartRunnerOptions.AgentOptions).V1RunnerInstanceAPI.
+			_, res, err := NewWarpBuildClient(opts.StartRunnerOptions.AgentOptions).V1RunnerInstanceApi.
 				RunnerInstanceCleanupHook(ctx, opts.StartRunnerOptions.AgentOptions.ID).
 				XPOLLINGSECRET(opts.StartRunnerOptions.AgentOptions.PollingSecret).
 				Execute()
@@ -53,5 +53,4 @@ func (*CleanupCallbackHook) PostEndHook(ctx context.Context, opts *manager.PostE
 			return nil
 		}
 	}
-	return nil
 }

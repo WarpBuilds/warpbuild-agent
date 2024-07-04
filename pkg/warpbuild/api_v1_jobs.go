@@ -20,6 +20,7 @@ import (
 )
 
 
+<<<<<<< HEAD
 type V1JobsAPI interface {
 
 	/*
@@ -43,22 +44,70 @@ type V1JobsAPIService service
 type ApiGetEstimatedCostsRequest struct {
 	ctx context.Context
 	ApiService V1JobsAPI
+=======
+type V1JobsApi interface {
+
+	/*
+	GetCostSummary GetCostSummary
+
+	GetCostSummary
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetCostSummaryRequest
+	*/
+	GetCostSummary(ctx context.Context) ApiGetCostSummaryRequest
+
+	// GetCostSummaryExecute executes the request
+	//  @return CommonsCostSummary
+	GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*CommonsCostSummary, *http.Response, error)
+
+	/*
+	GetDaywiseCosts GetDaywiseCosts
+
+	GetDaywiseCosts
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiGetDaywiseCostsRequest
+	*/
+	GetDaywiseCosts(ctx context.Context) ApiGetDaywiseCostsRequest
+
+	// GetDaywiseCostsExecute executes the request
+	//  @return []CommonsDaywiseCost
+	GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) ([]CommonsDaywiseCost, *http.Response, error)
+}
+
+// V1JobsApiService V1JobsApi service
+type V1JobsApiService service
+
+type ApiGetCostSummaryRequest struct {
+	ctx context.Context
+	ApiService V1JobsApi
+>>>>>>> prajjwal-warp-323
 	startDate *string
 	endDate *string
 }
 
 // Date range start
+<<<<<<< HEAD
 func (r ApiGetEstimatedCostsRequest) StartDate(startDate string) ApiGetEstimatedCostsRequest {
+=======
+func (r ApiGetCostSummaryRequest) StartDate(startDate string) ApiGetCostSummaryRequest {
+>>>>>>> prajjwal-warp-323
 	r.startDate = &startDate
 	return r
 }
 
 // Date range end
+<<<<<<< HEAD
 func (r ApiGetEstimatedCostsRequest) EndDate(endDate string) ApiGetEstimatedCostsRequest {
+=======
+func (r ApiGetCostSummaryRequest) EndDate(endDate string) ApiGetCostSummaryRequest {
+>>>>>>> prajjwal-warp-323
 	r.endDate = &endDate
 	return r
 }
 
+<<<<<<< HEAD
 func (r ApiGetEstimatedCostsRequest) Execute() ([]EstimatedCost, *http.Response, error) {
 	return r.ApiService.GetEstimatedCostsExecute(r)
 }
@@ -73,27 +122,215 @@ GetEstimatedCosts
 */
 func (a *V1JobsAPIService) GetEstimatedCosts(ctx context.Context) ApiGetEstimatedCostsRequest {
 	return ApiGetEstimatedCostsRequest{
+=======
+func (r ApiGetCostSummaryRequest) Execute() (*CommonsCostSummary, *http.Response, error) {
+	return r.ApiService.GetCostSummaryExecute(r)
+}
+
+/*
+GetCostSummary GetCostSummary
+
+GetCostSummary
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiGetCostSummaryRequest
+*/
+func (a *V1JobsApiService) GetCostSummary(ctx context.Context) ApiGetCostSummaryRequest {
+	return ApiGetCostSummaryRequest{
+>>>>>>> prajjwal-warp-323
 		ApiService: a,
 		ctx: ctx,
 	}
 }
 
 // Execute executes the request
+<<<<<<< HEAD
 //  @return []EstimatedCost
 func (a *V1JobsAPIService) GetEstimatedCostsExecute(r ApiGetEstimatedCostsRequest) ([]EstimatedCost, *http.Response, error) {
+=======
+//  @return CommonsCostSummary
+func (a *V1JobsApiService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*CommonsCostSummary, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
+<<<<<<< HEAD
 		localVarReturnValue  []EstimatedCost
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsAPIService.GetEstimatedCosts")
+=======
+		localVarReturnValue  *CommonsCostSummary
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsApiService.GetCostSummary")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
+<<<<<<< HEAD
 	localVarPath := localBasePath + "/jobs/estimated-costs"
+=======
+	localVarPath := localBasePath + "/jobs/cost-summary"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.startDate == nil {
+		return localVarReturnValue, nil, reportError("startDate is required and must be specified")
+	}
+	if r.endDate == nil {
+		return localVarReturnValue, nil, reportError("endDate is required and must be specified")
+	}
+
+	parameterAddToHeaderOrQuery(localVarQueryParams, "start_date", r.startDate, "")
+	parameterAddToHeaderOrQuery(localVarQueryParams, "end_date", r.endDate, "")
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"*/*"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetDaywiseCostsRequest struct {
+	ctx context.Context
+	ApiService V1JobsApi
+	startDate *string
+	endDate *string
+}
+
+// Date range start
+func (r ApiGetDaywiseCostsRequest) StartDate(startDate string) ApiGetDaywiseCostsRequest {
+	r.startDate = &startDate
+	return r
+}
+
+// Date range end
+func (r ApiGetDaywiseCostsRequest) EndDate(endDate string) ApiGetDaywiseCostsRequest {
+	r.endDate = &endDate
+	return r
+}
+
+func (r ApiGetDaywiseCostsRequest) Execute() ([]CommonsDaywiseCost, *http.Response, error) {
+	return r.ApiService.GetDaywiseCostsExecute(r)
+}
+
+/*
+GetDaywiseCosts GetDaywiseCosts
+
+GetDaywiseCosts
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiGetDaywiseCostsRequest
+*/
+func (a *V1JobsApiService) GetDaywiseCosts(ctx context.Context) ApiGetDaywiseCostsRequest {
+	return ApiGetDaywiseCostsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []CommonsDaywiseCost
+func (a *V1JobsApiService) GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) ([]CommonsDaywiseCost, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []CommonsDaywiseCost
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsApiService.GetDaywiseCosts")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/jobs/daywise-costs"
+>>>>>>> prajjwal-warp-323
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

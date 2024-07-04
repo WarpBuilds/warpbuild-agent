@@ -135,6 +135,7 @@ func (o CommonsResSetupIntentInit) ToMap() (map[string]interface{}, error) {
 func (o *CommonsResSetupIntentInit) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsResSetupIntentInit := _CommonsResSetupIntentInit{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsResSetupIntentInit)
 
 	if err != nil {
@@ -143,6 +144,12 @@ func (o *CommonsResSetupIntentInit) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsResSetupIntentInit(varCommonsResSetupIntentInit)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsResSetupIntentInit); err == nil {
+		*o = CommonsResSetupIntentInit(varCommonsResSetupIntentInit)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

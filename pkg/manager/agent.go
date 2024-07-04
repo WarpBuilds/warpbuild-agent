@@ -92,7 +92,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
 			log.Logger().Infof("polling secret: %s", a.pollingSecret)
 
-			allocationDetails, resp, err := a.client.V1RunnerInstanceAPI.
+			allocationDetails, resp, err := a.client.V1RunnerInstanceApi.
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
@@ -141,7 +141,6 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 		}
 	}
 
-	return nil
 }
 
 func (a *agentImpl) writeExitFile(ctx context.Context, opts *StartRunnerOutput) error {

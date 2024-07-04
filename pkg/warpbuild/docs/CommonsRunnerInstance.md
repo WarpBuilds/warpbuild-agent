@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+<<<<<<< HEAD
 **Cluster** | Pointer to **string** |  | [optional] 
 **Configuration** | Pointer to [**CommonsRunnerConfiguration**](CommonsRunnerConfiguration.md) |  | [optional] 
 **CreatedAt** | Pointer to **string** |  | [optional] 
@@ -14,6 +15,32 @@ Name | Type | Description | Notes
 **OrganizationId** | Pointer to **string** |  | [optional] 
 **RunnerFor** | Pointer to **string** |  | [optional] 
 **RunnerSetId** | Pointer to **string** |  | [optional] 
+=======
+**AllocatedAt** | Pointer to **string** |  | [optional] 
+**AllocationFor** | Pointer to **string** |  | [optional] 
+**AllocationRequestedAt** | Pointer to **string** |  | [optional] 
+**AllocationRequestedEventAt** | Pointer to **string** |  | [optional] 
+**Cluster** | Pointer to **string** |  | [optional] 
+**Configuration** | Pointer to [**CommonsRunnerInstanceConfiguration**](CommonsRunnerInstanceConfiguration.md) |  | [optional] 
+**CreatedAt** | Pointer to **string** |  | [optional] 
+**CreatedBy** | Pointer to **string** |  | [optional] 
+**ExternalId** | Pointer to **string** |  | [optional] 
+**FirstPolledAt** | Pointer to **string** |  | [optional] 
+**Host** | Pointer to **string** |  | [optional] 
+**Id** | Pointer to **string** |  | [optional] 
+**Labels** | Pointer to **[]string** |  | [optional] 
+**LastJobProcessedId** | Pointer to **string** |  | [optional] 
+**LastJobProcessedMeta** | Pointer to [**CommonsLastJobProcessedMeta**](CommonsLastJobProcessedMeta.md) |  | [optional] 
+**LastPolledAt** | Pointer to **string** |  | [optional] 
+**OrganizationId** | Pointer to **string** |  | [optional] 
+**ProviderKind** | Pointer to **string** |  | [optional] 
+**ProviderKindId** | Pointer to **string** |  | [optional] 
+**PurgedAt** | Pointer to **string** |  | [optional] 
+**PurgedReason** | Pointer to **string** |  | [optional] 
+**RunnerFor** | Pointer to **string** |  | [optional] 
+**RunnerSetId** | Pointer to **string** |  | [optional] 
+**RunningStartedAt** | Pointer to **string** |  | [optional] 
+>>>>>>> prajjwal-warp-323
 **Status** | Pointer to **string** |  | [optional] 
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
@@ -37,6 +64,109 @@ NewCommonsRunnerInstanceWithDefaults instantiates a new CommonsRunnerInstance ob
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
+<<<<<<< HEAD
+=======
+### GetAllocatedAt
+
+`func (o *CommonsRunnerInstance) GetAllocatedAt() string`
+
+GetAllocatedAt returns the AllocatedAt field if non-nil, zero value otherwise.
+
+### GetAllocatedAtOk
+
+`func (o *CommonsRunnerInstance) GetAllocatedAtOk() (*string, bool)`
+
+GetAllocatedAtOk returns a tuple with the AllocatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllocatedAt
+
+`func (o *CommonsRunnerInstance) SetAllocatedAt(v string)`
+
+SetAllocatedAt sets AllocatedAt field to given value.
+
+### HasAllocatedAt
+
+`func (o *CommonsRunnerInstance) HasAllocatedAt() bool`
+
+HasAllocatedAt returns a boolean if a field has been set.
+
+### GetAllocationFor
+
+`func (o *CommonsRunnerInstance) GetAllocationFor() string`
+
+GetAllocationFor returns the AllocationFor field if non-nil, zero value otherwise.
+
+### GetAllocationForOk
+
+`func (o *CommonsRunnerInstance) GetAllocationForOk() (*string, bool)`
+
+GetAllocationForOk returns a tuple with the AllocationFor field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllocationFor
+
+`func (o *CommonsRunnerInstance) SetAllocationFor(v string)`
+
+SetAllocationFor sets AllocationFor field to given value.
+
+### HasAllocationFor
+
+`func (o *CommonsRunnerInstance) HasAllocationFor() bool`
+
+HasAllocationFor returns a boolean if a field has been set.
+
+### GetAllocationRequestedAt
+
+`func (o *CommonsRunnerInstance) GetAllocationRequestedAt() string`
+
+GetAllocationRequestedAt returns the AllocationRequestedAt field if non-nil, zero value otherwise.
+
+### GetAllocationRequestedAtOk
+
+`func (o *CommonsRunnerInstance) GetAllocationRequestedAtOk() (*string, bool)`
+
+GetAllocationRequestedAtOk returns a tuple with the AllocationRequestedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllocationRequestedAt
+
+`func (o *CommonsRunnerInstance) SetAllocationRequestedAt(v string)`
+
+SetAllocationRequestedAt sets AllocationRequestedAt field to given value.
+
+### HasAllocationRequestedAt
+
+`func (o *CommonsRunnerInstance) HasAllocationRequestedAt() bool`
+
+HasAllocationRequestedAt returns a boolean if a field has been set.
+
+### GetAllocationRequestedEventAt
+
+`func (o *CommonsRunnerInstance) GetAllocationRequestedEventAt() string`
+
+GetAllocationRequestedEventAt returns the AllocationRequestedEventAt field if non-nil, zero value otherwise.
+
+### GetAllocationRequestedEventAtOk
+
+`func (o *CommonsRunnerInstance) GetAllocationRequestedEventAtOk() (*string, bool)`
+
+GetAllocationRequestedEventAtOk returns a tuple with the AllocationRequestedEventAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllocationRequestedEventAt
+
+`func (o *CommonsRunnerInstance) SetAllocationRequestedEventAt(v string)`
+
+SetAllocationRequestedEventAt sets AllocationRequestedEventAt field to given value.
+
+### HasAllocationRequestedEventAt
+
+`func (o *CommonsRunnerInstance) HasAllocationRequestedEventAt() bool`
+
+HasAllocationRequestedEventAt returns a boolean if a field has been set.
+
+>>>>>>> prajjwal-warp-323
 ### GetCluster
 
 `func (o *CommonsRunnerInstance) GetCluster() string`
@@ -64,20 +194,32 @@ HasCluster returns a boolean if a field has been set.
 
 ### GetConfiguration
 
+<<<<<<< HEAD
 `func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerConfiguration`
+=======
+`func (o *CommonsRunnerInstance) GetConfiguration() CommonsRunnerInstanceConfiguration`
+>>>>>>> prajjwal-warp-323
 
 GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
 
 ### GetConfigurationOk
 
+<<<<<<< HEAD
 `func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerConfiguration, bool)`
+=======
+`func (o *CommonsRunnerInstance) GetConfigurationOk() (*CommonsRunnerInstanceConfiguration, bool)`
+>>>>>>> prajjwal-warp-323
 
 GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetConfiguration
 
+<<<<<<< HEAD
 `func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerConfiguration)`
+=======
+`func (o *CommonsRunnerInstance) SetConfiguration(v CommonsRunnerInstanceConfiguration)`
+>>>>>>> prajjwal-warp-323
 
 SetConfiguration sets Configuration field to given value.
 
@@ -137,6 +279,84 @@ SetCreatedBy sets CreatedBy field to given value.
 
 HasCreatedBy returns a boolean if a field has been set.
 
+<<<<<<< HEAD
+=======
+### GetExternalId
+
+`func (o *CommonsRunnerInstance) GetExternalId() string`
+
+GetExternalId returns the ExternalId field if non-nil, zero value otherwise.
+
+### GetExternalIdOk
+
+`func (o *CommonsRunnerInstance) GetExternalIdOk() (*string, bool)`
+
+GetExternalIdOk returns a tuple with the ExternalId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExternalId
+
+`func (o *CommonsRunnerInstance) SetExternalId(v string)`
+
+SetExternalId sets ExternalId field to given value.
+
+### HasExternalId
+
+`func (o *CommonsRunnerInstance) HasExternalId() bool`
+
+HasExternalId returns a boolean if a field has been set.
+
+### GetFirstPolledAt
+
+`func (o *CommonsRunnerInstance) GetFirstPolledAt() string`
+
+GetFirstPolledAt returns the FirstPolledAt field if non-nil, zero value otherwise.
+
+### GetFirstPolledAtOk
+
+`func (o *CommonsRunnerInstance) GetFirstPolledAtOk() (*string, bool)`
+
+GetFirstPolledAtOk returns a tuple with the FirstPolledAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetFirstPolledAt
+
+`func (o *CommonsRunnerInstance) SetFirstPolledAt(v string)`
+
+SetFirstPolledAt sets FirstPolledAt field to given value.
+
+### HasFirstPolledAt
+
+`func (o *CommonsRunnerInstance) HasFirstPolledAt() bool`
+
+HasFirstPolledAt returns a boolean if a field has been set.
+
+### GetHost
+
+`func (o *CommonsRunnerInstance) GetHost() string`
+
+GetHost returns the Host field if non-nil, zero value otherwise.
+
+### GetHostOk
+
+`func (o *CommonsRunnerInstance) GetHostOk() (*string, bool)`
+
+GetHostOk returns a tuple with the Host field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHost
+
+`func (o *CommonsRunnerInstance) SetHost(v string)`
+
+SetHost sets Host field to given value.
+
+### HasHost
+
+`func (o *CommonsRunnerInstance) HasHost() bool`
+
+HasHost returns a boolean if a field has been set.
+
+>>>>>>> prajjwal-warp-323
 ### GetId
 
 `func (o *CommonsRunnerInstance) GetId() string`
@@ -162,6 +382,34 @@ SetId sets Id field to given value.
 
 HasId returns a boolean if a field has been set.
 
+<<<<<<< HEAD
+=======
+### GetLabels
+
+`func (o *CommonsRunnerInstance) GetLabels() []string`
+
+GetLabels returns the Labels field if non-nil, zero value otherwise.
+
+### GetLabelsOk
+
+`func (o *CommonsRunnerInstance) GetLabelsOk() (*[]string, bool)`
+
+GetLabelsOk returns a tuple with the Labels field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLabels
+
+`func (o *CommonsRunnerInstance) SetLabels(v []string)`
+
+SetLabels sets Labels field to given value.
+
+### HasLabels
+
+`func (o *CommonsRunnerInstance) HasLabels() bool`
+
+HasLabels returns a boolean if a field has been set.
+
+>>>>>>> prajjwal-warp-323
 ### GetLastJobProcessedId
 
 `func (o *CommonsRunnerInstance) GetLastJobProcessedId() string`
@@ -187,6 +435,7 @@ SetLastJobProcessedId sets LastJobProcessedId field to given value.
 
 HasLastJobProcessedId returns a boolean if a field has been set.
 
+<<<<<<< HEAD
 ### GetLastPolled
 
 `func (o *CommonsRunnerInstance) GetLastPolled() string`
@@ -211,6 +460,57 @@ SetLastPolled sets LastPolled field to given value.
 `func (o *CommonsRunnerInstance) HasLastPolled() bool`
 
 HasLastPolled returns a boolean if a field has been set.
+=======
+### GetLastJobProcessedMeta
+
+`func (o *CommonsRunnerInstance) GetLastJobProcessedMeta() CommonsLastJobProcessedMeta`
+
+GetLastJobProcessedMeta returns the LastJobProcessedMeta field if non-nil, zero value otherwise.
+
+### GetLastJobProcessedMetaOk
+
+`func (o *CommonsRunnerInstance) GetLastJobProcessedMetaOk() (*CommonsLastJobProcessedMeta, bool)`
+
+GetLastJobProcessedMetaOk returns a tuple with the LastJobProcessedMeta field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastJobProcessedMeta
+
+`func (o *CommonsRunnerInstance) SetLastJobProcessedMeta(v CommonsLastJobProcessedMeta)`
+
+SetLastJobProcessedMeta sets LastJobProcessedMeta field to given value.
+
+### HasLastJobProcessedMeta
+
+`func (o *CommonsRunnerInstance) HasLastJobProcessedMeta() bool`
+
+HasLastJobProcessedMeta returns a boolean if a field has been set.
+
+### GetLastPolledAt
+
+`func (o *CommonsRunnerInstance) GetLastPolledAt() string`
+
+GetLastPolledAt returns the LastPolledAt field if non-nil, zero value otherwise.
+
+### GetLastPolledAtOk
+
+`func (o *CommonsRunnerInstance) GetLastPolledAtOk() (*string, bool)`
+
+GetLastPolledAtOk returns a tuple with the LastPolledAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLastPolledAt
+
+`func (o *CommonsRunnerInstance) SetLastPolledAt(v string)`
+
+SetLastPolledAt sets LastPolledAt field to given value.
+
+### HasLastPolledAt
+
+`func (o *CommonsRunnerInstance) HasLastPolledAt() bool`
+
+HasLastPolledAt returns a boolean if a field has been set.
+>>>>>>> prajjwal-warp-323
 
 ### GetOrganizationId
 
@@ -237,6 +537,109 @@ SetOrganizationId sets OrganizationId field to given value.
 
 HasOrganizationId returns a boolean if a field has been set.
 
+<<<<<<< HEAD
+=======
+### GetProviderKind
+
+`func (o *CommonsRunnerInstance) GetProviderKind() string`
+
+GetProviderKind returns the ProviderKind field if non-nil, zero value otherwise.
+
+### GetProviderKindOk
+
+`func (o *CommonsRunnerInstance) GetProviderKindOk() (*string, bool)`
+
+GetProviderKindOk returns a tuple with the ProviderKind field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProviderKind
+
+`func (o *CommonsRunnerInstance) SetProviderKind(v string)`
+
+SetProviderKind sets ProviderKind field to given value.
+
+### HasProviderKind
+
+`func (o *CommonsRunnerInstance) HasProviderKind() bool`
+
+HasProviderKind returns a boolean if a field has been set.
+
+### GetProviderKindId
+
+`func (o *CommonsRunnerInstance) GetProviderKindId() string`
+
+GetProviderKindId returns the ProviderKindId field if non-nil, zero value otherwise.
+
+### GetProviderKindIdOk
+
+`func (o *CommonsRunnerInstance) GetProviderKindIdOk() (*string, bool)`
+
+GetProviderKindIdOk returns a tuple with the ProviderKindId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProviderKindId
+
+`func (o *CommonsRunnerInstance) SetProviderKindId(v string)`
+
+SetProviderKindId sets ProviderKindId field to given value.
+
+### HasProviderKindId
+
+`func (o *CommonsRunnerInstance) HasProviderKindId() bool`
+
+HasProviderKindId returns a boolean if a field has been set.
+
+### GetPurgedAt
+
+`func (o *CommonsRunnerInstance) GetPurgedAt() string`
+
+GetPurgedAt returns the PurgedAt field if non-nil, zero value otherwise.
+
+### GetPurgedAtOk
+
+`func (o *CommonsRunnerInstance) GetPurgedAtOk() (*string, bool)`
+
+GetPurgedAtOk returns a tuple with the PurgedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPurgedAt
+
+`func (o *CommonsRunnerInstance) SetPurgedAt(v string)`
+
+SetPurgedAt sets PurgedAt field to given value.
+
+### HasPurgedAt
+
+`func (o *CommonsRunnerInstance) HasPurgedAt() bool`
+
+HasPurgedAt returns a boolean if a field has been set.
+
+### GetPurgedReason
+
+`func (o *CommonsRunnerInstance) GetPurgedReason() string`
+
+GetPurgedReason returns the PurgedReason field if non-nil, zero value otherwise.
+
+### GetPurgedReasonOk
+
+`func (o *CommonsRunnerInstance) GetPurgedReasonOk() (*string, bool)`
+
+GetPurgedReasonOk returns a tuple with the PurgedReason field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetPurgedReason
+
+`func (o *CommonsRunnerInstance) SetPurgedReason(v string)`
+
+SetPurgedReason sets PurgedReason field to given value.
+
+### HasPurgedReason
+
+`func (o *CommonsRunnerInstance) HasPurgedReason() bool`
+
+HasPurgedReason returns a boolean if a field has been set.
+
+>>>>>>> prajjwal-warp-323
 ### GetRunnerFor
 
 `func (o *CommonsRunnerInstance) GetRunnerFor() string`
@@ -287,6 +690,34 @@ SetRunnerSetId sets RunnerSetId field to given value.
 
 HasRunnerSetId returns a boolean if a field has been set.
 
+<<<<<<< HEAD
+=======
+### GetRunningStartedAt
+
+`func (o *CommonsRunnerInstance) GetRunningStartedAt() string`
+
+GetRunningStartedAt returns the RunningStartedAt field if non-nil, zero value otherwise.
+
+### GetRunningStartedAtOk
+
+`func (o *CommonsRunnerInstance) GetRunningStartedAtOk() (*string, bool)`
+
+GetRunningStartedAtOk returns a tuple with the RunningStartedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRunningStartedAt
+
+`func (o *CommonsRunnerInstance) SetRunningStartedAt(v string)`
+
+SetRunningStartedAt sets RunningStartedAt field to given value.
+
+### HasRunningStartedAt
+
+`func (o *CommonsRunnerInstance) HasRunningStartedAt() bool`
+
+HasRunningStartedAt returns a boolean if a field has been set.
+
+>>>>>>> prajjwal-warp-323
 ### GetStatus
 
 `func (o *CommonsRunnerInstance) GetStatus() string`

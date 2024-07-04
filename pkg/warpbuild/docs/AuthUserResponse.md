@@ -5,16 +5,26 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AccessToken** | **string** |  | 
+<<<<<<< HEAD
 **Organization** | [**V1Organization**](V1Organization.md) |  | 
 **RefreshToken** | **string** |  | 
 **ShouldShowVcsIntegration** | **bool** |  | 
+=======
+**IsDifferentOrg** | **bool** |  | 
+**Organization** | [**V1Organization**](V1Organization.md) |  | 
+**RefreshToken** | **string** |  | 
+>>>>>>> prajjwal-warp-323
 **User** | [**V1User**](V1User.md) |  | 
 
 ## Methods
 
 ### NewAuthUserResponse
 
+<<<<<<< HEAD
 `func NewAuthUserResponse(accessToken string, organization V1Organization, refreshToken string, shouldShowVcsIntegration bool, user V1User, ) *AuthUserResponse`
+=======
+`func NewAuthUserResponse(accessToken string, isDifferentOrg bool, organization V1Organization, refreshToken string, user V1User, ) *AuthUserResponse`
+>>>>>>> prajjwal-warp-323
 
 NewAuthUserResponse instantiates a new AuthUserResponse object
 This constructor will assign default values to properties that have it defined,
@@ -49,6 +59,29 @@ and a boolean to check if the value has been set.
 SetAccessToken sets AccessToken field to given value.
 
 
+<<<<<<< HEAD
+=======
+### GetIsDifferentOrg
+
+`func (o *AuthUserResponse) GetIsDifferentOrg() bool`
+
+GetIsDifferentOrg returns the IsDifferentOrg field if non-nil, zero value otherwise.
+
+### GetIsDifferentOrgOk
+
+`func (o *AuthUserResponse) GetIsDifferentOrgOk() (*bool, bool)`
+
+GetIsDifferentOrgOk returns a tuple with the IsDifferentOrg field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIsDifferentOrg
+
+`func (o *AuthUserResponse) SetIsDifferentOrg(v bool)`
+
+SetIsDifferentOrg sets IsDifferentOrg field to given value.
+
+
+>>>>>>> prajjwal-warp-323
 ### GetOrganization
 
 `func (o *AuthUserResponse) GetOrganization() V1Organization`
@@ -89,6 +122,7 @@ and a boolean to check if the value has been set.
 SetRefreshToken sets RefreshToken field to given value.
 
 
+<<<<<<< HEAD
 ### GetShouldShowVcsIntegration
 
 `func (o *AuthUserResponse) GetShouldShowVcsIntegration() bool`
@@ -109,6 +143,8 @@ and a boolean to check if the value has been set.
 SetShouldShowVcsIntegration sets ShouldShowVcsIntegration field to given value.
 
 
+=======
+>>>>>>> prajjwal-warp-323
 ### GetUser
 
 `func (o *AuthUserResponse) GetUser() V1User`

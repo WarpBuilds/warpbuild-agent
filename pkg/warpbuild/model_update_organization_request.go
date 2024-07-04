@@ -135,6 +135,7 @@ func (o UpdateOrganizationRequest) ToMap() (map[string]interface{}, error) {
 func (o *UpdateOrganizationRequest) UnmarshalJSON(bytes []byte) (err error) {
 	varUpdateOrganizationRequest := _UpdateOrganizationRequest{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varUpdateOrganizationRequest)
 
 	if err != nil {
@@ -143,6 +144,12 @@ func (o *UpdateOrganizationRequest) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = UpdateOrganizationRequest(varUpdateOrganizationRequest)
 
+=======
+	if err = json.Unmarshal(bytes, &varUpdateOrganizationRequest); err == nil {
+		*o = UpdateOrganizationRequest(varUpdateOrganizationRequest)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

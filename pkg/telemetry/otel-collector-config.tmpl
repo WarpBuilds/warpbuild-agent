@@ -1,0 +1,48 @@
+receivers:
+  filelog:
+    include: ["{{.SyslogFilePath}}"]
+    start_at: "end"
+    max_log_size: 200KiB
+    include_file_name: false
+    include_file_path: false
+    poll_interval: 30s
+
+  hostmetrics:
+    collection_interval: 20s
+    scrapers:
+      memory:
+      filesystem:
+        metrics:
+          system.filesystem.inodes.usage:
+            enabled: false
+      load:
+        metrics:
+          system.cpu.load_average.1m:
+            enabled: false
+          system.cpu.load_average.5m:
+            enabled: false
+
+processors:
+  batch:
+    timeout: 60s
+    send_batch_size: 1000
+
+exporters:
+  file:
+    path: "{{.ExportFilePath}}"
+    format: json
+    append: false
+    rotation:
+      max_megabytes: 1
+      max_backups: 1
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [file]
+    metrics:
+      receivers: [hostmetrics]
+      processors: [batch]
+      exporters: [file]

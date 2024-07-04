@@ -117,6 +117,7 @@ func (o AuthUserRequest) ToMap() (map[string]interface{}, error) {
 func (o *AuthUserRequest) UnmarshalJSON(bytes []byte) (err error) {
 	varAuthUserRequest := _AuthUserRequest{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varAuthUserRequest)
 
 	if err != nil {
@@ -125,6 +126,12 @@ func (o *AuthUserRequest) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = AuthUserRequest(varAuthUserRequest)
 
+=======
+	if err = json.Unmarshal(bytes, &varAuthUserRequest); err == nil {
+		*o = AuthUserRequest(varAuthUserRequest)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

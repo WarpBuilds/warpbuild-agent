@@ -451,6 +451,7 @@ func (o VCSEntity) ToMap() (map[string]interface{}, error) {
 func (o *VCSEntity) UnmarshalJSON(bytes []byte) (err error) {
 	varVCSEntity := _VCSEntity{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varVCSEntity)
 
 	if err != nil {
@@ -459,6 +460,12 @@ func (o *VCSEntity) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = VCSEntity(varVCSEntity)
 
+=======
+	if err = json.Unmarshal(bytes, &varVCSEntity); err == nil {
+		*o = VCSEntity(varVCSEntity)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

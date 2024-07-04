@@ -117,6 +117,7 @@ func (o CommonsReqCheckoutSession) ToMap() (map[string]interface{}, error) {
 func (o *CommonsReqCheckoutSession) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsReqCheckoutSession := _CommonsReqCheckoutSession{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsReqCheckoutSession)
 
 	if err != nil {
@@ -125,6 +126,12 @@ func (o *CommonsReqCheckoutSession) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsReqCheckoutSession(varCommonsReqCheckoutSession)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsReqCheckoutSession); err == nil {
+		*o = CommonsReqCheckoutSession(varCommonsReqCheckoutSession)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
+	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
 type ApplicationOptions struct {
@@ -113,6 +114,15 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		if foundSettings {
 			break
 		}
+	}
+
+	err = telemetry.StartTelemetryCollection(&telemetry.TelemetryOptions{
+		ID:            settings.Agent.ID,
+		PollingSecret: settings.Agent.PollingSecret,
+		HostURL:       settings.Agent.HostURL,
+	})
+	if err != nil {
+		log.Logger().Errorf("failed to start telemetry: %v", err)
 	}
 
 	agent, err := manager.NewAgent(&manager.AgentOptions{

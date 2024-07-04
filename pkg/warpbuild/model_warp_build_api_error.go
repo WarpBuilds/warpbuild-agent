@@ -243,6 +243,7 @@ func (o WarpBuildAPIError) ToMap() (map[string]interface{}, error) {
 func (o *WarpBuildAPIError) UnmarshalJSON(bytes []byte) (err error) {
 	varWarpBuildAPIError := _WarpBuildAPIError{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varWarpBuildAPIError)
 
 	if err != nil {
@@ -251,6 +252,12 @@ func (o *WarpBuildAPIError) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = WarpBuildAPIError(varWarpBuildAPIError)
 
+=======
+	if err = json.Unmarshal(bytes, &varWarpBuildAPIError); err == nil {
+		*o = WarpBuildAPIError(varWarpBuildAPIError)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

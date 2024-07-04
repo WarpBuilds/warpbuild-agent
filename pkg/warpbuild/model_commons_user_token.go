@@ -279,6 +279,7 @@ func (o CommonsUserToken) ToMap() (map[string]interface{}, error) {
 func (o *CommonsUserToken) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsUserToken := _CommonsUserToken{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsUserToken)
 
 	if err != nil {
@@ -287,6 +288,12 @@ func (o *CommonsUserToken) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsUserToken(varCommonsUserToken)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsUserToken); err == nil {
+		*o = CommonsUserToken(varCommonsUserToken)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

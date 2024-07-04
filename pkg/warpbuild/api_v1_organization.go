@@ -20,7 +20,11 @@ import (
 )
 
 
+<<<<<<< HEAD
 type V1OrganizationAPI interface {
+=======
+type V1OrganizationApi interface {
+>>>>>>> prajjwal-warp-323
 
 	/*
 	CreateOrganization Adds a new organisation for a current user
@@ -87,12 +91,21 @@ type V1OrganizationAPI interface {
 	UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error)
 }
 
+<<<<<<< HEAD
 // V1OrganizationAPIService V1OrganizationAPI service
 type V1OrganizationAPIService service
 
 type ApiCreateOrganizationRequest struct {
 	ctx context.Context
 	ApiService V1OrganizationAPI
+=======
+// V1OrganizationApiService V1OrganizationApi service
+type V1OrganizationApiService service
+
+type ApiCreateOrganizationRequest struct {
+	ctx context.Context
+	ApiService V1OrganizationApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiCreateOrganizationRequest) Execute() (*SwitchOrganizationResponse, *http.Response, error) {
@@ -107,7 +120,11 @@ User can manage multiple tenanats from one account, this api provides user a fun
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiCreateOrganizationRequest
 */
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
+=======
+func (a *V1OrganizationApiService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiCreateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -116,7 +133,11 @@ func (a *V1OrganizationAPIService) CreateOrganization(ctx context.Context) ApiCr
 
 // Execute executes the request
 //  @return SwitchOrganizationResponse
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
+=======
+func (a *V1OrganizationApiService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -124,7 +145,11 @@ func (a *V1OrganizationAPIService) CreateOrganizationExecute(r ApiCreateOrganiza
 		localVarReturnValue  *SwitchOrganizationResponse
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.CreateOrganization")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.CreateOrganization")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -213,7 +238,11 @@ func (a *V1OrganizationAPIService) CreateOrganizationExecute(r ApiCreateOrganiza
 
 type ApiGetOrganizationRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1OrganizationAPI
+=======
+	ApiService V1OrganizationApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiGetOrganizationRequest) Execute() (*CommonsOrganization, *http.Response, error) {
@@ -226,7 +255,11 @@ GetOrganization Get organization details for the current organization. Current o
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetOrganizationRequest
 */
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) GetOrganization(ctx context.Context) ApiGetOrganizationRequest {
+=======
+func (a *V1OrganizationApiService) GetOrganization(ctx context.Context) ApiGetOrganizationRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiGetOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -235,7 +268,11 @@ func (a *V1OrganizationAPIService) GetOrganization(ctx context.Context) ApiGetOr
 
 // Execute executes the request
 //  @return CommonsOrganization
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) GetOrganizationExecute(r ApiGetOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+=======
+func (a *V1OrganizationApiService) GetOrganizationExecute(r ApiGetOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -243,7 +280,11 @@ func (a *V1OrganizationAPIService) GetOrganizationExecute(r ApiGetOrganizationRe
 		localVarReturnValue  *CommonsOrganization
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.GetOrganization")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.GetOrganization")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -345,7 +386,11 @@ func (a *V1OrganizationAPIService) GetOrganizationExecute(r ApiGetOrganizationRe
 
 type ApiListOrgUsersRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1OrganizationAPI
+=======
+	ApiService V1OrganizationApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiListOrgUsersRequest) Execute() ([]V1ListUsersForOrganizationResult, *http.Response, error) {
@@ -358,7 +403,11 @@ ListOrgUsers ListOrgUsers list the users for the current organization
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListOrgUsersRequest
 */
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) ListOrgUsers(ctx context.Context) ApiListOrgUsersRequest {
+=======
+func (a *V1OrganizationApiService) ListOrgUsers(ctx context.Context) ApiListOrgUsersRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiListOrgUsersRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -367,7 +416,11 @@ func (a *V1OrganizationAPIService) ListOrgUsers(ctx context.Context) ApiListOrgU
 
 // Execute executes the request
 //  @return []V1ListUsersForOrganizationResult
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) ListOrgUsersExecute(r ApiListOrgUsersRequest) ([]V1ListUsersForOrganizationResult, *http.Response, error) {
+=======
+func (a *V1OrganizationApiService) ListOrgUsersExecute(r ApiListOrgUsersRequest) ([]V1ListUsersForOrganizationResult, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -375,7 +428,11 @@ func (a *V1OrganizationAPIService) ListOrgUsersExecute(r ApiListOrgUsersRequest)
 		localVarReturnValue  []V1ListUsersForOrganizationResult
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.ListOrgUsers")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.ListOrgUsers")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -464,7 +521,11 @@ func (a *V1OrganizationAPIService) ListOrgUsersExecute(r ApiListOrgUsersRequest)
 
 type ApiListUserOrganizationsRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1OrganizationAPI
+=======
+	ApiService V1OrganizationApi
+>>>>>>> prajjwal-warp-323
 }
 
 func (r ApiListUserOrganizationsRequest) Execute() ([]V1Organization, *http.Response, error) {
@@ -477,7 +538,11 @@ ListUserOrganizations ListUserOrganizations lists all the organization user has 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListUserOrganizationsRequest
 */
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) ListUserOrganizations(ctx context.Context) ApiListUserOrganizationsRequest {
+=======
+func (a *V1OrganizationApiService) ListUserOrganizations(ctx context.Context) ApiListUserOrganizationsRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiListUserOrganizationsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -486,7 +551,11 @@ func (a *V1OrganizationAPIService) ListUserOrganizations(ctx context.Context) Ap
 
 // Execute executes the request
 //  @return []V1Organization
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) ListUserOrganizationsExecute(r ApiListUserOrganizationsRequest) ([]V1Organization, *http.Response, error) {
+=======
+func (a *V1OrganizationApiService) ListUserOrganizationsExecute(r ApiListUserOrganizationsRequest) ([]V1Organization, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -494,7 +563,11 @@ func (a *V1OrganizationAPIService) ListUserOrganizationsExecute(r ApiListUserOrg
 		localVarReturnValue  []V1Organization
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.ListUserOrganizations")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.ListUserOrganizations")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -583,7 +656,11 @@ func (a *V1OrganizationAPIService) ListUserOrganizationsExecute(r ApiListUserOrg
 
 type ApiUpdateOrganizationRequest struct {
 	ctx context.Context
+<<<<<<< HEAD
 	ApiService V1OrganizationAPI
+=======
+	ApiService V1OrganizationApi
+>>>>>>> prajjwal-warp-323
 	body *UpdateOrganizationRequest
 }
 
@@ -605,7 +682,11 @@ Organization is figured out from the auth token since tokens are specific to org
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiUpdateOrganizationRequest
 */
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) UpdateOrganization(ctx context.Context) ApiUpdateOrganizationRequest {
+=======
+func (a *V1OrganizationApiService) UpdateOrganization(ctx context.Context) ApiUpdateOrganizationRequest {
+>>>>>>> prajjwal-warp-323
 	return ApiUpdateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -614,7 +695,11 @@ func (a *V1OrganizationAPIService) UpdateOrganization(ctx context.Context) ApiUp
 
 // Execute executes the request
 //  @return CommonsOrganization
+<<<<<<< HEAD
 func (a *V1OrganizationAPIService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+=======
+func (a *V1OrganizationApiService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+>>>>>>> prajjwal-warp-323
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -622,7 +707,11 @@ func (a *V1OrganizationAPIService) UpdateOrganizationExecute(r ApiUpdateOrganiza
 		localVarReturnValue  *CommonsOrganization
 	)
 
+<<<<<<< HEAD
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.UpdateOrganization")
+=======
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.UpdateOrganization")
+>>>>>>> prajjwal-warp-323
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

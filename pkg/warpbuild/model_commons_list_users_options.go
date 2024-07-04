@@ -135,6 +135,7 @@ func (o CommonsListUsersOptions) ToMap() (map[string]interface{}, error) {
 func (o *CommonsListUsersOptions) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsListUsersOptions := _CommonsListUsersOptions{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsListUsersOptions)
 
 	if err != nil {
@@ -143,6 +144,12 @@ func (o *CommonsListUsersOptions) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsListUsersOptions(varCommonsListUsersOptions)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsListUsersOptions); err == nil {
+		*o = CommonsListUsersOptions(varCommonsListUsersOptions)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

@@ -21,8 +21,14 @@ var _ MappedNullable = &CommonsUpdateRunnerInput{}
 // CommonsUpdateRunnerInput struct for CommonsUpdateRunnerInput
 type CommonsUpdateRunnerInput struct {
 	Active *bool `json:"Active,omitempty"`
+<<<<<<< HEAD
 	Configuration *CommonsRunnerConfiguration `json:"configuration,omitempty"`
 	Labels map[string]interface{} `json:"labels,omitempty"`
+=======
+	Configuration *CommonsRunnerSetConfiguration `json:"configuration,omitempty"`
+	Labels []string `json:"labels,omitempty"`
+	Name *string `json:"name,omitempty"`
+>>>>>>> prajjwal-warp-323
 	AdditionalProperties map[string]interface{}
 }
 
@@ -78,9 +84,15 @@ func (o *CommonsUpdateRunnerInput) SetActive(v bool) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise.
+<<<<<<< HEAD
 func (o *CommonsUpdateRunnerInput) GetConfiguration() CommonsRunnerConfiguration {
 	if o == nil || IsNil(o.Configuration) {
 		var ret CommonsRunnerConfiguration
+=======
+func (o *CommonsUpdateRunnerInput) GetConfiguration() CommonsRunnerSetConfiguration {
+	if o == nil || IsNil(o.Configuration) {
+		var ret CommonsRunnerSetConfiguration
+>>>>>>> prajjwal-warp-323
 		return ret
 	}
 	return *o.Configuration
@@ -88,7 +100,11 @@ func (o *CommonsUpdateRunnerInput) GetConfiguration() CommonsRunnerConfiguration
 
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+<<<<<<< HEAD
 func (o *CommonsUpdateRunnerInput) GetConfigurationOk() (*CommonsRunnerConfiguration, bool) {
+=======
+func (o *CommonsUpdateRunnerInput) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool) {
+>>>>>>> prajjwal-warp-323
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -104,15 +120,26 @@ func (o *CommonsUpdateRunnerInput) HasConfiguration() bool {
 	return false
 }
 
+<<<<<<< HEAD
 // SetConfiguration gets a reference to the given CommonsRunnerConfiguration and assigns it to the Configuration field.
 func (o *CommonsUpdateRunnerInput) SetConfiguration(v CommonsRunnerConfiguration) {
+=======
+// SetConfiguration gets a reference to the given CommonsRunnerSetConfiguration and assigns it to the Configuration field.
+func (o *CommonsUpdateRunnerInput) SetConfiguration(v CommonsRunnerSetConfiguration) {
+>>>>>>> prajjwal-warp-323
 	o.Configuration = &v
 }
 
 // GetLabels returns the Labels field value if set, zero value otherwise.
+<<<<<<< HEAD
 func (o *CommonsUpdateRunnerInput) GetLabels() map[string]interface{} {
 	if o == nil || IsNil(o.Labels) {
 		var ret map[string]interface{}
+=======
+func (o *CommonsUpdateRunnerInput) GetLabels() []string {
+	if o == nil || IsNil(o.Labels) {
+		var ret []string
+>>>>>>> prajjwal-warp-323
 		return ret
 	}
 	return o.Labels
@@ -120,9 +147,15 @@ func (o *CommonsUpdateRunnerInput) GetLabels() map[string]interface{} {
 
 // GetLabelsOk returns a tuple with the Labels field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+<<<<<<< HEAD
 func (o *CommonsUpdateRunnerInput) GetLabelsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Labels) {
 		return map[string]interface{}{}, false
+=======
+func (o *CommonsUpdateRunnerInput) GetLabelsOk() ([]string, bool) {
+	if o == nil || IsNil(o.Labels) {
+		return nil, false
+>>>>>>> prajjwal-warp-323
 	}
 	return o.Labels, true
 }
@@ -136,11 +169,51 @@ func (o *CommonsUpdateRunnerInput) HasLabels() bool {
 	return false
 }
 
+<<<<<<< HEAD
 // SetLabels gets a reference to the given map[string]interface{} and assigns it to the Labels field.
 func (o *CommonsUpdateRunnerInput) SetLabels(v map[string]interface{}) {
 	o.Labels = v
 }
 
+=======
+// SetLabels gets a reference to the given []string and assigns it to the Labels field.
+func (o *CommonsUpdateRunnerInput) SetLabels(v []string) {
+	o.Labels = v
+}
+
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *CommonsUpdateRunnerInput) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
+		return ret
+	}
+	return *o.Name
+}
+
+// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsUpdateRunnerInput) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
+		return nil, false
+	}
+	return o.Name, true
+}
+
+// HasName returns a boolean if a field has been set.
+func (o *CommonsUpdateRunnerInput) HasName() bool {
+	if o != nil && !IsNil(o.Name) {
+		return true
+	}
+
+	return false
+}
+
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *CommonsUpdateRunnerInput) SetName(v string) {
+	o.Name = &v
+}
+
+>>>>>>> prajjwal-warp-323
 func (o CommonsUpdateRunnerInput) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -160,6 +233,12 @@ func (o CommonsUpdateRunnerInput) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Labels) {
 		toSerialize["labels"] = o.Labels
 	}
+<<<<<<< HEAD
+=======
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
+	}
+>>>>>>> prajjwal-warp-323
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -171,6 +250,7 @@ func (o CommonsUpdateRunnerInput) ToMap() (map[string]interface{}, error) {
 func (o *CommonsUpdateRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsUpdateRunnerInput := _CommonsUpdateRunnerInput{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsUpdateRunnerInput)
 
 	if err != nil {
@@ -179,12 +259,22 @@ func (o *CommonsUpdateRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsUpdateRunnerInput(varCommonsUpdateRunnerInput)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsUpdateRunnerInput); err == nil {
+		*o = CommonsUpdateRunnerInput(varCommonsUpdateRunnerInput)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
 		delete(additionalProperties, "Active")
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "labels")
+<<<<<<< HEAD
+=======
+		delete(additionalProperties, "name")
+>>>>>>> prajjwal-warp-323
 		o.AdditionalProperties = additionalProperties
 	}
 

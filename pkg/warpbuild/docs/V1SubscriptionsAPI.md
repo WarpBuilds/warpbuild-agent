@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 # \V1SubscriptionsAPI
+=======
+# \V1SubscriptionsApi
+>>>>>>> prajjwal-warp-323
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+<<<<<<< HEAD
 [**DeleteCurrentSubscription**](V1SubscriptionsAPI.md#DeleteCurrentSubscription) | **Delete** /subscription | Cancel Org current Subscription
 [**DeleteStripePaymentMethod**](V1SubscriptionsAPI.md#DeleteStripePaymentMethod) | **Delete** /subscription/stripe/payment_method/{payment_method_id} | delete stripe setup intent payment method
 [**GetSubscriptionDetails**](V1SubscriptionsAPI.md#GetSubscriptionDetails) | **Get** /subscription | Get Current Org Subscription Details
@@ -11,6 +16,19 @@ Method | HTTP request | Description
 [**InitiateSetupIntent**](V1SubscriptionsAPI.md#InitiateSetupIntent) | **Post** /billing/setup_intent/init | Initiate Checkout for subscription with PG
 [**StripePaymentMethodDefault**](V1SubscriptionsAPI.md#StripePaymentMethodDefault) | **Patch** /subscription/stripe/payment_method/{payment_method_id} | update stripe payment method to default
 [**SubscriptionPGWebhook**](V1SubscriptionsAPI.md#SubscriptionPGWebhook) | **Post** /subscription/{gateway}/webhook | S2S Webhook received from PG
+=======
+[**DeleteCurrentSubscription**](V1SubscriptionsApi.md#DeleteCurrentSubscription) | **Delete** /subscription | Cancel Org current Subscription
+[**DeleteStripePaymentMethod**](V1SubscriptionsApi.md#DeleteStripePaymentMethod) | **Delete** /subscription/stripe/payment_method/{payment_method_id} | delete stripe setup intent payment method
+[**GetBillingInfo**](V1SubscriptionsApi.md#GetBillingInfo) | **Get** /billing/info | Get Billing Info
+[**GetCustomerPortalUrl**](V1SubscriptionsApi.md#GetCustomerPortalUrl) | **Post** /subscription/customer_portal_url | Get customer portal url
+[**GetSubscriptionDetails**](V1SubscriptionsApi.md#GetSubscriptionDetails) | **Get** /subscription | Get Current Org Subscription Details
+[**InitateSubscriptionCheckout**](V1SubscriptionsApi.md#InitateSubscriptionCheckout) | **Post** /billing/checkout | Initiate Checkout for subscription with PG
+[**InitiateSetupIntent**](V1SubscriptionsApi.md#InitiateSetupIntent) | **Post** /billing/setup_intent/init | Initiate Checkout for subscription with PG
+[**PostSetupIntent**](V1SubscriptionsApi.md#PostSetupIntent) | **Post** /billing/setup_intent/post_processor | Post Checkout processing for subscription with PG
+[**StripePaymentMethodDefault**](V1SubscriptionsApi.md#StripePaymentMethodDefault) | **Patch** /subscription/stripe/payment_method/{payment_method_id} | update stripe payment method to default
+[**SubscriptionPGWebhook**](V1SubscriptionsApi.md#SubscriptionPGWebhook) | **Post** /subscription/{gateway}/webhook | S2S Webhook received from PG
+[**UpdateBillingInfo**](V1SubscriptionsApi.md#UpdateBillingInfo) | **Patch** /billing/info | Update Billing Info
+>>>>>>> prajjwal-warp-323
 
 
 
@@ -36,6 +54,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.DeleteCurrentSubscription(context.Background()).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.DeleteCurrentSubscription``: %v\n", err)
@@ -43,6 +62,15 @@ func main() {
     }
     // response from `DeleteCurrentSubscription`: CommonsSubscriptionDetails
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.DeleteCurrentSubscription`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.DeleteCurrentSubscription(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.DeleteCurrentSubscription``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `DeleteCurrentSubscription`: CommonsSubscriptionDetails
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.DeleteCurrentSubscription`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -96,6 +124,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.DeleteStripePaymentMethod(context.Background(), paymentMethodId).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.DeleteStripePaymentMethod``: %v\n", err)
@@ -103,6 +132,15 @@ func main() {
     }
     // response from `DeleteStripePaymentMethod`: CommonsSubscriptionDetails
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.DeleteStripePaymentMethod`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.DeleteStripePaymentMethod(context.Background(), paymentMethodId).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.DeleteStripePaymentMethod``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `DeleteStripePaymentMethod`: CommonsSubscriptionDetails
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.DeleteStripePaymentMethod`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -141,6 +179,127 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+<<<<<<< HEAD
+=======
+## GetBillingInfo
+
+> CommonsBillingInfo GetBillingInfo(ctx).Execute()
+
+Get Billing Info
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1SubscriptionsApi.GetBillingInfo(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.GetBillingInfo``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `GetBillingInfo`: CommonsBillingInfo
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.GetBillingInfo`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetBillingInfoRequest struct via the builder pattern
+
+
+### Return type
+
+[**CommonsBillingInfo**](CommonsBillingInfo.md)
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetCustomerPortalUrl
+
+> string GetCustomerPortalUrl(ctx).Execute()
+
+Get customer portal url
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1SubscriptionsApi.GetCustomerPortalUrl(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.GetCustomerPortalUrl``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `GetCustomerPortalUrl`: string
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.GetCustomerPortalUrl`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+This endpoint does not need any parameter.
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiGetCustomerPortalUrlRequest struct via the builder pattern
+
+
+### Return type
+
+**string**
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+>>>>>>> prajjwal-warp-323
 ## GetSubscriptionDetails
 
 > CommonsSubscriptionDetails GetSubscriptionDetails(ctx).Execute()
@@ -163,6 +322,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.GetSubscriptionDetails(context.Background()).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.GetSubscriptionDetails``: %v\n", err)
@@ -170,6 +330,15 @@ func main() {
     }
     // response from `GetSubscriptionDetails`: CommonsSubscriptionDetails
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.GetSubscriptionDetails`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.GetSubscriptionDetails(context.Background()).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.GetSubscriptionDetails``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `GetSubscriptionDetails`: CommonsSubscriptionDetails
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.GetSubscriptionDetails`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -223,6 +392,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.InitateSubscriptionCheckout(context.Background()).Body(body).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.InitateSubscriptionCheckout``: %v\n", err)
@@ -230,6 +400,15 @@ func main() {
     }
     // response from `InitateSubscriptionCheckout`: CommonsResCheckoutSession
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.InitateSubscriptionCheckout`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.InitateSubscriptionCheckout(context.Background()).Body(body).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.InitateSubscriptionCheckout``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `InitateSubscriptionCheckout`: CommonsResCheckoutSession
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.InitateSubscriptionCheckout`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -287,6 +466,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.InitiateSetupIntent(context.Background()).Body(body).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.InitiateSetupIntent``: %v\n", err)
@@ -294,6 +474,15 @@ func main() {
     }
     // response from `InitiateSetupIntent`: CommonsResSetupIntentInit
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.InitiateSetupIntent`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.InitiateSetupIntent(context.Background()).Body(body).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.InitiateSetupIntent``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `InitiateSetupIntent`: CommonsResSetupIntentInit
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.InitiateSetupIntent`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -328,6 +517,73 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
+<<<<<<< HEAD
+=======
+## PostSetupIntent
+
+> CommonsPostPaymentMethodSetupInput PostSetupIntent(ctx).Body(body).Execute()
+
+Post Checkout processing for subscription with PG
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+    body := *openapiclient.NewCommonsPostPaymentMethodSetupInput() // CommonsPostPaymentMethodSetupInput | post setup intent session input
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1SubscriptionsApi.PostSetupIntent(context.Background()).Body(body).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.PostSetupIntent``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `PostSetupIntent`: CommonsPostPaymentMethodSetupInput
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.PostSetupIntent`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiPostSetupIntentRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**CommonsPostPaymentMethodSetupInput**](CommonsPostPaymentMethodSetupInput.md) | post setup intent session input | 
+
+### Return type
+
+[**CommonsPostPaymentMethodSetupInput**](CommonsPostPaymentMethodSetupInput.md)
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+>>>>>>> prajjwal-warp-323
 ## StripePaymentMethodDefault
 
 > CommonsSubscriptionDetails StripePaymentMethodDefault(ctx, paymentMethodId).Execute()
@@ -351,6 +607,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     resp, r, err := apiClient.V1SubscriptionsAPI.StripePaymentMethodDefault(context.Background(), paymentMethodId).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.StripePaymentMethodDefault``: %v\n", err)
@@ -358,6 +615,15 @@ func main() {
     }
     // response from `StripePaymentMethodDefault`: CommonsSubscriptionDetails
     fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsAPI.StripePaymentMethodDefault`: %v\n", resp)
+=======
+    resp, r, err := apiClient.V1SubscriptionsApi.StripePaymentMethodDefault(context.Background(), paymentMethodId).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.StripePaymentMethodDefault``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `StripePaymentMethodDefault`: CommonsSubscriptionDetails
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.StripePaymentMethodDefault`: %v\n", resp)
+>>>>>>> prajjwal-warp-323
 }
 ```
 
@@ -419,9 +685,15 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
+<<<<<<< HEAD
     r, err := apiClient.V1SubscriptionsAPI.SubscriptionPGWebhook(context.Background(), gateway).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsAPI.SubscriptionPGWebhook``: %v\n", err)
+=======
+    r, err := apiClient.V1SubscriptionsApi.SubscriptionPGWebhook(context.Background(), gateway).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.SubscriptionPGWebhook``: %v\n", err)
+>>>>>>> prajjwal-warp-323
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
@@ -461,3 +733,70 @@ Name | Type | Description  | Notes
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
 
+<<<<<<< HEAD
+=======
+
+## UpdateBillingInfo
+
+> CommonsBillingInfo UpdateBillingInfo(ctx).Body(body).Execute()
+
+Update Billing Info
+
+### Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID/warpbuild"
+)
+
+func main() {
+    body := *openapiclient.NewCommonsUpdateBillingInfoInput() // CommonsUpdateBillingInfoInput | billing info update input
+
+    configuration := openapiclient.NewConfiguration()
+    apiClient := openapiclient.NewAPIClient(configuration)
+    resp, r, err := apiClient.V1SubscriptionsApi.UpdateBillingInfo(context.Background()).Body(body).Execute()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SubscriptionsApi.UpdateBillingInfo``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+    }
+    // response from `UpdateBillingInfo`: CommonsBillingInfo
+    fmt.Fprintf(os.Stdout, "Response from `V1SubscriptionsApi.UpdateBillingInfo`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiUpdateBillingInfoRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**CommonsUpdateBillingInfoInput**](CommonsUpdateBillingInfoInput.md) | billing info update input | 
+
+### Return type
+
+[**CommonsBillingInfo**](CommonsBillingInfo.md)
+
+### Authorization
+
+[JWTKeyAuth](../README.md#JWTKeyAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+>>>>>>> prajjwal-warp-323

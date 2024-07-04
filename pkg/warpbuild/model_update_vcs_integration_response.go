@@ -135,6 +135,7 @@ func (o UpdateVCSIntegrationResponse) ToMap() (map[string]interface{}, error) {
 func (o *UpdateVCSIntegrationResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varUpdateVCSIntegrationResponse := _UpdateVCSIntegrationResponse{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varUpdateVCSIntegrationResponse)
 
 	if err != nil {
@@ -143,6 +144,12 @@ func (o *UpdateVCSIntegrationResponse) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = UpdateVCSIntegrationResponse(varUpdateVCSIntegrationResponse)
 
+=======
+	if err = json.Unmarshal(bytes, &varUpdateVCSIntegrationResponse); err == nil {
+		*o = UpdateVCSIntegrationResponse(varUpdateVCSIntegrationResponse)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

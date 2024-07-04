@@ -207,6 +207,7 @@ func (o CommonsOrganization) ToMap() (map[string]interface{}, error) {
 func (o *CommonsOrganization) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsOrganization := _CommonsOrganization{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsOrganization)
 
 	if err != nil {
@@ -215,6 +216,12 @@ func (o *CommonsOrganization) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsOrganization(varCommonsOrganization)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsOrganization); err == nil {
+		*o = CommonsOrganization(varCommonsOrganization)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {

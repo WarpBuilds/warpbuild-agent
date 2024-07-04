@@ -459,6 +459,7 @@ func (o CommonsPaymentMethod) ToMap() (map[string]interface{}, error) {
 func (o *CommonsPaymentMethod) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsPaymentMethod := _CommonsPaymentMethod{}
 
+<<<<<<< HEAD
 	err = json.Unmarshal(bytes, &varCommonsPaymentMethod)
 
 	if err != nil {
@@ -467,6 +468,12 @@ func (o *CommonsPaymentMethod) UnmarshalJSON(bytes []byte) (err error) {
 
 	*o = CommonsPaymentMethod(varCommonsPaymentMethod)
 
+=======
+	if err = json.Unmarshal(bytes, &varCommonsPaymentMethod); err == nil {
+		*o = CommonsPaymentMethod(varCommonsPaymentMethod)
+	}
+
+>>>>>>> prajjwal-warp-323
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
