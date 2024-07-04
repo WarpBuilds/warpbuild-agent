@@ -16,6 +16,8 @@ builds:
     goarch:
       - amd64
       - arm64
+    hooks:
+      pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
     main: ./cmd/agentd
 
 archives:
@@ -39,6 +41,7 @@ archives:
       - tools/launchd/com.warpbuild.warpbuild-agentd.plist
       - tools/systemd/warpbuild-agentd.service
       - tools/github/hooks/prerun.sh
+      - ./pkg/telemetry/binaries/**
 
 checksum:
   name_template: "checksums.txt"
