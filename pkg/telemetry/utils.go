@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
@@ -38,18 +40,34 @@ func fetchPresignedURL(ctx context.Context) (string, error) {
 	runnerId := ctx.Value(WarpBuildRunnerIDContextKey).(string)
 	pollingSecret := ctx.Value(WarpBuildRunnerPollingSecretContextKey).(string)
 
+	log.Logger().Infof("Fetching presigned URL for runner ID: %s and polling secret %s from url %v and client [%+v]", runnerId, pollingSecret, client.GetConfig().Host, client)
+
 	logFileName := fmt.Sprintf("%s.log", time.Now().Format("20060102-150405"))
-	out, _, err := client.V1RunnerInstanceApi.
+	out, resp, err := client.V1RunnerInstanceApi.
 		GetRunnerInstancePresignedLogUploadURL(context.Background(), runnerId).
 		XPOLLINGSECRET(pollingSecret).
 		LogFileName(logFileName).
 		Execute()
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch presigned URL: %w", err)
+		return "", err
 	}
 
-	if out.Url == nil {
-		return "", fmt.Errorf("failed to fetch presigned URL: %w", err)
+	// Print the response body
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Logger().Errorf("Error reading response body: %v", err)
+	}
+
+	fmt.Printf("Response body: %s\n", body)
+
+	// You can also print other details like status code and headers if needed
+	fmt.Printf("Status code: %d\n", resp.StatusCode)
+	fmt.Printf("Response headers: %v\n", resp.Header)
+
+	if out == nil || out.Url == nil {
+		return "", fmt.Errorf("no url received in response")
 	}
 
 	return *out.Url, nil
