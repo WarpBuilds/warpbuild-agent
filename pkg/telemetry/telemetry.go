@@ -3,9 +3,6 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
@@ -32,7 +29,7 @@ type TelemetryOptions struct {
 	HostURL       string `json:"host_url"`
 }
 
-func StartTelemetryCollection(opts *TelemetryOptions) error {
+func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
 	cfg := warpbuild.NewConfiguration()
 	if opts.HostURL == "" {
 		return fmt.Errorf("host url is required")
@@ -40,7 +37,6 @@ func StartTelemetryCollection(opts *TelemetryOptions) error {
 	cfg.Servers[0].URL = opts.HostURL
 	wb := warpbuild.NewAPIClient(cfg)
 
-	ctx := context.Background()
 	ctx = context.WithValue(ctx, WarpBuildAgentContextKey, wb)
 	ctx = context.WithValue(ctx, WarpBuildRunnerIDContextKey, opts.ID)
 	ctx = context.WithValue(ctx, WarpBuildRunnerPollingSecretContextKey, opts.PollingSecret)
@@ -75,24 +71,16 @@ func StartTelemetryCollection(opts *TelemetryOptions) error {
 		log.Logger().Errorf("Failed to enable file watcher: %v", err)
 	}
 
-	// Set up signal handling to catch OS kill signals
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	<-ctx.Done()
+	log.Logger().Infof("Context cancelled, initiating shutdown...")
 
-	go func() {
-		sig := <-sigs
-		log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
+	// Perform final upload before shutting down
+	if err := readAndUploadFileToS3(ctx, syslogFilePath, 1000, false); err != nil {
+		log.Logger().Errorf("Error during final upload: %v", err)
+	}
 
-		// Perform final upload before shutting down
-		if err := readAndUploadFileToS3(ctx, syslogFilePath, 1000, false); err != nil {
-			log.Logger().Errorf("Error during final upload: %v", err)
-		}
-
-		// Signal the OpenTelemetry Collector process to terminate
-		done <- true
-	}()
-
-	<-done
+	// Signal the OpenTelemetry Collector process to terminate
+	done <- true
 	log.Logger().Infof("Shutdown complete.")
 
 	return nil

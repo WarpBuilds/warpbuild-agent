@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -116,14 +118,21 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
-	err = telemetry.StartTelemetryCollection(&telemetry.TelemetryOptions{
-		ID:            settings.Agent.ID,
-		PollingSecret: settings.Agent.PollingSecret,
-		HostURL:       settings.Agent.HostURL,
-	})
-	if err != nil {
-		log.Logger().Errorf("failed to start telemetry: %v", err)
-	}
+	telemetryCtx, telemetryCtxCancel := context.WithCancel(ctx)
+	defer telemetryCtxCancel()
+
+	telemetryDone := make(chan bool, 1)
+
+	go func() {
+		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
+			ID:            settings.Agent.ID,
+			PollingSecret: settings.Agent.PollingSecret,
+			HostURL:       settings.Agent.HostURL,
+		}); err != nil {
+			log.Logger().Errorf("failed to start telemetry: %v", err)
+		}
+		telemetryDone <- true
+	}()
 
 	agent, err := manager.NewAgent(&manager.AgentOptions{
 		ID:               settings.Agent.ID,
@@ -135,6 +144,16 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		log.Logger().Errorf("failed to create agent: %v", err)
 		return err
 	}
+
+	// Set up signal handling to catch OS kill signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
+		telemetryCtxCancel()
+	}()
 
 	err = agent.StartAgent(ctx, &manager.StartAgentOptions{
 		Manager: &manager.ManagerOptions{
@@ -152,6 +171,9 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		log.Logger().Errorf("failed to start agent: %v", err)
 		return err
 	}
+
+	<-telemetryDone
+	log.Logger().Infof("Shutdown complete.")
 
 	return nil
 }
