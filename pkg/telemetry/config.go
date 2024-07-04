@@ -15,7 +15,7 @@ const (
 	configFilePath              = "./otel-collector-config.yaml"
 	configTemplatePath          = "./otel-collector-config.tmpl"
 	otelCollectorOutputFilePath = "./otel-out.log"
-	binariesDir                 = "./binaries"
+	binariesDir                 = "/runner/warpbuild-agent/otel/binaries/"
 )
 
 var syslogFilePath = getSyslogFilePath()
