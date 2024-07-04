@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	configFilePath              = "./otel-collector-config.yaml"
-	configTemplatePath          = "./otel-collector-config.tmpl"
-	otelCollectorOutputFilePath = "./otel-out.log"
+	configFilePath              = "/runner/warpbuild-agent/pkg/telemetry/otel-collector-config.yaml"
+	configTemplatePath          = "/runner/warpbuild-agent/pkg/telemetry/otel-collector-config.tmpl"
+	otelCollectorOutputFilePath = "/runner/warpbuild-agent/pkg/telemetry/otel-out.log"
 	binariesDir                 = "/runner/warpbuild-agent/pkg/telemetry/binaries"
 )
 
