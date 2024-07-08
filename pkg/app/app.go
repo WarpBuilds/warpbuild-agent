@@ -43,7 +43,7 @@ type TelemetrySettings struct {
 	Enabled       bool   `json:"enabled"`
 	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
 	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
-	// At what frequency to push the telemetry data to the server
+	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
 }
 
@@ -136,6 +136,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	go func() {
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
+			BaseDirectory:             settings.Telemetry.BaseDirectory,
 			RunnerID:                  settings.Agent.ID,
 			PollingSecret:             settings.Agent.PollingSecret,
 			HostURL:                   settings.Agent.HostURL,
