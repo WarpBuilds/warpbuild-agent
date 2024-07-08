@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
@@ -23,13 +24,28 @@ const (
 )
 
 type TelemetryOptions struct {
-	// ID is the warpbuild assigned id.
-	ID            string `json:"id"`
-	PollingSecret string `json:"polling_secret"`
-	HostURL       string `json:"host_url"`
+	Enabled                   bool          `json:"enabled"`
+	SysLogNumberOfLinesToRead int           `json:"syslog_number_of_lines_to_read"`
+	PushFrequency             time.Duration `json:"push_frequency"`
+	RunnerID                  string        `json:"id"`
+	PollingSecret             string        `json:"polling_secret"`
+	HostURL                   string        `json:"host_url"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
+	if !opts.Enabled {
+		log.Logger().Infof("Telemetry collection is disabled.")
+		return nil
+	}
+
+	// Fallback to defaults
+	if opts.PushFrequency == 0 {
+		opts.PushFrequency = 60 * time.Second
+	}
+	if opts.SysLogNumberOfLinesToRead == 0 {
+		opts.SysLogNumberOfLinesToRead = 1000
+	}
+
 	log.Logger().Infof("Starting telemetry collection...")
 
 	cfg := warpbuild.NewConfiguration()
@@ -40,7 +56,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	wb := warpbuild.NewAPIClient(cfg)
 
 	ctx = context.WithValue(ctx, WarpBuildAgentContextKey, wb)
-	ctx = context.WithValue(ctx, WarpBuildRunnerIDContextKey, opts.ID)
+	ctx = context.WithValue(ctx, WarpBuildRunnerIDContextKey, opts.RunnerID)
 	ctx = context.WithValue(ctx, WarpBuildRunnerPollingSecretContextKey, opts.PollingSecret)
 
 	log.Logger().Infof("WarpBuild API client initialized with values: [%+v]", wb)
@@ -55,7 +71,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
 
 	// Write the OpenTelemetry Collector configuration file
-	writeOtelCollectorConfig()
+	writeOtelCollectorConfig(opts.PushFrequency)
 
 	log.Logger().Infof("OpenTelemetry Collector configuration file written to: %s", configFilePath)
 
@@ -86,7 +102,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	log.Logger().Infof("Context cancelled, initiating shutdown...")
 
 	// Perform final upload before shutting down
-	if err := readAndUploadFileToS3(ctx, syslogFilePath, 1000, false); err != nil {
+	if err := readAndUploadFileToS3(ctx, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
 		log.Logger().Errorf("Error during final upload: %v", err)
 	}
 

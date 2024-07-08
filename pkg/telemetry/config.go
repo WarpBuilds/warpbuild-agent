@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"text/template"
+	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
@@ -90,7 +91,7 @@ func getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
-func writeOtelCollectorConfig() error {
+func writeOtelCollectorConfig(pushFrequency time.Duration) error {
 	tmpl, err := template.ParseFiles(configTemplatePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse template file: %w", err)
@@ -105,9 +106,11 @@ func writeOtelCollectorConfig() error {
 	data := struct {
 		SyslogFilePath string
 		ExportFilePath string
+		PushFrequency  time.Duration
 	}{
 		SyslogFilePath: syslogFilePath,
 		ExportFilePath: otelCollectorOutputFilePath,
+		PushFrequency:  pushFrequency,
 	}
 
 	err = tmpl.Execute(file, data)

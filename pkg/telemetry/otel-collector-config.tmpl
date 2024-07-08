@@ -24,7 +24,7 @@ receivers:
 
 processors:
   batch:
-    timeout: 60s
+    timeout: {{.PushFrequency}}
     send_batch_size: 1000
 
 exporters:
