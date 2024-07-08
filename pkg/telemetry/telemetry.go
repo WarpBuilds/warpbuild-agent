@@ -25,6 +25,7 @@ const (
 
 type TelemetryOptions struct {
 	Enabled                   bool          `json:"enabled"`
+	BaseDirectory             string        `json:"base_directory"`
 	SysLogNumberOfLinesToRead int           `json:"syslog_number_of_lines_to_read"`
 	PushFrequency             time.Duration `json:"push_frequency"`
 	RunnerID                  string        `json:"id"`
@@ -45,6 +46,9 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	if opts.SysLogNumberOfLinesToRead == 0 {
 		opts.SysLogNumberOfLinesToRead = 1000
 	}
+	if opts.BaseDirectory == "" {
+		opts.BaseDirectory = "/runner/warpbuild-agent"
+	}
 
 	log.Logger().Infof("Starting telemetry collection...")
 
@@ -62,7 +66,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	log.Logger().Infof("WarpBuild API client initialized with values: [%+v]", wb)
 
 	// Get the appropriate OpenTelemetry Collector Contrib binary
-	collectorPath, err := getOtelCollectorPath()
+	collectorPath, err := getOtelCollectorPath(opts.BaseDirectory)
 	if err != nil {
 		log.Logger().Errorf("Failed to get OpenTelemetry Collector binary: %v", err)
 		return err
@@ -71,9 +75,9 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
 
 	// Write the OpenTelemetry Collector configuration file
-	writeOtelCollectorConfig(opts.PushFrequency)
+	writeOtelCollectorConfig(opts.BaseDirectory, opts.PushFrequency)
 
-	log.Logger().Infof("OpenTelemetry Collector configuration file written to: %s", configFilePath)
+	log.Logger().Infof("OpenTelemetry Collector configuration file written to: %s", getConfigFilePath(opts.BaseDirectory))
 
 	url, err := fetchPresignedURL(ctx)
 	if err != nil {
@@ -90,11 +94,11 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	// Start OpenTelemetry Collector Contrib
 	go func() {
 		defer handlePanic()
-		startOtelCollector(collectorPath, done)
+		startOtelCollector(opts.BaseDirectory, collectorPath, done)
 	}()
 
 	// Setup a filewatcher to monitor changes in the otel output file
-	if err := enableOtelOutputFileWatcher(ctx); err != nil {
+	if err := enableOtelOutputFileWatcher(ctx, opts.BaseDirectory); err != nil {
 		log.Logger().Errorf("Failed to enable file watcher: %v", err)
 	}
 
@@ -102,7 +106,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	log.Logger().Infof("Context cancelled, initiating shutdown...")
 
 	// Perform final upload before shutting down
-	if err := readAndUploadFileToS3(ctx, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
+	if err := readAndUploadFileToS3(ctx, opts.BaseDirectory, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
 		log.Logger().Errorf("Error during final upload: %v", err)
 	}
 

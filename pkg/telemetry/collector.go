@@ -8,8 +8,8 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-func startOtelCollector(collectorPath string, done chan bool) {
-	cmd := exec.Command(collectorPath, "--config", configFilePath)
+func startOtelCollector(baseDirectory string, collectorPath string, done chan bool) {
+	cmd := exec.Command(collectorPath, "--config", getConfigFilePath(baseDirectory))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

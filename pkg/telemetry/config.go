@@ -12,15 +12,24 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-const (
-	configFilePath              = "/runner/warpbuild-agent/pkg/telemetry/otel-collector-config.yaml"
-	configTemplatePath          = "/runner/warpbuild-agent/pkg/telemetry/otel-collector-config.tmpl"
-	otelCollectorOutputFilePath = "/runner/warpbuild-agent/pkg/telemetry/otel-out.log"
-	binariesDir                 = "/runner/warpbuild-agent/pkg/telemetry/binaries"
-)
-
 var syslogFilePath = getSyslogFilePath()
 var presignedS3URL = ""
+
+func getConfigFilePath(baseDirectory string) string {
+	return filepath.Join(baseDirectory, "pkg/telemetry/otel-collector-config.yaml")
+}
+
+func getConfigTemplatePath(baseDirectory string) string {
+	return filepath.Join(baseDirectory, "pkg/telemetry/otel-collector-config.tmpl")
+}
+
+func getOtelCollectorOutputFilePath(baseDirectory string) string {
+	return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.log")
+}
+
+func getBinariesDir(baseDirectory string) string {
+	return filepath.Join(baseDirectory, "pkg/telemetry/binaries")
+}
 
 func getSyslogFilePath() string {
 	switch runtime.GOOS {
@@ -36,10 +45,12 @@ func getSyslogFilePath() string {
 	}
 }
 
-func getOtelCollectorPath() (string, error) {
+func getOtelCollectorPath(baseDirectory string) (string, error) {
 	var collectorPath string
 	systemArch := runtime.GOARCH
 	systemOS := runtime.GOOS
+
+	binariesDir := getBinariesDir(baseDirectory)
 
 	switch systemOS {
 	case "linux":
@@ -91,13 +102,13 @@ func getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
-func writeOtelCollectorConfig(pushFrequency time.Duration) error {
-	tmpl, err := template.ParseFiles(configTemplatePath)
+func writeOtelCollectorConfig(baseDirectory string, pushFrequency time.Duration) error {
+	tmpl, err := template.ParseFiles(getConfigTemplatePath(baseDirectory))
 	if err != nil {
 		return fmt.Errorf("failed to parse template file: %w", err)
 	}
 
-	file, err := os.Create(configFilePath)
+	file, err := os.Create(getConfigFilePath(baseDirectory))
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
@@ -109,7 +120,7 @@ func writeOtelCollectorConfig(pushFrequency time.Duration) error {
 		PushFrequency  time.Duration
 	}{
 		SyslogFilePath: syslogFilePath,
-		ExportFilePath: otelCollectorOutputFilePath,
+		ExportFilePath: getOtelCollectorOutputFilePath(baseDirectory),
 		PushFrequency:  pushFrequency,
 	}
 

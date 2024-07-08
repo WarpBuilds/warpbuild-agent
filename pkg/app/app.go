@@ -39,7 +39,8 @@ type AgentSettings struct {
 }
 
 type TelemetrySettings struct {
-	Enabled bool `json:"enabled"`
+	BaseDirectory string `json:"base_directory"`
+	Enabled       bool   `json:"enabled"`
 	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
 	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server

@@ -19,7 +19,7 @@ var (
 	uploadMu      sync.Mutex
 )
 
-func debouncedOtelUpload(ctx context.Context) {
+func debouncedOtelUpload(ctx context.Context, baseDirectory string) {
 	debounceMu.Lock()
 	defer debounceMu.Unlock()
 
@@ -28,13 +28,13 @@ func debouncedOtelUpload(ctx context.Context) {
 	}
 	debounceTimer = time.AfterFunc(debounceDelay, func() {
 		defer handlePanic()
-		if err := readAndUploadFileToS3(ctx, otelCollectorOutputFilePath, 0, true); err != nil {
+		if err := readAndUploadFileToS3(ctx, baseDirectory, getOtelCollectorOutputFilePath(baseDirectory), 0, true); err != nil {
 			log.Logger().Errorf("Error during upload: %v", err)
 		}
 	})
 }
 
-func readAndUploadFileToS3(ctx context.Context, filePath string, linesToRead int, shouldTruncateAfterRead bool) error {
+func readAndUploadFileToS3(ctx context.Context, baseDirectory string, filePath string, linesToRead int, shouldTruncateAfterRead bool) error {
 	uploadMu.Lock()
 	defer uploadMu.Unlock()
 
@@ -78,7 +78,7 @@ func readAndUploadFileToS3(ctx context.Context, filePath string, linesToRead int
 		}
 
 		// Re-enable watcher after truncating
-		err = enableOtelOutputFileWatcher(ctx)
+		err = enableOtelOutputFileWatcher(ctx, baseDirectory)
 		if err != nil {
 			return fmt.Errorf("failed to re-enable watcher: %w", err)
 		}

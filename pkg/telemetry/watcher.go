@@ -15,7 +15,7 @@ func disableOtelOutputFileWatcher() {
 	watcher.Close()
 }
 
-func enableOtelOutputFileWatcher(ctx context.Context) error {
+func enableOtelOutputFileWatcher(ctx context.Context, baseDirectory string) error {
 	var err error
 	watcher, err = fsnotify.NewWatcher()
 	if err != nil {
@@ -24,24 +24,24 @@ func enableOtelOutputFileWatcher(ctx context.Context) error {
 
 	go func() {
 		defer handlePanic()
-		watchOtelOutputFile(ctx)
+		watchOtelOutputFile(ctx, baseDirectory)
 	}()
 	return nil
 }
 
-func watchOtelOutputFile(ctx context.Context) {
+func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 	defer watcher.Close()
 
 	// Ensure the log file exists
-	if _, err := os.Stat(otelCollectorOutputFilePath); os.IsNotExist(err) {
-		file, err := os.Create(otelCollectorOutputFilePath)
+	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory)); os.IsNotExist(err) {
+		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory))
 		if err != nil {
 			log.Logger().Errorf("failed to create log file: %v", err)
 		}
 		file.Close()
 	}
 
-	err := watcher.Add(otelCollectorOutputFilePath)
+	err := watcher.Add(getOtelCollectorOutputFilePath(baseDirectory))
 	if err != nil {
 		log.Logger().Errorf("failed to watch file: %v", err)
 	}
@@ -54,7 +54,7 @@ func watchOtelOutputFile(ctx context.Context) {
 			}
 			if event.Op == fsnotify.Write {
 				log.Logger().Infof("Modified file:", event.Name)
-				debouncedOtelUpload(ctx)
+				debouncedOtelUpload(ctx, baseDirectory)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
