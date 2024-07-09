@@ -135,13 +135,9 @@ func (o CommonsResSetupIntentInit) ToMap() (map[string]interface{}, error) {
 func (o *CommonsResSetupIntentInit) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsResSetupIntentInit := _CommonsResSetupIntentInit{}
 
-	err = json.Unmarshal(bytes, &varCommonsResSetupIntentInit)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsResSetupIntentInit); err == nil {
+		*o = CommonsResSetupIntentInit(varCommonsResSetupIntentInit)
 	}
-
-	*o = CommonsResSetupIntentInit(varCommonsResSetupIntentInit)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -21,9 +21,10 @@ var _ MappedNullable = &CommonsSetupRunnerInput{}
 // CommonsSetupRunnerInput struct for CommonsSetupRunnerInput
 type CommonsSetupRunnerInput struct {
 	Active *bool `json:"Active,omitempty"`
-	Configuration *CommonsRunnerConfiguration `json:"configuration,omitempty"`
-	Labels map[string]interface{} `json:"labels,omitempty"`
+	Configuration *CommonsRunnerSetConfiguration `json:"configuration,omitempty"`
+	Labels []string `json:"labels,omitempty"`
 	Name *string `json:"name,omitempty"`
+	StockRunnerId *string `json:"stock_runner_id,omitempty"`
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -80,9 +81,9 @@ func (o *CommonsSetupRunnerInput) SetActive(v bool) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise.
-func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerConfiguration {
+func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerSetConfiguration {
 	if o == nil || IsNil(o.Configuration) {
-		var ret CommonsRunnerConfiguration
+		var ret CommonsRunnerSetConfiguration
 		return ret
 	}
 	return *o.Configuration
@@ -90,7 +91,7 @@ func (o *CommonsSetupRunnerInput) GetConfiguration() CommonsRunnerConfiguration 
 
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerConfiguration, bool) {
+func (o *CommonsSetupRunnerInput) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -106,15 +107,15 @@ func (o *CommonsSetupRunnerInput) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given CommonsRunnerConfiguration and assigns it to the Configuration field.
-func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerConfiguration) {
+// SetConfiguration gets a reference to the given CommonsRunnerSetConfiguration and assigns it to the Configuration field.
+func (o *CommonsSetupRunnerInput) SetConfiguration(v CommonsRunnerSetConfiguration) {
 	o.Configuration = &v
 }
 
 // GetLabels returns the Labels field value if set, zero value otherwise.
-func (o *CommonsSetupRunnerInput) GetLabels() map[string]interface{} {
+func (o *CommonsSetupRunnerInput) GetLabels() []string {
 	if o == nil || IsNil(o.Labels) {
-		var ret map[string]interface{}
+		var ret []string
 		return ret
 	}
 	return o.Labels
@@ -122,9 +123,9 @@ func (o *CommonsSetupRunnerInput) GetLabels() map[string]interface{} {
 
 // GetLabelsOk returns a tuple with the Labels field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsSetupRunnerInput) GetLabelsOk() (map[string]interface{}, bool) {
+func (o *CommonsSetupRunnerInput) GetLabelsOk() ([]string, bool) {
 	if o == nil || IsNil(o.Labels) {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
 	return o.Labels, true
 }
@@ -138,8 +139,8 @@ func (o *CommonsSetupRunnerInput) HasLabels() bool {
 	return false
 }
 
-// SetLabels gets a reference to the given map[string]interface{} and assigns it to the Labels field.
-func (o *CommonsSetupRunnerInput) SetLabels(v map[string]interface{}) {
+// SetLabels gets a reference to the given []string and assigns it to the Labels field.
+func (o *CommonsSetupRunnerInput) SetLabels(v []string) {
 	o.Labels = v
 }
 
@@ -173,6 +174,38 @@ func (o *CommonsSetupRunnerInput) HasName() bool {
 // SetName gets a reference to the given string and assigns it to the Name field.
 func (o *CommonsSetupRunnerInput) SetName(v string) {
 	o.Name = &v
+}
+
+// GetStockRunnerId returns the StockRunnerId field value if set, zero value otherwise.
+func (o *CommonsSetupRunnerInput) GetStockRunnerId() string {
+	if o == nil || IsNil(o.StockRunnerId) {
+		var ret string
+		return ret
+	}
+	return *o.StockRunnerId
+}
+
+// GetStockRunnerIdOk returns a tuple with the StockRunnerId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsSetupRunnerInput) GetStockRunnerIdOk() (*string, bool) {
+	if o == nil || IsNil(o.StockRunnerId) {
+		return nil, false
+	}
+	return o.StockRunnerId, true
+}
+
+// HasStockRunnerId returns a boolean if a field has been set.
+func (o *CommonsSetupRunnerInput) HasStockRunnerId() bool {
+	if o != nil && !IsNil(o.StockRunnerId) {
+		return true
+	}
+
+	return false
+}
+
+// SetStockRunnerId gets a reference to the given string and assigns it to the StockRunnerId field.
+func (o *CommonsSetupRunnerInput) SetStockRunnerId(v string) {
+	o.StockRunnerId = &v
 }
 
 // GetVcsIntegrationId returns the VcsIntegrationId field value if set, zero value otherwise.
@@ -229,6 +262,9 @@ func (o CommonsSetupRunnerInput) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
+	if !IsNil(o.StockRunnerId) {
+		toSerialize["stock_runner_id"] = o.StockRunnerId
+	}
 	if !IsNil(o.VcsIntegrationId) {
 		toSerialize["vcs_integration_id"] = o.VcsIntegrationId
 	}
@@ -243,13 +279,9 @@ func (o CommonsSetupRunnerInput) ToMap() (map[string]interface{}, error) {
 func (o *CommonsSetupRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsSetupRunnerInput := _CommonsSetupRunnerInput{}
 
-	err = json.Unmarshal(bytes, &varCommonsSetupRunnerInput)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsSetupRunnerInput); err == nil {
+		*o = CommonsSetupRunnerInput(varCommonsSetupRunnerInput)
 	}
-
-	*o = CommonsSetupRunnerInput(varCommonsSetupRunnerInput)
 
 	additionalProperties := make(map[string]interface{})
 
@@ -258,6 +290,7 @@ func (o *CommonsSetupRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "labels")
 		delete(additionalProperties, "name")
+		delete(additionalProperties, "stock_runner_id")
 		delete(additionalProperties, "vcs_integration_id")
 		o.AdditionalProperties = additionalProperties
 	}

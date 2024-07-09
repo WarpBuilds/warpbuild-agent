@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -52,7 +53,16 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 		os.Setenv(env.Key, env.Value)
 	}
 
-	cmd := exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
+	var cmd *exec.Cmd
+
+	switch runtime.GOARCH {
+	case "amd64":
+		// x64 runners require the command to be run as sudo
+		cmd = exec.CommandContext(ctx, "sudo", "-E", "-H", "-u", "runner", m.Script, "--jitconfig", opts.JitToken)
+	default:
+		cmd = exec.CommandContext(ctx, m.Script, "--jitconfig", opts.JitToken)
+	}
+
 	cmd.Dir = m.RunnerDir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())

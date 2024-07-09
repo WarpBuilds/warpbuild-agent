@@ -21,7 +21,7 @@ import (
 )
 
 
-type V1RunnerInstanceAPI interface {
+type V1RunnerInstanceApi interface {
 
 	/*
 	GetRunnerInstanceAllocationDetails Get runner instance allocation details for the id
@@ -37,6 +37,32 @@ type V1RunnerInstanceAPI interface {
 	GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error)
 
 	/*
+	GetRunnerInstancePresignedLogUploadURL Gets a presigned url for uploading logs for a runner instance
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id runner instance id
+	@return ApiGetRunnerInstancePresignedLogUploadURLRequest
+	*/
+	GetRunnerInstancePresignedLogUploadURL(ctx context.Context, id string) ApiGetRunnerInstancePresignedLogUploadURLRequest
+
+	// GetRunnerInstancePresignedLogUploadURLExecute executes the request
+	//  @return CommonsGetPresignedLogUploadURLOutput
+	GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error)
+
+	/*
+	GetRunnerLastJobProcessedMeta Get runner last used job meta
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id runner instance id
+	@return ApiGetRunnerLastJobProcessedMetaRequest
+	*/
+	GetRunnerLastJobProcessedMeta(ctx context.Context, id string) ApiGetRunnerLastJobProcessedMetaRequest
+
+	// GetRunnerLastJobProcessedMetaExecute executes the request
+	//  @return CommonsLastJobProcessedMeta
+	GetRunnerLastJobProcessedMetaExecute(r ApiGetRunnerLastJobProcessedMetaRequest) (*CommonsLastJobProcessedMeta, *http.Response, error)
+
+	/*
 	RunnerInstanceCleanupHook Get runner instance allocation details for the id
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -50,12 +76,12 @@ type V1RunnerInstanceAPI interface {
 	RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error)
 }
 
-// V1RunnerInstanceAPIService V1RunnerInstanceAPI service
-type V1RunnerInstanceAPIService service
+// V1RunnerInstanceApiService V1RunnerInstanceApi service
+type V1RunnerInstanceApiService service
 
 type ApiGetRunnerInstanceAllocationDetailsRequest struct {
 	ctx context.Context
-	ApiService V1RunnerInstanceAPI
+	ApiService V1RunnerInstanceApi
 	id string
 	xPOLLINGSECRET *string
 }
@@ -77,7 +103,7 @@ GetRunnerInstanceAllocationDetails Get runner instance allocation details for th
  @param id runner instance id
  @return ApiGetRunnerInstanceAllocationDetailsRequest
 */
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest {
+func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetails(ctx context.Context, id string) ApiGetRunnerInstanceAllocationDetailsRequest {
 	return ApiGetRunnerInstanceAllocationDetailsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -87,7 +113,7 @@ func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetails(ctx cont
 
 // Execute executes the request
 //  @return CommonsRunnerInstanceAllocationDetails
-func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
+func (a *V1RunnerInstanceApiService) GetRunnerInstanceAllocationDetailsExecute(r ApiGetRunnerInstanceAllocationDetailsRequest) (*CommonsRunnerInstanceAllocationDetails, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -95,7 +121,7 @@ func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetailsExecute(r
 		localVarReturnValue  *CommonsRunnerInstanceAllocationDetails
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.GetRunnerInstanceAllocationDetails")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.GetRunnerInstanceAllocationDetails")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -186,9 +212,288 @@ func (a *V1RunnerInstanceAPIService) GetRunnerInstanceAllocationDetailsExecute(r
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGetRunnerInstancePresignedLogUploadURLRequest struct {
+	ctx context.Context
+	ApiService V1RunnerInstanceApi
+	id string
+	xPOLLINGSECRET *string
+	logFileName *string
+}
+
+// polling secret for validation
+func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) XPOLLINGSECRET(xPOLLINGSECRET string) ApiGetRunnerInstancePresignedLogUploadURLRequest {
+	r.xPOLLINGSECRET = &xPOLLINGSECRET
+	return r
+}
+
+// Log file name
+func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) LogFileName(logFileName string) ApiGetRunnerInstancePresignedLogUploadURLRequest {
+	r.logFileName = &logFileName
+	return r
+}
+
+func (r ApiGetRunnerInstancePresignedLogUploadURLRequest) Execute() (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error) {
+	return r.ApiService.GetRunnerInstancePresignedLogUploadURLExecute(r)
+}
+
+/*
+GetRunnerInstancePresignedLogUploadURL Gets a presigned url for uploading logs for a runner instance
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id runner instance id
+ @return ApiGetRunnerInstancePresignedLogUploadURLRequest
+*/
+func (a *V1RunnerInstanceApiService) GetRunnerInstancePresignedLogUploadURL(ctx context.Context, id string) ApiGetRunnerInstancePresignedLogUploadURLRequest {
+	return ApiGetRunnerInstancePresignedLogUploadURLRequest{
+		ApiService: a,
+		ctx: ctx,
+		id: id,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsGetPresignedLogUploadURLOutput
+func (a *V1RunnerInstanceApiService) GetRunnerInstancePresignedLogUploadURLExecute(r ApiGetRunnerInstancePresignedLogUploadURLRequest) (*CommonsGetPresignedLogUploadURLOutput, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsGetPresignedLogUploadURLOutput
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.GetRunnerInstancePresignedLogUploadURL")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/runners_instance/{id}/presigned_log_upload_url"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.xPOLLINGSECRET == nil {
+		return localVarReturnValue, nil, reportError("xPOLLINGSECRET is required and must be specified")
+	}
+
+	if r.logFileName != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "log-file-name", r.logFileName, "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-POLLING-SECRET", r.xPOLLINGSECRET, "")
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetRunnerLastJobProcessedMetaRequest struct {
+	ctx context.Context
+	ApiService V1RunnerInstanceApi
+	id string
+}
+
+func (r ApiGetRunnerLastJobProcessedMetaRequest) Execute() (*CommonsLastJobProcessedMeta, *http.Response, error) {
+	return r.ApiService.GetRunnerLastJobProcessedMetaExecute(r)
+}
+
+/*
+GetRunnerLastJobProcessedMeta Get runner last used job meta
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id runner instance id
+ @return ApiGetRunnerLastJobProcessedMetaRequest
+*/
+func (a *V1RunnerInstanceApiService) GetRunnerLastJobProcessedMeta(ctx context.Context, id string) ApiGetRunnerLastJobProcessedMetaRequest {
+	return ApiGetRunnerLastJobProcessedMetaRequest{
+		ApiService: a,
+		ctx: ctx,
+		id: id,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsLastJobProcessedMeta
+func (a *V1RunnerInstanceApiService) GetRunnerLastJobProcessedMetaExecute(r ApiGetRunnerLastJobProcessedMetaRequest) (*CommonsLastJobProcessedMeta, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsLastJobProcessedMeta
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.GetRunnerLastJobProcessedMeta")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/runner_instance/internal/{id}/last_job_processed_meta"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["WarpBuildServiceSecretAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["x-warpbuild-service-secret"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiRunnerInstanceCleanupHookRequest struct {
 	ctx context.Context
-	ApiService V1RunnerInstanceAPI
+	ApiService V1RunnerInstanceApi
 	id string
 	xPOLLINGSECRET *string
 }
@@ -210,7 +515,7 @@ RunnerInstanceCleanupHook Get runner instance allocation details for the id
  @param id runner instance id
  @return ApiRunnerInstanceCleanupHookRequest
 */
-func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest {
+func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHook(ctx context.Context, id string) ApiRunnerInstanceCleanupHookRequest {
 	return ApiRunnerInstanceCleanupHookRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -220,7 +525,7 @@ func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHook(ctx context.Conte
 
 // Execute executes the request
 //  @return map[string]interface{}
-func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error) {
+func (a *V1RunnerInstanceApiService) RunnerInstanceCleanupHookExecute(r ApiRunnerInstanceCleanupHookRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -228,7 +533,7 @@ func (a *V1RunnerInstanceAPIService) RunnerInstanceCleanupHookExecute(r ApiRunne
 		localVarReturnValue  map[string]interface{}
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceAPIService.RunnerInstanceCleanupHook")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnerInstanceApiService.RunnerInstanceCleanupHook")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

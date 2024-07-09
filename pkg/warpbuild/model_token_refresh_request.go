@@ -90,13 +90,9 @@ func (o TokenRefreshRequest) ToMap() (map[string]interface{}, error) {
 func (o *TokenRefreshRequest) UnmarshalJSON(bytes []byte) (err error) {
 	varTokenRefreshRequest := _TokenRefreshRequest{}
 
-	err = json.Unmarshal(bytes, &varTokenRefreshRequest)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varTokenRefreshRequest); err == nil {
+		*o = TokenRefreshRequest(varTokenRefreshRequest)
 	}
-
-	*o = TokenRefreshRequest(varTokenRefreshRequest)
 
 	additionalProperties := make(map[string]interface{})
 
