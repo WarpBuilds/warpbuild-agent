@@ -198,9 +198,9 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	case manager.ProviderGithubCRI:
 		startAgentOpts.Manager.GithubCRI = &manager.GithubCRIOptions{
-			StdoutFile:       settings.Runner.Github.StdoutFile,
-			StderrFile:       settings.Runner.Github.StderrFile,
-			RunnerDir:        settings.Runner.Github.RunnerDir,
+			StdoutFile:       settings.Runner.GithubCRI.StdoutFile,
+			StderrFile:       settings.Runner.GithubCRI.StderrFile,
+			RunnerDir:        settings.Runner.GithubCRI.RunnerDir,
 			ContainerOptions: settings.Runner.GithubCRI.ContainerOptions,
 		}
 	default:
