@@ -4,5 +4,5 @@ type Provider string
 
 const (
 	ProviderGithub    Provider = "github"
-	ProviderGithubCRI Provider = "github-cri"
+	ProviderGithubCRI Provider = "github_cri"
 )
