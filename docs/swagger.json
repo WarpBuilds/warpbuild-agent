@@ -91,12 +91,6 @@
                         "name": "provider",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Invite code if any",
-                        "name": "invite_code",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -493,6 +487,119 @@
                 }
             }
         },
+        "/billing/info": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Get Billing Info",
+                "operationId": "GetBillingInfo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.BillingInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Update Billing Info",
+                "operationId": "UpdateBillingInfo",
+                "parameters": [
+                    {
+                        "description": "billing info update input",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.UpdateBillingInfoInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.BillingInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
         "/billing/setup_intent/init": {
             "post": {
                 "security": [
@@ -527,6 +634,132 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/commons.ResSetupIntentInit"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/setup_intent/post_processor": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Post Checkout processing for subscription with PG",
+                "operationId": "PostSetupIntent",
+                "parameters": [
+                    {
+                        "description": "post setup intent session input",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.PostPaymentMethodSetupInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.PostPaymentMethodSetupInput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/usage/internal": {
+            "post": {
+                "security": [
+                    {
+                        "WarpBuildServiceSecretAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 billing"
+                ],
+                "summary": "Post Usage for internal service",
+                "operationId": "PostUsageForInternalService",
+                "parameters": [
+                    {
+                        "description": "post usage input",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.InternalPostUsageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.InternalPostUsageOutput"
                         }
                     },
                     "400": {
@@ -619,30 +852,33 @@
                 }
             }
         },
-        "/invite": {
+        "/insights/integrations/github/callback": {
             "post": {
                 "security": [
                     {
                         "JWTKeyAuth": []
                     }
                 ],
-                "description": "User can manage multiple tenanats from one account, this api provides user a functionality to add a new tenant/org to the user.",
+                "description": "Callback for verifying insights integration",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "v1 invite"
+                    "v1 insights integrations"
                 ],
-                "summary": "Adds a new organisation for a current user",
-                "operationId": "CreateInvite",
+                "summary": "GitHub callback for insights",
+                "operationId": "GitHubCallback",
                 "parameters": [
                     {
-                        "description": "Create new invite body",
+                        "description": "Callback input",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CreateInviteRequest"
+                            "$ref": "#/definitions/insights.callbackInput"
                         }
                     }
                 ],
@@ -650,149 +886,82 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/V1Invite"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "JWTKeyAuth": []
-                    }
-                ],
-                "description": "Invite is figured out from the auth token since tokens are specific to invites.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "v1 invite"
-                ],
-                "summary": "Updates existing invite based on the fields provided.",
-                "operationId": "UpdateInvite",
-                "parameters": [
-                    {
-                        "description": "Update existing invite body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/UpdateInviteRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/V1Invite"
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
+                            "$ref": "#/definitions/AuthUserResponse"
                         }
                     }
                 }
             }
         },
-        "/invite/send/email": {
-            "post": {
-                "security": [
-                    {
-                        "JWTKeyAuth": []
-                    }
-                ],
-                "description": "Sending email invite to the user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "v1 invite"
-                ],
-                "summary": "Adds a new organisation for a current user",
-                "operationId": "SendInvite",
-                "parameters": [
-                    {
-                        "description": "Send invite body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/V1SendInviteRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/invites": {
+        "/jobs/cost-summary": {
             "get": {
                 "security": [
                     {
                         "JWTKeyAuth": []
                     }
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "v1 invite"
-                ],
-                "summary": "ListOrgInvites lists all the invite user has access to.",
-                "operationId": "ListOrgInvites",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/V1Invite"
-                            }
-                        }
-                    },
-                    "default": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/WarpBuildAPIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/jobs/estimated-costs": {
-            "get": {
-                "security": [
-                    {
-                        "JWTKeyAuth": []
-                    }
-                ],
-                "description": "GetEstimatedCosts",
+                "description": "GetCostSummary",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "v1 jobs"
                 ],
-                "summary": "GetEstimatedCosts",
-                "operationId": "GetEstimatedCosts",
+                "summary": "GetCostSummary",
+                "operationId": "GetCostSummary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date range start",
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date range end",
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.CostSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/daywise-costs": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "GetDaywiseCosts",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 jobs"
+                ],
+                "summary": "GetDaywiseCosts",
+                "operationId": "GetDaywiseCosts",
                 "parameters": [
                     {
                         "type": "string",
@@ -815,7 +984,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/EstimatedCost"
+                                "$ref": "#/definitions/commons.DaywiseCost"
                             }
                         }
                     },
@@ -1013,6 +1182,735 @@
                 }
             }
         },
+        "/runner-image-pull-secrets": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_pull_secrets"
+                ],
+                "summary": "List all runner image pull secrets.",
+                "operationId": "ListRunnerImagePullSecrets",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListRunnerImagePullSecretsOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_pull_secrets"
+                ],
+                "summary": "Create a new runner image pull secret.",
+                "operationId": "CreateRunnerImagePullSecret",
+                "parameters": [
+                    {
+                        "description": "Runner Image Pull Secret",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.CreateRunnerImagePullSecretInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImagePullSecret"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner-image-pull-secrets/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_pull_secrets"
+                ],
+                "summary": "Get runner image pull secret details for the id.",
+                "operationId": "GetRunnerImagePullSecret",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Pull Secret ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImagePullSecret"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_pull_secrets"
+                ],
+                "summary": "Update runner image pull secret details for the id.",
+                "operationId": "UpdateRunnerImagePullSecret",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Pull Secret ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Runner Image Pull Secret",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.UpdateRunnerImagePullSecretInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImagePullSecret"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_pull_secrets"
+                ],
+                "summary": "Delete runner image pull secret details for the id.",
+                "operationId": "DeleteRunnerImagePullSecret",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Pull Secret ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericSuccessMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner-image-versions": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_versions"
+                ],
+                "summary": "List all runner image versions.",
+                "operationId": "ListRunnerImageVersions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image ID",
+                        "name": "runner_image_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListRunnerImageVersionsOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner-image-versions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_versions"
+                ],
+                "summary": "Get runner image version details for the id.",
+                "operationId": "GetRunnerImageVersion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Version ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImageVersion"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_versions"
+                ],
+                "summary": "Delete runner image version details for the id.",
+                "operationId": "DeleteRunnerImageVersion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Version ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericSuccessMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_image_versions"
+                ],
+                "summary": "Update runner image version details for the id.",
+                "operationId": "UpdateRunnerImageVersion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image Version ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Runner Image Version",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.UpdateRunnerImageVersionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImageVersion"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner-images": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_images"
+                ],
+                "summary": "List all runner images.",
+                "operationId": "ListRunnerImages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListRunnerImagesOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_images"
+                ],
+                "summary": "Create a new runner image.",
+                "operationId": "CreateRunnerImage",
+                "parameters": [
+                    {
+                        "description": "Runner Image",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.CreateRunnerImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner-images/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_images"
+                ],
+                "summary": "Get runner image details for the id.",
+                "operationId": "GetRunnerImage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_images"
+                ],
+                "summary": "Update runner image details for the id.",
+                "operationId": "UpdateRunnerImage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Runner Image",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.UpdateRunnerImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runner_images"
+                ],
+                "summary": "Delete runner image details for the id.",
+                "operationId": "DeleteRunnerImage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerImage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runner_instance/internal/{id}/last_job_processed_meta": {
+            "get": {
+                "security": [
+                    {
+                        "WarpBuildServiceSecretAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Get runner last used job meta",
+                "operationId": "GetRunnerLastJobProcessedMeta",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "runner instance id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.LastJobProcessedMeta"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
         "/runners": {
             "get": {
                 "security": [
@@ -1088,7 +1986,141 @@
                 }
             }
         },
-        "/runners/runtimes": {
+        "/runners/cost/calculator": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 runners"
+                ],
+                "summary": "Get ComputeCustomRunnerRate details",
+                "operationId": "ComputeCustomRunnerRate",
+                "parameters": [
+                    {
+                        "description": "Compute custom runner rate",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.RateCalculationInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RateCalculationOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners/default-group": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Get default group for runner set",
+                "operationId": "GetRunnerSetDefaultGroup",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerSetDefaultGroup"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Runners"
+                ],
+                "summary": "Set default group for runner set",
+                "operationId": "SetRunnerSetDefaultGroup",
+                "parameters": [
+                    {
+                        "description": "Set default group for runner set body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.SetRunnerSetDefaultGroupInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerSetDefaultGroup"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners/usage": {
             "get": {
                 "security": [
                     {
@@ -1105,15 +2137,110 @@
                     "v1 Runners"
                 ],
                 "summary": "Get runtimes for runners of the organisation",
-                "operationId": "GetRuntimes",
+                "operationId": "GetRunnersUsage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date range start",
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date range end",
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "ondemand",
+                                "spot"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Capacity types",
+                        "name": "capacity_types",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "x64",
+                                "arm64"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Architectures",
+                        "name": "archs",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "macos-13",
+                                "ubuntu-2204",
+                                "macos-14",
+                                "ubuntu-2404"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Images",
+                        "name": "images",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                2,
+                                4,
+                                6,
+                                8,
+                                16,
+                                32
+                            ],
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Cores",
+                        "name": "cores",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "stock",
+                                "custom"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Runner types",
+                        "name": "runner_types",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term",
+                        "name": "search_term",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/commons.Runtime"
-                            }
+                            "$ref": "#/definitions/commons.RunnersUsage"
                         }
                     },
                     "400": {
@@ -1149,6 +2276,15 @@
                 ],
                 "summary": "Get runner details for the id. Current organization is figured from the authorization token",
                 "operationId": "GetRunner",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1187,6 +2323,15 @@
                 ],
                 "summary": "delete runner for the id. Current organization is figured from the authorization token",
                 "operationId": "DeleteRunner",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Runner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1234,6 +2379,13 @@
                         "schema": {
                             "$ref": "#/definitions/commons.UpdateRunnerInput"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Runner ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1241,6 +2393,58 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/commons.Runner"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runners_instance": {
+            "post": {
+                "security": [
+                    {
+                        "WarpBuildServiceSecretAuth": []
+                    }
+                ],
+                "description": "Add a new runner instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Add a new runner instance",
+                "operationId": "AddRunnerInstance",
+                "parameters": [
+                    {
+                        "description": "Add runner instance body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.AddRunnerInstanceInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.RunnerInstance"
                         }
                     },
                     "400": {
@@ -1355,6 +2559,223 @@
                 }
             }
         },
+        "/runners_instance/{id}/presigned_log_upload_url": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 RunnerInstance"
+                ],
+                "summary": "Gets a presigned url for uploading logs for a runner instance",
+                "operationId": "GetRunnerInstancePresignedLogUploadURL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "runner instance id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "polling secret for validation",
+                        "name": "X-POLLING-SECRET",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Log file name",
+                        "name": "log-file-name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.GetPresignedLogUploadURLOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/sku": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Sku"
+                ],
+                "summary": "ListAllSku lists all the runners sku for an org.",
+                "operationId": "ListSku",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "list of sku id's",
+                        "name": "ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "cores",
+                        "name": "cores",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "memory",
+                        "name": "memory",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "x64",
+                            "arm64"
+                        ],
+                        "type": "string",
+                        "description": "Architectures",
+                        "name": "arch",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "ubuntu",
+                                "mac"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "operating system",
+                        "name": "os",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "any",
+                            "amd",
+                            "intel",
+                            "arm"
+                        ],
+                        "type": "string",
+                        "description": "Images",
+                        "name": "manufacturer",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "small",
+                            "medium",
+                            "large"
+                        ],
+                        "type": "string",
+                        "description": "performance category",
+                        "name": "performance_category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "has gpu",
+                        "name": "has_gpu",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "burstable",
+                        "name": "burstable",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "include internal skus",
+                        "name": "include_internal",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.InstanceSku"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/sku/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 Sku"
+                ],
+                "summary": "Get default group for runner set",
+                "operationId": "GetSku",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.InstanceSku"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
         "/subscription": {
             "get": {
                 "security": [
@@ -1410,6 +2831,43 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/commons.SubscriptionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscription/customer_portal_url": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 subscriptions"
+                ],
+                "summary": "Get customer portal url",
+                "operationId": "GetCustomerPortalUrl",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -1565,6 +3023,55 @@
                     },
                     "503": {
                         "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/ui/banner-messages": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 ui"
+                ],
+                "summary": "Get specific banner messages for UI/Org or all",
+                "operationId": "GetBannerMessages",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.BannerMessage"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/WarpBuildAPIError"
                         }
@@ -1918,7 +3425,99 @@
                 }
             }
         },
+        "/vcs/list-runner-groups": {
+            "post": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Lists all vcs runner groups",
+                "operationId": "ListVCSRunnerGroups",
+                "parameters": [
+                    {
+                        "description": "List runner groups input",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListVCSRunnerGroupsInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commons.ListVCSRunnerGroupsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
         "/vcs/repos": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 vcs"
+                ],
+                "summary": "Lists all vcs repos for vcs integration",
+                "operationId": "ListVCSRepos",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/commons.Repo"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -2017,6 +3616,178 @@
                     }
                 }
             }
+        },
+        "/workflows": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Workflows (workflows)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 workflows"
+                ],
+                "summary": "Lists all workflows (workflows) for organization according to repo",
+                "operationId": "ListWorkflows",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListWorkflowsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/workflows/pr-auth-url": {
+            "get": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Get auth url required for GH PR",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 workflows"
+                ],
+                "summary": "Get auth url required for GH PR",
+                "operationId": "GetPullRequestAuthURL",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/workflows/pull": {
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Workflows (workflows)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 workflows"
+                ],
+                "summary": "Pulls all workflows from the provider to the database",
+                "operationId": "PullWorkflows",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/workflows/warp": {
+            "patch": {
+                "security": [
+                    {
+                        "JWTKeyAuth": []
+                    }
+                ],
+                "description": "Warps workflows",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1 workflows"
+                ],
+                "summary": "Warps workflows for organization according to given internal workflow ids",
+                "operationId": "WarpWorkflows",
+                "parameters": [
+                    {
+                        "description": "Warp workflows options",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/WarpWorkflowsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/WarpWorkflowsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/WarpBuildAPIError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2050,14 +3821,17 @@
             "type": "object",
             "required": [
                 "access_token",
+                "is_different_org",
                 "organization",
                 "refresh_token",
-                "should_show_vcs_integration",
                 "user"
             ],
             "properties": {
                 "access_token": {
                     "type": "string"
+                },
+                "is_different_org": {
+                    "type": "boolean"
                 },
                 "organization": {
                     "$ref": "#/definitions/V1Organization"
@@ -2065,27 +3839,8 @@
                 "refresh_token": {
                     "type": "string"
                 },
-                "should_show_vcs_integration": {
-                    "type": "boolean"
-                },
                 "user": {
                     "$ref": "#/definitions/V1User"
-                }
-            }
-        },
-        "CreateInviteRequest": {
-            "type": "object",
-            "required": [
-                "role_kind"
-            ],
-            "properties": {
-                "role_kind": {
-                    "type": "string",
-                    "enum": [
-                        "owner",
-                        "admin",
-                        "member"
-                    ]
                 }
             }
         },
@@ -2116,14 +3871,20 @@
                 }
             }
         },
-        "EstimatedCost": {
+        "ListWorkflowsResponse": {
             "type": "object",
             "properties": {
-                "amount": {
-                    "type": "number"
+                "is_pulling": {
+                    "type": "boolean"
                 },
-                "date": {
+                "last_synced_at": {
                     "type": "string"
+                },
+                "workflows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.Workflow"
+                    }
                 }
             }
         },
@@ -2135,6 +3896,12 @@
                 "vcs_integration"
             ],
             "properties": {
+                "extras": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "organization": {
                     "$ref": "#/definitions/V1Organization"
                 },
@@ -2198,14 +3965,6 @@
                 }
             }
         },
-        "UpdateInviteRequest": {
-            "type": "object",
-            "properties": {
-                "Status": {
-                    "type": "string"
-                }
-            }
-        },
         "UpdateOrganizationRequest": {
             "type": "object",
             "properties": {
@@ -2251,29 +4010,6 @@
                 }
             }
         },
-        "V1Invite": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "organization_id": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
         "V1ListUsersForOrganizationResult": {
             "type": "object",
             "properties": {
@@ -2315,21 +4051,6 @@
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "V1SendInviteRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "invite_id"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "invite_id": {
                     "type": "string"
                 }
             }
@@ -2496,6 +4217,53 @@
                 }
             }
         },
+        "WarpWorkflowsRequest": {
+            "type": "object",
+            "required": [
+                "runner_id",
+                "workflow_ids"
+            ],
+            "properties": {
+                "authorization": {
+                    "description": "for github oauth flow",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "runner_id": {
+                    "type": "string"
+                },
+                "workflow_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "WarpWorkflowsResponse": {
+            "type": "object",
+            "properties": {
+                "pr_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.AddRunnerInstanceInput": {
+            "type": "object",
+            "properties": {
+                "provider_id": {
+                    "type": "string"
+                },
+                "runner_set_id": {
+                    "type": "string"
+                },
+                "unique_external_id": {
+                    "type": "string"
+                }
+            }
+        },
         "commons.Balance": {
             "type": "object",
             "properties": {
@@ -2521,6 +4289,162 @@
                 },
                 "paid_balance": {
                     "$ref": "#/definitions/commons.Balance"
+                }
+            }
+        },
+        "commons.BannerMessage": {
+            "type": "object",
+            "properties": {
+                "closeable": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.BillingInfo": {
+            "type": "object",
+            "properties": {
+                "applied_coupon": {
+                    "$ref": "#/definitions/commons.Coupon"
+                },
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.CacheCostSummary": {
+            "type": "object",
+            "properties": {
+                "cache_storage_size_bytes": {
+                    "type": "number"
+                },
+                "num_cache_operations": {
+                    "type": "integer"
+                },
+                "total_cost": {
+                    "type": "number"
+                }
+            }
+        },
+        "commons.ContainerRunnerImage": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "command": {
+                    "type": "string"
+                },
+                "entrypoint": {
+                    "type": "string"
+                },
+                "environment_variables": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "image_repository": {
+                    "type": "string"
+                },
+                "image_tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ContainerRunnerImageUpdate": {
+            "type": "object",
+            "properties": {
+                "image_tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ContainerRunnerImageVersion": {
+            "type": "object",
+            "properties": {
+                "data_dir_size": {
+                    "type": "string"
+                },
+                "image_digest": {
+                    "type": "string"
+                },
+                "image_repository": {
+                    "type": "string"
+                },
+                "image_size": {
+                    "type": "string"
+                },
+                "image_tag": {
+                    "type": "string"
+                },
+                "image_uri": {
+                    "description": "ImageURI is the full uri of the image.\nThis can be used to download the image\n\n+OutputOnly",
+                    "type": "string"
+                },
+                "snapshot_id": {
+                    "type": "string"
+                },
+                "snapshot_size": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_size_gb": {
+                    "description": "VolumeSizeGB is the size of the volume in GB.\nThis is used when creating a snapshot out of the volume.\n\nThis is rounded up to the nearest GiB.",
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.CostSummary": {
+            "type": "object",
+            "properties": {
+                "cache": {
+                    "$ref": "#/definitions/commons.CacheCostSummary"
+                },
+                "runners": {
+                    "$ref": "#/definitions/commons.RunnersCostSummary"
+                }
+            }
+        },
+        "commons.Coupon": {
+            "type": "object",
+            "properties": {
+                "amount_off": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "duration_months": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent_off": {
+                    "type": "number"
+                },
+                "redeemed_at": {
+                    "type": "string"
                 }
             }
         },
@@ -2558,6 +4482,96 @@
                 }
             }
         },
+        "commons.CreateRunnerImageInput": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "arch": {
+                    "type": "string"
+                },
+                "container_runner_image": {
+                    "$ref": "#/definitions/commons.ContainerRunnerImage"
+                },
+                "hooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImageHook"
+                    }
+                },
+                "os": {
+                    "type": "string"
+                },
+                "runner_image_pull_secret_id": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/commons.RunnerImageSettings"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.CreateRunnerImagePullSecretInput": {
+            "type": "object",
+            "required": [
+                "alias",
+                "type"
+            ],
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "aws": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretAWS"
+                },
+                "docker_credentials": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretDockerCredentials"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "docker_credentials",
+                        "aws"
+                    ]
+                }
+            }
+        },
+        "commons.DaywiseCost": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "cumulative_amount": {
+                    "type": "number"
+                },
+                "date": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.DaywiseRuntime": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "runtime_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.GetPresignedLogUploadURLOutput": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "commons.GithubRunnerApplicationDetails": {
             "type": "object",
             "properties": {
@@ -2577,6 +4591,202 @@
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
+                    }
+                }
+            }
+        },
+        "commons.InstanceSku": {
+            "type": "object",
+            "properties": {
+                "arch": {
+                    "type": "string",
+                    "enum": [
+                        "x64",
+                        "arm64"
+                    ]
+                },
+                "cores": {
+                    "type": "integer"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "memory": {
+                    "type": "integer"
+                },
+                "os": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "ubuntu",
+                            "mac"
+                        ]
+                    }
+                },
+                "properties": {
+                    "$ref": "#/definitions/commons.InstanceSkuProperties"
+                }
+            }
+        },
+        "commons.InstanceSkuProperties": {
+            "type": "object",
+            "properties": {
+                "burstable_speed": {
+                    "type": "number"
+                },
+                "generation": {
+                    "type": "string"
+                },
+                "gpu": {
+                    "type": "integer"
+                },
+                "manufacturer": {
+                    "type": "string",
+                    "enum": [
+                        "any",
+                        "amd",
+                        "intel",
+                        "arm"
+                    ]
+                },
+                "performance_category": {
+                    "type": "string",
+                    "enum": [
+                        "small",
+                        "medium",
+                        "large"
+                    ]
+                },
+                "performance_rating": {
+                    "type": "integer"
+                },
+                "speed": {
+                    "type": "number"
+                }
+            }
+        },
+        "commons.InternalPostUsageInput": {
+            "type": "object",
+            "properties": {
+                "pricing_id": {
+                    "type": "string"
+                },
+                "product_category": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "transaction_id": {
+                    "type": "string"
+                },
+                "usage_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.InternalPostUsageOutput": {
+            "type": "object",
+            "properties": {
+                "ledger_id": {
+                    "type": "string"
+                },
+                "usage_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.JobRunnerInfo": {
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "type": "string"
+                },
+                "runner_arch": {
+                    "type": "string"
+                },
+                "runner_host": {
+                    "type": "string"
+                },
+                "runner_id": {
+                    "type": "string"
+                },
+                "runner_name": {
+                    "type": "string"
+                },
+                "runner_os": {
+                    "type": "string"
+                },
+                "warp_added_at": {
+                    "type": "string"
+                },
+                "warp_removed_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.LastJobProcessedMeta": {
+            "type": "object",
+            "properties": {
+                "vcs_base_ref": {
+                    "type": "string"
+                },
+                "vcs_head_ref": {
+                    "type": "string"
+                },
+                "vcs_org": {
+                    "type": "string"
+                },
+                "vcs_ref": {
+                    "type": "string"
+                },
+                "vcs_ref_type": {
+                    "type": "string"
+                },
+                "vcs_repo": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ListRunnerImagePullSecretsOutput": {
+            "type": "object",
+            "properties": {
+                "runner_image_pull_secrets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImagePullSecret"
+                    }
+                }
+            }
+        },
+        "commons.ListRunnerImageVersionsOutput": {
+            "type": "object",
+            "properties": {
+                "runner_image_versions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImageVersion"
+                    }
+                }
+            }
+        },
+        "commons.ListRunnerImagesOutput": {
+            "type": "object",
+            "properties": {
+                "runner_images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImage"
                     }
                 }
             }
@@ -2625,6 +4835,34 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/V1User"
+                    }
+                }
+            }
+        },
+        "commons.ListVCSRunnerGroupsInput": {
+            "type": "object",
+            "properties": {
+                "fetch_from_remote": {
+                    "type": "boolean"
+                },
+                "integration_id": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ListVCSRunnerGroupsResponse": {
+            "type": "object",
+            "properties": {
+                "last_synced_at": {
+                    "type": "string"
+                },
+                "runner_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerGroup"
                     }
                 }
             }
@@ -2710,34 +4948,94 @@
                 }
             }
         },
+        "commons.PostPaymentMethodSetupInput": {
+            "type": "object",
+            "properties": {
+                "customer_id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "payment_method_id": {
+                    "type": "string"
+                },
+                "setup_intent_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ProviderInstanceSkuMapping": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_sku": {
+                    "type": "string"
+                },
+                "provider_sku_meta": {
+                    "$ref": "#/definitions/commons.ProviderSkuMeta"
+                },
+                "sku_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.ProviderSkuMeta": {
+            "type": "object"
+        },
+        "commons.RateCalculationInput": {
+            "type": "object",
+            "properties": {
+                "configuration": {
+                    "$ref": "#/definitions/commons.RunnerSetConfiguration"
+                },
+                "product_type": {
+                    "type": "string",
+                    "enum": [
+                        "runner",
+                        "cache"
+                    ]
+                }
+            }
+        },
+        "commons.RateCalculationOutput": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "number"
+                }
+            }
+        },
         "commons.Repo": {
             "type": "object",
             "properties": {
-                "AccountID": {
+                "account_id": {
                     "type": "string"
                 },
-                "CreatedAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "DefaultBranch": {
+                "default_branch": {
                     "type": "string"
                 },
-                "DisplayName": {
-                    "type": "string"
-                },
-                "IntegrationID": {
-                    "type": "string"
-                },
-                "SSHURL": {
-                    "type": "string"
-                },
-                "UpdatedAt": {
-                    "type": "string"
-                },
-                "WebURL": {
+                "display_name": {
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "integration_id": {
                     "type": "string"
                 },
                 "name": {
@@ -2749,7 +5047,16 @@
                 "provider": {
                     "type": "string"
                 },
+                "sshurl": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
                 "vcs_id": {
+                    "type": "string"
+                },
+                "web_url": {
                     "type": "string"
                 }
             }
@@ -2810,29 +5117,31 @@
                 "active": {
                     "type": "boolean"
                 },
-                "cluster_id": {
-                    "type": "string"
-                },
                 "configuration": {
-                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                    "$ref": "#/definitions/commons.RunnerSetConfiguration"
                 },
                 "created_at": {
-                    "type": "string"
-                },
-                "external_reference_id": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
                 "labels": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string"
                 },
                 "organization_id": {
+                    "type": "string"
+                },
+                "provider_id": {
+                    "type": "string"
+                },
+                "stock_runner_id": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -2843,31 +5152,259 @@
                 }
             }
         },
-        "commons.RunnerConfiguration": {
+        "commons.RunnerGroup": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "inherited": {
+                    "type": "boolean"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "runners_url": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerImage": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "arch": {
+                    "type": "string"
+                },
+                "container_runner_image": {
+                    "$ref": "#/definitions/commons.ContainerRunnerImage"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "hooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImageHook"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "runner_image_pull_secret_id": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/commons.RunnerImageSettings"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "warpbuild_image": {
+                    "description": "WarpbuildImage is the vm image used by warpbuild to run the jobs.\nThis will have the info for internal images managed by warpbuild when\ntype = 'warpbuild_managed'.\n\nIn case of container images, this will have the base image of the VM on\nwhich the container is run.",
+                    "$ref": "#/definitions/commons.WarpbuildImage"
+                }
+            }
+        },
+        "commons.RunnerImageHook": {
+            "type": "object",
+            "properties": {
+                "file": {
+                    "description": "File is the base64 encoded file.\nThis must be a shell script which is encoded in base64.",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Type is the type of hook.",
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerImagePullSecret": {
+            "type": "object",
+            "required": [
+                "alias",
+                "created_at",
+                "id",
+                "organization_id",
+                "type",
+                "updated_at"
+            ],
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "aws": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretAWS"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "docker_credentials": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretDockerCredentials"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "docker_credentials",
+                        "aws"
+                    ]
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerImagePullSecretAWS": {
+            "type": "object",
+            "properties": {
+                "access_key_id": {
+                    "type": "string"
+                },
+                "aws_ecr_repository": {
+                    "description": "AWSECRRepository is the short name of the ecr repository\nFor example, if the complete uri for an image is\n\u003caccount_id\u003e.dkr.ecr.\u003cregion\u003e.amazonaws.com/acme/customrunners:v1.5.0\nThe AWS ECR Repo is `acme/customrunners`",
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "secret_access_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerImagePullSecretDockerCredentials": {
+            "type": "object",
+            "required": [
+                "host",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "host": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.RunnerImageSettings": {
+            "type": "object",
+            "properties": {
+                "purge_image_versions_offset": {
+                    "description": "PurgeImageVersionsOffset is the number of versions to keep.\nEach time a new version is created, the oldest version is purged.\nAllowed values range [1, inf).\n\nDefault value is 2.",
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.RunnerImageVersion": {
             "type": "object",
             "properties": {
                 "arch": {
                     "type": "string"
                 },
-                "cores": {
-                    "type": "integer"
+                "container_runner_image": {
+                    "$ref": "#/definitions/commons.ContainerRunnerImageVersion"
                 },
-                "image": {
+                "created_at": {
                     "type": "string"
                 },
-                "memory": {
+                "external_id": {
+                    "description": "ExternalID is the ID of the runner image version in the external system.",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "runner_image_id": {
+                    "type": "string"
+                },
+                "runner_image_pull_secret_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "version_time_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "commons.RunnerInfo": {
+            "type": "object",
+            "properties": {
+                "arch": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
                 }
             }
         },
         "commons.RunnerInstance": {
             "type": "object",
             "properties": {
+                "allocated_at": {
+                    "type": "string"
+                },
+                "allocation_for": {
+                    "type": "string"
+                },
+                "allocation_requested_at": {
+                    "type": "string"
+                },
+                "allocation_requested_event_at": {
+                    "type": "string"
+                },
                 "cluster": {
                     "type": "string"
                 },
                 "configuration": {
-                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                    "$ref": "#/definitions/commons.RunnerInstanceConfiguration"
                 },
                 "created_at": {
                     "type": "string"
@@ -2875,22 +5412,55 @@
                 "created_by": {
                     "type": "string"
                 },
+                "external_id": {
+                    "type": "string"
+                },
+                "first_polled_at": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "last_job_processed_id": {
                     "type": "string"
                 },
-                "last_polled": {
+                "last_job_processed_meta": {
+                    "$ref": "#/definitions/commons.LastJobProcessedMeta"
+                },
+                "last_polled_at": {
                     "type": "string"
                 },
                 "organization_id": {
+                    "type": "string"
+                },
+                "provider_kind": {
+                    "type": "string"
+                },
+                "provider_kind_id": {
+                    "type": "string"
+                },
+                "purged_at": {
+                    "type": "string"
+                },
+                "purged_reason": {
                     "type": "string"
                 },
                 "runner_for": {
                     "type": "string"
                 },
                 "runner_set_id": {
+                    "type": "string"
+                },
+                "running_started_at": {
                     "type": "string"
                 },
                 "status": {
@@ -2929,14 +5499,119 @@
                 }
             }
         },
-        "commons.Runtime": {
+        "commons.RunnerInstanceConfiguration": {
             "type": "object",
             "properties": {
-                "duration_seconds": {
+                "capacity_type": {
+                    "type": "string",
+                    "enum": [
+                        "spot",
+                        "ondemand"
+                    ]
+                },
+                "image": {
+                    "description": "Refer",
+                    "type": "string"
+                },
+                "provider_sku_mapping": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.ProviderInstanceSkuMapping"
+                    }
+                },
+                "sku": {
+                    "$ref": "#/definitions/commons.InstanceSku"
+                },
+                "stock_runner_set_id": {
+                    "type": "string"
+                },
+                "storage": {
+                    "$ref": "#/definitions/commons.Storage"
+                }
+            }
+        },
+        "commons.RunnerSetConfiguration": {
+            "type": "object",
+            "properties": {
+                "capacity_type": {
+                    "type": "string",
+                    "enum": [
+                        "spot",
+                        "ondemand"
+                    ]
+                },
+                "image": {
+                    "type": "string"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "storage": {
+                    "$ref": "#/definitions/commons.Storage"
+                }
+            }
+        },
+        "commons.RunnerSetDefaultGroup": {
+            "type": "object",
+            "properties": {
+                "group_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.RunnersCostSummary": {
+            "type": "object",
+            "properties": {
+                "arm64_billed_minutes": {
                     "type": "integer"
                 },
+                "total_cost": {
+                    "type": "number"
+                },
+                "x64_billed_minutes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.RunnersUsage": {
+            "type": "object",
+            "properties": {
+                "daywise": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.DaywiseRuntime"
+                    }
+                },
+                "runnerwise": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerwiseRuntime"
+                    }
+                },
+                "total_job_count": {
+                    "type": "integer"
+                },
+                "total_runtime_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.RunnerwiseRuntime": {
+            "type": "object",
+            "properties": {
                 "runner_id": {
                     "type": "string"
+                },
+                "runtime_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.SetRunnerSetDefaultGroupInput": {
+            "type": "object",
+            "properties": {
+                "group_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -2947,17 +5622,45 @@
                     "type": "boolean"
                 },
                 "configuration": {
-                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                    "$ref": "#/definitions/commons.RunnerSetConfiguration"
                 },
                 "labels": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string"
                 },
+                "stock_runner_id": {
+                    "type": "string"
+                },
                 "vcs_integration_id": {
                     "type": "string"
+                }
+            }
+        },
+        "commons.Storage": {
+            "type": "object",
+            "properties": {
+                "iops": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "throughput": {
+                    "type": "integer"
+                },
+                "tier": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "extreme"
+                    ]
                 }
             }
         },
@@ -3022,6 +5725,85 @@
                 }
             }
         },
+        "commons.UpdateBillingInfoInput": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.UpdateContainerRunnerImageVersion": {
+            "type": "object",
+            "properties": {
+                "data_dir_size": {
+                    "type": "string"
+                },
+                "image_digest": {
+                    "type": "string"
+                },
+                "image_size": {
+                    "description": "ImageSize is the size of the image.\nExpected format: \"4G\"",
+                    "type": "string"
+                },
+                "snapshot_id": {
+                    "type": "string"
+                },
+                "snapshot_size": {
+                    "description": "SnapshotSize is the size of the snapshot in human readable format.",
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_size_gb": {
+                    "description": "VolumeSizeGB is the size of the volume in GB.\nThis is used when creating a snapshot out of the volume.\n\nThis is rounded up to the nearest GiB.",
+                    "type": "integer"
+                }
+            }
+        },
+        "commons.UpdateRunnerImageInput": {
+            "type": "object",
+            "properties": {
+                "container_runner_image": {
+                    "$ref": "#/definitions/commons.ContainerRunnerImageUpdate"
+                },
+                "hooks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.RunnerImageHook"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "runner_image_pull_secret_id": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/commons.RunnerImageSettings"
+                }
+            }
+        },
+        "commons.UpdateRunnerImagePullSecretInput": {
+            "type": "object",
+            "properties": {
+                "aws": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretAWS"
+                },
+                "docker_credentials": {
+                    "$ref": "#/definitions/commons.RunnerImagePullSecretDockerCredentials"
+                }
+            }
+        },
+        "commons.UpdateRunnerImageVersionInput": {
+            "type": "object",
+            "properties": {
+                "container_runner_image_version": {
+                    "$ref": "#/definitions/commons.UpdateContainerRunnerImageVersion"
+                }
+            }
+        },
         "commons.UpdateRunnerInput": {
             "type": "object",
             "properties": {
@@ -3029,11 +5811,16 @@
                     "type": "boolean"
                 },
                 "configuration": {
-                    "$ref": "#/definitions/commons.RunnerConfiguration"
+                    "$ref": "#/definitions/commons.RunnerSetConfiguration"
                 },
                 "labels": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -3088,6 +5875,87 @@
                 }
             }
         },
+        "commons.WarpbuildImage": {
+            "type": "object",
+            "properties": {
+                "cloud_init_template": {
+                    "type": "string"
+                },
+                "image_uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.Workflow": {
+            "type": "object",
+            "properties": {
+                "external_id": {
+                    "type": "string"
+                },
+                "external_repo_entity": {
+                    "type": "string"
+                },
+                "external_repo_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_repo_public": {
+                    "type": "boolean"
+                },
+                "jobs_runner_info": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/commons.JobRunnerInfo"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_integration_id": {
+                    "type": "string"
+                },
+                "runner_info": {
+                    "$ref": "#/definitions/commons.RunnerInfo"
+                },
+                "stats": {
+                    "$ref": "#/definitions/commons.WorkflowStats"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "warp_pr_id": {
+                    "type": "string"
+                },
+                "warp_pr_link": {
+                    "type": "string"
+                },
+                "warp_pr_runner": {
+                    "type": "string"
+                },
+                "warp_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "commons.WorkflowStats": {
+            "type": "object",
+            "properties": {
+                "run_count": {
+                    "type": "integer"
+                },
+                "run_duration": {
+                    "type": "integer"
+                }
+            }
+        },
         "debugger.PublishEventInput": {
             "type": "object",
             "properties": {
@@ -3099,6 +5967,24 @@
                     "type": "string"
                 },
                 "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "insights.callbackInput": {
+            "type": "object",
+            "required": [
+                "code",
+                "setup_action"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "installation_id": {
+                    "type": "string"
+                },
+                "setup_action": {
                     "type": "string"
                 }
             }
@@ -3121,6 +6007,11 @@
         "WarpBuildAdminSecretAuth": {
             "type": "apiKey",
             "name": "X-Warp-Build-Admin-Secret",
+            "in": "header"
+        },
+        "WarpBuildServiceSecretAuth": {
+            "type": "apiKey",
+            "name": "x-warpbuild-service-secret",
             "in": "header"
         }
     },

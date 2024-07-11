@@ -532,9 +532,13 @@ func (o VCSIntegration) ToMap() (map[string]interface{}, error) {
 func (o *VCSIntegration) UnmarshalJSON(bytes []byte) (err error) {
 	varVCSIntegration := _VCSIntegration{}
 
-	if err = json.Unmarshal(bytes, &varVCSIntegration); err == nil {
-		*o = VCSIntegration(varVCSIntegration)
+	err = json.Unmarshal(bytes, &varVCSIntegration)
+
+	if err != nil {
+		return err
 	}
+
+	*o = VCSIntegration(varVCSIntegration)
 
 	additionalProperties := make(map[string]interface{})
 

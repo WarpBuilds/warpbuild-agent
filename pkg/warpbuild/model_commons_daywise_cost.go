@@ -171,9 +171,13 @@ func (o CommonsDaywiseCost) ToMap() (map[string]interface{}, error) {
 func (o *CommonsDaywiseCost) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsDaywiseCost := _CommonsDaywiseCost{}
 
-	if err = json.Unmarshal(bytes, &varCommonsDaywiseCost); err == nil {
-		*o = CommonsDaywiseCost(varCommonsDaywiseCost)
+	err = json.Unmarshal(bytes, &varCommonsDaywiseCost)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsDaywiseCost(varCommonsDaywiseCost)
 
 	additionalProperties := make(map[string]interface{})
 

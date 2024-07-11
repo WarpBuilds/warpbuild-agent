@@ -171,9 +171,13 @@ func (o ListWorkflowsResponse) ToMap() (map[string]interface{}, error) {
 func (o *ListWorkflowsResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varListWorkflowsResponse := _ListWorkflowsResponse{}
 
-	if err = json.Unmarshal(bytes, &varListWorkflowsResponse); err == nil {
-		*o = ListWorkflowsResponse(varListWorkflowsResponse)
+	err = json.Unmarshal(bytes, &varListWorkflowsResponse)
+
+	if err != nil {
+		return err
 	}
+
+	*o = ListWorkflowsResponse(varListWorkflowsResponse)
 
 	additionalProperties := make(map[string]interface{})
 

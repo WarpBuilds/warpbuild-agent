@@ -154,9 +154,13 @@ func (o WarpWorkflowsRequest) ToMap() (map[string]interface{}, error) {
 func (o *WarpWorkflowsRequest) UnmarshalJSON(bytes []byte) (err error) {
 	varWarpWorkflowsRequest := _WarpWorkflowsRequest{}
 
-	if err = json.Unmarshal(bytes, &varWarpWorkflowsRequest); err == nil {
-		*o = WarpWorkflowsRequest(varWarpWorkflowsRequest)
+	err = json.Unmarshal(bytes, &varWarpWorkflowsRequest)
+
+	if err != nil {
+		return err
 	}
+
+	*o = WarpWorkflowsRequest(varWarpWorkflowsRequest)
 
 	additionalProperties := make(map[string]interface{})
 

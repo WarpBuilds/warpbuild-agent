@@ -99,9 +99,13 @@ func (o CommonsGetPresignedLogUploadURLOutput) ToMap() (map[string]interface{}, 
 func (o *CommonsGetPresignedLogUploadURLOutput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsGetPresignedLogUploadURLOutput := _CommonsGetPresignedLogUploadURLOutput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsGetPresignedLogUploadURLOutput); err == nil {
-		*o = CommonsGetPresignedLogUploadURLOutput(varCommonsGetPresignedLogUploadURLOutput)
+	err = json.Unmarshal(bytes, &varCommonsGetPresignedLogUploadURLOutput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsGetPresignedLogUploadURLOutput(varCommonsGetPresignedLogUploadURLOutput)
 
 	additionalProperties := make(map[string]interface{})
 

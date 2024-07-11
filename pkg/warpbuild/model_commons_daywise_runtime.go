@@ -135,9 +135,13 @@ func (o CommonsDaywiseRuntime) ToMap() (map[string]interface{}, error) {
 func (o *CommonsDaywiseRuntime) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsDaywiseRuntime := _CommonsDaywiseRuntime{}
 
-	if err = json.Unmarshal(bytes, &varCommonsDaywiseRuntime); err == nil {
-		*o = CommonsDaywiseRuntime(varCommonsDaywiseRuntime)
+	err = json.Unmarshal(bytes, &varCommonsDaywiseRuntime)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsDaywiseRuntime(varCommonsDaywiseRuntime)
 
 	additionalProperties := make(map[string]interface{})
 

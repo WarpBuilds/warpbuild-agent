@@ -21,31 +21,20 @@ definitions:
     properties:
       access_token:
         type: string
+      is_different_org:
+        type: boolean
       organization:
         $ref: '#/definitions/V1Organization'
       refresh_token:
         type: string
-      should_show_vcs_integration:
-        type: boolean
       user:
         $ref: '#/definitions/V1User'
     required:
     - access_token
+    - is_different_org
     - organization
     - refresh_token
-    - should_show_vcs_integration
     - user
-    type: object
-  CreateInviteRequest:
-    properties:
-      role_kind:
-        enum:
-        - owner
-        - admin
-        - member
-        type: string
-    required:
-    - role_kind
     type: object
   CreateVCSIntegrationRequest:
     properties:
@@ -65,15 +54,23 @@ definitions:
     required:
     - provider
     type: object
-  EstimatedCost:
+  ListWorkflowsResponse:
     properties:
-      amount:
-        type: number
-      date:
+      is_pulling:
+        type: boolean
+      last_synced_at:
         type: string
+      workflows:
+        items:
+          $ref: '#/definitions/commons.Workflow'
+        type: array
     type: object
   MeResponse:
     properties:
+      extras:
+        additionalProperties:
+          type: string
+        type: object
       organization:
         $ref: '#/definitions/V1Organization'
       user:
@@ -119,11 +116,6 @@ definitions:
     required:
     - access_token
     type: object
-  UpdateInviteRequest:
-    properties:
-      Status:
-        type: string
-    type: object
   UpdateOrganizationRequest:
     properties:
       avatar_url:
@@ -163,21 +155,6 @@ definitions:
       vcs_integration:
         $ref: '#/definitions/VCSIntegration'
     type: object
-  V1Invite:
-    properties:
-      code:
-        type: string
-      expires_at:
-        type: string
-      id:
-        type: string
-      organization_id:
-        type: string
-      role:
-        type: string
-      status:
-        type: string
-    type: object
   V1ListUsersForOrganizationResult:
     properties:
       avatar_url:
@@ -207,16 +184,6 @@ definitions:
     - created_by
     - id
     - name
-    type: object
-  V1SendInviteRequest:
-    properties:
-      email:
-        type: string
-      invite_id:
-        type: string
-    required:
-    - email
-    - invite_id
     type: object
   V1User:
     properties:
@@ -340,6 +307,37 @@ definitions:
       sub_message:
         type: string
     type: object
+  WarpWorkflowsRequest:
+    properties:
+      authorization:
+        additionalProperties:
+          type: string
+        description: for github oauth flow
+        type: object
+      runner_id:
+        type: string
+      workflow_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - runner_id
+    - workflow_ids
+    type: object
+  WarpWorkflowsResponse:
+    properties:
+      pr_link:
+        type: string
+    type: object
+  commons.AddRunnerInstanceInput:
+    properties:
+      provider_id:
+        type: string
+      runner_set_id:
+        type: string
+      unique_external_id:
+        type: string
+    type: object
   commons.Balance:
     properties:
       id:
@@ -357,6 +355,116 @@ definitions:
         $ref: '#/definitions/commons.Balance'
       paid_balance:
         $ref: '#/definitions/commons.Balance'
+    type: object
+  commons.BannerMessage:
+    properties:
+      closeable:
+        type: boolean
+      id:
+        type: integer
+      message:
+        type: string
+      priority:
+        type: integer
+      type:
+        type: string
+    type: object
+  commons.BillingInfo:
+    properties:
+      applied_coupon:
+        $ref: '#/definitions/commons.Coupon'
+      email:
+        type: string
+    type: object
+  commons.CacheCostSummary:
+    properties:
+      cache_storage_size_bytes:
+        type: number
+      num_cache_operations:
+        type: integer
+      total_cost:
+        type: number
+    type: object
+  commons.ContainerRunnerImage:
+    properties:
+      args:
+        items:
+          type: string
+        type: array
+      command:
+        type: string
+      entrypoint:
+        type: string
+      environment_variables:
+        additionalProperties:
+          type: string
+        type: object
+      image_repository:
+        type: string
+      image_tag:
+        type: string
+    type: object
+  commons.ContainerRunnerImageUpdate:
+    properties:
+      image_tag:
+        type: string
+    type: object
+  commons.ContainerRunnerImageVersion:
+    properties:
+      data_dir_size:
+        type: string
+      image_digest:
+        type: string
+      image_repository:
+        type: string
+      image_size:
+        type: string
+      image_tag:
+        type: string
+      image_uri:
+        description: |-
+          ImageURI is the full uri of the image.
+          This can be used to download the image
+
+          +OutputOnly
+        type: string
+      snapshot_id:
+        type: string
+      snapshot_size:
+        type: string
+      volume_id:
+        type: string
+      volume_size_gb:
+        description: |-
+          VolumeSizeGB is the size of the volume in GB.
+          This is used when creating a snapshot out of the volume.
+
+          This is rounded up to the nearest GiB.
+        type: integer
+    type: object
+  commons.CostSummary:
+    properties:
+      cache:
+        $ref: '#/definitions/commons.CacheCostSummary'
+      runners:
+        $ref: '#/definitions/commons.RunnersCostSummary'
+    type: object
+  commons.Coupon:
+    properties:
+      amount_off:
+        type: integer
+      currency:
+        type: string
+      duration_months:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      percent_off:
+        type: number
+      redeemed_at:
+        type: string
     type: object
   commons.CreateRepoOptions:
     properties:
@@ -381,6 +489,65 @@ definitions:
     - name
     - owner
     type: object
+  commons.CreateRunnerImageInput:
+    properties:
+      alias:
+        type: string
+      arch:
+        type: string
+      container_runner_image:
+        $ref: '#/definitions/commons.ContainerRunnerImage'
+      hooks:
+        items:
+          $ref: '#/definitions/commons.RunnerImageHook'
+        type: array
+      os:
+        type: string
+      runner_image_pull_secret_id:
+        type: string
+      settings:
+        $ref: '#/definitions/commons.RunnerImageSettings'
+      type:
+        type: string
+    type: object
+  commons.CreateRunnerImagePullSecretInput:
+    properties:
+      alias:
+        type: string
+      aws:
+        $ref: '#/definitions/commons.RunnerImagePullSecretAWS'
+      docker_credentials:
+        $ref: '#/definitions/commons.RunnerImagePullSecretDockerCredentials'
+      type:
+        enum:
+        - docker_credentials
+        - aws
+        type: string
+    required:
+    - alias
+    - type
+    type: object
+  commons.DaywiseCost:
+    properties:
+      amount:
+        type: number
+      cumulative_amount:
+        type: number
+      date:
+        type: string
+    type: object
+  commons.DaywiseRuntime:
+    properties:
+      date:
+        type: string
+      runtime_seconds:
+        type: integer
+    type: object
+  commons.GetPresignedLogUploadURLOutput:
+    properties:
+      url:
+        type: string
+    type: object
   commons.GithubRunnerApplicationDetails:
     properties:
       jit:
@@ -395,6 +562,136 @@ definitions:
         additionalProperties:
           type: string
         type: object
+    type: object
+  commons.InstanceSku:
+    properties:
+      arch:
+        enum:
+        - x64
+        - arm64
+        type: string
+      cores:
+        type: integer
+      display_name:
+        type: string
+      id:
+        type: string
+      memory:
+        type: integer
+      os:
+        items:
+          enum:
+          - ubuntu
+          - mac
+          type: string
+        type: array
+      properties:
+        $ref: '#/definitions/commons.InstanceSkuProperties'
+    type: object
+  commons.InstanceSkuProperties:
+    properties:
+      burstable_speed:
+        type: number
+      generation:
+        type: string
+      gpu:
+        type: integer
+      manufacturer:
+        enum:
+        - any
+        - amd
+        - intel
+        - arm
+        type: string
+      performance_category:
+        enum:
+        - small
+        - medium
+        - large
+        type: string
+      performance_rating:
+        type: integer
+      speed:
+        type: number
+    type: object
+  commons.InternalPostUsageInput:
+    properties:
+      pricing_id:
+        type: string
+      product_category:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+      timestamp:
+        type: string
+      transaction_id:
+        type: string
+      usage_count:
+        type: integer
+    type: object
+  commons.InternalPostUsageOutput:
+    properties:
+      ledger_id:
+        type: string
+      usage_id:
+        type: string
+    type: object
+  commons.JobRunnerInfo:
+    properties:
+      job_id:
+        type: string
+      runner_arch:
+        type: string
+      runner_host:
+        type: string
+      runner_id:
+        type: string
+      runner_name:
+        type: string
+      runner_os:
+        type: string
+      warp_added_at:
+        type: string
+      warp_removed_at:
+        type: string
+    type: object
+  commons.LastJobProcessedMeta:
+    properties:
+      vcs_base_ref:
+        type: string
+      vcs_head_ref:
+        type: string
+      vcs_org:
+        type: string
+      vcs_ref:
+        type: string
+      vcs_ref_type:
+        type: string
+      vcs_repo:
+        type: string
+    type: object
+  commons.ListRunnerImagePullSecretsOutput:
+    properties:
+      runner_image_pull_secrets:
+        items:
+          $ref: '#/definitions/commons.RunnerImagePullSecret'
+        type: array
+    type: object
+  commons.ListRunnerImageVersionsOutput:
+    properties:
+      runner_image_versions:
+        items:
+          $ref: '#/definitions/commons.RunnerImageVersion'
+        type: array
+    type: object
+  commons.ListRunnerImagesOutput:
+    properties:
+      runner_images:
+        items:
+          $ref: '#/definitions/commons.RunnerImage'
+        type: array
     type: object
   commons.ListTokensOptions:
     properties:
@@ -425,6 +722,24 @@ definitions:
       users:
         items:
           $ref: '#/definitions/V1User'
+        type: array
+    type: object
+  commons.ListVCSRunnerGroupsInput:
+    properties:
+      fetch_from_remote:
+        type: boolean
+      integration_id:
+        type: string
+      owner:
+        type: string
+    type: object
+  commons.ListVCSRunnerGroupsResponse:
+    properties:
+      last_synced_at:
+        type: string
+      runner_groups:
+        items:
+          $ref: '#/definitions/commons.RunnerGroup'
         type: array
     type: object
   commons.Organization:
@@ -480,25 +795,64 @@ definitions:
       type:
         type: string
     type: object
+  commons.PostPaymentMethodSetupInput:
+    properties:
+      customer_id:
+        type: string
+      organization_id:
+        type: string
+      payment_method_id:
+        type: string
+      setup_intent_id:
+        type: string
+    type: object
+  commons.ProviderInstanceSkuMapping:
+    properties:
+      id:
+        type: string
+      priority:
+        type: integer
+      provider:
+        type: string
+      provider_sku:
+        type: string
+      provider_sku_meta:
+        $ref: '#/definitions/commons.ProviderSkuMeta'
+      sku_id:
+        type: string
+    type: object
+  commons.ProviderSkuMeta:
+    type: object
+  commons.RateCalculationInput:
+    properties:
+      configuration:
+        $ref: '#/definitions/commons.RunnerSetConfiguration'
+      product_type:
+        enum:
+        - runner
+        - cache
+        type: string
+    type: object
+  commons.RateCalculationOutput:
+    properties:
+      currency:
+        type: string
+      rate:
+        type: number
+    type: object
   commons.Repo:
     properties:
-      AccountID:
+      account_id:
         type: string
-      CreatedAt:
+      created_at:
         type: string
-      DefaultBranch:
+      default_branch:
         type: string
-      DisplayName:
-        type: string
-      IntegrationID:
-        type: string
-      SSHURL:
-        type: string
-      UpdatedAt:
-        type: string
-      WebURL:
+      display_name:
         type: string
       id:
+        type: string
+      integration_id:
         type: string
       name:
         type: string
@@ -506,7 +860,13 @@ definitions:
         type: string
       provider:
         type: string
+      sshurl:
+        type: string
+      updated_at:
+        type: string
       vcs_id:
+        type: string
+      web_url:
         type: string
     type: object
   commons.ReqCheckoutSession:
@@ -546,60 +906,255 @@ definitions:
     properties:
       active:
         type: boolean
-      cluster_id:
-        type: string
       configuration:
-        $ref: '#/definitions/commons.RunnerConfiguration'
+        $ref: '#/definitions/commons.RunnerSetConfiguration'
       created_at:
-        type: string
-      external_reference_id:
         type: string
       id:
         type: string
       labels:
-        additionalProperties: true
-        type: object
+        items:
+          type: string
+        type: array
       name:
         type: string
       organization_id:
+        type: string
+      provider_id:
+        type: string
+      stock_runner_id:
         type: string
       updated_at:
         type: string
       vcs_integration_id:
         type: string
     type: object
-  commons.RunnerConfiguration:
+  commons.RunnerGroup:
+    properties:
+      id:
+        type: integer
+      inherited:
+        type: boolean
+      is_default:
+        type: boolean
+      name:
+        type: string
+      runners_url:
+        type: string
+      visibility:
+        type: string
+    type: object
+  commons.RunnerImage:
+    properties:
+      alias:
+        type: string
+      arch:
+        type: string
+      container_runner_image:
+        $ref: '#/definitions/commons.ContainerRunnerImage'
+      created_at:
+        type: string
+      hooks:
+        items:
+          $ref: '#/definitions/commons.RunnerImageHook'
+        type: array
+      id:
+        type: string
+      organization_id:
+        type: string
+      os:
+        type: string
+      runner_image_pull_secret_id:
+        type: string
+      settings:
+        $ref: '#/definitions/commons.RunnerImageSettings'
+      status:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      warpbuild_image:
+        $ref: '#/definitions/commons.WarpbuildImage'
+        description: |-
+          WarpbuildImage is the vm image used by warpbuild to run the jobs.
+          This will have the info for internal images managed by warpbuild when
+          type = 'warpbuild_managed'.
+
+          In case of container images, this will have the base image of the VM on
+          which the container is run.
+    type: object
+  commons.RunnerImageHook:
+    properties:
+      file:
+        description: |-
+          File is the base64 encoded file.
+          This must be a shell script which is encoded in base64.
+        type: string
+      type:
+        description: Type is the type of hook.
+        type: string
+    type: object
+  commons.RunnerImagePullSecret:
+    properties:
+      alias:
+        type: string
+      aws:
+        $ref: '#/definitions/commons.RunnerImagePullSecretAWS'
+      created_at:
+        type: string
+      docker_credentials:
+        $ref: '#/definitions/commons.RunnerImagePullSecretDockerCredentials'
+      id:
+        type: string
+      organization_id:
+        type: string
+      type:
+        enum:
+        - docker_credentials
+        - aws
+        type: string
+      updated_at:
+        type: string
+    required:
+    - alias
+    - created_at
+    - id
+    - organization_id
+    - type
+    - updated_at
+    type: object
+  commons.RunnerImagePullSecretAWS:
+    properties:
+      access_key_id:
+        type: string
+      aws_ecr_repository:
+        description: |-
+          AWSECRRepository is the short name of the ecr repository
+          For example, if the complete uri for an image is
+          <account_id>.dkr.ecr.<region>.amazonaws.com/acme/customrunners:v1.5.0
+          The AWS ECR Repo is `acme/customrunners`
+        type: string
+      region:
+        type: string
+      secret_access_key:
+        type: string
+    type: object
+  commons.RunnerImagePullSecretDockerCredentials:
+    properties:
+      host:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - host
+    - password
+    - username
+    type: object
+  commons.RunnerImageSettings:
+    properties:
+      purge_image_versions_offset:
+        description: |-
+          PurgeImageVersionsOffset is the number of versions to keep.
+          Each time a new version is created, the oldest version is purged.
+          Allowed values range [1, inf).
+
+          Default value is 2.
+        type: integer
+    type: object
+  commons.RunnerImageVersion:
     properties:
       arch:
         type: string
-      cores:
-        type: integer
-      image:
+      container_runner_image:
+        $ref: '#/definitions/commons.ContainerRunnerImageVersion'
+      created_at:
         type: string
-      memory:
+      external_id:
+        description: ExternalID is the ID of the runner image version in the external
+          system.
+        type: string
+      id:
+        type: string
+      organization_id:
+        type: string
+      os:
+        type: string
+      runner_image_id:
+        type: string
+      runner_image_pull_secret_id:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      version_time_id:
         type: integer
+    type: object
+  commons.RunnerInfo:
+    properties:
+      arch:
+        type: string
+      host:
+        type: string
+      os:
+        type: string
     type: object
   commons.RunnerInstance:
     properties:
+      allocated_at:
+        type: string
+      allocation_for:
+        type: string
+      allocation_requested_at:
+        type: string
+      allocation_requested_event_at:
+        type: string
       cluster:
         type: string
       configuration:
-        $ref: '#/definitions/commons.RunnerConfiguration'
+        $ref: '#/definitions/commons.RunnerInstanceConfiguration'
       created_at:
         type: string
       created_by:
         type: string
+      external_id:
+        type: string
+      first_polled_at:
+        type: string
+      host:
+        type: string
       id:
         type: string
+      labels:
+        items:
+          type: string
+        type: array
       last_job_processed_id:
         type: string
-      last_polled:
+      last_job_processed_meta:
+        $ref: '#/definitions/commons.LastJobProcessedMeta'
+      last_polled_at:
         type: string
       organization_id:
+        type: string
+      provider_kind:
+        type: string
+      provider_kind_id:
+        type: string
+      purged_at:
+        type: string
+      purged_reason:
         type: string
       runner_for:
         type: string
       runner_set_id:
+        type: string
+      running_started_at:
         type: string
       status:
         type: string
@@ -625,25 +1180,113 @@ definitions:
         - invalidated
         type: string
     type: object
-  commons.Runtime:
+  commons.RunnerInstanceConfiguration:
     properties:
-      duration_seconds:
+      capacity_type:
+        enum:
+        - spot
+        - ondemand
+        type: string
+      image:
+        description: Refer
+        type: string
+      provider_sku_mapping:
+        items:
+          $ref: '#/definitions/commons.ProviderInstanceSkuMapping'
+        type: array
+      sku:
+        $ref: '#/definitions/commons.InstanceSku'
+      stock_runner_set_id:
+        type: string
+      storage:
+        $ref: '#/definitions/commons.Storage'
+    type: object
+  commons.RunnerSetConfiguration:
+    properties:
+      capacity_type:
+        enum:
+        - spot
+        - ondemand
+        type: string
+      image:
+        type: string
+      sku:
+        type: string
+      storage:
+        $ref: '#/definitions/commons.Storage'
+    type: object
+  commons.RunnerSetDefaultGroup:
+    properties:
+      group_id:
         type: integer
+    type: object
+  commons.RunnersCostSummary:
+    properties:
+      arm64_billed_minutes:
+        type: integer
+      total_cost:
+        type: number
+      x64_billed_minutes:
+        type: integer
+    type: object
+  commons.RunnersUsage:
+    properties:
+      daywise:
+        items:
+          $ref: '#/definitions/commons.DaywiseRuntime'
+        type: array
+      runnerwise:
+        items:
+          $ref: '#/definitions/commons.RunnerwiseRuntime'
+        type: array
+      total_job_count:
+        type: integer
+      total_runtime_seconds:
+        type: integer
+    type: object
+  commons.RunnerwiseRuntime:
+    properties:
       runner_id:
         type: string
+      runtime_seconds:
+        type: integer
+    type: object
+  commons.SetRunnerSetDefaultGroupInput:
+    properties:
+      group_id:
+        type: integer
     type: object
   commons.SetupRunnerInput:
     properties:
       Active:
         type: boolean
       configuration:
-        $ref: '#/definitions/commons.RunnerConfiguration'
+        $ref: '#/definitions/commons.RunnerSetConfiguration'
       labels:
-        additionalProperties: true
-        type: object
+        items:
+          type: string
+        type: array
       name:
         type: string
+      stock_runner_id:
+        type: string
       vcs_integration_id:
+        type: string
+    type: object
+  commons.Storage:
+    properties:
+      iops:
+        type: integer
+      size:
+        type: integer
+      throughput:
+        type: integer
+      tier:
+        enum:
+        - low
+        - medium
+        - high
+        - extreme
         type: string
     type: object
   commons.SubscriptionDetails:
@@ -686,15 +1329,76 @@ definitions:
       date:
         type: string
     type: object
+  commons.UpdateBillingInfoInput:
+    properties:
+      email:
+        type: string
+    type: object
+  commons.UpdateContainerRunnerImageVersion:
+    properties:
+      data_dir_size:
+        type: string
+      image_digest:
+        type: string
+      image_size:
+        description: |-
+          ImageSize is the size of the image.
+          Expected format: "4G"
+        type: string
+      snapshot_id:
+        type: string
+      snapshot_size:
+        description: SnapshotSize is the size of the snapshot in human readable format.
+        type: string
+      volume_id:
+        type: string
+      volume_size_gb:
+        description: |-
+          VolumeSizeGB is the size of the volume in GB.
+          This is used when creating a snapshot out of the volume.
+
+          This is rounded up to the nearest GiB.
+        type: integer
+    type: object
+  commons.UpdateRunnerImageInput:
+    properties:
+      container_runner_image:
+        $ref: '#/definitions/commons.ContainerRunnerImageUpdate'
+      hooks:
+        items:
+          $ref: '#/definitions/commons.RunnerImageHook'
+        type: array
+      id:
+        type: string
+      runner_image_pull_secret_id:
+        type: string
+      settings:
+        $ref: '#/definitions/commons.RunnerImageSettings'
+    type: object
+  commons.UpdateRunnerImagePullSecretInput:
+    properties:
+      aws:
+        $ref: '#/definitions/commons.RunnerImagePullSecretAWS'
+      docker_credentials:
+        $ref: '#/definitions/commons.RunnerImagePullSecretDockerCredentials'
+    type: object
+  commons.UpdateRunnerImageVersionInput:
+    properties:
+      container_runner_image_version:
+        $ref: '#/definitions/commons.UpdateContainerRunnerImageVersion'
+    type: object
   commons.UpdateRunnerInput:
     properties:
       Active:
         type: boolean
       configuration:
-        $ref: '#/definitions/commons.RunnerConfiguration'
+        $ref: '#/definitions/commons.RunnerSetConfiguration'
       labels:
-        additionalProperties: true
-        type: object
+        items:
+          type: string
+        type: array
+      name:
+        type: string
     type: object
   commons.UserToken:
     properties:
@@ -730,6 +1434,59 @@ definitions:
     - id
     - target_type
     type: object
+  commons.WarpbuildImage:
+    properties:
+      cloud_init_template:
+        type: string
+      image_uri:
+        type: string
+    type: object
+  commons.Workflow:
+    properties:
+      external_id:
+        type: string
+      external_repo_entity:
+        type: string
+      external_repo_id:
+        type: string
+      id:
+        type: string
+      is_repo_public:
+        type: boolean
+      jobs_runner_info:
+        items:
+          $ref: '#/definitions/commons.JobRunnerInfo'
+        type: array
+      name:
+        type: string
+      organization_id:
+        type: string
+      provider:
+        type: string
+      provider_integration_id:
+        type: string
+      runner_info:
+        $ref: '#/definitions/commons.RunnerInfo'
+      stats:
+        $ref: '#/definitions/commons.WorkflowStats'
+      url:
+        type: string
+      warp_pr_id:
+        type: string
+      warp_pr_link:
+        type: string
+      warp_pr_runner:
+        type: string
+      warp_status:
+        type: string
+    type: object
+  commons.WorkflowStats:
+    properties:
+      run_count:
+        type: integer
+      run_duration:
+        type: integer
+    type: object
   debugger.PublishEventInput:
     properties:
       data: {}
@@ -739,6 +1496,18 @@ definitions:
         type: string
       topic:
         type: string
+    type: object
+  insights.callbackInput:
+    properties:
+      code:
+        type: string
+      installation_id:
+        type: string
+      setup_action:
+        type: string
+    required:
+    - code
+    - setup_action
     type: object
   types.GenericSuccessMessage:
     properties:
@@ -804,10 +1573,6 @@ paths:
         in: path
         name: provider
         required: true
-        type: string
-      - description: Invite code if any
-        in: query
-        name: invite_code
         type: string
       responses:
         "302":
@@ -1062,6 +1827,78 @@ paths:
       summary: Initiate Checkout for subscription with PG
       tags:
       - v1 subscriptions
+  /billing/info:
+    get:
+      consumes:
+      - application/json
+      operationId: GetBillingInfo
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.BillingInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get Billing Info
+      tags:
+      - v1 subscriptions
+    patch:
+      consumes:
+      - application/json
+      operationId: UpdateBillingInfo
+      parameters:
+      - description: billing info update input
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.UpdateBillingInfoInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.BillingInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Update Billing Info
+      tags:
+      - v1 subscriptions
   /billing/setup_intent/init:
     post:
       consumes:
@@ -1102,6 +1939,86 @@ paths:
       summary: Initiate Checkout for subscription with PG
       tags:
       - v1 subscriptions
+  /billing/setup_intent/post_processor:
+    post:
+      consumes:
+      - application/json
+      operationId: PostSetupIntent
+      parameters:
+      - description: post setup intent session input
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.PostPaymentMethodSetupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.PostPaymentMethodSetupInput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Post Checkout processing for subscription with PG
+      tags:
+      - v1 subscriptions
+  /billing/usage/internal:
+    post:
+      consumes:
+      - application/json
+      operationId: PostUsageForInternalService
+      parameters:
+      - description: post usage input
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.InternalPostUsageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.InternalPostUsageOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Post Usage for internal service
+      tags:
+      - v1 billing
   /debugger/events/publish:
     post:
       consumes:
@@ -1142,113 +2059,72 @@ paths:
       summary: Publish an event to the event bus
       tags:
       - v1 debugger
-  /invite:
-    patch:
-      description: Invite is figured out from the auth token since tokens are specific
-        to invites.
-      operationId: UpdateInvite
-      parameters:
-      - description: Update existing invite body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/UpdateInviteRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/V1Invite'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
-      security:
-      - JWTKeyAuth: []
-      summary: Updates existing invite based on the fields provided.
-      tags:
-      - v1 invite
+  /insights/integrations/github/callback:
     post:
-      description: User can manage multiple tenanats from one account, this api provides
-        user a functionality to add a new tenant/org to the user.
-      operationId: CreateInvite
+      consumes:
+      - application/json
+      description: Callback for verifying insights integration
+      operationId: GitHubCallback
       parameters:
-      - description: Create new invite body
+      - description: Callback input
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/CreateInviteRequest'
+          $ref: '#/definitions/insights.callbackInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/V1Invite'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
+            $ref: '#/definitions/AuthUserResponse'
       security:
       - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
+      summary: GitHub callback for insights
       tags:
-      - v1 invite
-  /invite/send/email:
-    post:
-      description: Sending email invite to the user.
-      operationId: SendInvite
-      parameters:
-      - description: Send invite body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/V1SendInviteRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
-      security:
-      - JWTKeyAuth: []
-      summary: Adds a new organisation for a current user
-      tags:
-      - v1 invite
-  /invites:
-    get:
-      operationId: ListOrgInvites
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/V1Invite'
-            type: array
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/WarpBuildAPIError'
-      security:
-      - JWTKeyAuth: []
-      summary: ListOrgInvites lists all the invite user has access to.
-      tags:
-      - v1 invite
-  /jobs/estimated-costs:
+      - v1 insights integrations
+  /jobs/cost-summary:
     get:
       consumes:
       - application/json
-      description: GetEstimatedCosts
-      operationId: GetEstimatedCosts
+      description: GetCostSummary
+      operationId: GetCostSummary
+      parameters:
+      - description: Date range start
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.CostSummary'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: GetCostSummary
+      tags:
+      - v1 jobs
+  /jobs/daywise-costs:
+    get:
+      consumes:
+      - application/json
+      description: GetDaywiseCosts
+      operationId: GetDaywiseCosts
       parameters:
       - description: Date range start
         in: query
@@ -1265,7 +2141,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/EstimatedCost'
+              $ref: '#/definitions/commons.DaywiseCost'
             type: array
         "400":
           description: Bad Request
@@ -1277,7 +2153,7 @@ paths:
             $ref: '#/definitions/WarpBuildAPIError'
       security:
       - JWTKeyAuth: []
-      summary: GetEstimatedCosts
+      summary: GetDaywiseCosts
       tags:
       - v1 jobs
   /organization:
@@ -1395,6 +2271,469 @@ paths:
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
       - v1 organization
+  /runner-image-pull-secrets:
+    get:
+      consumes:
+      - application/json
+      operationId: ListRunnerImagePullSecrets
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.ListRunnerImagePullSecretsOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner image pull secrets.
+      tags:
+      - v1 runner_image_pull_secrets
+    post:
+      consumes:
+      - application/json
+      operationId: CreateRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.CreateRunnerImagePullSecretInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImagePullSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Create a new runner image pull secret.
+      tags:
+      - v1 runner_image_pull_secrets
+  /runner-image-pull-secrets/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GenericSuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+    get:
+      consumes:
+      - application/json
+      operationId: GetRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImagePullSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+    put:
+      consumes:
+      - application/json
+      operationId: UpdateRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Runner Image Pull Secret
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.UpdateRunnerImagePullSecretInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImagePullSecret'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+  /runner-image-versions:
+    get:
+      consumes:
+      - application/json
+      operationId: ListRunnerImageVersions
+      parameters:
+      - description: Runner Image ID
+        in: query
+        name: runner_image_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.ListRunnerImageVersionsOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner image versions.
+      tags:
+      - v1 runner_image_versions
+  /runner-image-versions/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GenericSuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+    get:
+      consumes:
+      - application/json
+      operationId: GetRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImageVersion'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+    patch:
+      consumes:
+      - application/json
+      operationId: UpdateRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Runner Image Version
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.UpdateRunnerImageVersionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImageVersion'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+  /runner-images:
+    get:
+      consumes:
+      - application/json
+      operationId: ListRunnerImages
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.ListRunnerImagesOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner images.
+      tags:
+      - v1 runner_images
+    post:
+      consumes:
+      - application/json
+      operationId: CreateRunnerImage
+      parameters:
+      - description: Runner Image
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.CreateRunnerImageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Create a new runner image.
+      tags:
+      - v1 runner_images
+  /runner-images/{id}:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image details for the id.
+      tags:
+      - v1 runner_images
+    get:
+      consumes:
+      - application/json
+      operationId: GetRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image details for the id.
+      tags:
+      - v1 runner_images
+    put:
+      consumes:
+      - application/json
+      operationId: UpdateRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Runner Image
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.UpdateRunnerImageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerImage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image details for the id.
+      tags:
+      - v1 runner_images
+  /runner_instance/internal/{id}/last_job_processed_meta:
+    get:
+      operationId: GetRunnerLastJobProcessedMeta
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.LastJobProcessedMeta'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Get runner last used job meta
+      tags:
+      - v1 RunnerInstance
   /runners:
     get:
       operationId: ListRunners
@@ -1447,6 +2786,12 @@ paths:
       consumes:
       - application/json
       operationId: DeleteRunner
+      parameters:
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1472,6 +2817,12 @@ paths:
       consumes:
       - application/json
       operationId: GetRunner
+      parameters:
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1504,6 +2855,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/commons.UpdateRunnerInput'
+      - description: Runner ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1525,20 +2881,173 @@ paths:
         the authorization token
       tags:
       - v1 Runners
-  /runners/runtimes:
-    get:
-      consumes:
-      - application/json
-      operationId: GetRuntimes
+  /runners/cost/calculator:
+    post:
+      operationId: ComputeCustomRunnerRate
+      parameters:
+      - description: Compute custom runner rate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.RateCalculationInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/commons.Runtime'
-            type: array
+            $ref: '#/definitions/commons.RateCalculationOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get ComputeCustomRunnerRate details
+      tags:
+      - v1 runners
+  /runners/default-group:
+    get:
+      operationId: GetRunnerSetDefaultGroup
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerSetDefaultGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get default group for runner set
+      tags:
+      - v1 Runners
+    patch:
+      consumes:
+      - application/json
+      operationId: SetRunnerSetDefaultGroup
+      parameters:
+      - description: Set default group for runner set body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.SetRunnerSetDefaultGroupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerSetDefaultGroup'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Set default group for runner set
+      tags:
+      - v1 Runners
+  /runners/usage:
+    get:
+      consumes:
+      - application/json
+      operationId: GetRunnersUsage
+      parameters:
+      - description: Date range start
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: Date range end
+        in: query
+        name: end_date
+        required: true
+        type: string
+      - collectionFormat: multi
+        description: Capacity types
+        in: query
+        items:
+          enum:
+          - ondemand
+          - spot
+          type: string
+        name: capacity_types
+        type: array
+      - collectionFormat: multi
+        description: Architectures
+        in: query
+        items:
+          enum:
+          - x64
+          - arm64
+          type: string
+        name: archs
+        type: array
+      - collectionFormat: multi
+        description: Images
+        in: query
+        items:
+          enum:
+          - macos-13
+          - ubuntu-2204
+          - macos-14
+          - ubuntu-2404
+          type: string
+        name: images
+        type: array
+      - collectionFormat: multi
+        description: Cores
+        in: query
+        items:
+          enum:
+          - 2
+          - 4
+          - 6
+          - 8
+          - 16
+          - 32
+          type: integer
+        name: cores
+        type: array
+      - collectionFormat: multi
+        description: Runner types
+        in: query
+        items:
+          enum:
+          - stock
+          - custom
+          type: string
+        name: runner_types
+        type: array
+      - description: Search term
+        in: query
+        name: search_term
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnersUsage'
         "400":
           description: Bad Request
           schema:
@@ -1552,6 +3061,39 @@ paths:
       summary: Get runtimes for runners of the organisation
       tags:
       - v1 Runners
+  /runners_instance:
+    post:
+      consumes:
+      - application/json
+      description: Add a new runner instance
+      operationId: AddRunnerInstance
+      parameters:
+      - description: Add runner instance body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.AddRunnerInstanceInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.RunnerInstance'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Add a new runner instance
+      tags:
+      - v1 RunnerInstance
   /runners_instance/{id}/allocation_details:
     get:
       operationId: GetRunnerInstanceAllocationDetails
@@ -1617,6 +3159,150 @@ paths:
       summary: Get runner instance allocation details for the id
       tags:
       - v1 RunnerInstance
+  /runners_instance/{id}/presigned_log_upload_url:
+    get:
+      operationId: GetRunnerInstancePresignedLogUploadURL
+      parameters:
+      - description: runner instance id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: polling secret for validation
+        in: header
+        name: X-POLLING-SECRET
+        required: true
+        type: string
+      - description: Log file name
+        in: query
+        name: log-file-name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.GetPresignedLogUploadURLOutput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      summary: Gets a presigned url for uploading logs for a runner instance
+      tags:
+      - v1 RunnerInstance
+  /sku:
+    get:
+      operationId: ListSku
+      parameters:
+      - collectionFormat: multi
+        description: list of sku id's
+        in: query
+        items:
+          type: string
+        name: ids
+        type: array
+      - description: cores
+        in: query
+        name: cores
+        type: integer
+      - description: memory
+        in: query
+        name: memory
+        type: integer
+      - description: Architectures
+        enum:
+        - x64
+        - arm64
+        in: query
+        name: arch
+        type: string
+      - collectionFormat: multi
+        description: operating system
+        in: query
+        items:
+          enum:
+          - ubuntu
+          - mac
+          type: string
+        name: os
+        type: array
+      - description: Images
+        enum:
+        - any
+        - amd
+        - intel
+        - arm
+        in: query
+        name: manufacturer
+        type: string
+      - description: performance category
+        enum:
+        - small
+        - medium
+        - large
+        in: query
+        name: performance_category
+        type: string
+      - description: has gpu
+        in: query
+        name: has_gpu
+        type: boolean
+      - description: burstable
+        in: query
+        name: burstable
+        type: boolean
+      - description: include internal skus
+        in: query
+        name: include_internal
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/commons.InstanceSku'
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: ListAllSku lists all the runners sku for an org.
+      tags:
+      - v1 Sku
+  /sku/{id}:
+    get:
+      consumes:
+      - application/json
+      operationId: GetSku
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.InstanceSku'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get default group for runner set
+      tags:
+      - v1 Sku
   /subscription:
     delete:
       operationId: DeleteCurrentSubscription
@@ -1697,6 +3383,29 @@ paths:
       summary: S2S Webhook received from PG
       tags:
       - v1 subscriptions
+  /subscription/customer_portal_url:
+    post:
+      operationId: GetCustomerPortalUrl
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get customer portal url
+      tags:
+      - v1 subscriptions
   /subscription/stripe/payment_method/{payment_method_id}:
     delete:
       operationId: DeleteStripePaymentMethod
@@ -1754,6 +3463,37 @@ paths:
       summary: update stripe payment method to default
       tags:
       - v1 subscriptions
+  /ui/banner-messages:
+    get:
+      consumes:
+      - application/json
+      operationId: GetBannerMessages
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/commons.BannerMessage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get specific banner messages for UI/Org or all
+      tags:
+      - v1 ui
   /vcs/approve-integration:
     put:
       consumes:
@@ -1988,7 +3728,65 @@ paths:
       summary: Update an existing vcs integration
       tags:
       - v1 vcs
+  /vcs/list-runner-groups:
+    post:
+      consumes:
+      - application/json
+      operationId: ListVCSRunnerGroups
+      parameters:
+      - description: List runner groups input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/commons.ListVCSRunnerGroupsInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commons.ListVCSRunnerGroupsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs runner groups
+      tags:
+      - v1 vcs
   /vcs/repos:
+    get:
+      consumes:
+      - application/json
+      operationId: ListVCSRepos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/commons.Repo'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all vcs repos for vcs integration
+      tags:
+      - v1 vcs
     post:
       consumes:
       - application/json
@@ -2051,6 +3849,116 @@ paths:
       summary: get vcs repo based on repo internal id
       tags:
       - v1 vcs
+  /workflows:
+    get:
+      consumes:
+      - application/json
+      description: Workflows (workflows)
+      operationId: ListWorkflows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListWorkflowsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Lists all workflows (workflows) for organization according to repo
+      tags:
+      - v1 workflows
+  /workflows/pr-auth-url:
+    get:
+      consumes:
+      - application/json
+      description: Get auth url required for GH PR
+      operationId: GetPullRequestAuthURL
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Get auth url required for GH PR
+      tags:
+      - v1 workflows
+  /workflows/pull:
+    patch:
+      consumes:
+      - application/json
+      description: Workflows (workflows)
+      operationId: PullWorkflows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Pulls all workflows from the provider to the database
+      tags:
+      - v1 workflows
+  /workflows/warp:
+    patch:
+      consumes:
+      - application/json
+      description: Warps workflows
+      operationId: WarpWorkflows
+      parameters:
+      - description: Warp workflows options
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/WarpWorkflowsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WarpWorkflowsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/WarpBuildAPIError'
+      security:
+      - JWTKeyAuth: []
+      summary: Warps workflows for organization according to given internal workflow
+        ids
+      tags:
+      - v1 workflows
 schemes:
 - https
 securityDefinitions:
@@ -2061,6 +3969,10 @@ securityDefinitions:
   WarpBuildAdminSecretAuth:
     in: header
     name: X-Warp-Build-Admin-Secret
+    type: apiKey
+  WarpBuildServiceSecretAuth:
+    in: header
+    name: x-warpbuild-service-secret
     type: apiKey
 swagger: "2.0"
 x-extension-openapi:

@@ -1,10 +1,10 @@
-# \V1UiApi
+# \V1UiAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetBannerMessages**](V1UiApi.md#GetBannerMessages) | **Get** /ui/banner-messages | Get specific banner messages for UI/Org or all
+[**GetBannerMessages**](V1UiAPI.md#GetBannerMessages) | **Get** /ui/banner-messages | Get specific banner messages for UI/Org or all
 
 
 
@@ -30,13 +30,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1UiApi.GetBannerMessages(context.Background()).Execute()
+    resp, r, err := apiClient.V1UiAPI.GetBannerMessages(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1UiApi.GetBannerMessages``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1UiAPI.GetBannerMessages``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetBannerMessages`: []CommonsBannerMessage
-    fmt.Fprintf(os.Stdout, "Response from `V1UiApi.GetBannerMessages`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1UiAPI.GetBannerMessages`: %v\n", resp)
 }
 ```
 

@@ -135,9 +135,13 @@ func (o CommonsRunnerwiseRuntime) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunnerwiseRuntime) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerwiseRuntime := _CommonsRunnerwiseRuntime{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRunnerwiseRuntime); err == nil {
-		*o = CommonsRunnerwiseRuntime(varCommonsRunnerwiseRuntime)
+	err = json.Unmarshal(bytes, &varCommonsRunnerwiseRuntime)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRunnerwiseRuntime(varCommonsRunnerwiseRuntime)
 
 	additionalProperties := make(map[string]interface{})
 

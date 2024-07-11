@@ -117,9 +117,13 @@ func (o CommonsReqCheckoutSession) ToMap() (map[string]interface{}, error) {
 func (o *CommonsReqCheckoutSession) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsReqCheckoutSession := _CommonsReqCheckoutSession{}
 
-	if err = json.Unmarshal(bytes, &varCommonsReqCheckoutSession); err == nil {
-		*o = CommonsReqCheckoutSession(varCommonsReqCheckoutSession)
+	err = json.Unmarshal(bytes, &varCommonsReqCheckoutSession)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsReqCheckoutSession(varCommonsReqCheckoutSession)
 
 	additionalProperties := make(map[string]interface{})
 

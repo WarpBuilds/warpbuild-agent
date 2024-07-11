@@ -207,9 +207,13 @@ func (o CommonsPostPaymentMethodSetupInput) ToMap() (map[string]interface{}, err
 func (o *CommonsPostPaymentMethodSetupInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsPostPaymentMethodSetupInput := _CommonsPostPaymentMethodSetupInput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsPostPaymentMethodSetupInput); err == nil {
-		*o = CommonsPostPaymentMethodSetupInput(varCommonsPostPaymentMethodSetupInput)
+	err = json.Unmarshal(bytes, &varCommonsPostPaymentMethodSetupInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsPostPaymentMethodSetupInput(varCommonsPostPaymentMethodSetupInput)
 
 	additionalProperties := make(map[string]interface{})
 

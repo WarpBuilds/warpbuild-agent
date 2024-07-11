@@ -153,9 +153,13 @@ func (o InsightsCallbackInput) ToMap() (map[string]interface{}, error) {
 func (o *InsightsCallbackInput) UnmarshalJSON(bytes []byte) (err error) {
 	varInsightsCallbackInput := _InsightsCallbackInput{}
 
-	if err = json.Unmarshal(bytes, &varInsightsCallbackInput); err == nil {
-		*o = InsightsCallbackInput(varInsightsCallbackInput)
+	err = json.Unmarshal(bytes, &varInsightsCallbackInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = InsightsCallbackInput(varInsightsCallbackInput)
 
 	additionalProperties := make(map[string]interface{})
 

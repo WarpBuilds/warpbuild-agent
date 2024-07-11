@@ -207,9 +207,13 @@ func (o CommonsUpdateRunnerInput) ToMap() (map[string]interface{}, error) {
 func (o *CommonsUpdateRunnerInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsUpdateRunnerInput := _CommonsUpdateRunnerInput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsUpdateRunnerInput); err == nil {
-		*o = CommonsUpdateRunnerInput(varCommonsUpdateRunnerInput)
+	err = json.Unmarshal(bytes, &varCommonsUpdateRunnerInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsUpdateRunnerInput(varCommonsUpdateRunnerInput)
 
 	additionalProperties := make(map[string]interface{})
 

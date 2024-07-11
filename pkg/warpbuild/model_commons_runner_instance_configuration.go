@@ -21,6 +21,7 @@ var _ MappedNullable = &CommonsRunnerInstanceConfiguration{}
 // CommonsRunnerInstanceConfiguration struct for CommonsRunnerInstanceConfiguration
 type CommonsRunnerInstanceConfiguration struct {
 	CapacityType *string `json:"capacity_type,omitempty"`
+	// Refer
 	Image *string `json:"image,omitempty"`
 	ProviderSkuMapping []CommonsProviderInstanceSkuMapping `json:"provider_sku_mapping,omitempty"`
 	Sku *CommonsInstanceSku `json:"sku,omitempty"`
@@ -279,9 +280,13 @@ func (o CommonsRunnerInstanceConfiguration) ToMap() (map[string]interface{}, err
 func (o *CommonsRunnerInstanceConfiguration) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerInstanceConfiguration := _CommonsRunnerInstanceConfiguration{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRunnerInstanceConfiguration); err == nil {
-		*o = CommonsRunnerInstanceConfiguration(varCommonsRunnerInstanceConfiguration)
+	err = json.Unmarshal(bytes, &varCommonsRunnerInstanceConfiguration)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRunnerInstanceConfiguration(varCommonsRunnerInstanceConfiguration)
 
 	additionalProperties := make(map[string]interface{})
 

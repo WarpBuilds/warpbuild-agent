@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **CapacityType** | Pointer to **string** |  | [optional] 
-**Image** | Pointer to **string** |  | [optional] 
+**Image** | Pointer to **string** | Refer | [optional] 
 **ProviderSkuMapping** | Pointer to [**[]CommonsProviderInstanceSkuMapping**](CommonsProviderInstanceSkuMapping.md) |  | [optional] 
 **Sku** | Pointer to [**CommonsInstanceSku**](CommonsInstanceSku.md) |  | [optional] 
 **StockRunnerSetId** | Pointer to **string** |  | [optional] 

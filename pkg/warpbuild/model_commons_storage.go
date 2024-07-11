@@ -207,9 +207,13 @@ func (o CommonsStorage) ToMap() (map[string]interface{}, error) {
 func (o *CommonsStorage) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsStorage := _CommonsStorage{}
 
-	if err = json.Unmarshal(bytes, &varCommonsStorage); err == nil {
-		*o = CommonsStorage(varCommonsStorage)
+	err = json.Unmarshal(bytes, &varCommonsStorage)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsStorage(varCommonsStorage)
 
 	additionalProperties := make(map[string]interface{})
 

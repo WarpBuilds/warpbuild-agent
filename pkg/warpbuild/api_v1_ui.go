@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1UiApi interface {
+type V1UiAPI interface {
 
 	/*
 	GetBannerMessages Get specific banner messages for UI/Org or all
@@ -35,12 +35,12 @@ type V1UiApi interface {
 	GetBannerMessagesExecute(r ApiGetBannerMessagesRequest) ([]CommonsBannerMessage, *http.Response, error)
 }
 
-// V1UiApiService V1UiApi service
-type V1UiApiService service
+// V1UiAPIService V1UiAPI service
+type V1UiAPIService service
 
 type ApiGetBannerMessagesRequest struct {
 	ctx context.Context
-	ApiService V1UiApi
+	ApiService V1UiAPI
 }
 
 func (r ApiGetBannerMessagesRequest) Execute() ([]CommonsBannerMessage, *http.Response, error) {
@@ -53,7 +53,7 @@ GetBannerMessages Get specific banner messages for UI/Org or all
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetBannerMessagesRequest
 */
-func (a *V1UiApiService) GetBannerMessages(ctx context.Context) ApiGetBannerMessagesRequest {
+func (a *V1UiAPIService) GetBannerMessages(ctx context.Context) ApiGetBannerMessagesRequest {
 	return ApiGetBannerMessagesRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -62,7 +62,7 @@ func (a *V1UiApiService) GetBannerMessages(ctx context.Context) ApiGetBannerMess
 
 // Execute executes the request
 //  @return []CommonsBannerMessage
-func (a *V1UiApiService) GetBannerMessagesExecute(r ApiGetBannerMessagesRequest) ([]CommonsBannerMessage, *http.Response, error) {
+func (a *V1UiAPIService) GetBannerMessagesExecute(r ApiGetBannerMessagesRequest) ([]CommonsBannerMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -70,7 +70,7 @@ func (a *V1UiApiService) GetBannerMessagesExecute(r ApiGetBannerMessagesRequest)
 		localVarReturnValue  []CommonsBannerMessage
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1UiApiService.GetBannerMessages")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1UiAPIService.GetBannerMessages")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

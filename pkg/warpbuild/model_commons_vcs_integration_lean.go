@@ -252,9 +252,13 @@ func (o CommonsVCSIntegrationLean) ToMap() (map[string]interface{}, error) {
 func (o *CommonsVCSIntegrationLean) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsVCSIntegrationLean := _CommonsVCSIntegrationLean{}
 
-	if err = json.Unmarshal(bytes, &varCommonsVCSIntegrationLean); err == nil {
-		*o = CommonsVCSIntegrationLean(varCommonsVCSIntegrationLean)
+	err = json.Unmarshal(bytes, &varCommonsVCSIntegrationLean)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsVCSIntegrationLean(varCommonsVCSIntegrationLean)
 
 	additionalProperties := make(map[string]interface{})
 

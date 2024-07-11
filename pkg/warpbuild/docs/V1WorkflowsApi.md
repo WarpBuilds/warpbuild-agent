@@ -1,13 +1,13 @@
-# \V1WorkflowsApi
+# \V1WorkflowsAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetPullRequestAuthURL**](V1WorkflowsApi.md#GetPullRequestAuthURL) | **Get** /workflows/pr-auth-url | Get auth url required for GH PR
-[**ListWorkflows**](V1WorkflowsApi.md#ListWorkflows) | **Get** /workflows | Lists all workflows (workflows) for organization according to repo
-[**PullWorkflows**](V1WorkflowsApi.md#PullWorkflows) | **Patch** /workflows/pull | Pulls all workflows from the provider to the database
-[**WarpWorkflows**](V1WorkflowsApi.md#WarpWorkflows) | **Patch** /workflows/warp | Warps workflows for organization according to given internal workflow ids
+[**GetPullRequestAuthURL**](V1WorkflowsAPI.md#GetPullRequestAuthURL) | **Get** /workflows/pr-auth-url | Get auth url required for GH PR
+[**ListWorkflows**](V1WorkflowsAPI.md#ListWorkflows) | **Get** /workflows | Lists all workflows (workflows) for organization according to repo
+[**PullWorkflows**](V1WorkflowsAPI.md#PullWorkflows) | **Patch** /workflows/pull | Pulls all workflows from the provider to the database
+[**WarpWorkflows**](V1WorkflowsAPI.md#WarpWorkflows) | **Patch** /workflows/warp | Warps workflows for organization according to given internal workflow ids
 
 
 
@@ -35,13 +35,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1WorkflowsApi.GetPullRequestAuthURL(context.Background()).Execute()
+    resp, r, err := apiClient.V1WorkflowsAPI.GetPullRequestAuthURL(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsApi.GetPullRequestAuthURL``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsAPI.GetPullRequestAuthURL``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetPullRequestAuthURL`: map[string]string
-    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsApi.GetPullRequestAuthURL`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsAPI.GetPullRequestAuthURL`: %v\n", resp)
 }
 ```
 
@@ -96,13 +96,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1WorkflowsApi.ListWorkflows(context.Background()).Execute()
+    resp, r, err := apiClient.V1WorkflowsAPI.ListWorkflows(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsApi.ListWorkflows``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsAPI.ListWorkflows``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListWorkflows`: ListWorkflowsResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsApi.ListWorkflows`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsAPI.ListWorkflows`: %v\n", resp)
 }
 ```
 
@@ -157,9 +157,9 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    r, err := apiClient.V1WorkflowsApi.PullWorkflows(context.Background()).Execute()
+    r, err := apiClient.V1WorkflowsAPI.PullWorkflows(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsApi.PullWorkflows``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsAPI.PullWorkflows``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
@@ -217,13 +217,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1WorkflowsApi.WarpWorkflows(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1WorkflowsAPI.WarpWorkflows(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsApi.WarpWorkflows``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1WorkflowsAPI.WarpWorkflows``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `WarpWorkflows`: WarpWorkflowsResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsApi.WarpWorkflows`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1WorkflowsAPI.WarpWorkflows`: %v\n", resp)
 }
 ```
 

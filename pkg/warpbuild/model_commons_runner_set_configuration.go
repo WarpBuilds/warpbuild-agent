@@ -207,9 +207,13 @@ func (o CommonsRunnerSetConfiguration) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunnerSetConfiguration) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnerSetConfiguration := _CommonsRunnerSetConfiguration{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRunnerSetConfiguration); err == nil {
-		*o = CommonsRunnerSetConfiguration(varCommonsRunnerSetConfiguration)
+	err = json.Unmarshal(bytes, &varCommonsRunnerSetConfiguration)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRunnerSetConfiguration(varCommonsRunnerSetConfiguration)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -207,9 +207,13 @@ func (o CommonsRunnersUsage) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunnersUsage) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnersUsage := _CommonsRunnersUsage{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRunnersUsage); err == nil {
-		*o = CommonsRunnersUsage(varCommonsRunnersUsage)
+	err = json.Unmarshal(bytes, &varCommonsRunnersUsage)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRunnersUsage(varCommonsRunnersUsage)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -117,9 +117,13 @@ func (o SwitchOrganizationResponse) ToMap() (map[string]interface{}, error) {
 func (o *SwitchOrganizationResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varSwitchOrganizationResponse := _SwitchOrganizationResponse{}
 
-	if err = json.Unmarshal(bytes, &varSwitchOrganizationResponse); err == nil {
-		*o = SwitchOrganizationResponse(varSwitchOrganizationResponse)
+	err = json.Unmarshal(bytes, &varSwitchOrganizationResponse)
+
+	if err != nil {
+		return err
 	}
+
+	*o = SwitchOrganizationResponse(varSwitchOrganizationResponse)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -180,9 +180,13 @@ func (o MeResponse) ToMap() (map[string]interface{}, error) {
 func (o *MeResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varMeResponse := _MeResponse{}
 
-	if err = json.Unmarshal(bytes, &varMeResponse); err == nil {
-		*o = MeResponse(varMeResponse)
+	err = json.Unmarshal(bytes, &varMeResponse)
+
+	if err != nil {
+		return err
 	}
+
+	*o = MeResponse(varMeResponse)
 
 	additionalProperties := make(map[string]interface{})
 

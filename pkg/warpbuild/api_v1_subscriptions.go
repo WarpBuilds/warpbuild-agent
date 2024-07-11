@@ -21,7 +21,7 @@ import (
 )
 
 
-type V1SubscriptionsApi interface {
+type V1SubscriptionsAPI interface {
 
 	/*
 	DeleteCurrentSubscription Cancel Org current Subscription
@@ -158,12 +158,12 @@ type V1SubscriptionsApi interface {
 	UpdateBillingInfoExecute(r ApiUpdateBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error)
 }
 
-// V1SubscriptionsApiService V1SubscriptionsApi service
-type V1SubscriptionsApiService service
+// V1SubscriptionsAPIService V1SubscriptionsAPI service
+type V1SubscriptionsAPIService service
 
 type ApiDeleteCurrentSubscriptionRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 }
 
 func (r ApiDeleteCurrentSubscriptionRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -176,7 +176,7 @@ DeleteCurrentSubscription Cancel Org current Subscription
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDeleteCurrentSubscriptionRequest
 */
-func (a *V1SubscriptionsApiService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
+func (a *V1SubscriptionsAPIService) DeleteCurrentSubscription(ctx context.Context) ApiDeleteCurrentSubscriptionRequest {
 	return ApiDeleteCurrentSubscriptionRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -185,7 +185,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscription(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) DeleteCurrentSubscriptionExecute(r ApiDeleteCurrentSubscriptionRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -193,7 +193,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteCurrentSubscription")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteCurrentSubscription")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -295,7 +295,7 @@ func (a *V1SubscriptionsApiService) DeleteCurrentSubscriptionExecute(r ApiDelete
 
 type ApiDeleteStripePaymentMethodRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	paymentMethodId string
 }
 
@@ -310,7 +310,7 @@ DeleteStripePaymentMethod delete stripe setup intent payment method
  @param paymentMethodId ID for the stripe payment method
  @return ApiDeleteStripePaymentMethodRequest
 */
-func (a *V1SubscriptionsApiService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
+func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethod(ctx context.Context, paymentMethodId string) ApiDeleteStripePaymentMethodRequest {
 	return ApiDeleteStripePaymentMethodRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -320,7 +320,7 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethod(ctx context.Contex
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) DeleteStripePaymentMethodExecute(r ApiDeleteStripePaymentMethodRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -328,7 +328,7 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDelete
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.DeleteStripePaymentMethod")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.DeleteStripePaymentMethod")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -431,7 +431,7 @@ func (a *V1SubscriptionsApiService) DeleteStripePaymentMethodExecute(r ApiDelete
 
 type ApiGetBillingInfoRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 }
 
 func (r ApiGetBillingInfoRequest) Execute() (*CommonsBillingInfo, *http.Response, error) {
@@ -444,7 +444,7 @@ GetBillingInfo Get Billing Info
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetBillingInfoRequest
 */
-func (a *V1SubscriptionsApiService) GetBillingInfo(ctx context.Context) ApiGetBillingInfoRequest {
+func (a *V1SubscriptionsAPIService) GetBillingInfo(ctx context.Context) ApiGetBillingInfoRequest {
 	return ApiGetBillingInfoRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -453,7 +453,7 @@ func (a *V1SubscriptionsApiService) GetBillingInfo(ctx context.Context) ApiGetBi
 
 // Execute executes the request
 //  @return CommonsBillingInfo
-func (a *V1SubscriptionsApiService) GetBillingInfoExecute(r ApiGetBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) GetBillingInfoExecute(r ApiGetBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -461,7 +461,7 @@ func (a *V1SubscriptionsApiService) GetBillingInfoExecute(r ApiGetBillingInfoReq
 		localVarReturnValue  *CommonsBillingInfo
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetBillingInfo")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.GetBillingInfo")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -585,7 +585,7 @@ func (a *V1SubscriptionsApiService) GetBillingInfoExecute(r ApiGetBillingInfoReq
 
 type ApiGetCustomerPortalUrlRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 }
 
 func (r ApiGetCustomerPortalUrlRequest) Execute() (string, *http.Response, error) {
@@ -598,7 +598,7 @@ GetCustomerPortalUrl Get customer portal url
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetCustomerPortalUrlRequest
 */
-func (a *V1SubscriptionsApiService) GetCustomerPortalUrl(ctx context.Context) ApiGetCustomerPortalUrlRequest {
+func (a *V1SubscriptionsAPIService) GetCustomerPortalUrl(ctx context.Context) ApiGetCustomerPortalUrlRequest {
 	return ApiGetCustomerPortalUrlRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -607,7 +607,7 @@ func (a *V1SubscriptionsApiService) GetCustomerPortalUrl(ctx context.Context) Ap
 
 // Execute executes the request
 //  @return string
-func (a *V1SubscriptionsApiService) GetCustomerPortalUrlExecute(r ApiGetCustomerPortalUrlRequest) (string, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) GetCustomerPortalUrlExecute(r ApiGetCustomerPortalUrlRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -615,7 +615,7 @@ func (a *V1SubscriptionsApiService) GetCustomerPortalUrlExecute(r ApiGetCustomer
 		localVarReturnValue  string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetCustomerPortalUrl")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.GetCustomerPortalUrl")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -717,7 +717,7 @@ func (a *V1SubscriptionsApiService) GetCustomerPortalUrlExecute(r ApiGetCustomer
 
 type ApiGetSubscriptionDetailsRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 }
 
 func (r ApiGetSubscriptionDetailsRequest) Execute() (*CommonsSubscriptionDetails, *http.Response, error) {
@@ -730,7 +730,7 @@ GetSubscriptionDetails Get Current Org Subscription Details
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetSubscriptionDetailsRequest
 */
-func (a *V1SubscriptionsApiService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
+func (a *V1SubscriptionsAPIService) GetSubscriptionDetails(ctx context.Context) ApiGetSubscriptionDetailsRequest {
 	return ApiGetSubscriptionDetailsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -739,7 +739,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetails(ctx context.Context) 
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) GetSubscriptionDetailsExecute(r ApiGetSubscriptionDetailsRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -747,7 +747,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.GetSubscriptionDetails")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.GetSubscriptionDetails")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -849,7 +849,7 @@ func (a *V1SubscriptionsApiService) GetSubscriptionDetailsExecute(r ApiGetSubscr
 
 type ApiInitateSubscriptionCheckoutRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	body *CommonsReqCheckoutSession
 }
 
@@ -869,7 +869,7 @@ InitateSubscriptionCheckout Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitateSubscriptionCheckoutRequest
 */
-func (a *V1SubscriptionsApiService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
+func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckout(ctx context.Context) ApiInitateSubscriptionCheckoutRequest {
 	return ApiInitateSubscriptionCheckoutRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -878,7 +878,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckout(ctx context.Cont
 
 // Execute executes the request
 //  @return CommonsResCheckoutSession
-func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) InitateSubscriptionCheckoutExecute(r ApiInitateSubscriptionCheckoutRequest) (*CommonsResCheckoutSession, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -886,7 +886,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInit
 		localVarReturnValue  *CommonsResCheckoutSession
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitateSubscriptionCheckout")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitateSubscriptionCheckout")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1015,7 +1015,7 @@ func (a *V1SubscriptionsApiService) InitateSubscriptionCheckoutExecute(r ApiInit
 
 type ApiInitiateSetupIntentRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	body *CommonsReqSetupIntentInit
 }
 
@@ -1035,7 +1035,7 @@ InitiateSetupIntent Initiate Checkout for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiInitiateSetupIntentRequest
 */
-func (a *V1SubscriptionsApiService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
+func (a *V1SubscriptionsAPIService) InitiateSetupIntent(ctx context.Context) ApiInitiateSetupIntentRequest {
 	return ApiInitiateSetupIntentRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1044,7 +1044,7 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntent(ctx context.Context) Api
 
 // Execute executes the request
 //  @return CommonsResSetupIntentInit
-func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) InitiateSetupIntentExecute(r ApiInitiateSetupIntentRequest) (*CommonsResSetupIntentInit, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -1052,7 +1052,7 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetu
 		localVarReturnValue  *CommonsResSetupIntentInit
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.InitiateSetupIntent")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.InitiateSetupIntent")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1181,7 +1181,7 @@ func (a *V1SubscriptionsApiService) InitiateSetupIntentExecute(r ApiInitiateSetu
 
 type ApiPostSetupIntentRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	body *CommonsPostPaymentMethodSetupInput
 }
 
@@ -1201,7 +1201,7 @@ PostSetupIntent Post Checkout processing for subscription with PG
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiPostSetupIntentRequest
 */
-func (a *V1SubscriptionsApiService) PostSetupIntent(ctx context.Context) ApiPostSetupIntentRequest {
+func (a *V1SubscriptionsAPIService) PostSetupIntent(ctx context.Context) ApiPostSetupIntentRequest {
 	return ApiPostSetupIntentRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1210,7 +1210,7 @@ func (a *V1SubscriptionsApiService) PostSetupIntent(ctx context.Context) ApiPost
 
 // Execute executes the request
 //  @return CommonsPostPaymentMethodSetupInput
-func (a *V1SubscriptionsApiService) PostSetupIntentExecute(r ApiPostSetupIntentRequest) (*CommonsPostPaymentMethodSetupInput, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) PostSetupIntentExecute(r ApiPostSetupIntentRequest) (*CommonsPostPaymentMethodSetupInput, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -1218,7 +1218,7 @@ func (a *V1SubscriptionsApiService) PostSetupIntentExecute(r ApiPostSetupIntentR
 		localVarReturnValue  *CommonsPostPaymentMethodSetupInput
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.PostSetupIntent")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.PostSetupIntent")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1347,7 +1347,7 @@ func (a *V1SubscriptionsApiService) PostSetupIntentExecute(r ApiPostSetupIntentR
 
 type ApiStripePaymentMethodDefaultRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	paymentMethodId string
 }
 
@@ -1362,7 +1362,7 @@ StripePaymentMethodDefault update stripe payment method to default
  @param paymentMethodId ID for the stripe payment method
  @return ApiStripePaymentMethodDefaultRequest
 */
-func (a *V1SubscriptionsApiService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
+func (a *V1SubscriptionsAPIService) StripePaymentMethodDefault(ctx context.Context, paymentMethodId string) ApiStripePaymentMethodDefaultRequest {
 	return ApiStripePaymentMethodDefaultRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1372,7 +1372,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefault(ctx context.Conte
 
 // Execute executes the request
 //  @return CommonsSubscriptionDetails
-func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) StripePaymentMethodDefaultExecute(r ApiStripePaymentMethodDefaultRequest) (*CommonsSubscriptionDetails, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1380,7 +1380,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStrip
 		localVarReturnValue  *CommonsSubscriptionDetails
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.StripePaymentMethodDefault")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.StripePaymentMethodDefault")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1483,7 +1483,7 @@ func (a *V1SubscriptionsApiService) StripePaymentMethodDefaultExecute(r ApiStrip
 
 type ApiSubscriptionPGWebhookRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	gateway string
 }
 
@@ -1498,7 +1498,7 @@ SubscriptionPGWebhook S2S Webhook received from PG
  @param gateway gateway name, current only stripe
  @return ApiSubscriptionPGWebhookRequest
 */
-func (a *V1SubscriptionsApiService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
+func (a *V1SubscriptionsAPIService) SubscriptionPGWebhook(ctx context.Context, gateway string) ApiSubscriptionPGWebhookRequest {
 	return ApiSubscriptionPGWebhookRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1507,14 +1507,14 @@ func (a *V1SubscriptionsApiService) SubscriptionPGWebhook(ctx context.Context, g
 }
 
 // Execute executes the request
-func (a *V1SubscriptionsApiService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
+func (a *V1SubscriptionsAPIService) SubscriptionPGWebhookExecute(r ApiSubscriptionPGWebhookRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.SubscriptionPGWebhook")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.SubscriptionPGWebhook")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1630,7 +1630,7 @@ func (a *V1SubscriptionsApiService) SubscriptionPGWebhookExecute(r ApiSubscripti
 
 type ApiUpdateBillingInfoRequest struct {
 	ctx context.Context
-	ApiService V1SubscriptionsApi
+	ApiService V1SubscriptionsAPI
 	body *CommonsUpdateBillingInfoInput
 }
 
@@ -1650,7 +1650,7 @@ UpdateBillingInfo Update Billing Info
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiUpdateBillingInfoRequest
 */
-func (a *V1SubscriptionsApiService) UpdateBillingInfo(ctx context.Context) ApiUpdateBillingInfoRequest {
+func (a *V1SubscriptionsAPIService) UpdateBillingInfo(ctx context.Context) ApiUpdateBillingInfoRequest {
 	return ApiUpdateBillingInfoRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1659,7 +1659,7 @@ func (a *V1SubscriptionsApiService) UpdateBillingInfo(ctx context.Context) ApiUp
 
 // Execute executes the request
 //  @return CommonsBillingInfo
-func (a *V1SubscriptionsApiService) UpdateBillingInfoExecute(r ApiUpdateBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
+func (a *V1SubscriptionsAPIService) UpdateBillingInfoExecute(r ApiUpdateBillingInfoRequest) (*CommonsBillingInfo, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1667,7 +1667,7 @@ func (a *V1SubscriptionsApiService) UpdateBillingInfoExecute(r ApiUpdateBillingI
 		localVarReturnValue  *CommonsBillingInfo
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsApiService.UpdateBillingInfo")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SubscriptionsAPIService.UpdateBillingInfo")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

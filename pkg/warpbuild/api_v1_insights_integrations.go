@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1InsightsIntegrationsApi interface {
+type V1InsightsIntegrationsAPI interface {
 
 	/*
 	GitHubCallback GitHub callback for insights
@@ -37,12 +37,12 @@ type V1InsightsIntegrationsApi interface {
 	GitHubCallbackExecute(r ApiGitHubCallbackRequest) (*AuthUserResponse, *http.Response, error)
 }
 
-// V1InsightsIntegrationsApiService V1InsightsIntegrationsApi service
-type V1InsightsIntegrationsApiService service
+// V1InsightsIntegrationsAPIService V1InsightsIntegrationsAPI service
+type V1InsightsIntegrationsAPIService service
 
 type ApiGitHubCallbackRequest struct {
 	ctx context.Context
-	ApiService V1InsightsIntegrationsApi
+	ApiService V1InsightsIntegrationsAPI
 	body *InsightsCallbackInput
 }
 
@@ -64,7 +64,7 @@ Callback for verifying insights integration
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGitHubCallbackRequest
 */
-func (a *V1InsightsIntegrationsApiService) GitHubCallback(ctx context.Context) ApiGitHubCallbackRequest {
+func (a *V1InsightsIntegrationsAPIService) GitHubCallback(ctx context.Context) ApiGitHubCallbackRequest {
 	return ApiGitHubCallbackRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -73,7 +73,7 @@ func (a *V1InsightsIntegrationsApiService) GitHubCallback(ctx context.Context) A
 
 // Execute executes the request
 //  @return AuthUserResponse
-func (a *V1InsightsIntegrationsApiService) GitHubCallbackExecute(r ApiGitHubCallbackRequest) (*AuthUserResponse, *http.Response, error) {
+func (a *V1InsightsIntegrationsAPIService) GitHubCallbackExecute(r ApiGitHubCallbackRequest) (*AuthUserResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -81,7 +81,7 @@ func (a *V1InsightsIntegrationsApiService) GitHubCallbackExecute(r ApiGitHubCall
 		localVarReturnValue  *AuthUserResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1InsightsIntegrationsApiService.GitHubCallback")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1InsightsIntegrationsAPIService.GitHubCallback")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

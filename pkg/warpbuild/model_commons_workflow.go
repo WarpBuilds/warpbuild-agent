@@ -675,9 +675,13 @@ func (o CommonsWorkflow) ToMap() (map[string]interface{}, error) {
 func (o *CommonsWorkflow) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsWorkflow := _CommonsWorkflow{}
 
-	if err = json.Unmarshal(bytes, &varCommonsWorkflow); err == nil {
-		*o = CommonsWorkflow(varCommonsWorkflow)
+	err = json.Unmarshal(bytes, &varCommonsWorkflow)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsWorkflow(varCommonsWorkflow)
 
 	additionalProperties := make(map[string]interface{})
 

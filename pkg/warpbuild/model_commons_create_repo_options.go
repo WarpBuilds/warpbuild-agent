@@ -324,9 +324,13 @@ func (o CommonsCreateRepoOptions) ToMap() (map[string]interface{}, error) {
 func (o *CommonsCreateRepoOptions) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsCreateRepoOptions := _CommonsCreateRepoOptions{}
 
-	if err = json.Unmarshal(bytes, &varCommonsCreateRepoOptions); err == nil {
-		*o = CommonsCreateRepoOptions(varCommonsCreateRepoOptions)
+	err = json.Unmarshal(bytes, &varCommonsCreateRepoOptions)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsCreateRepoOptions(varCommonsCreateRepoOptions)
 
 	additionalProperties := make(map[string]interface{})
 

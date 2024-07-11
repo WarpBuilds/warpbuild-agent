@@ -1,18 +1,18 @@
-# \V1RunnersApi
+# \V1RunnersAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ComputeCustomRunnerRate**](V1RunnersApi.md#ComputeCustomRunnerRate) | **Post** /runners/cost/calculator | Get ComputeCustomRunnerRate details
-[**DeleteRunner**](V1RunnersApi.md#DeleteRunner) | **Delete** /runners/{id} | delete runner for the id. Current organization is figured from the authorization token
-[**GetRunner**](V1RunnersApi.md#GetRunner) | **Get** /runners/{id} | Get runner details for the id. Current organization is figured from the authorization token
-[**GetRunnerSetDefaultGroup**](V1RunnersApi.md#GetRunnerSetDefaultGroup) | **Get** /runners/default-group | Get default group for runner set
-[**GetRunnersUsage**](V1RunnersApi.md#GetRunnersUsage) | **Get** /runners/usage | Get runtimes for runners of the organisation
-[**ListRunners**](V1RunnersApi.md#ListRunners) | **Get** /runners | ListRunners lists all the runners for an org.
-[**SetRunnerSetDefaultGroup**](V1RunnersApi.md#SetRunnerSetDefaultGroup) | **Patch** /runners/default-group | Set default group for runner set
-[**SetupRunner**](V1RunnersApi.md#SetupRunner) | **Post** /runners | Adds a new runner for a current organization
-[**UpdateRunner**](V1RunnersApi.md#UpdateRunner) | **Patch** /runners/{id} | Get runner details for the id. Current organization is figured from the authorization token
+[**ComputeCustomRunnerRate**](V1RunnersAPI.md#ComputeCustomRunnerRate) | **Post** /runners/cost/calculator | Get ComputeCustomRunnerRate details
+[**DeleteRunner**](V1RunnersAPI.md#DeleteRunner) | **Delete** /runners/{id} | delete runner for the id. Current organization is figured from the authorization token
+[**GetRunner**](V1RunnersAPI.md#GetRunner) | **Get** /runners/{id} | Get runner details for the id. Current organization is figured from the authorization token
+[**GetRunnerSetDefaultGroup**](V1RunnersAPI.md#GetRunnerSetDefaultGroup) | **Get** /runners/default-group | Get default group for runner set
+[**GetRunnersUsage**](V1RunnersAPI.md#GetRunnersUsage) | **Get** /runners/usage | Get runtimes for runners of the organisation
+[**ListRunners**](V1RunnersAPI.md#ListRunners) | **Get** /runners | ListRunners lists all the runners for an org.
+[**SetRunnerSetDefaultGroup**](V1RunnersAPI.md#SetRunnerSetDefaultGroup) | **Patch** /runners/default-group | Set default group for runner set
+[**SetupRunner**](V1RunnersAPI.md#SetupRunner) | **Post** /runners | Adds a new runner for a current organization
+[**UpdateRunner**](V1RunnersAPI.md#UpdateRunner) | **Patch** /runners/{id} | Get runner details for the id. Current organization is figured from the authorization token
 
 
 
@@ -39,13 +39,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.ComputeCustomRunnerRate(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.ComputeCustomRunnerRate(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.ComputeCustomRunnerRate``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.ComputeCustomRunnerRate``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ComputeCustomRunnerRate`: CommonsRateCalculationOutput
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.ComputeCustomRunnerRate`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.ComputeCustomRunnerRate`: %v\n", resp)
 }
 ```
 
@@ -103,13 +103,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.DeleteRunner(context.Background(), id).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.DeleteRunner(context.Background(), id).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.DeleteRunner``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.DeleteRunner``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `DeleteRunner`: CommonsRunner
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.DeleteRunner`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.DeleteRunner`: %v\n", resp)
 }
 ```
 
@@ -171,13 +171,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.GetRunner(context.Background(), id).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.GetRunner(context.Background(), id).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.GetRunner``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.GetRunner``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetRunner`: CommonsRunner
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.GetRunner`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.GetRunner`: %v\n", resp)
 }
 ```
 
@@ -238,13 +238,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.GetRunnerSetDefaultGroup(context.Background()).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.GetRunnerSetDefaultGroup(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.GetRunnerSetDefaultGroup``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.GetRunnerSetDefaultGroup``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetRunnerSetDefaultGroup`: CommonsRunnerSetDefaultGroup
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.GetRunnerSetDefaultGroup`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.GetRunnerSetDefaultGroup`: %v\n", resp)
 }
 ```
 
@@ -305,13 +305,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.GetRunnersUsage(context.Background()).StartDate(startDate).EndDate(endDate).CapacityTypes(capacityTypes).Archs(archs).Images(images).Cores(cores).RunnerTypes(runnerTypes).SearchTerm(searchTerm).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.GetRunnersUsage(context.Background()).StartDate(startDate).EndDate(endDate).CapacityTypes(capacityTypes).Archs(archs).Images(images).Cores(cores).RunnerTypes(runnerTypes).SearchTerm(searchTerm).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.GetRunnersUsage``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.GetRunnersUsage``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetRunnersUsage`: CommonsRunnersUsage
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.GetRunnersUsage`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.GetRunnersUsage`: %v\n", resp)
 }
 ```
 
@@ -375,13 +375,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.ListRunners(context.Background()).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.ListRunners(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.ListRunners``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.ListRunners``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListRunners`: []CommonsRunner
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.ListRunners`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.ListRunners`: %v\n", resp)
 }
 ```
 
@@ -435,13 +435,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.SetRunnerSetDefaultGroup(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.SetRunnerSetDefaultGroup(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.SetRunnerSetDefaultGroup``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.SetRunnerSetDefaultGroup``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `SetRunnerSetDefaultGroup`: CommonsRunnerSetDefaultGroup
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.SetRunnerSetDefaultGroup`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.SetRunnerSetDefaultGroup`: %v\n", resp)
 }
 ```
 
@@ -501,13 +501,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.SetupRunner(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.SetupRunner(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.SetupRunner``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.SetupRunner``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `SetupRunner`: CommonsRunner
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.SetupRunner`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.SetupRunner`: %v\n", resp)
 }
 ```
 
@@ -566,13 +566,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1RunnersApi.UpdateRunner(context.Background(), id).Body(body).Execute()
+    resp, r, err := apiClient.V1RunnersAPI.UpdateRunner(context.Background(), id).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersApi.UpdateRunner``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1RunnersAPI.UpdateRunner``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `UpdateRunner`: CommonsRunner
-    fmt.Fprintf(os.Stdout, "Response from `V1RunnersApi.UpdateRunner`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1RunnersAPI.UpdateRunner`: %v\n", resp)
 }
 ```
 

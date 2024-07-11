@@ -207,9 +207,13 @@ func (o CommonsGithubRunnerApplicationDetails) ToMap() (map[string]interface{}, 
 func (o *CommonsGithubRunnerApplicationDetails) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsGithubRunnerApplicationDetails := _CommonsGithubRunnerApplicationDetails{}
 
-	if err = json.Unmarshal(bytes, &varCommonsGithubRunnerApplicationDetails); err == nil {
-		*o = CommonsGithubRunnerApplicationDetails(varCommonsGithubRunnerApplicationDetails)
+	err = json.Unmarshal(bytes, &varCommonsGithubRunnerApplicationDetails)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsGithubRunnerApplicationDetails(varCommonsGithubRunnerApplicationDetails)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -315,9 +315,13 @@ func (o CommonsInstanceSku) ToMap() (map[string]interface{}, error) {
 func (o *CommonsInstanceSku) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsInstanceSku := _CommonsInstanceSku{}
 
-	if err = json.Unmarshal(bytes, &varCommonsInstanceSku); err == nil {
-		*o = CommonsInstanceSku(varCommonsInstanceSku)
+	err = json.Unmarshal(bytes, &varCommonsInstanceSku)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsInstanceSku(varCommonsInstanceSku)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -351,9 +351,13 @@ func (o CommonsJobRunnerInfo) ToMap() (map[string]interface{}, error) {
 func (o *CommonsJobRunnerInfo) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsJobRunnerInfo := _CommonsJobRunnerInfo{}
 
-	if err = json.Unmarshal(bytes, &varCommonsJobRunnerInfo); err == nil {
-		*o = CommonsJobRunnerInfo(varCommonsJobRunnerInfo)
+	err = json.Unmarshal(bytes, &varCommonsJobRunnerInfo)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsJobRunnerInfo(varCommonsJobRunnerInfo)
 
 	additionalProperties := make(map[string]interface{})
 

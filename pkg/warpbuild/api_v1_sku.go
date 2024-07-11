@@ -21,7 +21,7 @@ import (
 )
 
 
-type V1SkuApi interface {
+type V1SkuAPI interface {
 
 	/*
 	GetSku Get default group for runner set
@@ -48,12 +48,12 @@ type V1SkuApi interface {
 	ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstanceSku, *http.Response, error)
 }
 
-// V1SkuApiService V1SkuApi service
-type V1SkuApiService service
+// V1SkuAPIService V1SkuAPI service
+type V1SkuAPIService service
 
 type ApiGetSkuRequest struct {
 	ctx context.Context
-	ApiService V1SkuApi
+	ApiService V1SkuAPI
 }
 
 func (r ApiGetSkuRequest) Execute() (*CommonsInstanceSku, *http.Response, error) {
@@ -66,7 +66,7 @@ GetSku Get default group for runner set
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetSkuRequest
 */
-func (a *V1SkuApiService) GetSku(ctx context.Context) ApiGetSkuRequest {
+func (a *V1SkuAPIService) GetSku(ctx context.Context) ApiGetSkuRequest {
 	return ApiGetSkuRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -75,7 +75,7 @@ func (a *V1SkuApiService) GetSku(ctx context.Context) ApiGetSkuRequest {
 
 // Execute executes the request
 //  @return CommonsInstanceSku
-func (a *V1SkuApiService) GetSkuExecute(r ApiGetSkuRequest) (*CommonsInstanceSku, *http.Response, error) {
+func (a *V1SkuAPIService) GetSkuExecute(r ApiGetSkuRequest) (*CommonsInstanceSku, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -83,7 +83,7 @@ func (a *V1SkuApiService) GetSkuExecute(r ApiGetSkuRequest) (*CommonsInstanceSku
 		localVarReturnValue  *CommonsInstanceSku
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SkuApiService.GetSku")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SkuAPIService.GetSku")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -185,7 +185,7 @@ func (a *V1SkuApiService) GetSkuExecute(r ApiGetSkuRequest) (*CommonsInstanceSku
 
 type ApiListSkuRequest struct {
 	ctx context.Context
-	ApiService V1SkuApi
+	ApiService V1SkuAPI
 	ids *[]string
 	cores *int32
 	memory *int32
@@ -268,7 +268,7 @@ ListSku ListAllSku lists all the runners sku for an org.
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListSkuRequest
 */
-func (a *V1SkuApiService) ListSku(ctx context.Context) ApiListSkuRequest {
+func (a *V1SkuAPIService) ListSku(ctx context.Context) ApiListSkuRequest {
 	return ApiListSkuRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -277,7 +277,7 @@ func (a *V1SkuApiService) ListSku(ctx context.Context) ApiListSkuRequest {
 
 // Execute executes the request
 //  @return []CommonsInstanceSku
-func (a *V1SkuApiService) ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstanceSku, *http.Response, error) {
+func (a *V1SkuAPIService) ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstanceSku, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -285,7 +285,7 @@ func (a *V1SkuApiService) ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstance
 		localVarReturnValue  []CommonsInstanceSku
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SkuApiService.ListSku")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1SkuAPIService.ListSku")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -301,7 +301,7 @@ func (a *V1SkuApiService) ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstance
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "ids", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "ids", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "ids", t, "multi")
@@ -321,7 +321,7 @@ func (a *V1SkuApiService) ListSkuExecute(r ApiListSkuRequest) ([]CommonsInstance
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "os", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "os", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "os", t, "multi")
