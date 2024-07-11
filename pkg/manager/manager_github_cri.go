@@ -63,7 +63,16 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		m.ContainerOptions.Image, m.ContainerOptions.Cmd,
 	)
 	cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
+	for _, env := range m.ContainerOptions.Envs {
+		cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
+	for _, volume := range m.ContainerOptions.Volumes {
+		cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,destination=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
+	}
 	cmd.Args = append(cmd.Args, "--jitconfig", opts.JitToken)
+
+	// add jit token to the environment variables
+	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
 
 	cmd.Dir = m.RunnerDir
 
