@@ -73,7 +73,7 @@ type Provider string
 const (
 	ProviderGithub Provider = "github"
 	// ProviderGithubCRI is the provider for the github custom runner image.
-	ProviderGithubCRI Provider = "github-cri"
+	ProviderGithubCRI Provider = "github_cri"
 )
 
 func NewApp(ctx context.Context, opts *ApplicationOptions) error {
