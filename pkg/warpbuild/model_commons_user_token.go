@@ -279,13 +279,9 @@ func (o CommonsUserToken) ToMap() (map[string]interface{}, error) {
 func (o *CommonsUserToken) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsUserToken := _CommonsUserToken{}
 
-	err = json.Unmarshal(bytes, &varCommonsUserToken)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsUserToken); err == nil {
+		*o = CommonsUserToken(varCommonsUserToken)
 	}
-
-	*o = CommonsUserToken(varCommonsUserToken)
 
 	additionalProperties := make(map[string]interface{})
 

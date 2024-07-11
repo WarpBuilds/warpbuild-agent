@@ -243,13 +243,9 @@ func (o WarpBuildAPIError) ToMap() (map[string]interface{}, error) {
 func (o *WarpBuildAPIError) UnmarshalJSON(bytes []byte) (err error) {
 	varWarpBuildAPIError := _WarpBuildAPIError{}
 
-	err = json.Unmarshal(bytes, &varWarpBuildAPIError)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varWarpBuildAPIError); err == nil {
+		*o = WarpBuildAPIError(varWarpBuildAPIError)
 	}
-
-	*o = WarpBuildAPIError(varWarpBuildAPIError)
 
 	additionalProperties := make(map[string]interface{})
 

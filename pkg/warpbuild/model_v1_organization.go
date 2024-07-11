@@ -180,13 +180,9 @@ func (o V1Organization) ToMap() (map[string]interface{}, error) {
 func (o *V1Organization) UnmarshalJSON(bytes []byte) (err error) {
 	varV1Organization := _V1Organization{}
 
-	err = json.Unmarshal(bytes, &varV1Organization)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varV1Organization); err == nil {
+		*o = V1Organization(varV1Organization)
 	}
-
-	*o = V1Organization(varV1Organization)
 
 	additionalProperties := make(map[string]interface{})
 

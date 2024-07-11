@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Extras** | Pointer to **map[string]string** |  | [optional] 
 **Organization** | [**V1Organization**](V1Organization.md) |  | 
 **User** | [**V1User**](V1User.md) |  | 
 **VcsIntegration** | [**CommonsVCSIntegrationLean**](CommonsVCSIntegrationLean.md) |  | 
@@ -26,6 +27,31 @@ will change when the set of required properties is changed
 NewMeResponseWithDefaults instantiates a new MeResponse object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetExtras
+
+`func (o *MeResponse) GetExtras() map[string]string`
+
+GetExtras returns the Extras field if non-nil, zero value otherwise.
+
+### GetExtrasOk
+
+`func (o *MeResponse) GetExtrasOk() (*map[string]string, bool)`
+
+GetExtrasOk returns a tuple with the Extras field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExtras
+
+`func (o *MeResponse) SetExtras(v map[string]string)`
+
+SetExtras sets Extras field to given value.
+
+### HasExtras
+
+`func (o *MeResponse) HasExtras() bool`
+
+HasExtras returns a boolean if a field has been set.
 
 ### GetOrganization
 

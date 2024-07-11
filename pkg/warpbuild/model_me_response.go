@@ -20,6 +20,7 @@ var _ MappedNullable = &MeResponse{}
 
 // MeResponse struct for MeResponse
 type MeResponse struct {
+	Extras *map[string]string `json:"extras,omitempty"`
 	Organization V1Organization `json:"organization"`
 	User V1User `json:"user"`
 	VcsIntegration CommonsVCSIntegrationLean `json:"vcs_integration"`
@@ -46,6 +47,38 @@ func NewMeResponse(organization V1Organization, user V1User, vcsIntegration Comm
 func NewMeResponseWithDefaults() *MeResponse {
 	this := MeResponse{}
 	return &this
+}
+
+// GetExtras returns the Extras field value if set, zero value otherwise.
+func (o *MeResponse) GetExtras() map[string]string {
+	if o == nil || IsNil(o.Extras) {
+		var ret map[string]string
+		return ret
+	}
+	return *o.Extras
+}
+
+// GetExtrasOk returns a tuple with the Extras field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *MeResponse) GetExtrasOk() (*map[string]string, bool) {
+	if o == nil || IsNil(o.Extras) {
+		return nil, false
+	}
+	return o.Extras, true
+}
+
+// HasExtras returns a boolean if a field has been set.
+func (o *MeResponse) HasExtras() bool {
+	if o != nil && !IsNil(o.Extras) {
+		return true
+	}
+
+	return false
+}
+
+// SetExtras gets a reference to the given map[string]string and assigns it to the Extras field.
+func (o *MeResponse) SetExtras(v map[string]string) {
+	o.Extras = &v
 }
 
 // GetOrganization returns the Organization field value
@@ -130,6 +163,9 @@ func (o MeResponse) MarshalJSON() ([]byte, error) {
 
 func (o MeResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.Extras) {
+		toSerialize["extras"] = o.Extras
+	}
 	toSerialize["organization"] = o.Organization
 	toSerialize["user"] = o.User
 	toSerialize["vcs_integration"] = o.VcsIntegration
@@ -144,17 +180,14 @@ func (o MeResponse) ToMap() (map[string]interface{}, error) {
 func (o *MeResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varMeResponse := _MeResponse{}
 
-	err = json.Unmarshal(bytes, &varMeResponse)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varMeResponse); err == nil {
+		*o = MeResponse(varMeResponse)
 	}
-
-	*o = MeResponse(varMeResponse)
 
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
+		delete(additionalProperties, "extras")
 		delete(additionalProperties, "organization")
 		delete(additionalProperties, "user")
 		delete(additionalProperties, "vcs_integration")

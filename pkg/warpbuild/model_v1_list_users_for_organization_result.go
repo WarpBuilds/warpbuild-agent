@@ -279,13 +279,9 @@ func (o V1ListUsersForOrganizationResult) ToMap() (map[string]interface{}, error
 func (o *V1ListUsersForOrganizationResult) UnmarshalJSON(bytes []byte) (err error) {
 	varV1ListUsersForOrganizationResult := _V1ListUsersForOrganizationResult{}
 
-	err = json.Unmarshal(bytes, &varV1ListUsersForOrganizationResult)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varV1ListUsersForOrganizationResult); err == nil {
+		*o = V1ListUsersForOrganizationResult(varV1ListUsersForOrganizationResult)
 	}
-
-	*o = V1ListUsersForOrganizationResult(varV1ListUsersForOrganizationResult)
 
 	additionalProperties := make(map[string]interface{})
 

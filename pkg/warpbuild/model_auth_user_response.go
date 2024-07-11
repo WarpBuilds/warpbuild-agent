@@ -21,9 +21,9 @@ var _ MappedNullable = &AuthUserResponse{}
 // AuthUserResponse struct for AuthUserResponse
 type AuthUserResponse struct {
 	AccessToken string `json:"access_token"`
+	IsDifferentOrg bool `json:"is_different_org"`
 	Organization V1Organization `json:"organization"`
 	RefreshToken string `json:"refresh_token"`
-	ShouldShowVcsIntegration bool `json:"should_show_vcs_integration"`
 	User V1User `json:"user"`
 	AdditionalProperties map[string]interface{}
 }
@@ -34,12 +34,12 @@ type _AuthUserResponse AuthUserResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAuthUserResponse(accessToken string, organization V1Organization, refreshToken string, shouldShowVcsIntegration bool, user V1User) *AuthUserResponse {
+func NewAuthUserResponse(accessToken string, isDifferentOrg bool, organization V1Organization, refreshToken string, user V1User) *AuthUserResponse {
 	this := AuthUserResponse{}
 	this.AccessToken = accessToken
+	this.IsDifferentOrg = isDifferentOrg
 	this.Organization = organization
 	this.RefreshToken = refreshToken
-	this.ShouldShowVcsIntegration = shouldShowVcsIntegration
 	this.User = user
 	return &this
 }
@@ -74,6 +74,30 @@ func (o *AuthUserResponse) GetAccessTokenOk() (*string, bool) {
 // SetAccessToken sets field value
 func (o *AuthUserResponse) SetAccessToken(v string) {
 	o.AccessToken = v
+}
+
+// GetIsDifferentOrg returns the IsDifferentOrg field value
+func (o *AuthUserResponse) GetIsDifferentOrg() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.IsDifferentOrg
+}
+
+// GetIsDifferentOrgOk returns a tuple with the IsDifferentOrg field value
+// and a boolean to check if the value has been set.
+func (o *AuthUserResponse) GetIsDifferentOrgOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.IsDifferentOrg, true
+}
+
+// SetIsDifferentOrg sets field value
+func (o *AuthUserResponse) SetIsDifferentOrg(v bool) {
+	o.IsDifferentOrg = v
 }
 
 // GetOrganization returns the Organization field value
@@ -124,30 +148,6 @@ func (o *AuthUserResponse) SetRefreshToken(v string) {
 	o.RefreshToken = v
 }
 
-// GetShouldShowVcsIntegration returns the ShouldShowVcsIntegration field value
-func (o *AuthUserResponse) GetShouldShowVcsIntegration() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.ShouldShowVcsIntegration
-}
-
-// GetShouldShowVcsIntegrationOk returns a tuple with the ShouldShowVcsIntegration field value
-// and a boolean to check if the value has been set.
-func (o *AuthUserResponse) GetShouldShowVcsIntegrationOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.ShouldShowVcsIntegration, true
-}
-
-// SetShouldShowVcsIntegration sets field value
-func (o *AuthUserResponse) SetShouldShowVcsIntegration(v bool) {
-	o.ShouldShowVcsIntegration = v
-}
-
 // GetUser returns the User field value
 func (o *AuthUserResponse) GetUser() V1User {
 	if o == nil {
@@ -183,9 +183,9 @@ func (o AuthUserResponse) MarshalJSON() ([]byte, error) {
 func (o AuthUserResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["access_token"] = o.AccessToken
+	toSerialize["is_different_org"] = o.IsDifferentOrg
 	toSerialize["organization"] = o.Organization
 	toSerialize["refresh_token"] = o.RefreshToken
-	toSerialize["should_show_vcs_integration"] = o.ShouldShowVcsIntegration
 	toSerialize["user"] = o.User
 
 	for key, value := range o.AdditionalProperties {
@@ -198,21 +198,17 @@ func (o AuthUserResponse) ToMap() (map[string]interface{}, error) {
 func (o *AuthUserResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varAuthUserResponse := _AuthUserResponse{}
 
-	err = json.Unmarshal(bytes, &varAuthUserResponse)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varAuthUserResponse); err == nil {
+		*o = AuthUserResponse(varAuthUserResponse)
 	}
-
-	*o = AuthUserResponse(varAuthUserResponse)
 
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
 		delete(additionalProperties, "access_token")
+		delete(additionalProperties, "is_different_org")
 		delete(additionalProperties, "organization")
 		delete(additionalProperties, "refresh_token")
-		delete(additionalProperties, "should_show_vcs_integration")
 		delete(additionalProperties, "user")
 		o.AdditionalProperties = additionalProperties
 	}

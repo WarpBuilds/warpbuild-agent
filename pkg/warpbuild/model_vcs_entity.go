@@ -451,13 +451,9 @@ func (o VCSEntity) ToMap() (map[string]interface{}, error) {
 func (o *VCSEntity) UnmarshalJSON(bytes []byte) (err error) {
 	varVCSEntity := _VCSEntity{}
 
-	err = json.Unmarshal(bytes, &varVCSEntity)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varVCSEntity); err == nil {
+		*o = VCSEntity(varVCSEntity)
 	}
-
-	*o = VCSEntity(varVCSEntity)
 
 	additionalProperties := make(map[string]interface{})
 

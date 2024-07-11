@@ -5,8 +5,9 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Active** | Pointer to **bool** |  | [optional] 
-**Configuration** | Pointer to [**CommonsRunnerConfiguration**](CommonsRunnerConfiguration.md) |  | [optional] 
-**Labels** | Pointer to **map[string]interface{}** |  | [optional] 
+**Configuration** | Pointer to [**CommonsRunnerSetConfiguration**](CommonsRunnerSetConfiguration.md) |  | [optional] 
+**Labels** | Pointer to **[]string** |  | [optional] 
+**Name** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -54,20 +55,20 @@ HasActive returns a boolean if a field has been set.
 
 ### GetConfiguration
 
-`func (o *CommonsUpdateRunnerInput) GetConfiguration() CommonsRunnerConfiguration`
+`func (o *CommonsUpdateRunnerInput) GetConfiguration() CommonsRunnerSetConfiguration`
 
 GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
 
 ### GetConfigurationOk
 
-`func (o *CommonsUpdateRunnerInput) GetConfigurationOk() (*CommonsRunnerConfiguration, bool)`
+`func (o *CommonsUpdateRunnerInput) GetConfigurationOk() (*CommonsRunnerSetConfiguration, bool)`
 
 GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetConfiguration
 
-`func (o *CommonsUpdateRunnerInput) SetConfiguration(v CommonsRunnerConfiguration)`
+`func (o *CommonsUpdateRunnerInput) SetConfiguration(v CommonsRunnerSetConfiguration)`
 
 SetConfiguration sets Configuration field to given value.
 
@@ -79,20 +80,20 @@ HasConfiguration returns a boolean if a field has been set.
 
 ### GetLabels
 
-`func (o *CommonsUpdateRunnerInput) GetLabels() map[string]interface{}`
+`func (o *CommonsUpdateRunnerInput) GetLabels() []string`
 
 GetLabels returns the Labels field if non-nil, zero value otherwise.
 
 ### GetLabelsOk
 
-`func (o *CommonsUpdateRunnerInput) GetLabelsOk() (*map[string]interface{}, bool)`
+`func (o *CommonsUpdateRunnerInput) GetLabelsOk() (*[]string, bool)`
 
 GetLabelsOk returns a tuple with the Labels field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLabels
 
-`func (o *CommonsUpdateRunnerInput) SetLabels(v map[string]interface{})`
+`func (o *CommonsUpdateRunnerInput) SetLabels(v []string)`
 
 SetLabels sets Labels field to given value.
 
@@ -101,6 +102,31 @@ SetLabels sets Labels field to given value.
 `func (o *CommonsUpdateRunnerInput) HasLabels() bool`
 
 HasLabels returns a boolean if a field has been set.
+
+### GetName
+
+`func (o *CommonsUpdateRunnerInput) GetName() string`
+
+GetName returns the Name field if non-nil, zero value otherwise.
+
+### GetNameOk
+
+`func (o *CommonsUpdateRunnerInput) GetNameOk() (*string, bool)`
+
+GetNameOk returns a tuple with the Name field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetName
+
+`func (o *CommonsUpdateRunnerInput) SetName(v string)`
+
+SetName sets Name field to given value.
+
+### HasName
+
+`func (o *CommonsUpdateRunnerInput) HasName() bool`
+
+HasName returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

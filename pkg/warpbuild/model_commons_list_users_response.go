@@ -279,13 +279,9 @@ func (o CommonsListUsersResponse) ToMap() (map[string]interface{}, error) {
 func (o *CommonsListUsersResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsListUsersResponse := _CommonsListUsersResponse{}
 
-	err = json.Unmarshal(bytes, &varCommonsListUsersResponse)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsListUsersResponse); err == nil {
+		*o = CommonsListUsersResponse(varCommonsListUsersResponse)
 	}
-
-	*o = CommonsListUsersResponse(varCommonsListUsersResponse)
 
 	additionalProperties := make(map[string]interface{})
 

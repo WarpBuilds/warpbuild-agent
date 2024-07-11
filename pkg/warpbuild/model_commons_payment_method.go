@@ -459,13 +459,9 @@ func (o CommonsPaymentMethod) ToMap() (map[string]interface{}, error) {
 func (o *CommonsPaymentMethod) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsPaymentMethod := _CommonsPaymentMethod{}
 
-	err = json.Unmarshal(bytes, &varCommonsPaymentMethod)
-
-	if err != nil {
-		return err
+	if err = json.Unmarshal(bytes, &varCommonsPaymentMethod); err == nil {
+		*o = CommonsPaymentMethod(varCommonsPaymentMethod)
 	}
-
-	*o = CommonsPaymentMethod(varCommonsPaymentMethod)
 
 	additionalProperties := make(map[string]interface{})
 

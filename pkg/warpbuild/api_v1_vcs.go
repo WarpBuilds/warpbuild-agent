@@ -21,7 +21,7 @@ import (
 )
 
 
-type V1VcsAPI interface {
+type V1VcsApi interface {
 
 	/*
 	ApproveVCSIntegration This handles the callback for approving an installation
@@ -122,6 +122,30 @@ For the most top level entity there is no parent_id.
 	ListVCSIntegrationExecute(r ApiListVCSIntegrationRequest) ([]VCSIntegration, *http.Response, error)
 
 	/*
+	ListVCSRepos Lists all vcs repos for vcs integration
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListVCSReposRequest
+	*/
+	ListVCSRepos(ctx context.Context) ApiListVCSReposRequest
+
+	// ListVCSReposExecute executes the request
+	//  @return []CommonsRepo
+	ListVCSReposExecute(r ApiListVCSReposRequest) ([]CommonsRepo, *http.Response, error)
+
+	/*
+	ListVCSRunnerGroups Lists all vcs runner groups
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListVCSRunnerGroupsRequest
+	*/
+	ListVCSRunnerGroups(ctx context.Context) ApiListVCSRunnerGroupsRequest
+
+	// ListVCSRunnerGroupsExecute executes the request
+	//  @return CommonsListVCSRunnerGroupsResponse
+	ListVCSRunnerGroupsExecute(r ApiListVCSRunnerGroupsRequest) (*CommonsListVCSRunnerGroupsResponse, *http.Response, error)
+
+	/*
 	UpdateVCSIntegration Update an existing vcs integration
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -135,12 +159,12 @@ For the most top level entity there is no parent_id.
 	UpdateVCSIntegrationExecute(r ApiUpdateVCSIntegrationRequest) (*UpdateVCSIntegrationResponse, *http.Response, error)
 }
 
-// V1VcsAPIService V1VcsAPI service
-type V1VcsAPIService service
+// V1VcsApiService V1VcsApi service
+type V1VcsApiService service
 
 type ApiApproveVCSIntegrationRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	body *ApproveVCSIntegrationRequest
 }
 
@@ -160,7 +184,7 @@ ApproveVCSIntegration This handles the callback for approving an installation
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiApproveVCSIntegrationRequest
 */
-func (a *V1VcsAPIService) ApproveVCSIntegration(ctx context.Context) ApiApproveVCSIntegrationRequest {
+func (a *V1VcsApiService) ApproveVCSIntegration(ctx context.Context) ApiApproveVCSIntegrationRequest {
 	return ApiApproveVCSIntegrationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -169,7 +193,7 @@ func (a *V1VcsAPIService) ApproveVCSIntegration(ctx context.Context) ApiApproveV
 
 // Execute executes the request
 //  @return AuthUserResponse
-func (a *V1VcsAPIService) ApproveVCSIntegrationExecute(r ApiApproveVCSIntegrationRequest) (*AuthUserResponse, *http.Response, error) {
+func (a *V1VcsApiService) ApproveVCSIntegrationExecute(r ApiApproveVCSIntegrationRequest) (*AuthUserResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
@@ -177,7 +201,7 @@ func (a *V1VcsAPIService) ApproveVCSIntegrationExecute(r ApiApproveVCSIntegratio
 		localVarReturnValue  *AuthUserResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.ApproveVCSIntegration")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.ApproveVCSIntegration")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -270,7 +294,7 @@ func (a *V1VcsAPIService) ApproveVCSIntegrationExecute(r ApiApproveVCSIntegratio
 
 type ApiCreateVCSGitRepoRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	body *CommonsCreateRepoOptions
 }
 
@@ -290,7 +314,7 @@ CreateVCSGitRepo create vcs repo based on repo internal id
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiCreateVCSGitRepoRequest
 */
-func (a *V1VcsAPIService) CreateVCSGitRepo(ctx context.Context) ApiCreateVCSGitRepoRequest {
+func (a *V1VcsApiService) CreateVCSGitRepo(ctx context.Context) ApiCreateVCSGitRepoRequest {
 	return ApiCreateVCSGitRepoRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -299,7 +323,7 @@ func (a *V1VcsAPIService) CreateVCSGitRepo(ctx context.Context) ApiCreateVCSGitR
 
 // Execute executes the request
 //  @return CommonsRepo
-func (a *V1VcsAPIService) CreateVCSGitRepoExecute(r ApiCreateVCSGitRepoRequest) (*CommonsRepo, *http.Response, error) {
+func (a *V1VcsApiService) CreateVCSGitRepoExecute(r ApiCreateVCSGitRepoRequest) (*CommonsRepo, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -307,7 +331,7 @@ func (a *V1VcsAPIService) CreateVCSGitRepoExecute(r ApiCreateVCSGitRepoRequest) 
 		localVarReturnValue  *CommonsRepo
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.CreateVCSGitRepo")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.CreateVCSGitRepo")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -400,7 +424,7 @@ func (a *V1VcsAPIService) CreateVCSGitRepoExecute(r ApiCreateVCSGitRepoRequest) 
 
 type ApiCreateVCSIntegrationRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	body *CreateVCSIntegrationRequest
 }
 
@@ -420,7 +444,7 @@ CreateVCSIntegration Create a new vcs integration
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiCreateVCSIntegrationRequest
 */
-func (a *V1VcsAPIService) CreateVCSIntegration(ctx context.Context) ApiCreateVCSIntegrationRequest {
+func (a *V1VcsApiService) CreateVCSIntegration(ctx context.Context) ApiCreateVCSIntegrationRequest {
 	return ApiCreateVCSIntegrationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -429,7 +453,7 @@ func (a *V1VcsAPIService) CreateVCSIntegration(ctx context.Context) ApiCreateVCS
 
 // Execute executes the request
 //  @return VCSIntegration
-func (a *V1VcsAPIService) CreateVCSIntegrationExecute(r ApiCreateVCSIntegrationRequest) (*VCSIntegration, *http.Response, error) {
+func (a *V1VcsApiService) CreateVCSIntegrationExecute(r ApiCreateVCSIntegrationRequest) (*VCSIntegration, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -437,7 +461,7 @@ func (a *V1VcsAPIService) CreateVCSIntegrationExecute(r ApiCreateVCSIntegrationR
 		localVarReturnValue  *VCSIntegration
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.CreateVCSIntegration")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.CreateVCSIntegration")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -544,7 +568,7 @@ func (a *V1VcsAPIService) CreateVCSIntegrationExecute(r ApiCreateVCSIntegrationR
 
 type ApiDeleteVCSIntegrationRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	integrationId string
 	provider *string
 }
@@ -566,7 +590,7 @@ DeleteVCSIntegration Delete an existing vcs integration
  @param integrationId ID for the vcs integration
  @return ApiDeleteVCSIntegrationRequest
 */
-func (a *V1VcsAPIService) DeleteVCSIntegration(ctx context.Context, integrationId string) ApiDeleteVCSIntegrationRequest {
+func (a *V1VcsApiService) DeleteVCSIntegration(ctx context.Context, integrationId string) ApiDeleteVCSIntegrationRequest {
 	return ApiDeleteVCSIntegrationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -576,7 +600,7 @@ func (a *V1VcsAPIService) DeleteVCSIntegration(ctx context.Context, integrationI
 
 // Execute executes the request
 //  @return TypesGenericSuccessMessage
-func (a *V1VcsAPIService) DeleteVCSIntegrationExecute(r ApiDeleteVCSIntegrationRequest) (*TypesGenericSuccessMessage, *http.Response, error) {
+func (a *V1VcsApiService) DeleteVCSIntegrationExecute(r ApiDeleteVCSIntegrationRequest) (*TypesGenericSuccessMessage, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -584,7 +608,7 @@ func (a *V1VcsAPIService) DeleteVCSIntegrationExecute(r ApiDeleteVCSIntegrationR
 		localVarReturnValue  *TypesGenericSuccessMessage
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.DeleteVCSIntegration")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.DeleteVCSIntegration")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -691,7 +715,7 @@ func (a *V1VcsAPIService) DeleteVCSIntegrationExecute(r ApiDeleteVCSIntegrationR
 
 type ApiGetVCSGitRepoRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	id string
 }
 
@@ -706,7 +730,7 @@ GetVCSGitRepo get vcs repo based on repo internal id
  @param id internal id for the vcs git repo
  @return ApiGetVCSGitRepoRequest
 */
-func (a *V1VcsAPIService) GetVCSGitRepo(ctx context.Context, id string) ApiGetVCSGitRepoRequest {
+func (a *V1VcsApiService) GetVCSGitRepo(ctx context.Context, id string) ApiGetVCSGitRepoRequest {
 	return ApiGetVCSGitRepoRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -716,7 +740,7 @@ func (a *V1VcsAPIService) GetVCSGitRepo(ctx context.Context, id string) ApiGetVC
 
 // Execute executes the request
 //  @return CommonsRepo
-func (a *V1VcsAPIService) GetVCSGitRepoExecute(r ApiGetVCSGitRepoRequest) (*CommonsRepo, *http.Response, error) {
+func (a *V1VcsApiService) GetVCSGitRepoExecute(r ApiGetVCSGitRepoRequest) (*CommonsRepo, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -724,7 +748,7 @@ func (a *V1VcsAPIService) GetVCSGitRepoExecute(r ApiGetVCSGitRepoRequest) (*Comm
 		localVarReturnValue  *CommonsRepo
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.GetVCSGitRepo")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.GetVCSGitRepo")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -827,7 +851,7 @@ func (a *V1VcsAPIService) GetVCSGitRepoExecute(r ApiGetVCSGitRepoRequest) (*Comm
 
 type ApiListVCSEntitesRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	entityType *string
 	provider *string
 	name *string
@@ -887,7 +911,7 @@ For the most top level entity there is no parent_id.
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListVCSEntitesRequest
 */
-func (a *V1VcsAPIService) ListVCSEntites(ctx context.Context) ApiListVCSEntitesRequest {
+func (a *V1VcsApiService) ListVCSEntites(ctx context.Context) ApiListVCSEntitesRequest {
 	return ApiListVCSEntitesRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -896,7 +920,7 @@ func (a *V1VcsAPIService) ListVCSEntites(ctx context.Context) ApiListVCSEntitesR
 
 // Execute executes the request
 //  @return []VCSEntity
-func (a *V1VcsAPIService) ListVCSEntitesExecute(r ApiListVCSEntitesRequest) ([]VCSEntity, *http.Response, error) {
+func (a *V1VcsApiService) ListVCSEntitesExecute(r ApiListVCSEntitesRequest) ([]VCSEntity, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -904,7 +928,7 @@ func (a *V1VcsAPIService) ListVCSEntitesExecute(r ApiListVCSEntitesRequest) ([]V
 		localVarReturnValue  []VCSEntity
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.ListVCSEntites")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.ListVCSEntites")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1022,7 +1046,7 @@ func (a *V1VcsAPIService) ListVCSEntitesExecute(r ApiListVCSEntitesRequest) ([]V
 
 type ApiListVCSIntegrationRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	provider *string
 	status *string
 }
@@ -1049,7 +1073,7 @@ ListVCSIntegration Lists all vcs integration for provider
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListVCSIntegrationRequest
 */
-func (a *V1VcsAPIService) ListVCSIntegration(ctx context.Context) ApiListVCSIntegrationRequest {
+func (a *V1VcsApiService) ListVCSIntegration(ctx context.Context) ApiListVCSIntegrationRequest {
 	return ApiListVCSIntegrationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1058,7 +1082,7 @@ func (a *V1VcsAPIService) ListVCSIntegration(ctx context.Context) ApiListVCSInte
 
 // Execute executes the request
 //  @return []VCSIntegration
-func (a *V1VcsAPIService) ListVCSIntegrationExecute(r ApiListVCSIntegrationRequest) ([]VCSIntegration, *http.Response, error) {
+func (a *V1VcsApiService) ListVCSIntegrationExecute(r ApiListVCSIntegrationRequest) ([]VCSIntegration, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -1066,7 +1090,7 @@ func (a *V1VcsAPIService) ListVCSIntegrationExecute(r ApiListVCSIntegrationReque
 		localVarReturnValue  []VCSIntegration
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.ListVCSIntegration")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.ListVCSIntegration")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1172,9 +1196,285 @@ func (a *V1VcsAPIService) ListVCSIntegrationExecute(r ApiListVCSIntegrationReque
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiListVCSReposRequest struct {
+	ctx context.Context
+	ApiService V1VcsApi
+}
+
+func (r ApiListVCSReposRequest) Execute() ([]CommonsRepo, *http.Response, error) {
+	return r.ApiService.ListVCSReposExecute(r)
+}
+
+/*
+ListVCSRepos Lists all vcs repos for vcs integration
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiListVCSReposRequest
+*/
+func (a *V1VcsApiService) ListVCSRepos(ctx context.Context) ApiListVCSReposRequest {
+	return ApiListVCSReposRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []CommonsRepo
+func (a *V1VcsApiService) ListVCSReposExecute(r ApiListVCSReposRequest) ([]CommonsRepo, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []CommonsRepo
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.ListVCSRepos")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/vcs/repos"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListVCSRunnerGroupsRequest struct {
+	ctx context.Context
+	ApiService V1VcsApi
+	body *CommonsListVCSRunnerGroupsInput
+}
+
+// List runner groups input
+func (r ApiListVCSRunnerGroupsRequest) Body(body CommonsListVCSRunnerGroupsInput) ApiListVCSRunnerGroupsRequest {
+	r.body = &body
+	return r
+}
+
+func (r ApiListVCSRunnerGroupsRequest) Execute() (*CommonsListVCSRunnerGroupsResponse, *http.Response, error) {
+	return r.ApiService.ListVCSRunnerGroupsExecute(r)
+}
+
+/*
+ListVCSRunnerGroups Lists all vcs runner groups
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiListVCSRunnerGroupsRequest
+*/
+func (a *V1VcsApiService) ListVCSRunnerGroups(ctx context.Context) ApiListVCSRunnerGroupsRequest {
+	return ApiListVCSRunnerGroupsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return CommonsListVCSRunnerGroupsResponse
+func (a *V1VcsApiService) ListVCSRunnerGroupsExecute(r ApiListVCSRunnerGroupsRequest) (*CommonsListVCSRunnerGroupsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CommonsListVCSRunnerGroupsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.ListVCSRunnerGroups")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/vcs/list-runner-groups"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.body == nil {
+		return localVarReturnValue, nil, reportError("body is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.body
+	if r.ctx != nil {
+		// API Key Authentication
+		if auth, ok := r.ctx.Value(ContextAPIKeys).(map[string]APIKey); ok {
+			if apiKey, ok := auth["JWTKeyAuth"]; ok {
+				var key string
+				if apiKey.Prefix != "" {
+					key = apiKey.Prefix + " " + apiKey.Key
+				} else {
+					key = apiKey.Key
+				}
+				localVarHeaderParams["Authorization"] = key
+			}
+		}
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v WarpBuildAPIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiUpdateVCSIntegrationRequest struct {
 	ctx context.Context
-	ApiService V1VcsAPI
+	ApiService V1VcsApi
 	integrationId string
 	body *UpdateVCSIntegrationRequest
 }
@@ -1196,7 +1496,7 @@ UpdateVCSIntegration Update an existing vcs integration
  @param integrationId ID for the vcs integration
  @return ApiUpdateVCSIntegrationRequest
 */
-func (a *V1VcsAPIService) UpdateVCSIntegration(ctx context.Context, integrationId string) ApiUpdateVCSIntegrationRequest {
+func (a *V1VcsApiService) UpdateVCSIntegration(ctx context.Context, integrationId string) ApiUpdateVCSIntegrationRequest {
 	return ApiUpdateVCSIntegrationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1206,7 +1506,7 @@ func (a *V1VcsAPIService) UpdateVCSIntegration(ctx context.Context, integrationI
 
 // Execute executes the request
 //  @return UpdateVCSIntegrationResponse
-func (a *V1VcsAPIService) UpdateVCSIntegrationExecute(r ApiUpdateVCSIntegrationRequest) (*UpdateVCSIntegrationResponse, *http.Response, error) {
+func (a *V1VcsApiService) UpdateVCSIntegrationExecute(r ApiUpdateVCSIntegrationRequest) (*UpdateVCSIntegrationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
@@ -1214,7 +1514,7 @@ func (a *V1VcsAPIService) UpdateVCSIntegrationExecute(r ApiUpdateVCSIntegrationR
 		localVarReturnValue  *UpdateVCSIntegrationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsAPIService.UpdateVCSIntegration")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1VcsApiService.UpdateVCSIntegration")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
