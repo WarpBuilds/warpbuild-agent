@@ -12,9 +12,12 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
       - arm64
+    hooks:
+      pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
     main: ./cmd/agentd
 
 archives:
@@ -33,10 +36,14 @@ archives:
       - goos: windows
         format: zip
     files:
-      # - LICENSE
+      - LICENSE
       - README.md
+      - tools/launchd/com.warpbuild.warpbuild-agentd.plist
       - tools/systemd/warpbuild-agentd.service
+      - tools/systemd/warpbuild-agentd.user.service
       - tools/github/hooks/prerun.sh
+      - pkg/telemetry/binaries/**
+      - pkg/telemetry/otel-collector-config.tmpl
 
 checksum:
   name_template: "checksums.txt"
@@ -55,6 +62,8 @@ release:
   github:
     owner: warpbuilds
     name: warpbuild-agent
+  prerelease: auto
+  make_latest: false
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json

@@ -1,3 +1,5 @@
 pkg/warpbuild/** linguist-generated=true
 docs/swagger.json linguist-generated=true
 docs/swagger.yaml linguist-generated=true
+pkg/telemetry/binaries/**/otel-contrib* filter=lfs diff=lfs merge=lfs -text
+pkg/telemetry/binaries/**/otelcol-contrib* filter=lfs diff=lfs merge=lfs -text

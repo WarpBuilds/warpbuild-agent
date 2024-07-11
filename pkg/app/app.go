@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
+	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
 type ApplicationOptions struct {
@@ -24,8 +27,9 @@ func (opts *ApplicationOptions) ApplyDefaults() {
 }
 
 type Settings struct {
-	Agent  *AgentSettings  `json:"agent"`
-	Runner *RunnerSettings `json:"runner"`
+	Agent     *AgentSettings     `json:"agent"`
+	Runner    *RunnerSettings    `json:"runner"`
+	Telemetry *TelemetrySettings `json:"telemetry"`
 }
 
 type AgentSettings struct {
@@ -33,6 +37,15 @@ type AgentSettings struct {
 	PollingSecret    string `json:"polling_secret"`
 	HostURL          string `json:"host_url"`
 	ExitFileLocation string `json:"exit_file_location"`
+}
+
+type TelemetrySettings struct {
+	BaseDirectory string `json:"base_directory"`
+	Enabled       bool   `json:"enabled"`
+	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
+	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
+	// At what frequency to push the telemetry data to the server. This is in seconds.
+	PushFrequency string `json:"push_frequency"`
 }
 
 type RunnerSettings struct {
@@ -125,6 +138,27 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
+	telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
+	defer telemetryCtxCancel()
+
+	telemetryDone := make(chan bool, 1)
+
+	go func() {
+		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
+		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
+			BaseDirectory:             settings.Telemetry.BaseDirectory,
+			RunnerID:                  settings.Agent.ID,
+			PollingSecret:             settings.Agent.PollingSecret,
+			HostURL:                   settings.Agent.HostURL,
+			Enabled:                   settings.Telemetry.Enabled,
+			PushFrequency:             pushFrequency,
+			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
+		}); err != nil {
+			log.Logger().Errorf("failed to start telemetry: %v", err)
+		}
+		telemetryDone <- true
+	}()
+
 	agent, err := manager.NewAgent(&manager.AgentOptions{
 		ID:               settings.Agent.ID,
 		PollingSecret:    settings.Agent.PollingSecret,
@@ -135,6 +169,16 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		log.Logger().Errorf("failed to create agent: %v", err)
 		return err
 	}
+
+	// Set up signal handling to catch OS kill signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
+		telemetryCtxCancel()
+	}()
 
 	startAgentOpts := manager.StartAgentOptions{
 		Manager: &manager.ManagerOptions{
@@ -167,6 +211,9 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		log.Logger().Errorf("failed to start agent: %v", err)
 		return err
 	}
+
+	<-telemetryDone
+	log.Logger().Infof("Shutdown complete.")
 
 	return nil
 }
