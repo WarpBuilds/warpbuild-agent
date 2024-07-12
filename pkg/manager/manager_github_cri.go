@@ -58,7 +58,7 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		return nil, err
 	}
 
-	containerID := opts.AgentOptions.ID
+	// containerID := opts.AgentOptions.ID
 
 	// TODO: verify if the pull is needed or not for the image.
 	// TODO: if the pull is needed, then exec another command here before running the container.
