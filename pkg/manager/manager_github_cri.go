@@ -57,22 +57,47 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	// TODO: verify if the pull is needed or not for the image.
 	// TODO: if the pull is needed, then exec another command here before running the container.
 
-	cmd := exec.CommandContext(
-		ctx, "ctr", "run", "--rm", "--detach", "--entrypoint",
-		m.ContainerOptions.Entrypoint, "--name", containerID,
-		m.ContainerOptions.Image, m.ContainerOptions.Cmd,
-	)
-	cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
+	// Containerd doesn't support entrypoint
+	// cmd := exec.CommandContext(
+	// 	ctx, "ctr", "run", "--rm", "--entrypoint",
+	// 	m.ContainerOptions.Entrypoint, "--name", containerID,
+	// 	m.ContainerOptions.Image, m.ContainerOptions.Cmd,
+	// )
+	// cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
+	// for _, env := range m.ContainerOptions.Envs {
+	// 	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
+	// }
+	// for _, volume := range m.ContainerOptions.Volumes {
+	// 	cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,destination=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
+	// }
+	// cmd.Args = append(cmd.Args, "--jitconfig", opts.JitToken)
+
+	// // add jit token to the environment variables
+	// cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
+
+	// Nerdctl wrapper for containerd
+	cmd := exec.CommandContext(ctx, "nerdctl", "run", "--rm", "--name", containerID)
+	// Add the entrypoint if it's specified
+	if m.ContainerOptions.Entrypoint != "" {
+		cmd.Args = append(cmd.Args, "--entrypoint", m.ContainerOptions.Entrypoint)
+	}
+	// Add the environment variables
 	for _, env := range m.ContainerOptions.Envs {
 		cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
 	}
+	// Add the volume mounts
 	for _, volume := range m.ContainerOptions.Volumes {
-		cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,destination=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
+		cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,target=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
 	}
-	cmd.Args = append(cmd.Args, "--jitconfig", opts.JitToken)
-
-	// add jit token to the environment variables
+	// Add the JIT config token as an environment variable
 	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
+	// Add the image and command
+	cmd.Args = append(cmd.Args, m.ContainerOptions.Image)
+	// Add the command and its arguments
+	if m.ContainerOptions.Cmd != "" {
+		cmd.Args = append(cmd.Args, m.ContainerOptions.Cmd)
+	}
+	cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
 
 	cmd.Dir = m.RunnerDir
 
