@@ -17,10 +17,16 @@ type ghcriManager struct {
 }
 
 type GithubCRIOptions struct {
-	StdoutFile       string            `json:"stdout_file"`
-	StderrFile       string            `json:"stderr_file"`
-	RunnerDir        string            `json:"runner_dir"`
-	ContainerOptions *ContainerOptions `json:"container_options"`
+	StdoutFile string      `json:"stdout_file"`
+	StderrFile string      `json:"stderr_file"`
+	RunnerDir  string      `json:"runner_dir"`
+	CMDOptions *CMDOptions `json:"cmd_options"`
+}
+
+type CMDOptions struct {
+	CMD  string   `json:"cmd"`
+	Args []string `json:"args"`
+	Dir  string   `json:"dir"`
 }
 
 type ContainerOptions struct {
@@ -75,31 +81,36 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	// // add jit token to the environment variables
 	// cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
 
-	// Nerdctl wrapper for containerd
-	cmd := exec.CommandContext(ctx, "nerdctl", "run", "--rm", "--name", containerID)
-	// Add the entrypoint if it's specified
-	if m.ContainerOptions.Entrypoint != "" {
-		cmd.Args = append(cmd.Args, "--entrypoint", m.ContainerOptions.Entrypoint)
-	}
-	// Add the environment variables
-	for _, env := range m.ContainerOptions.Envs {
-		cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
-	}
-	// Add the volume mounts
-	for _, volume := range m.ContainerOptions.Volumes {
-		cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,target=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
-	}
-	// Add the JIT config token as an environment variable
-	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
-	// Add the image and command
-	cmd.Args = append(cmd.Args, m.ContainerOptions.Image)
-	// Add the command and its arguments
-	if m.ContainerOptions.Cmd != "" {
-		cmd.Args = append(cmd.Args, m.ContainerOptions.Cmd)
-	}
-	cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
+	// // Nerdctl wrapper for containerd
+	// cmd := exec.CommandContext(ctx, "nerdctl", "run", "--rm", "--name", containerID)
+	// // Add the entrypoint if it's specified
+	// if m.ContainerOptions.Entrypoint != "" {
+	// 	cmd.Args = append(cmd.Args, "--entrypoint", m.ContainerOptions.Entrypoint)
+	// }
+	// // Add the environment variables
+	// for _, env := range m.ContainerOptions.Envs {
+	// 	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
+	// }
+	// // Add the volume mounts
+	// for _, volume := range m.ContainerOptions.Volumes {
+	// 	cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,target=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
+	// }
+	// // Add the JIT config token as an environment variable
+	// cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
+	// // Add the image and command
+	// cmd.Args = append(cmd.Args, m.ContainerOptions.Image)
+	// // Add the command and its arguments
+	// if m.ContainerOptions.Cmd != "" {
+	// 	cmd.Args = append(cmd.Args, m.ContainerOptions.Cmd)
+	// }
+	// cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
 
-	cmd.Dir = m.RunnerDir
+	// cmd.Dir = m.RunnerDir
+
+	// Base command
+	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
+	cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
+	cmd.Dir = m.CMDOptions.Dir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
 
