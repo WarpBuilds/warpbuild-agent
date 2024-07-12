@@ -197,12 +197,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			Envs:       settings.Runner.Github.Envs,
 		}
 	case manager.ProviderGithubCRI:
-		startAgentOpts.Manager.GithubCRI = &manager.GithubCRIOptions{
-			StdoutFile:       settings.Runner.GithubCRI.StdoutFile,
-			StderrFile:       settings.Runner.GithubCRI.StderrFile,
-			RunnerDir:        settings.Runner.GithubCRI.RunnerDir,
-			ContainerOptions: settings.Runner.GithubCRI.ContainerOptions,
-		}
+		startAgentOpts.Manager.GithubCRI = settings.Runner.GithubCRI
 	default:
 		log.Logger().Errorf("unknown provider: %s", startAgentOpts.Manager.Provider)
 		return errors.New("unknown provider")
