@@ -113,6 +113,7 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	cmd.Dir = m.CMDOptions.Dir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
+	log.Logger().Infof("JIT Token: %s", opts.JitToken)
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
