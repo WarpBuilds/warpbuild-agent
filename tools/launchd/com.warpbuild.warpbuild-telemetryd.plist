@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.warpbuild.warpbuild-telemetryd</string>
+
+    <key>Program</key>
+    <string>/usr/local/bin/warpbuild-agentd --launch-telemetry</string>
+
+    <key>WorkingDirectory</key>
+    <string>/</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardErrorPath</key>
+    <string>/var/log/warpbuild-agentd.error.log</string>
+
+    <key>StandardOutPath</key>
+    <string>/var/log/warpbuild-agentd.out.log</string>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>
