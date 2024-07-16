@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
+  <dict>
     <key>Label</key>
-    <string>com.warpbuild.warpbuild-agentd</string>
-
-    <key>Program</key>
-    <string>/usr/local/bin/warpbuild-agentd</string>
-
-    <key>WorkingDirectory</key>
-    <string>/</string>
-
+    <string>warpbuild-agentd-launcher</string>
+    <key>Nice</key>
+    <integer>-10</integer>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/warpbuild-agentd-launcher.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>LANG</key>
+      <string>en_US.UTF-8</string>
+    </dict>
+    <key>UserName</key>
+    <string>$USERNAME</string>
     <key>RunAtLoad</key>
     <true/>
-
-    <key>KeepAlive</key>
-    <true/>
-
-    <key>StandardErrorPath</key>
-    <string>/var/log/warpbuild-agentd.error.log</string>
-
-    <key>StandardOutPath</key>
-    <string>/var/log/warpbuild-agentd.out.log</string>
-
     <key>ThrottleInterval</key>
-    <integer>5</integer>
-</dict>
+    <integer>15</integer>
+    <key>KeepAlive</key>
+    <dict>
+      <key>SuccessfulExit</key>
+      <false/>
+    </dict>
+    <key>StandardErrorPath</key>
+    <string>$BASE_DIR/log/warpbuild-agentd-launcher.error.log</string>
+    <key>StandardOutPath</key>
+    <string>$BASE_DIR/log/warpbuild-agentd-launcher.out.log</string>
+  </dict>
 </plist>
