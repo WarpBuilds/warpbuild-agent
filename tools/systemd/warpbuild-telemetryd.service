@@ -1,0 +1,13 @@
+[Unit]
+Description=Systemd service to manage warpbuild-telemetry lifecycle
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/warpbuild-agentd --launch-telemetry
+WorkingDirectory=/
+Restart=always
+RestartSec=5
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target

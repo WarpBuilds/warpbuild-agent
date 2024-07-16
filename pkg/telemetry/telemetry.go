@@ -88,6 +88,11 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 
 	log.Logger().Infof("Fetched initial Presigned S3 URL: %s", presignedS3URL)
 
+	// Do an initial syslog upload
+	if err := readAndUploadFileToS3(ctx, opts.BaseDirectory, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
+		log.Logger().Errorf("Error during initial Syslog upload: %v", err)
+	}
+
 	// Channel to signal when the application should terminate
 	done := make(chan bool, 1)
 
@@ -107,7 +112,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 
 	// Perform final upload before shutting down
 	if err := readAndUploadFileToS3(ctx, opts.BaseDirectory, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
-		log.Logger().Errorf("Error during final upload: %v", err)
+		log.Logger().Errorf("Error during final Syslog upload: %v", err)
 	}
 
 	// Signal the OpenTelemetry Collector process to terminate

@@ -8,9 +8,10 @@ import (
 )
 
 type flagsStruct struct {
-	stdoutFile   string
-	stderrFile   string
-	settingsFile string
+	stdoutFile      string
+	stderrFile      string
+	settingsFile    string
+	launchTelemetry bool
 }
 
 var flags flagsStruct
@@ -18,14 +19,15 @@ var flags flagsStruct
 var rootCmd = &cobra.Command{
 	Use:   "agentd",
 	Short: "Manages runner lifecycle",
-	Long: `Manages runner lifecycle and synchronizes runner state with the Warpbuild.
+	Long: `Manages runner lifecycle and synchronizes runner state with the WarpBuild.
 	This is run as a daemon on the runner host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
-			SettingsFile: flags.settingsFile,
-			StdoutFile:   flags.stdoutFile,
-			StderrFile:   flags.stderrFile,
+			SettingsFile:    flags.settingsFile,
+			StdoutFile:      flags.stdoutFile,
+			StderrFile:      flags.stderrFile,
+			LaunchTelemetry: flags.launchTelemetry,
 		})
 		if err != nil {
 			return err
@@ -57,4 +59,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.stdoutFile, "stdout", "", "stdout file")
 	rootCmd.PersistentFlags().StringVar(&flags.stderrFile, "stderr", "", "stderr file")
 	rootCmd.PersistentFlags().StringVar(&flags.settingsFile, "settings", "", "settings file")
+	rootCmd.PersistentFlags().BoolVar(&flags.launchTelemetry, "launch-telemetry", false, "launch telemetry")
 }

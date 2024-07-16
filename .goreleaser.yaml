@@ -38,9 +38,8 @@ archives:
     files:
       - LICENSE
       - README.md
-      - tools/launchd/com.warpbuild.warpbuild-agentd.plist
-      - tools/systemd/warpbuild-agentd.service
-      - tools/systemd/warpbuild-agentd.user.service
+      - tools/launchd/**
+      - tools/systemd/**
       - tools/github/hooks/prerun.sh
       - pkg/telemetry/binaries/**
       - pkg/telemetry/otel-collector-config.tmpl
