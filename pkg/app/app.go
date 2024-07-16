@@ -14,9 +14,10 @@ import (
 )
 
 type ApplicationOptions struct {
-	SettingsFile string `json:"settings_file"`
-	StdoutFile   string `json:"stdout_file"`
-	StderrFile   string `json:"stderr_file"`
+	SettingsFile    string `json:"settings_file"`
+	StdoutFile      string `json:"stdout_file"`
+	StderrFile      string `json:"stderr_file"`
+	LaunchTelemetry bool   `json:"launch_telemetry"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -128,12 +129,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
-	telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
-	defer telemetryCtxCancel()
+	if opts.LaunchTelemetry {
+		telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
+		defer telemetryCtxCancel()
 
-	telemetryDone := make(chan bool, 1)
-
-	go func() {
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
 			BaseDirectory:             settings.Telemetry.BaseDirectory,
@@ -146,49 +145,46 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
-		telemetryDone <- true
-	}()
 
-	agent, err := manager.NewAgent(&manager.AgentOptions{
-		ID:               settings.Agent.ID,
-		PollingSecret:    settings.Agent.PollingSecret,
-		HostURL:          settings.Agent.HostURL,
-		ExitFileLocation: settings.Agent.ExitFileLocation,
-	})
-	if err != nil {
-		log.Logger().Errorf("failed to create agent: %v", err)
-		return err
-	}
+		// Set up signal handling to catch OS kill signals
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// Set up signal handling to catch OS kill signals
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			sig := <-sigs
+			log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
+			telemetryCtxCancel()
+		}()
+	} else {
+		agent, err := manager.NewAgent(&manager.AgentOptions{
+			ID:               settings.Agent.ID,
+			PollingSecret:    settings.Agent.PollingSecret,
+			HostURL:          settings.Agent.HostURL,
+			ExitFileLocation: settings.Agent.ExitFileLocation,
+		})
+		if err != nil {
+			log.Logger().Errorf("failed to create agent: %v", err)
+			return err
+		}
 
-	go func() {
-		sig := <-sigs
-		log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
-		telemetryCtxCancel()
-	}()
-
-	err = agent.StartAgent(ctx, &manager.StartAgentOptions{
-		Manager: &manager.ManagerOptions{
-			Provider: manager.Provider(string(settings.Runner.Provider)),
-			Github: &manager.GithubOptions{
-				RunnerDir:  settings.Runner.Github.RunnerDir,
-				Script:     settings.Runner.Github.Script,
-				StdoutFile: settings.Runner.Github.StdoutFile,
-				StderrFile: settings.Runner.Github.StderrFile,
-				Envs:       settings.Runner.Github.Envs,
+		err = agent.StartAgent(ctx, &manager.StartAgentOptions{
+			Manager: &manager.ManagerOptions{
+				Provider: manager.Provider(string(settings.Runner.Provider)),
+				Github: &manager.GithubOptions{
+					RunnerDir:  settings.Runner.Github.RunnerDir,
+					Script:     settings.Runner.Github.Script,
+					StdoutFile: settings.Runner.Github.StdoutFile,
+					StderrFile: settings.Runner.Github.StderrFile,
+					Envs:       settings.Runner.Github.Envs,
+				},
 			},
-		},
-	})
-	if err != nil {
-		log.Logger().Errorf("failed to start agent: %v", err)
-		return err
+		})
+		if err != nil {
+			log.Logger().Errorf("failed to start agent: %v", err)
+			return err
+		}
 	}
 
-	<-telemetryDone
 	log.Logger().Infof("Shutdown complete.")
-
 	return nil
 }
