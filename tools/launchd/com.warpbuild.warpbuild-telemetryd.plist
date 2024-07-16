@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>warpbuild-agentd-launcher</string>
+    <string>warpbuild-telemetryd-launcher</string>
     <key>Nice</key>
     <integer>-10</integer>
     <key>ProgramArguments</key>
@@ -27,8 +27,8 @@
       <false/>
     </dict>
     <key>StandardErrorPath</key>
-    <string>$BASE_DIR/log/warpbuild-agentd-launcher.error.log</string>
+    <string>$BASE_DIR/log/warpbuild-telemetryd-launcher.error.log</string>
     <key>StandardOutPath</key>
-    <string>$BASE_DIR/log/warpbuild-agentd-launcher.out.log</string>
+    <string>$BASE_DIR/log/warpbuild-telemetryd-launcher.out.log</string>
   </dict>
 </plist>
