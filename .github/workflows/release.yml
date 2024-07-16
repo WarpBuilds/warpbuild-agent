@@ -51,15 +51,15 @@ jobs:
         id: get_short_commit
         run: echo "::set-output name=short_commit::$(git rev-parse --short HEAD)"
 
-      - name: Create GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
-          release_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
-          prerelease: true
+      # - name: Create GitHub release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
+      #     release_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
+      #     prerelease: true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -81,6 +81,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*
+          name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
+          tag_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
+          prerelease: true
           # upload_url: ${{ steps.create_release.outputs.upload_url }}
           # asset_path: ./dist/*
           # asset_name: ${{ github.ref_name }}-${{ steps.get_short_commit.outputs.short_commit }}-warpbuild-agent
