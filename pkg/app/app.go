@@ -133,6 +133,16 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
 		defer telemetryCtxCancel()
 
+		// Set up signal handling to catch OS kill signals
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+		go func() {
+			sig := <-sigs
+			log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
+			telemetryCtxCancel()
+		}()
+
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
 			BaseDirectory:             settings.Telemetry.BaseDirectory,
@@ -146,15 +156,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
 
-		// Set up signal handling to catch OS kill signals
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-		go func() {
-			sig := <-sigs
-			log.Logger().Infof("Received signal %s, initiating shutdown...", sig)
-			telemetryCtxCancel()
-		}()
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,
