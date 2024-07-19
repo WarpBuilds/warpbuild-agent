@@ -24,9 +24,10 @@ type GithubCRIOptions struct {
 }
 
 type CMDOptions struct {
-	CMD  string   `json:"cmd"`
-	Args []string `json:"args"`
-	Dir  string   `json:"dir"`
+	CMD  string               `json:"cmd"`
+	Args []string             `json:"args"`
+	Dir  string               `json:"dir"`
+	Envs EnvironmentVariables `json:"envs"`
 }
 
 type ContainerOptions struct {
@@ -110,6 +111,10 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	// Base command
 	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
 	cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
+	for _, env := range m.CMDOptions.Envs {
+		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
 	cmd.Dir = m.CMDOptions.Dir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
