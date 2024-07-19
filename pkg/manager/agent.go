@@ -111,6 +111,15 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 					os.Setenv(key, val)
 				}
 
+				if opts.Manager.Provider == ProviderGithubCRI {
+					for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+						opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
+							Key:   key,
+							Value: val,
+						})
+					}
+				}
+
 				log.Logger().Infof("Starting runner")
 				m := NewManager(opts.Manager)
 				startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
