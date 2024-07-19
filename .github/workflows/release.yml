@@ -40,6 +40,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           lfs: true
 
       - name: Set up Go
