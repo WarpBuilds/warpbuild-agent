@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
@@ -30,21 +29,6 @@ type CMDOptions struct {
 	Envs EnvironmentVariables `json:"envs"`
 }
 
-type ContainerOptions struct {
-	Image      string                   `json:"image"`
-	Entrypoint string                   `json:"entrypoint"`
-	Cmd        string                   `json:"cmd"`
-	Args       []string                 `json:"args"`
-	Envs       EnvironmentVariables     `json:"envs"`
-	Volumes    []ContainerOptionsVolume `json:"volumes"`
-}
-
-type ContainerOptionsVolume struct {
-	HostPath      string `json:"host_path"`
-	ContainerPath string `json:"container_path"`
-	AccessMode    string `json:"access_mode"`
-}
-
 var _ IManager = &ghcriManager{}
 
 func newGithubCRIManager(opts *ManagerOptions) IManager {
@@ -59,59 +43,8 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		return nil, err
 	}
 
-	// containerID := opts.AgentOptions.ID
-
-	// TODO: verify if the pull is needed or not for the image.
-	// TODO: if the pull is needed, then exec another command here before running the container.
-
-	// Containerd doesn't support entrypoint
-	// cmd := exec.CommandContext(
-	// 	ctx, "ctr", "run", "--rm", "--entrypoint",
-	// 	m.ContainerOptions.Entrypoint, "--name", containerID,
-	// 	m.ContainerOptions.Image, m.ContainerOptions.Cmd,
-	// )
-	// cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
-	// for _, env := range m.ContainerOptions.Envs {
-	// 	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
-	// }
-	// for _, volume := range m.ContainerOptions.Volumes {
-	// 	cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,destination=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
-	// }
-	// cmd.Args = append(cmd.Args, "--jitconfig", opts.JitToken)
-
-	// // add jit token to the environment variables
-	// cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
-
-	// // Nerdctl wrapper for containerd
-	// cmd := exec.CommandContext(ctx, "nerdctl", "run", "--rm", "--name", containerID)
-	// // Add the entrypoint if it's specified
-	// if m.ContainerOptions.Entrypoint != "" {
-	// 	cmd.Args = append(cmd.Args, "--entrypoint", m.ContainerOptions.Entrypoint)
-	// }
-	// // Add the environment variables
-	// for _, env := range m.ContainerOptions.Envs {
-	// 	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("%s=%s", env.Key, env.Value))
-	// }
-	// // Add the volume mounts
-	// for _, volume := range m.ContainerOptions.Volumes {
-	// 	cmd.Args = append(cmd.Args, "--mount", fmt.Sprintf("type=bind,source=%s,target=%s,options=%s", volume.HostPath, volume.ContainerPath, volume.AccessMode))
-	// }
-	// // Add the JIT config token as an environment variable
-	// cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("WARPBUILD_GH_JIT_TOKEN=%s", opts.JitToken))
-	// // Add the image and command
-	// cmd.Args = append(cmd.Args, m.ContainerOptions.Image)
-	// // Add the command and its arguments
-	// if m.ContainerOptions.Cmd != "" {
-	// 	cmd.Args = append(cmd.Args, m.ContainerOptions.Cmd)
-	// }
-	// cmd.Args = append(cmd.Args, m.ContainerOptions.Args...)
-
-	// cmd.Dir = m.RunnerDir
-
-	// Base command
 	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
 	cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
-	// log.Logger().Infof("Found envs: %v", m.CMDOptions.Envs)
 	for _, env := range m.CMDOptions.Envs {
 		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
@@ -183,8 +116,6 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		doneChan <- true
 	}()
 
-	// Ticker to capture output every second
-	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case out := <-stdoutChan:
@@ -193,8 +124,6 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		case err := <-stderrChan:
 			fmt.Fprintln(stderrFile, err)
 			fmt.Fprintln(os.Stderr, err)
-		case <-ticker.C:
-			// Handle output every second
 		case <-doneChan:
 
 			wg.Wait()

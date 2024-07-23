@@ -111,8 +111,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			settingsData, err := os.ReadFile(opts.SettingsFile)
 			if err != nil {
 				if os.IsNotExist(err) {
-					// TODO: remove this
-					log.Logger().Infof("error: %v", err)
 					continue
 				}
 				log.Logger().Errorf("failed to read settings file: %v", err)

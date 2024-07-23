@@ -103,6 +103,11 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				continue
 			}
 
+			if allocationDetails == nil {
+				log.Logger().Infof("No runner instance allocation details found. Retrying in %s", Interval)
+				continue
+			}
+
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
 
