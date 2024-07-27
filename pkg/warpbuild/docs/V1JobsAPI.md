@@ -1,11 +1,11 @@
-# \V1JobsApi
+# \V1JobsAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetCostSummary**](V1JobsApi.md#GetCostSummary) | **Get** /jobs/cost-summary | GetCostSummary
-[**GetDaywiseCosts**](V1JobsApi.md#GetDaywiseCosts) | **Get** /jobs/daywise-costs | GetDaywiseCosts
+[**GetCostSummary**](V1JobsAPI.md#GetCostSummary) | **Get** /jobs/cost-summary | GetCostSummary
+[**GetDaywiseCosts**](V1JobsAPI.md#GetDaywiseCosts) | **Get** /jobs/daywise-costs | GetDaywiseCosts
 
 
 
@@ -35,13 +35,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1JobsApi.GetCostSummary(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
+    resp, r, err := apiClient.V1JobsAPI.GetCostSummary(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1JobsApi.GetCostSummary``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1JobsAPI.GetCostSummary``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetCostSummary`: CommonsCostSummary
-    fmt.Fprintf(os.Stdout, "Response from `V1JobsApi.GetCostSummary`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1JobsAPI.GetCostSummary`: %v\n", resp)
 }
 ```
 
@@ -103,13 +103,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1JobsApi.GetDaywiseCosts(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
+    resp, r, err := apiClient.V1JobsAPI.GetDaywiseCosts(context.Background()).StartDate(startDate).EndDate(endDate).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1JobsApi.GetDaywiseCosts``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1JobsAPI.GetDaywiseCosts``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetDaywiseCosts`: []CommonsDaywiseCost
-    fmt.Fprintf(os.Stdout, "Response from `V1JobsApi.GetDaywiseCosts`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1JobsAPI.GetDaywiseCosts`: %v\n", resp)
 }
 ```
 

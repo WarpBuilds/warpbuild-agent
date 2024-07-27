@@ -1,17 +1,17 @@
-# \V1AuthApi
+# \V1AuthAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**AuthTokensGet**](V1AuthApi.md#AuthTokensGet) | **Get** /auth/tokens | List user tokens
-[**AuthUser**](V1AuthApi.md#AuthUser) | **Post** /auth | Auth user
-[**AuthUsersGet**](V1AuthApi.md#AuthUsersGet) | **Get** /auth/users | List users
-[**GetAuthURL**](V1AuthApi.md#GetAuthURL) | **Get** /auth/login/{provider} | Get auth url
-[**GetMe**](V1AuthApi.md#GetMe) | **Get** /auth/me | Auth user
-[**Logout**](V1AuthApi.md#Logout) | **Patch** /auth/logout | Logout
-[**RefreshToken**](V1AuthApi.md#RefreshToken) | **Patch** /auth/token/refresh | Refresh token
-[**SwitchOrganization**](V1AuthApi.md#SwitchOrganization) | **Patch** /auth/switch | Switch organization
+[**AuthTokensGet**](V1AuthAPI.md#AuthTokensGet) | **Get** /auth/tokens | List user tokens
+[**AuthUser**](V1AuthAPI.md#AuthUser) | **Post** /auth | Auth user
+[**AuthUsersGet**](V1AuthAPI.md#AuthUsersGet) | **Get** /auth/users | List users
+[**GetAuthURL**](V1AuthAPI.md#GetAuthURL) | **Get** /auth/login/{provider} | Get auth url
+[**GetMe**](V1AuthAPI.md#GetMe) | **Get** /auth/me | Auth user
+[**Logout**](V1AuthAPI.md#Logout) | **Patch** /auth/logout | Logout
+[**RefreshToken**](V1AuthAPI.md#RefreshToken) | **Patch** /auth/token/refresh | Refresh token
+[**SwitchOrganization**](V1AuthAPI.md#SwitchOrganization) | **Patch** /auth/switch | Switch organization
 
 
 
@@ -40,13 +40,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.AuthTokensGet(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1AuthAPI.AuthTokensGet(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.AuthTokensGet``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.AuthTokensGet``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `AuthTokensGet`: []CommonsUserToken
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.AuthTokensGet`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.AuthTokensGet`: %v\n", resp)
 }
 ```
 
@@ -106,13 +106,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.AuthUser(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1AuthAPI.AuthUser(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.AuthUser``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.AuthUser``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `AuthUser`: AuthUserResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.AuthUser`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.AuthUser`: %v\n", resp)
 }
 ```
 
@@ -172,13 +172,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.AuthUsersGet(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1AuthAPI.AuthUsersGet(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.AuthUsersGet``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.AuthUsersGet``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `AuthUsersGet`: []CommonsListUsersResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.AuthUsersGet`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.AuthUsersGet`: %v\n", resp)
 }
 ```
 
@@ -238,9 +238,9 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    r, err := apiClient.V1AuthApi.GetAuthURL(context.Background(), provider).Execute()
+    r, err := apiClient.V1AuthAPI.GetAuthURL(context.Background(), provider).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.GetAuthURL``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.GetAuthURL``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
@@ -305,13 +305,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.GetMe(context.Background()).Execute()
+    resp, r, err := apiClient.V1AuthAPI.GetMe(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.GetMe``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.GetMe``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetMe`: MeResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.GetMe`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.GetMe`: %v\n", resp)
 }
 ```
 
@@ -366,9 +366,9 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    r, err := apiClient.V1AuthApi.Logout(context.Background()).Execute()
+    r, err := apiClient.V1AuthAPI.Logout(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.Logout``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.Logout``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
 }
@@ -426,13 +426,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.RefreshToken(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1AuthAPI.RefreshToken(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.RefreshToken``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.RefreshToken``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `RefreshToken`: TokenRefreshResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.RefreshToken`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.RefreshToken`: %v\n", resp)
 }
 ```
 
@@ -490,13 +490,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1AuthApi.SwitchOrganization(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1AuthAPI.SwitchOrganization(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthApi.SwitchOrganization``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1AuthAPI.SwitchOrganization``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `SwitchOrganization`: SwitchOrganizationResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1AuthApi.SwitchOrganization`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1AuthAPI.SwitchOrganization`: %v\n", resp)
 }
 ```
 

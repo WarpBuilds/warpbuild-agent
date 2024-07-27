@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1OrganizationApi interface {
+type V1OrganizationAPI interface {
 
 	/*
 	CreateOrganization Adds a new organisation for a current user
@@ -87,12 +87,12 @@ type V1OrganizationApi interface {
 	UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error)
 }
 
-// V1OrganizationApiService V1OrganizationApi service
-type V1OrganizationApiService service
+// V1OrganizationAPIService V1OrganizationAPI service
+type V1OrganizationAPIService service
 
 type ApiCreateOrganizationRequest struct {
 	ctx context.Context
-	ApiService V1OrganizationApi
+	ApiService V1OrganizationAPI
 }
 
 func (r ApiCreateOrganizationRequest) Execute() (*SwitchOrganizationResponse, *http.Response, error) {
@@ -107,7 +107,7 @@ User can manage multiple tenanats from one account, this api provides user a fun
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiCreateOrganizationRequest
 */
-func (a *V1OrganizationApiService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
+func (a *V1OrganizationAPIService) CreateOrganization(ctx context.Context) ApiCreateOrganizationRequest {
 	return ApiCreateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -116,7 +116,7 @@ func (a *V1OrganizationApiService) CreateOrganization(ctx context.Context) ApiCr
 
 // Execute executes the request
 //  @return SwitchOrganizationResponse
-func (a *V1OrganizationApiService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
+func (a *V1OrganizationAPIService) CreateOrganizationExecute(r ApiCreateOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -124,7 +124,7 @@ func (a *V1OrganizationApiService) CreateOrganizationExecute(r ApiCreateOrganiza
 		localVarReturnValue  *SwitchOrganizationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.CreateOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.CreateOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -213,7 +213,7 @@ func (a *V1OrganizationApiService) CreateOrganizationExecute(r ApiCreateOrganiza
 
 type ApiGetOrganizationRequest struct {
 	ctx context.Context
-	ApiService V1OrganizationApi
+	ApiService V1OrganizationAPI
 }
 
 func (r ApiGetOrganizationRequest) Execute() (*CommonsOrganization, *http.Response, error) {
@@ -226,7 +226,7 @@ GetOrganization Get organization details for the current organization. Current o
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetOrganizationRequest
 */
-func (a *V1OrganizationApiService) GetOrganization(ctx context.Context) ApiGetOrganizationRequest {
+func (a *V1OrganizationAPIService) GetOrganization(ctx context.Context) ApiGetOrganizationRequest {
 	return ApiGetOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -235,7 +235,7 @@ func (a *V1OrganizationApiService) GetOrganization(ctx context.Context) ApiGetOr
 
 // Execute executes the request
 //  @return CommonsOrganization
-func (a *V1OrganizationApiService) GetOrganizationExecute(r ApiGetOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+func (a *V1OrganizationAPIService) GetOrganizationExecute(r ApiGetOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -243,7 +243,7 @@ func (a *V1OrganizationApiService) GetOrganizationExecute(r ApiGetOrganizationRe
 		localVarReturnValue  *CommonsOrganization
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.GetOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.GetOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -345,7 +345,7 @@ func (a *V1OrganizationApiService) GetOrganizationExecute(r ApiGetOrganizationRe
 
 type ApiListOrgUsersRequest struct {
 	ctx context.Context
-	ApiService V1OrganizationApi
+	ApiService V1OrganizationAPI
 }
 
 func (r ApiListOrgUsersRequest) Execute() ([]V1ListUsersForOrganizationResult, *http.Response, error) {
@@ -358,7 +358,7 @@ ListOrgUsers ListOrgUsers list the users for the current organization
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListOrgUsersRequest
 */
-func (a *V1OrganizationApiService) ListOrgUsers(ctx context.Context) ApiListOrgUsersRequest {
+func (a *V1OrganizationAPIService) ListOrgUsers(ctx context.Context) ApiListOrgUsersRequest {
 	return ApiListOrgUsersRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -367,7 +367,7 @@ func (a *V1OrganizationApiService) ListOrgUsers(ctx context.Context) ApiListOrgU
 
 // Execute executes the request
 //  @return []V1ListUsersForOrganizationResult
-func (a *V1OrganizationApiService) ListOrgUsersExecute(r ApiListOrgUsersRequest) ([]V1ListUsersForOrganizationResult, *http.Response, error) {
+func (a *V1OrganizationAPIService) ListOrgUsersExecute(r ApiListOrgUsersRequest) ([]V1ListUsersForOrganizationResult, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -375,7 +375,7 @@ func (a *V1OrganizationApiService) ListOrgUsersExecute(r ApiListOrgUsersRequest)
 		localVarReturnValue  []V1ListUsersForOrganizationResult
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.ListOrgUsers")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.ListOrgUsers")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -464,7 +464,7 @@ func (a *V1OrganizationApiService) ListOrgUsersExecute(r ApiListOrgUsersRequest)
 
 type ApiListUserOrganizationsRequest struct {
 	ctx context.Context
-	ApiService V1OrganizationApi
+	ApiService V1OrganizationAPI
 }
 
 func (r ApiListUserOrganizationsRequest) Execute() ([]V1Organization, *http.Response, error) {
@@ -477,7 +477,7 @@ ListUserOrganizations ListUserOrganizations lists all the organization user has 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListUserOrganizationsRequest
 */
-func (a *V1OrganizationApiService) ListUserOrganizations(ctx context.Context) ApiListUserOrganizationsRequest {
+func (a *V1OrganizationAPIService) ListUserOrganizations(ctx context.Context) ApiListUserOrganizationsRequest {
 	return ApiListUserOrganizationsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -486,7 +486,7 @@ func (a *V1OrganizationApiService) ListUserOrganizations(ctx context.Context) Ap
 
 // Execute executes the request
 //  @return []V1Organization
-func (a *V1OrganizationApiService) ListUserOrganizationsExecute(r ApiListUserOrganizationsRequest) ([]V1Organization, *http.Response, error) {
+func (a *V1OrganizationAPIService) ListUserOrganizationsExecute(r ApiListUserOrganizationsRequest) ([]V1Organization, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -494,7 +494,7 @@ func (a *V1OrganizationApiService) ListUserOrganizationsExecute(r ApiListUserOrg
 		localVarReturnValue  []V1Organization
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.ListUserOrganizations")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.ListUserOrganizations")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -583,7 +583,7 @@ func (a *V1OrganizationApiService) ListUserOrganizationsExecute(r ApiListUserOrg
 
 type ApiUpdateOrganizationRequest struct {
 	ctx context.Context
-	ApiService V1OrganizationApi
+	ApiService V1OrganizationAPI
 	body *UpdateOrganizationRequest
 }
 
@@ -605,7 +605,7 @@ Organization is figured out from the auth token since tokens are specific to org
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiUpdateOrganizationRequest
 */
-func (a *V1OrganizationApiService) UpdateOrganization(ctx context.Context) ApiUpdateOrganizationRequest {
+func (a *V1OrganizationAPIService) UpdateOrganization(ctx context.Context) ApiUpdateOrganizationRequest {
 	return ApiUpdateOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -614,7 +614,7 @@ func (a *V1OrganizationApiService) UpdateOrganization(ctx context.Context) ApiUp
 
 // Execute executes the request
 //  @return CommonsOrganization
-func (a *V1OrganizationApiService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
+func (a *V1OrganizationAPIService) UpdateOrganizationExecute(r ApiUpdateOrganizationRequest) (*CommonsOrganization, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -622,7 +622,7 @@ func (a *V1OrganizationApiService) UpdateOrganizationExecute(r ApiUpdateOrganiza
 		localVarReturnValue  *CommonsOrganization
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationApiService.UpdateOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1OrganizationAPIService.UpdateOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

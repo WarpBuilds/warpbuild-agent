@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1JobsApi interface {
+type V1JobsAPI interface {
 
 	/*
 	GetCostSummary GetCostSummary
@@ -51,12 +51,12 @@ type V1JobsApi interface {
 	GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) ([]CommonsDaywiseCost, *http.Response, error)
 }
 
-// V1JobsApiService V1JobsApi service
-type V1JobsApiService service
+// V1JobsAPIService V1JobsAPI service
+type V1JobsAPIService service
 
 type ApiGetCostSummaryRequest struct {
 	ctx context.Context
-	ApiService V1JobsApi
+	ApiService V1JobsAPI
 	startDate *string
 	endDate *string
 }
@@ -85,7 +85,7 @@ GetCostSummary
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetCostSummaryRequest
 */
-func (a *V1JobsApiService) GetCostSummary(ctx context.Context) ApiGetCostSummaryRequest {
+func (a *V1JobsAPIService) GetCostSummary(ctx context.Context) ApiGetCostSummaryRequest {
 	return ApiGetCostSummaryRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -94,7 +94,7 @@ func (a *V1JobsApiService) GetCostSummary(ctx context.Context) ApiGetCostSummary
 
 // Execute executes the request
 //  @return CommonsCostSummary
-func (a *V1JobsApiService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*CommonsCostSummary, *http.Response, error) {
+func (a *V1JobsAPIService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*CommonsCostSummary, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -102,7 +102,7 @@ func (a *V1JobsApiService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*C
 		localVarReturnValue  *CommonsCostSummary
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsApiService.GetCostSummary")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsAPIService.GetCostSummary")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -212,7 +212,7 @@ func (a *V1JobsApiService) GetCostSummaryExecute(r ApiGetCostSummaryRequest) (*C
 
 type ApiGetDaywiseCostsRequest struct {
 	ctx context.Context
-	ApiService V1JobsApi
+	ApiService V1JobsAPI
 	startDate *string
 	endDate *string
 }
@@ -241,7 +241,7 @@ GetDaywiseCosts
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetDaywiseCostsRequest
 */
-func (a *V1JobsApiService) GetDaywiseCosts(ctx context.Context) ApiGetDaywiseCostsRequest {
+func (a *V1JobsAPIService) GetDaywiseCosts(ctx context.Context) ApiGetDaywiseCostsRequest {
 	return ApiGetDaywiseCostsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -250,7 +250,7 @@ func (a *V1JobsApiService) GetDaywiseCosts(ctx context.Context) ApiGetDaywiseCos
 
 // Execute executes the request
 //  @return []CommonsDaywiseCost
-func (a *V1JobsApiService) GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) ([]CommonsDaywiseCost, *http.Response, error) {
+func (a *V1JobsAPIService) GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) ([]CommonsDaywiseCost, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -258,7 +258,7 @@ func (a *V1JobsApiService) GetDaywiseCostsExecute(r ApiGetDaywiseCostsRequest) (
 		localVarReturnValue  []CommonsDaywiseCost
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsApiService.GetDaywiseCosts")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1JobsAPIService.GetDaywiseCosts")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

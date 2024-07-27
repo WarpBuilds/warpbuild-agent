@@ -21,7 +21,7 @@ import (
 )
 
 
-type V1AuthApi interface {
+type V1AuthAPI interface {
 
 	/*
 	AuthTokensGet List user tokens
@@ -133,12 +133,12 @@ type V1AuthApi interface {
 	SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error)
 }
 
-// V1AuthApiService V1AuthApi service
-type V1AuthApiService service
+// V1AuthAPIService V1AuthAPI service
+type V1AuthAPIService service
 
 type ApiAuthTokensGetRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	body *CommonsListTokensOptions
 }
 
@@ -160,7 +160,7 @@ List user tokens
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthTokensGetRequest
 */
-func (a *V1AuthApiService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRequest {
+func (a *V1AuthAPIService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRequest {
 	return ApiAuthTokensGetRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -169,7 +169,7 @@ func (a *V1AuthApiService) AuthTokensGet(ctx context.Context) ApiAuthTokensGetRe
 
 // Execute executes the request
 //  @return []CommonsUserToken
-func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]CommonsUserToken, *http.Response, error) {
+func (a *V1AuthAPIService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]CommonsUserToken, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -177,7 +177,7 @@ func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]Co
 		localVarReturnValue  []CommonsUserToken
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthTokensGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthTokensGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -284,7 +284,7 @@ func (a *V1AuthApiService) AuthTokensGetExecute(r ApiAuthTokensGetRequest) ([]Co
 
 type ApiAuthUserRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	body *AuthUserRequest
 }
 
@@ -306,7 +306,7 @@ Logs in or signs up the userm
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthUserRequest
 */
-func (a *V1AuthApiService) AuthUser(ctx context.Context) ApiAuthUserRequest {
+func (a *V1AuthAPIService) AuthUser(ctx context.Context) ApiAuthUserRequest {
 	return ApiAuthUserRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -315,7 +315,7 @@ func (a *V1AuthApiService) AuthUser(ctx context.Context) ApiAuthUserRequest {
 
 // Execute executes the request
 //  @return AuthUserResponse
-func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserResponse, *http.Response, error) {
+func (a *V1AuthAPIService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -323,7 +323,7 @@ func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserRespo
 		localVarReturnValue  *AuthUserResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthUser")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthUser")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -427,7 +427,7 @@ func (a *V1AuthApiService) AuthUserExecute(r ApiAuthUserRequest) (*AuthUserRespo
 
 type ApiAuthUsersGetRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	body *CommonsListUsersOptions
 }
 
@@ -449,7 +449,7 @@ List users from authentication provider
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiAuthUsersGetRequest
 */
-func (a *V1AuthApiService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequest {
+func (a *V1AuthAPIService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequest {
 	return ApiAuthUsersGetRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -458,7 +458,7 @@ func (a *V1AuthApiService) AuthUsersGet(ctx context.Context) ApiAuthUsersGetRequ
 
 // Execute executes the request
 //  @return []CommonsListUsersResponse
-func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]CommonsListUsersResponse, *http.Response, error) {
+func (a *V1AuthAPIService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]CommonsListUsersResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -466,7 +466,7 @@ func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]Comm
 		localVarReturnValue  []CommonsListUsersResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.AuthUsersGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.AuthUsersGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -573,7 +573,7 @@ func (a *V1AuthApiService) AuthUsersGetExecute(r ApiAuthUsersGetRequest) ([]Comm
 
 type ApiGetAuthURLRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	provider string
 }
 
@@ -590,7 +590,7 @@ Get auth url
  @param provider Provider
  @return ApiGetAuthURLRequest
 */
-func (a *V1AuthApiService) GetAuthURL(ctx context.Context, provider string) ApiGetAuthURLRequest {
+func (a *V1AuthAPIService) GetAuthURL(ctx context.Context, provider string) ApiGetAuthURLRequest {
 	return ApiGetAuthURLRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -599,14 +599,14 @@ func (a *V1AuthApiService) GetAuthURL(ctx context.Context, provider string) ApiG
 }
 
 // Execute executes the request
-func (a *V1AuthApiService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Response, error) {
+func (a *V1AuthAPIService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.GetAuthURL")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.GetAuthURL")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -697,7 +697,7 @@ func (a *V1AuthApiService) GetAuthURLExecute(r ApiGetAuthURLRequest) (*http.Resp
 
 type ApiGetMeRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 }
 
 func (r ApiGetMeRequest) Execute() (*MeResponse, *http.Response, error) {
@@ -712,7 +712,7 @@ Gets the currently logged in user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetMeRequest
 */
-func (a *V1AuthApiService) GetMe(ctx context.Context) ApiGetMeRequest {
+func (a *V1AuthAPIService) GetMe(ctx context.Context) ApiGetMeRequest {
 	return ApiGetMeRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -721,7 +721,7 @@ func (a *V1AuthApiService) GetMe(ctx context.Context) ApiGetMeRequest {
 
 // Execute executes the request
 //  @return MeResponse
-func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.Response, error) {
+func (a *V1AuthAPIService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -729,7 +729,7 @@ func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.R
 		localVarReturnValue  *MeResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.GetMe")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.GetMe")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -842,7 +842,7 @@ func (a *V1AuthApiService) GetMeExecute(r ApiGetMeRequest) (*MeResponse, *http.R
 
 type ApiLogoutRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 }
 
 func (r ApiLogoutRequest) Execute() (*http.Response, error) {
@@ -857,7 +857,7 @@ Logs out the user
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiLogoutRequest
 */
-func (a *V1AuthApiService) Logout(ctx context.Context) ApiLogoutRequest {
+func (a *V1AuthAPIService) Logout(ctx context.Context) ApiLogoutRequest {
 	return ApiLogoutRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -865,14 +865,14 @@ func (a *V1AuthApiService) Logout(ctx context.Context) ApiLogoutRequest {
 }
 
 // Execute executes the request
-func (a *V1AuthApiService) LogoutExecute(r ApiLogoutRequest) (*http.Response, error) {
+func (a *V1AuthAPIService) LogoutExecute(r ApiLogoutRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.Logout")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.Logout")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -976,7 +976,7 @@ func (a *V1AuthApiService) LogoutExecute(r ApiLogoutRequest) (*http.Response, er
 
 type ApiRefreshTokenRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	body *TokenRefreshRequest
 }
 
@@ -998,7 +998,7 @@ Refreshes the access token
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiRefreshTokenRequest
 */
-func (a *V1AuthApiService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
+func (a *V1AuthAPIService) RefreshToken(ctx context.Context) ApiRefreshTokenRequest {
 	return ApiRefreshTokenRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1007,7 +1007,7 @@ func (a *V1AuthApiService) RefreshToken(ctx context.Context) ApiRefreshTokenRequ
 
 // Execute executes the request
 //  @return TokenRefreshResponse
-func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*TokenRefreshResponse, *http.Response, error) {
+func (a *V1AuthAPIService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*TokenRefreshResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1015,7 +1015,7 @@ func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*Token
 		localVarReturnValue  *TokenRefreshResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.RefreshToken")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.RefreshToken")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1119,7 +1119,7 @@ func (a *V1AuthApiService) RefreshTokenExecute(r ApiRefreshTokenRequest) (*Token
 
 type ApiSwitchOrganizationRequest struct {
 	ctx context.Context
-	ApiService V1AuthApi
+	ApiService V1AuthAPI
 	body *SwitchOrganizationRequest
 }
 
@@ -1139,7 +1139,7 @@ SwitchOrganization Switch organization
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSwitchOrganizationRequest
 */
-func (a *V1AuthApiService) SwitchOrganization(ctx context.Context) ApiSwitchOrganizationRequest {
+func (a *V1AuthAPIService) SwitchOrganization(ctx context.Context) ApiSwitchOrganizationRequest {
 	return ApiSwitchOrganizationRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1148,7 +1148,7 @@ func (a *V1AuthApiService) SwitchOrganization(ctx context.Context) ApiSwitchOrga
 
 // Execute executes the request
 //  @return SwitchOrganizationResponse
-func (a *V1AuthApiService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
+func (a *V1AuthAPIService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequest) (*SwitchOrganizationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1156,7 +1156,7 @@ func (a *V1AuthApiService) SwitchOrganizationExecute(r ApiSwitchOrganizationRequ
 		localVarReturnValue  *SwitchOrganizationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthApiService.SwitchOrganization")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1AuthAPIService.SwitchOrganization")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

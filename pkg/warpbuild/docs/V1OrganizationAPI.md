@@ -1,14 +1,14 @@
-# \V1OrganizationApi
+# \V1OrganizationAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**CreateOrganization**](V1OrganizationApi.md#CreateOrganization) | **Post** /organization | Adds a new organisation for a current user
-[**GetOrganization**](V1OrganizationApi.md#GetOrganization) | **Get** /organization | Get organization details for the current organization. Current organization is figured from the authorization token
-[**ListOrgUsers**](V1OrganizationApi.md#ListOrgUsers) | **Get** /organization/users | ListOrgUsers list the users for the current organization
-[**ListUserOrganizations**](V1OrganizationApi.md#ListUserOrganizations) | **Get** /organizations | ListUserOrganizations lists all the organization user has access to.
-[**UpdateOrganization**](V1OrganizationApi.md#UpdateOrganization) | **Patch** /organization | Updates existing organization based on the fields provided.
+[**CreateOrganization**](V1OrganizationAPI.md#CreateOrganization) | **Post** /organization | Adds a new organisation for a current user
+[**GetOrganization**](V1OrganizationAPI.md#GetOrganization) | **Get** /organization | Get organization details for the current organization. Current organization is figured from the authorization token
+[**ListOrgUsers**](V1OrganizationAPI.md#ListOrgUsers) | **Get** /organization/users | ListOrgUsers list the users for the current organization
+[**ListUserOrganizations**](V1OrganizationAPI.md#ListUserOrganizations) | **Get** /organizations | ListUserOrganizations lists all the organization user has access to.
+[**UpdateOrganization**](V1OrganizationAPI.md#UpdateOrganization) | **Patch** /organization | Updates existing organization based on the fields provided.
 
 
 
@@ -36,13 +36,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1OrganizationApi.CreateOrganization(context.Background()).Execute()
+    resp, r, err := apiClient.V1OrganizationAPI.CreateOrganization(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationApi.CreateOrganization``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationAPI.CreateOrganization``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `CreateOrganization`: SwitchOrganizationResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationApi.CreateOrganization`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationAPI.CreateOrganization`: %v\n", resp)
 }
 ```
 
@@ -95,13 +95,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1OrganizationApi.GetOrganization(context.Background()).Execute()
+    resp, r, err := apiClient.V1OrganizationAPI.GetOrganization(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationApi.GetOrganization``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationAPI.GetOrganization``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetOrganization`: CommonsOrganization
-    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationApi.GetOrganization`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationAPI.GetOrganization`: %v\n", resp)
 }
 ```
 
@@ -154,13 +154,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1OrganizationApi.ListOrgUsers(context.Background()).Execute()
+    resp, r, err := apiClient.V1OrganizationAPI.ListOrgUsers(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationApi.ListOrgUsers``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationAPI.ListOrgUsers``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListOrgUsers`: []V1ListUsersForOrganizationResult
-    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationApi.ListOrgUsers`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationAPI.ListOrgUsers`: %v\n", resp)
 }
 ```
 
@@ -213,13 +213,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1OrganizationApi.ListUserOrganizations(context.Background()).Execute()
+    resp, r, err := apiClient.V1OrganizationAPI.ListUserOrganizations(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationApi.ListUserOrganizations``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationAPI.ListUserOrganizations``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListUserOrganizations`: []V1Organization
-    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationApi.ListUserOrganizations`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationAPI.ListUserOrganizations`: %v\n", resp)
 }
 ```
 
@@ -275,13 +275,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1OrganizationApi.UpdateOrganization(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1OrganizationAPI.UpdateOrganization(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationApi.UpdateOrganization``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1OrganizationAPI.UpdateOrganization``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `UpdateOrganization`: CommonsOrganization
-    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationApi.UpdateOrganization`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1OrganizationAPI.UpdateOrganization`: %v\n", resp)
 }
 ```
 

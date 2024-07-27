@@ -1,11 +1,11 @@
-# \V1SkuApi
+# \V1SkuAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetSku**](V1SkuApi.md#GetSku) | **Get** /sku/{id} | Get default group for runner set
-[**ListSku**](V1SkuApi.md#ListSku) | **Get** /sku | ListAllSku lists all the runners sku for an org.
+[**GetSku**](V1SkuAPI.md#GetSku) | **Get** /sku/{id} | Get default group for runner set
+[**ListSku**](V1SkuAPI.md#ListSku) | **Get** /sku | ListAllSku lists all the runners sku for an org.
 
 
 
@@ -31,13 +31,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1SkuApi.GetSku(context.Background()).Execute()
+    resp, r, err := apiClient.V1SkuAPI.GetSku(context.Background()).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1SkuApi.GetSku``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SkuAPI.GetSku``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GetSku`: CommonsInstanceSku
-    fmt.Fprintf(os.Stdout, "Response from `V1SkuApi.GetSku`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1SkuAPI.GetSku`: %v\n", resp)
 }
 ```
 
@@ -100,13 +100,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1SkuApi.ListSku(context.Background()).Ids(ids).Cores(cores).Memory(memory).Arch(arch).Os(os).Manufacturer(manufacturer).PerformanceCategory(performanceCategory).HasGpu(hasGpu).Burstable(burstable).IncludeInternal(includeInternal).Execute()
+    resp, r, err := apiClient.V1SkuAPI.ListSku(context.Background()).Ids(ids).Cores(cores).Memory(memory).Arch(arch).Os(os).Manufacturer(manufacturer).PerformanceCategory(performanceCategory).HasGpu(hasGpu).Burstable(burstable).IncludeInternal(includeInternal).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1SkuApi.ListSku``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1SkuAPI.ListSku``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `ListSku`: []CommonsInstanceSku
-    fmt.Fprintf(os.Stdout, "Response from `V1SkuApi.ListSku`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1SkuAPI.ListSku`: %v\n", resp)
 }
 ```
 

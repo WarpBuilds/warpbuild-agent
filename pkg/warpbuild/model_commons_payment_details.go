@@ -315,9 +315,13 @@ func (o CommonsPaymentDetails) ToMap() (map[string]interface{}, error) {
 func (o *CommonsPaymentDetails) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsPaymentDetails := _CommonsPaymentDetails{}
 
-	if err = json.Unmarshal(bytes, &varCommonsPaymentDetails); err == nil {
-		*o = CommonsPaymentDetails(varCommonsPaymentDetails)
+	err = json.Unmarshal(bytes, &varCommonsPaymentDetails)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsPaymentDetails(varCommonsPaymentDetails)
 
 	additionalProperties := make(map[string]interface{})
 

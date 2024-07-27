@@ -207,9 +207,13 @@ func (o CommonsOrganization) ToMap() (map[string]interface{}, error) {
 func (o *CommonsOrganization) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsOrganization := _CommonsOrganization{}
 
-	if err = json.Unmarshal(bytes, &varCommonsOrganization); err == nil {
-		*o = CommonsOrganization(varCommonsOrganization)
+	err = json.Unmarshal(bytes, &varCommonsOrganization)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsOrganization(varCommonsOrganization)
 
 	additionalProperties := make(map[string]interface{})
 

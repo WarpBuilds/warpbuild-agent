@@ -135,9 +135,13 @@ func (o CommonsInternalPostUsageOutput) ToMap() (map[string]interface{}, error) 
 func (o *CommonsInternalPostUsageOutput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsInternalPostUsageOutput := _CommonsInternalPostUsageOutput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsInternalPostUsageOutput); err == nil {
-		*o = CommonsInternalPostUsageOutput(varCommonsInternalPostUsageOutput)
+	err = json.Unmarshal(bytes, &varCommonsInternalPostUsageOutput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsInternalPostUsageOutput(varCommonsInternalPostUsageOutput)
 
 	additionalProperties := make(map[string]interface{})
 

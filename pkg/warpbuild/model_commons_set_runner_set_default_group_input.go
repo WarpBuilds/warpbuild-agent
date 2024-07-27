@@ -99,9 +99,13 @@ func (o CommonsSetRunnerSetDefaultGroupInput) ToMap() (map[string]interface{}, e
 func (o *CommonsSetRunnerSetDefaultGroupInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsSetRunnerSetDefaultGroupInput := _CommonsSetRunnerSetDefaultGroupInput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsSetRunnerSetDefaultGroupInput); err == nil {
-		*o = CommonsSetRunnerSetDefaultGroupInput(varCommonsSetRunnerSetDefaultGroupInput)
+	err = json.Unmarshal(bytes, &varCommonsSetRunnerSetDefaultGroupInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsSetRunnerSetDefaultGroupInput(varCommonsSetRunnerSetDefaultGroupInput)
 
 	additionalProperties := make(map[string]interface{})
 

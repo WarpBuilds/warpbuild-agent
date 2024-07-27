@@ -135,9 +135,13 @@ func (o CommonsBillingInfo) ToMap() (map[string]interface{}, error) {
 func (o *CommonsBillingInfo) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsBillingInfo := _CommonsBillingInfo{}
 
-	if err = json.Unmarshal(bytes, &varCommonsBillingInfo); err == nil {
-		*o = CommonsBillingInfo(varCommonsBillingInfo)
+	err = json.Unmarshal(bytes, &varCommonsBillingInfo)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsBillingInfo(varCommonsBillingInfo)
 
 	additionalProperties := make(map[string]interface{})
 

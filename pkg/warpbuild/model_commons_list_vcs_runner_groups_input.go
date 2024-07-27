@@ -171,9 +171,13 @@ func (o CommonsListVCSRunnerGroupsInput) ToMap() (map[string]interface{}, error)
 func (o *CommonsListVCSRunnerGroupsInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsListVCSRunnerGroupsInput := _CommonsListVCSRunnerGroupsInput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsListVCSRunnerGroupsInput); err == nil {
-		*o = CommonsListVCSRunnerGroupsInput(varCommonsListVCSRunnerGroupsInput)
+	err = json.Unmarshal(bytes, &varCommonsListVCSRunnerGroupsInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsListVCSRunnerGroupsInput(varCommonsListVCSRunnerGroupsInput)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -171,9 +171,13 @@ func (o CommonsRunnersCostSummary) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRunnersCostSummary) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRunnersCostSummary := _CommonsRunnersCostSummary{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRunnersCostSummary); err == nil {
-		*o = CommonsRunnersCostSummary(varCommonsRunnersCostSummary)
+	err = json.Unmarshal(bytes, &varCommonsRunnersCostSummary)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRunnersCostSummary(varCommonsRunnersCostSummary)
 
 	additionalProperties := make(map[string]interface{})
 

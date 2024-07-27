@@ -315,9 +315,13 @@ func (o CommonsCoupon) ToMap() (map[string]interface{}, error) {
 func (o *CommonsCoupon) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsCoupon := _CommonsCoupon{}
 
-	if err = json.Unmarshal(bytes, &varCommonsCoupon); err == nil {
-		*o = CommonsCoupon(varCommonsCoupon)
+	err = json.Unmarshal(bytes, &varCommonsCoupon)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsCoupon(varCommonsCoupon)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -1,10 +1,10 @@
-# \V1BillingApi
+# \V1BillingAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**PostUsageForInternalService**](V1BillingApi.md#PostUsageForInternalService) | **Post** /billing/usage/internal | Post Usage for internal service
+[**PostUsageForInternalService**](V1BillingAPI.md#PostUsageForInternalService) | **Post** /billing/usage/internal | Post Usage for internal service
 
 
 
@@ -31,13 +31,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1BillingApi.PostUsageForInternalService(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1BillingAPI.PostUsageForInternalService(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1BillingApi.PostUsageForInternalService``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1BillingAPI.PostUsageForInternalService``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `PostUsageForInternalService`: CommonsInternalPostUsageOutput
-    fmt.Fprintf(os.Stdout, "Response from `V1BillingApi.PostUsageForInternalService`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1BillingAPI.PostUsageForInternalService`: %v\n", resp)
 }
 ```
 

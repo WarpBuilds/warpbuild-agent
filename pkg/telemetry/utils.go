@@ -43,7 +43,7 @@ func fetchPresignedURL(ctx context.Context) (string, error) {
 	log.Logger().Infof("Fetching presigned URL for runner ID: %s and polling secret %s from url %v and client [%+v]", runnerId, pollingSecret, client.GetConfig().Host, client)
 
 	logFileName := fmt.Sprintf("%s.log", time.Now().Format("20060102-150405"))
-	out, resp, err := client.V1RunnerInstanceApi.
+	out, resp, err := client.V1RunnerInstanceAPI.
 		GetRunnerInstancePresignedLogUploadURL(context.Background(), runnerId).
 		XPOLLINGSECRET(pollingSecret).
 		LogFileName(logFileName).

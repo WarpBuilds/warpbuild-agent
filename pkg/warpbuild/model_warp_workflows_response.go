@@ -99,9 +99,13 @@ func (o WarpWorkflowsResponse) ToMap() (map[string]interface{}, error) {
 func (o *WarpWorkflowsResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varWarpWorkflowsResponse := _WarpWorkflowsResponse{}
 
-	if err = json.Unmarshal(bytes, &varWarpWorkflowsResponse); err == nil {
-		*o = WarpWorkflowsResponse(varWarpWorkflowsResponse)
+	err = json.Unmarshal(bytes, &varWarpWorkflowsResponse)
+
+	if err != nil {
+		return err
 	}
+
+	*o = WarpWorkflowsResponse(varWarpWorkflowsResponse)
 
 	additionalProperties := make(map[string]interface{})
 

@@ -22,7 +22,7 @@ import (
 )
 
 
-type V1RunnersApi interface {
+type V1RunnersAPI interface {
 
 	/*
 	ComputeCustomRunnerRate Get ComputeCustomRunnerRate details
@@ -138,12 +138,12 @@ type V1RunnersApi interface {
 	UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*CommonsRunner, *http.Response, error)
 }
 
-// V1RunnersApiService V1RunnersApi service
-type V1RunnersApiService service
+// V1RunnersAPIService V1RunnersAPI service
+type V1RunnersAPIService service
 
 type ApiComputeCustomRunnerRateRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	body *CommonsRateCalculationInput
 }
 
@@ -163,7 +163,7 @@ ComputeCustomRunnerRate Get ComputeCustomRunnerRate details
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiComputeCustomRunnerRateRequest
 */
-func (a *V1RunnersApiService) ComputeCustomRunnerRate(ctx context.Context) ApiComputeCustomRunnerRateRequest {
+func (a *V1RunnersAPIService) ComputeCustomRunnerRate(ctx context.Context) ApiComputeCustomRunnerRateRequest {
 	return ApiComputeCustomRunnerRateRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -172,7 +172,7 @@ func (a *V1RunnersApiService) ComputeCustomRunnerRate(ctx context.Context) ApiCo
 
 // Execute executes the request
 //  @return CommonsRateCalculationOutput
-func (a *V1RunnersApiService) ComputeCustomRunnerRateExecute(r ApiComputeCustomRunnerRateRequest) (*CommonsRateCalculationOutput, *http.Response, error) {
+func (a *V1RunnersAPIService) ComputeCustomRunnerRateExecute(r ApiComputeCustomRunnerRateRequest) (*CommonsRateCalculationOutput, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -180,7 +180,7 @@ func (a *V1RunnersApiService) ComputeCustomRunnerRateExecute(r ApiComputeCustomR
 		localVarReturnValue  *CommonsRateCalculationOutput
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.ComputeCustomRunnerRate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.ComputeCustomRunnerRate")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -287,7 +287,7 @@ func (a *V1RunnersApiService) ComputeCustomRunnerRateExecute(r ApiComputeCustomR
 
 type ApiDeleteRunnerRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	id string
 }
 
@@ -302,7 +302,7 @@ DeleteRunner delete runner for the id. Current organization is figured from the 
  @param id Runner ID
  @return ApiDeleteRunnerRequest
 */
-func (a *V1RunnersApiService) DeleteRunner(ctx context.Context, id string) ApiDeleteRunnerRequest {
+func (a *V1RunnersAPIService) DeleteRunner(ctx context.Context, id string) ApiDeleteRunnerRequest {
 	return ApiDeleteRunnerRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -312,7 +312,7 @@ func (a *V1RunnersApiService) DeleteRunner(ctx context.Context, id string) ApiDe
 
 // Execute executes the request
 //  @return CommonsRunner
-func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*CommonsRunner, *http.Response, error) {
+func (a *V1RunnersAPIService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*CommonsRunner, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
@@ -320,7 +320,7 @@ func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*Co
 		localVarReturnValue  *CommonsRunner
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.DeleteRunner")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.DeleteRunner")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -423,7 +423,7 @@ func (a *V1RunnersApiService) DeleteRunnerExecute(r ApiDeleteRunnerRequest) (*Co
 
 type ApiGetRunnerRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	id string
 }
 
@@ -438,7 +438,7 @@ GetRunner Get runner details for the id. Current organization is figured from th
  @param id Runner ID
  @return ApiGetRunnerRequest
 */
-func (a *V1RunnersApiService) GetRunner(ctx context.Context, id string) ApiGetRunnerRequest {
+func (a *V1RunnersAPIService) GetRunner(ctx context.Context, id string) ApiGetRunnerRequest {
 	return ApiGetRunnerRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -448,7 +448,7 @@ func (a *V1RunnersApiService) GetRunner(ctx context.Context, id string) ApiGetRu
 
 // Execute executes the request
 //  @return CommonsRunner
-func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsRunner, *http.Response, error) {
+func (a *V1RunnersAPIService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsRunner, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -456,7 +456,7 @@ func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsR
 		localVarReturnValue  *CommonsRunner
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.GetRunner")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.GetRunner")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -559,7 +559,7 @@ func (a *V1RunnersApiService) GetRunnerExecute(r ApiGetRunnerRequest) (*CommonsR
 
 type ApiGetRunnerSetDefaultGroupRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 }
 
 func (r ApiGetRunnerSetDefaultGroupRequest) Execute() (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
@@ -572,7 +572,7 @@ GetRunnerSetDefaultGroup Get default group for runner set
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetRunnerSetDefaultGroupRequest
 */
-func (a *V1RunnersApiService) GetRunnerSetDefaultGroup(ctx context.Context) ApiGetRunnerSetDefaultGroupRequest {
+func (a *V1RunnersAPIService) GetRunnerSetDefaultGroup(ctx context.Context) ApiGetRunnerSetDefaultGroupRequest {
 	return ApiGetRunnerSetDefaultGroupRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -581,7 +581,7 @@ func (a *V1RunnersApiService) GetRunnerSetDefaultGroup(ctx context.Context) ApiG
 
 // Execute executes the request
 //  @return CommonsRunnerSetDefaultGroup
-func (a *V1RunnersApiService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
+func (a *V1RunnersAPIService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -589,7 +589,7 @@ func (a *V1RunnersApiService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetD
 		localVarReturnValue  *CommonsRunnerSetDefaultGroup
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.GetRunnerSetDefaultGroup")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.GetRunnerSetDefaultGroup")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -691,7 +691,7 @@ func (a *V1RunnersApiService) GetRunnerSetDefaultGroupExecute(r ApiGetRunnerSetD
 
 type ApiGetRunnersUsageRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	startDate *string
 	endDate *string
 	capacityTypes *[]string
@@ -760,7 +760,7 @@ GetRunnersUsage Get runtimes for runners of the organisation
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetRunnersUsageRequest
 */
-func (a *V1RunnersApiService) GetRunnersUsage(ctx context.Context) ApiGetRunnersUsageRequest {
+func (a *V1RunnersAPIService) GetRunnersUsage(ctx context.Context) ApiGetRunnersUsageRequest {
 	return ApiGetRunnersUsageRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -769,7 +769,7 @@ func (a *V1RunnersApiService) GetRunnersUsage(ctx context.Context) ApiGetRunners
 
 // Execute executes the request
 //  @return CommonsRunnersUsage
-func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest) (*CommonsRunnersUsage, *http.Response, error) {
+func (a *V1RunnersAPIService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest) (*CommonsRunnersUsage, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -777,7 +777,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		localVarReturnValue  *CommonsRunnersUsage
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.GetRunnersUsage")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.GetRunnersUsage")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -801,7 +801,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "capacity_types", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "capacity_types", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "capacity_types", t, "multi")
@@ -812,7 +812,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "archs", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "archs", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "archs", t, "multi")
@@ -823,7 +823,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "images", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "images", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "images", t, "multi")
@@ -834,7 +834,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "cores", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "cores", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "cores", t, "multi")
@@ -845,7 +845,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 		if reflect.TypeOf(t).Kind() == reflect.Slice {
 			s := reflect.ValueOf(t)
 			for i := 0; i < s.Len(); i++ {
-				parameterAddToHeaderOrQuery(localVarQueryParams, "runner_types", s.Index(i), "multi")
+				parameterAddToHeaderOrQuery(localVarQueryParams, "runner_types", s.Index(i).Interface(), "multi")
 			}
 		} else {
 			parameterAddToHeaderOrQuery(localVarQueryParams, "runner_types", t, "multi")
@@ -945,7 +945,7 @@ func (a *V1RunnersApiService) GetRunnersUsageExecute(r ApiGetRunnersUsageRequest
 
 type ApiListRunnersRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 }
 
 func (r ApiListRunnersRequest) Execute() ([]CommonsRunner, *http.Response, error) {
@@ -958,7 +958,7 @@ ListRunners ListRunners lists all the runners for an org.
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListRunnersRequest
 */
-func (a *V1RunnersApiService) ListRunners(ctx context.Context) ApiListRunnersRequest {
+func (a *V1RunnersAPIService) ListRunners(ctx context.Context) ApiListRunnersRequest {
 	return ApiListRunnersRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -967,7 +967,7 @@ func (a *V1RunnersApiService) ListRunners(ctx context.Context) ApiListRunnersReq
 
 // Execute executes the request
 //  @return []CommonsRunner
-func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]CommonsRunner, *http.Response, error) {
+func (a *V1RunnersAPIService) ListRunnersExecute(r ApiListRunnersRequest) ([]CommonsRunner, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -975,7 +975,7 @@ func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]Com
 		localVarReturnValue  []CommonsRunner
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.ListRunners")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.ListRunners")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1064,7 +1064,7 @@ func (a *V1RunnersApiService) ListRunnersExecute(r ApiListRunnersRequest) ([]Com
 
 type ApiSetRunnerSetDefaultGroupRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	body *CommonsSetRunnerSetDefaultGroupInput
 }
 
@@ -1084,7 +1084,7 @@ SetRunnerSetDefaultGroup Set default group for runner set
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSetRunnerSetDefaultGroupRequest
 */
-func (a *V1RunnersApiService) SetRunnerSetDefaultGroup(ctx context.Context) ApiSetRunnerSetDefaultGroupRequest {
+func (a *V1RunnersAPIService) SetRunnerSetDefaultGroup(ctx context.Context) ApiSetRunnerSetDefaultGroupRequest {
 	return ApiSetRunnerSetDefaultGroupRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1093,7 +1093,7 @@ func (a *V1RunnersApiService) SetRunnerSetDefaultGroup(ctx context.Context) ApiS
 
 // Execute executes the request
 //  @return CommonsRunnerSetDefaultGroup
-func (a *V1RunnersApiService) SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
+func (a *V1RunnersAPIService) SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetDefaultGroupRequest) (*CommonsRunnerSetDefaultGroup, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1101,7 +1101,7 @@ func (a *V1RunnersApiService) SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetD
 		localVarReturnValue  *CommonsRunnerSetDefaultGroup
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.SetRunnerSetDefaultGroup")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.SetRunnerSetDefaultGroup")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1208,7 +1208,7 @@ func (a *V1RunnersApiService) SetRunnerSetDefaultGroupExecute(r ApiSetRunnerSetD
 
 type ApiSetupRunnerRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	body *CommonsSetupRunnerInput
 }
 
@@ -1230,7 +1230,7 @@ User can request a runner setup by passing different name.
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSetupRunnerRequest
 */
-func (a *V1RunnersApiService) SetupRunner(ctx context.Context) ApiSetupRunnerRequest {
+func (a *V1RunnersAPIService) SetupRunner(ctx context.Context) ApiSetupRunnerRequest {
 	return ApiSetupRunnerRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1239,7 +1239,7 @@ func (a *V1RunnersApiService) SetupRunner(ctx context.Context) ApiSetupRunnerReq
 
 // Execute executes the request
 //  @return CommonsRunner
-func (a *V1RunnersApiService) SetupRunnerExecute(r ApiSetupRunnerRequest) (*CommonsRunner, *http.Response, error) {
+func (a *V1RunnersAPIService) SetupRunnerExecute(r ApiSetupRunnerRequest) (*CommonsRunner, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -1247,7 +1247,7 @@ func (a *V1RunnersApiService) SetupRunnerExecute(r ApiSetupRunnerRequest) (*Comm
 		localVarReturnValue  *CommonsRunner
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.SetupRunner")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.SetupRunner")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1341,7 +1341,7 @@ func (a *V1RunnersApiService) SetupRunnerExecute(r ApiSetupRunnerRequest) (*Comm
 
 type ApiUpdateRunnerRequest struct {
 	ctx context.Context
-	ApiService V1RunnersApi
+	ApiService V1RunnersAPI
 	id string
 	body *CommonsUpdateRunnerInput
 }
@@ -1363,7 +1363,7 @@ UpdateRunner Get runner details for the id. Current organization is figured from
  @param id Runner ID
  @return ApiUpdateRunnerRequest
 */
-func (a *V1RunnersApiService) UpdateRunner(ctx context.Context, id string) ApiUpdateRunnerRequest {
+func (a *V1RunnersAPIService) UpdateRunner(ctx context.Context, id string) ApiUpdateRunnerRequest {
 	return ApiUpdateRunnerRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -1373,7 +1373,7 @@ func (a *V1RunnersApiService) UpdateRunner(ctx context.Context, id string) ApiUp
 
 // Execute executes the request
 //  @return CommonsRunner
-func (a *V1RunnersApiService) UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*CommonsRunner, *http.Response, error) {
+func (a *V1RunnersAPIService) UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*CommonsRunner, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -1381,7 +1381,7 @@ func (a *V1RunnersApiService) UpdateRunnerExecute(r ApiUpdateRunnerRequest) (*Co
 		localVarReturnValue  *CommonsRunner
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersApiService.UpdateRunner")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1RunnersAPIService.UpdateRunner")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

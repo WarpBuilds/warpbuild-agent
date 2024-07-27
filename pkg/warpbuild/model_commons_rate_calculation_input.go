@@ -135,9 +135,13 @@ func (o CommonsRateCalculationInput) ToMap() (map[string]interface{}, error) {
 func (o *CommonsRateCalculationInput) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsRateCalculationInput := _CommonsRateCalculationInput{}
 
-	if err = json.Unmarshal(bytes, &varCommonsRateCalculationInput); err == nil {
-		*o = CommonsRateCalculationInput(varCommonsRateCalculationInput)
+	err = json.Unmarshal(bytes, &varCommonsRateCalculationInput)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsRateCalculationInput(varCommonsRateCalculationInput)
 
 	additionalProperties := make(map[string]interface{})
 

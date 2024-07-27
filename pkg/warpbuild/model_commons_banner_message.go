@@ -243,9 +243,13 @@ func (o CommonsBannerMessage) ToMap() (map[string]interface{}, error) {
 func (o *CommonsBannerMessage) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsBannerMessage := _CommonsBannerMessage{}
 
-	if err = json.Unmarshal(bytes, &varCommonsBannerMessage); err == nil {
-		*o = CommonsBannerMessage(varCommonsBannerMessage)
+	err = json.Unmarshal(bytes, &varCommonsBannerMessage)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsBannerMessage(varCommonsBannerMessage)
 
 	additionalProperties := make(map[string]interface{})
 

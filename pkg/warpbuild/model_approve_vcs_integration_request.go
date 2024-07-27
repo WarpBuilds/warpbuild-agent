@@ -135,9 +135,13 @@ func (o ApproveVCSIntegrationRequest) ToMap() (map[string]interface{}, error) {
 func (o *ApproveVCSIntegrationRequest) UnmarshalJSON(bytes []byte) (err error) {
 	varApproveVCSIntegrationRequest := _ApproveVCSIntegrationRequest{}
 
-	if err = json.Unmarshal(bytes, &varApproveVCSIntegrationRequest); err == nil {
-		*o = ApproveVCSIntegrationRequest(varApproveVCSIntegrationRequest)
+	err = json.Unmarshal(bytes, &varApproveVCSIntegrationRequest)
+
+	if err != nil {
+		return err
 	}
+
+	*o = ApproveVCSIntegrationRequest(varApproveVCSIntegrationRequest)
 
 	additionalProperties := make(map[string]interface{})
 

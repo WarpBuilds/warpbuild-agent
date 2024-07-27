@@ -1,10 +1,10 @@
-# \V1InsightsIntegrationsApi
+# \V1InsightsIntegrationsAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GitHubCallback**](V1InsightsIntegrationsApi.md#GitHubCallback) | **Post** /insights/integrations/github/callback | GitHub callback for insights
+[**GitHubCallback**](V1InsightsIntegrationsAPI.md#GitHubCallback) | **Post** /insights/integrations/github/callback | GitHub callback for insights
 
 
 
@@ -33,13 +33,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1InsightsIntegrationsApi.GitHubCallback(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1InsightsIntegrationsAPI.GitHubCallback(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1InsightsIntegrationsApi.GitHubCallback``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1InsightsIntegrationsAPI.GitHubCallback``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `GitHubCallback`: AuthUserResponse
-    fmt.Fprintf(os.Stdout, "Response from `V1InsightsIntegrationsApi.GitHubCallback`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1InsightsIntegrationsAPI.GitHubCallback`: %v\n", resp)
 }
 ```
 

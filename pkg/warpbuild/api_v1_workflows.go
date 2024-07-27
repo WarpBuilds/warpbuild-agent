@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1WorkflowsApi interface {
+type V1WorkflowsAPI interface {
 
 	/*
 	GetPullRequestAuthURL Get auth url required for GH PR
@@ -78,12 +78,12 @@ type V1WorkflowsApi interface {
 	WarpWorkflowsExecute(r ApiWarpWorkflowsRequest) (*WarpWorkflowsResponse, *http.Response, error)
 }
 
-// V1WorkflowsApiService V1WorkflowsApi service
-type V1WorkflowsApiService service
+// V1WorkflowsAPIService V1WorkflowsAPI service
+type V1WorkflowsAPIService service
 
 type ApiGetPullRequestAuthURLRequest struct {
 	ctx context.Context
-	ApiService V1WorkflowsApi
+	ApiService V1WorkflowsAPI
 }
 
 func (r ApiGetPullRequestAuthURLRequest) Execute() (map[string]string, *http.Response, error) {
@@ -98,7 +98,7 @@ Get auth url required for GH PR
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiGetPullRequestAuthURLRequest
 */
-func (a *V1WorkflowsApiService) GetPullRequestAuthURL(ctx context.Context) ApiGetPullRequestAuthURLRequest {
+func (a *V1WorkflowsAPIService) GetPullRequestAuthURL(ctx context.Context) ApiGetPullRequestAuthURLRequest {
 	return ApiGetPullRequestAuthURLRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -107,7 +107,7 @@ func (a *V1WorkflowsApiService) GetPullRequestAuthURL(ctx context.Context) ApiGe
 
 // Execute executes the request
 //  @return map[string]string
-func (a *V1WorkflowsApiService) GetPullRequestAuthURLExecute(r ApiGetPullRequestAuthURLRequest) (map[string]string, *http.Response, error) {
+func (a *V1WorkflowsAPIService) GetPullRequestAuthURLExecute(r ApiGetPullRequestAuthURLRequest) (map[string]string, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -115,7 +115,7 @@ func (a *V1WorkflowsApiService) GetPullRequestAuthURLExecute(r ApiGetPullRequest
 		localVarReturnValue  map[string]string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsApiService.GetPullRequestAuthURL")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsAPIService.GetPullRequestAuthURL")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -217,7 +217,7 @@ func (a *V1WorkflowsApiService) GetPullRequestAuthURLExecute(r ApiGetPullRequest
 
 type ApiListWorkflowsRequest struct {
 	ctx context.Context
-	ApiService V1WorkflowsApi
+	ApiService V1WorkflowsAPI
 }
 
 func (r ApiListWorkflowsRequest) Execute() (*ListWorkflowsResponse, *http.Response, error) {
@@ -232,7 +232,7 @@ Workflows (workflows)
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiListWorkflowsRequest
 */
-func (a *V1WorkflowsApiService) ListWorkflows(ctx context.Context) ApiListWorkflowsRequest {
+func (a *V1WorkflowsAPIService) ListWorkflows(ctx context.Context) ApiListWorkflowsRequest {
 	return ApiListWorkflowsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -241,7 +241,7 @@ func (a *V1WorkflowsApiService) ListWorkflows(ctx context.Context) ApiListWorkfl
 
 // Execute executes the request
 //  @return ListWorkflowsResponse
-func (a *V1WorkflowsApiService) ListWorkflowsExecute(r ApiListWorkflowsRequest) (*ListWorkflowsResponse, *http.Response, error) {
+func (a *V1WorkflowsAPIService) ListWorkflowsExecute(r ApiListWorkflowsRequest) (*ListWorkflowsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -249,7 +249,7 @@ func (a *V1WorkflowsApiService) ListWorkflowsExecute(r ApiListWorkflowsRequest) 
 		localVarReturnValue  *ListWorkflowsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsApiService.ListWorkflows")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsAPIService.ListWorkflows")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -351,7 +351,7 @@ func (a *V1WorkflowsApiService) ListWorkflowsExecute(r ApiListWorkflowsRequest) 
 
 type ApiPullWorkflowsRequest struct {
 	ctx context.Context
-	ApiService V1WorkflowsApi
+	ApiService V1WorkflowsAPI
 }
 
 func (r ApiPullWorkflowsRequest) Execute() (*http.Response, error) {
@@ -366,7 +366,7 @@ Workflows (workflows)
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiPullWorkflowsRequest
 */
-func (a *V1WorkflowsApiService) PullWorkflows(ctx context.Context) ApiPullWorkflowsRequest {
+func (a *V1WorkflowsAPIService) PullWorkflows(ctx context.Context) ApiPullWorkflowsRequest {
 	return ApiPullWorkflowsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -374,14 +374,14 @@ func (a *V1WorkflowsApiService) PullWorkflows(ctx context.Context) ApiPullWorkfl
 }
 
 // Execute executes the request
-func (a *V1WorkflowsApiService) PullWorkflowsExecute(r ApiPullWorkflowsRequest) (*http.Response, error) {
+func (a *V1WorkflowsAPIService) PullWorkflowsExecute(r ApiPullWorkflowsRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsApiService.PullWorkflows")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsAPIService.PullWorkflows")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -474,7 +474,7 @@ func (a *V1WorkflowsApiService) PullWorkflowsExecute(r ApiPullWorkflowsRequest) 
 
 type ApiWarpWorkflowsRequest struct {
 	ctx context.Context
-	ApiService V1WorkflowsApi
+	ApiService V1WorkflowsAPI
 	body *WarpWorkflowsRequest
 }
 
@@ -496,7 +496,7 @@ Warps workflows
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiWarpWorkflowsRequest
 */
-func (a *V1WorkflowsApiService) WarpWorkflows(ctx context.Context) ApiWarpWorkflowsRequest {
+func (a *V1WorkflowsAPIService) WarpWorkflows(ctx context.Context) ApiWarpWorkflowsRequest {
 	return ApiWarpWorkflowsRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -505,7 +505,7 @@ func (a *V1WorkflowsApiService) WarpWorkflows(ctx context.Context) ApiWarpWorkfl
 
 // Execute executes the request
 //  @return WarpWorkflowsResponse
-func (a *V1WorkflowsApiService) WarpWorkflowsExecute(r ApiWarpWorkflowsRequest) (*WarpWorkflowsResponse, *http.Response, error) {
+func (a *V1WorkflowsAPIService) WarpWorkflowsExecute(r ApiWarpWorkflowsRequest) (*WarpWorkflowsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
@@ -513,7 +513,7 @@ func (a *V1WorkflowsApiService) WarpWorkflowsExecute(r ApiWarpWorkflowsRequest) 
 		localVarReturnValue  *WarpWorkflowsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsApiService.WarpWorkflows")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1WorkflowsAPIService.WarpWorkflows")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

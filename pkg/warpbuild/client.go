@@ -50,31 +50,37 @@ type APIClient struct {
 
 	// API Services
 
-	V1AuthApi V1AuthApi
+	V1AuthAPI V1AuthAPI
 
-	V1BillingApi V1BillingApi
+	V1BillingAPI V1BillingAPI
 
-	V1DebuggerApi V1DebuggerApi
+	V1DebuggerAPI V1DebuggerAPI
 
-	V1InsightsIntegrationsApi V1InsightsIntegrationsApi
+	V1InsightsIntegrationsAPI V1InsightsIntegrationsAPI
 
-	V1JobsApi V1JobsApi
+	V1JobsAPI V1JobsAPI
 
-	V1OrganizationApi V1OrganizationApi
+	V1OrganizationAPI V1OrganizationAPI
 
-	V1RunnerInstanceApi V1RunnerInstanceApi
+	V1RunnerImagePullSecretsAPI V1RunnerImagePullSecretsAPI
 
-	V1RunnersApi V1RunnersApi
+	V1RunnerImageVersionsAPI V1RunnerImageVersionsAPI
 
-	V1SkuApi V1SkuApi
+	V1RunnerImagesAPI V1RunnerImagesAPI
 
-	V1SubscriptionsApi V1SubscriptionsApi
+	V1RunnerInstanceAPI V1RunnerInstanceAPI
 
-	V1UiApi V1UiApi
+	V1RunnersAPI V1RunnersAPI
 
-	V1VcsApi V1VcsApi
+	V1SkuAPI V1SkuAPI
 
-	V1WorkflowsApi V1WorkflowsApi
+	V1SubscriptionsAPI V1SubscriptionsAPI
+
+	V1UiAPI V1UiAPI
+
+	V1VcsAPI V1VcsAPI
+
+	V1WorkflowsAPI V1WorkflowsAPI
 }
 
 type service struct {
@@ -93,19 +99,22 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.V1AuthApi = (*V1AuthApiService)(&c.common)
-	c.V1BillingApi = (*V1BillingApiService)(&c.common)
-	c.V1DebuggerApi = (*V1DebuggerApiService)(&c.common)
-	c.V1InsightsIntegrationsApi = (*V1InsightsIntegrationsApiService)(&c.common)
-	c.V1JobsApi = (*V1JobsApiService)(&c.common)
-	c.V1OrganizationApi = (*V1OrganizationApiService)(&c.common)
-	c.V1RunnerInstanceApi = (*V1RunnerInstanceApiService)(&c.common)
-	c.V1RunnersApi = (*V1RunnersApiService)(&c.common)
-	c.V1SkuApi = (*V1SkuApiService)(&c.common)
-	c.V1SubscriptionsApi = (*V1SubscriptionsApiService)(&c.common)
-	c.V1UiApi = (*V1UiApiService)(&c.common)
-	c.V1VcsApi = (*V1VcsApiService)(&c.common)
-	c.V1WorkflowsApi = (*V1WorkflowsApiService)(&c.common)
+	c.V1AuthAPI = (*V1AuthAPIService)(&c.common)
+	c.V1BillingAPI = (*V1BillingAPIService)(&c.common)
+	c.V1DebuggerAPI = (*V1DebuggerAPIService)(&c.common)
+	c.V1InsightsIntegrationsAPI = (*V1InsightsIntegrationsAPIService)(&c.common)
+	c.V1JobsAPI = (*V1JobsAPIService)(&c.common)
+	c.V1OrganizationAPI = (*V1OrganizationAPIService)(&c.common)
+	c.V1RunnerImagePullSecretsAPI = (*V1RunnerImagePullSecretsAPIService)(&c.common)
+	c.V1RunnerImageVersionsAPI = (*V1RunnerImageVersionsAPIService)(&c.common)
+	c.V1RunnerImagesAPI = (*V1RunnerImagesAPIService)(&c.common)
+	c.V1RunnerInstanceAPI = (*V1RunnerInstanceAPIService)(&c.common)
+	c.V1RunnersAPI = (*V1RunnersAPIService)(&c.common)
+	c.V1SkuAPI = (*V1SkuAPIService)(&c.common)
+	c.V1SubscriptionsAPI = (*V1SubscriptionsAPIService)(&c.common)
+	c.V1UiAPI = (*V1UiAPIService)(&c.common)
+	c.V1VcsAPI = (*V1VcsAPIService)(&c.common)
+	c.V1WorkflowsAPI = (*V1WorkflowsAPIService)(&c.common)
 
 	return c
 }
@@ -473,6 +482,7 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 			return
 		}
 		_, err = f.Seek(0, io.SeekStart)
+		err = os.Remove(f.Name())
 		return
 	}
 	if f, ok := v.(**os.File); ok {
@@ -485,6 +495,7 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 			return
 		}
 		_, err = (*f).Seek(0, io.SeekStart)
+		err = os.Remove((*f).Name())
 		return
 	}
 	if xmlCheck.MatchString(contentType) {
@@ -561,7 +572,11 @@ func setBody(body interface{}, contentType string) (bodyBuf *bytes.Buffer, err e
 	} else if jsonCheck.MatchString(contentType) {
 		err = json.NewEncoder(bodyBuf).Encode(body)
 	} else if xmlCheck.MatchString(contentType) {
-		err = xml.NewEncoder(bodyBuf).Encode(body)
+		var bs []byte
+		bs, err = xml.Marshal(body)
+		if err == nil {
+			bodyBuf.Write(bs)
+		}
 	}
 
 	if err != nil {
@@ -677,16 +692,17 @@ func formatErrorMessage(status string, v interface{}) string {
 	str := ""
 	metaValue := reflect.ValueOf(v).Elem()
 
-	field := metaValue.FieldByName("Title")
-	if field != (reflect.Value{}) {
-		str = fmt.Sprintf("%s", field.Interface())
+	if metaValue.Kind() == reflect.Struct {
+		field := metaValue.FieldByName("Title")
+		if field != (reflect.Value{}) {
+			str = fmt.Sprintf("%s", field.Interface())
+		}
+
+		field = metaValue.FieldByName("Detail")
+		if field != (reflect.Value{}) {
+			str = fmt.Sprintf("%s (%s)", str, field.Interface())
+		}
 	}
 
-	field = metaValue.FieldByName("Detail")
-	if field != (reflect.Value{}) {
-		str = fmt.Sprintf("%s (%s)", str, field.Interface())
-	}
-
-	// status title (detail)
 	return strings.TrimSpace(fmt.Sprintf("%s %s", status, str))
 }

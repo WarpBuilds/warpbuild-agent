@@ -20,7 +20,7 @@ import (
 )
 
 
-type V1BillingApi interface {
+type V1BillingAPI interface {
 
 	/*
 	PostUsageForInternalService Post Usage for internal service
@@ -35,12 +35,12 @@ type V1BillingApi interface {
 	PostUsageForInternalServiceExecute(r ApiPostUsageForInternalServiceRequest) (*CommonsInternalPostUsageOutput, *http.Response, error)
 }
 
-// V1BillingApiService V1BillingApi service
-type V1BillingApiService service
+// V1BillingAPIService V1BillingAPI service
+type V1BillingAPIService service
 
 type ApiPostUsageForInternalServiceRequest struct {
 	ctx context.Context
-	ApiService V1BillingApi
+	ApiService V1BillingAPI
 	body *CommonsInternalPostUsageInput
 }
 
@@ -60,7 +60,7 @@ PostUsageForInternalService Post Usage for internal service
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiPostUsageForInternalServiceRequest
 */
-func (a *V1BillingApiService) PostUsageForInternalService(ctx context.Context) ApiPostUsageForInternalServiceRequest {
+func (a *V1BillingAPIService) PostUsageForInternalService(ctx context.Context) ApiPostUsageForInternalServiceRequest {
 	return ApiPostUsageForInternalServiceRequest{
 		ApiService: a,
 		ctx: ctx,
@@ -69,7 +69,7 @@ func (a *V1BillingApiService) PostUsageForInternalService(ctx context.Context) A
 
 // Execute executes the request
 //  @return CommonsInternalPostUsageOutput
-func (a *V1BillingApiService) PostUsageForInternalServiceExecute(r ApiPostUsageForInternalServiceRequest) (*CommonsInternalPostUsageOutput, *http.Response, error) {
+func (a *V1BillingAPIService) PostUsageForInternalServiceExecute(r ApiPostUsageForInternalServiceRequest) (*CommonsInternalPostUsageOutput, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -77,7 +77,7 @@ func (a *V1BillingApiService) PostUsageForInternalServiceExecute(r ApiPostUsageF
 		localVarReturnValue  *CommonsInternalPostUsageOutput
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1BillingApiService.PostUsageForInternalService")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "V1BillingAPIService.PostUsageForInternalService")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

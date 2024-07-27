@@ -1,10 +1,10 @@
-# \V1DebuggerApi
+# \V1DebuggerAPI
 
 All URIs are relative to *https://backend.warpbuild.com/api/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**DebugPublishEvent**](V1DebuggerApi.md#DebugPublishEvent) | **Post** /debugger/events/publish | Publish an event to the event bus
+[**DebugPublishEvent**](V1DebuggerAPI.md#DebugPublishEvent) | **Post** /debugger/events/publish | Publish an event to the event bus
 
 
 
@@ -31,13 +31,13 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.V1DebuggerApi.DebugPublishEvent(context.Background()).Body(body).Execute()
+    resp, r, err := apiClient.V1DebuggerAPI.DebugPublishEvent(context.Background()).Body(body).Execute()
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Error when calling `V1DebuggerApi.DebugPublishEvent``: %v\n", err)
+        fmt.Fprintf(os.Stderr, "Error when calling `V1DebuggerAPI.DebugPublishEvent``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
     // response from `DebugPublishEvent`: TypesGenericSuccessMessage
-    fmt.Fprintf(os.Stdout, "Response from `V1DebuggerApi.DebugPublishEvent`: %v\n", resp)
+    fmt.Fprintf(os.Stdout, "Response from `V1DebuggerAPI.DebugPublishEvent`: %v\n", resp)
 }
 ```
 

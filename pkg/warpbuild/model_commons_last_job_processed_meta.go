@@ -279,9 +279,13 @@ func (o CommonsLastJobProcessedMeta) ToMap() (map[string]interface{}, error) {
 func (o *CommonsLastJobProcessedMeta) UnmarshalJSON(bytes []byte) (err error) {
 	varCommonsLastJobProcessedMeta := _CommonsLastJobProcessedMeta{}
 
-	if err = json.Unmarshal(bytes, &varCommonsLastJobProcessedMeta); err == nil {
-		*o = CommonsLastJobProcessedMeta(varCommonsLastJobProcessedMeta)
+	err = json.Unmarshal(bytes, &varCommonsLastJobProcessedMeta)
+
+	if err != nil {
+		return err
 	}
+
+	*o = CommonsLastJobProcessedMeta(varCommonsLastJobProcessedMeta)
 
 	additionalProperties := make(map[string]interface{})
 

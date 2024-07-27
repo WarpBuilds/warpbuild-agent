@@ -92,7 +92,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
 			log.Logger().Infof("polling secret: %s", a.pollingSecret)
 
-			allocationDetails, resp, err := a.client.V1RunnerInstanceApi.
+			allocationDetails, resp, err := a.client.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
@@ -103,12 +103,26 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				continue
 			}
 
+			if allocationDetails == nil {
+				log.Logger().Infof("No runner instance allocation details found. Retrying in %s", Interval)
+				continue
+			}
+
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
 
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
 					os.Setenv(key, val)
+				}
+
+				if opts.Manager.Provider == ProviderGithubCRI {
+					for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+						opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
+							Key:   key,
+							Value: val,
+						})
+					}
 				}
 
 				log.Logger().Infof("Starting runner")

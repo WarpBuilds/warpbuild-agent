@@ -198,9 +198,13 @@ func (o AuthUserResponse) ToMap() (map[string]interface{}, error) {
 func (o *AuthUserResponse) UnmarshalJSON(bytes []byte) (err error) {
 	varAuthUserResponse := _AuthUserResponse{}
 
-	if err = json.Unmarshal(bytes, &varAuthUserResponse); err == nil {
-		*o = AuthUserResponse(varAuthUserResponse)
+	err = json.Unmarshal(bytes, &varAuthUserResponse)
+
+	if err != nil {
+		return err
 	}
+
+	*o = AuthUserResponse(varAuthUserResponse)
 
 	additionalProperties := make(map[string]interface{})
 

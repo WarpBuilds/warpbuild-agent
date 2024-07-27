@@ -860,6 +860,486 @@ paths:
       summary: ListUserOrganizations lists all the organization user has access to.
       tags:
       - v1 organization
+  /runner-image-pull-secrets:
+    get:
+      operationId: ListRunnerImagePullSecrets
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ListRunnerImagePullSecretsOutput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner image pull secrets.
+      tags:
+      - v1 runner_image_pull_secrets
+    post:
+      operationId: CreateRunnerImagePullSecret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.CreateRunnerImagePullSecretInput'
+        description: Runner Image Pull Secret
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImagePullSecret'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Create a new runner image pull secret.
+      tags:
+      - v1 runner_image_pull_secrets
+      x-codegen-request-body-name: body
+  /runner-image-pull-secrets/{id}:
+    delete:
+      operationId: DeleteRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/types.GenericSuccessMessage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+    get:
+      operationId: GetRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImagePullSecret'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+    put:
+      operationId: UpdateRunnerImagePullSecret
+      parameters:
+      - description: Runner Image Pull Secret ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.UpdateRunnerImagePullSecretInput'
+        description: Runner Image Pull Secret
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImagePullSecret'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image pull secret details for the id.
+      tags:
+      - v1 runner_image_pull_secrets
+      x-codegen-request-body-name: body
+  /runner-image-versions:
+    get:
+      operationId: ListRunnerImageVersions
+      parameters:
+      - description: Runner Image ID
+        in: query
+        name: runner_image_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ListRunnerImageVersionsOutput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner image versions.
+      tags:
+      - v1 runner_image_versions
+  /runner-image-versions/{id}:
+    delete:
+      operationId: DeleteRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/types.GenericSuccessMessage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+    get:
+      operationId: GetRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImageVersion'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+    patch:
+      operationId: UpdateRunnerImageVersion
+      parameters:
+      - description: Runner Image Version ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.UpdateRunnerImageVersionInput'
+        description: Runner Image Version
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImageVersion'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image version details for the id.
+      tags:
+      - v1 runner_image_versions
+      x-codegen-request-body-name: body
+  /runner-images:
+    get:
+      operationId: ListRunnerImages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.ListRunnerImagesOutput'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: List all runner images.
+      tags:
+      - v1 runner_images
+    post:
+      operationId: CreateRunnerImage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.CreateRunnerImageInput'
+        description: Runner Image
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Create a new runner image.
+      tags:
+      - v1 runner_images
+      x-codegen-request-body-name: body
+  /runner-images/{id}:
+    delete:
+      operationId: DeleteRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Delete runner image details for the id.
+      tags:
+      - v1 runner_images
+    get:
+      operationId: GetRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Get runner image details for the id.
+      tags:
+      - v1 runner_images
+    put:
+      operationId: UpdateRunnerImage
+      parameters:
+      - description: Runner Image ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.UpdateRunnerImageInput'
+        description: Runner Image
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerImage'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - JWTKeyAuth: []
+      summary: Update runner image details for the id.
+      tags:
+      - v1 runner_images
+      x-codegen-request-body-name: body
   /runner_instance/internal/{id}/last_job_processed_meta:
     get:
       operationId: GetRunnerLastJobProcessedMeta
@@ -1257,6 +1737,42 @@ paths:
       tags:
       - v1 Runners
       x-codegen-request-body-name: body
+  /runners_instance:
+    post:
+      description: Add a new runner instance
+      operationId: AddRunnerInstance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/commons.AddRunnerInstanceInput'
+        description: Add runner instance body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/commons.RunnerInstance'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarpBuildAPIError'
+          description: Not Found
+      security:
+      - WarpBuildServiceSecretAuth: []
+      summary: Add a new runner instance
+      tags:
+      - v1 RunnerInstance
+      x-codegen-request-body-name: body
   /runners_instance/{id}/allocation_details:
     get:
       operationId: GetRunnerInstanceAllocationDetails
@@ -1316,6 +1832,7 @@ paths:
           content:
             application/json:
               schema:
+                additionalProperties: true
                 type: object
           description: OK
         "400":
@@ -2304,13 +2821,14 @@ components:
       example:
         provider: provider
         vcs_url: vcs_url
-        additional_state: "{}"
+        additional_state:
+          key: ""
         application_secret: application_secret
         application_callback_url: application_callback_url
         application_id: application_id
       properties:
         additional_state:
-          properties: {}
+          additionalProperties: true
           type: object
         application_callback_url:
           type: string
@@ -2823,6 +3341,15 @@ components:
         pr_link:
           type: string
       type: object
+    commons.AddRunnerInstanceInput:
+      properties:
+        provider_id:
+          type: string
+        runner_set_id:
+          type: string
+        unique_external_id:
+          type: string
+      type: object
     commons.Balance:
       example:
         percentage: 6.027456183070403
@@ -2906,6 +3433,84 @@ components:
         total_cost:
           type: number
       type: object
+    commons.ContainerRunnerImage:
+      example:
+        args:
+        - args
+        - args
+        environment_variables:
+          key: environment_variables
+        image_repository: image_repository
+        entrypoint: entrypoint
+        image_tag: image_tag
+        command: command
+      properties:
+        args:
+          items:
+            type: string
+          type: array
+        command:
+          type: string
+        entrypoint:
+          type: string
+        environment_variables:
+          additionalProperties:
+            type: string
+          type: object
+        image_repository:
+          type: string
+        image_tag:
+          type: string
+      type: object
+    commons.ContainerRunnerImageUpdate:
+      properties:
+        image_tag:
+          type: string
+      type: object
+    commons.ContainerRunnerImageVersion:
+      example:
+        image_repository: image_repository
+        volume_size_gb: 0
+        image_digest: image_digest
+        snapshot_size: snapshot_size
+        volume_id: volume_id
+        image_size: image_size
+        image_uri: image_uri
+        snapshot_id: snapshot_id
+        image_tag: image_tag
+        data_dir_size: data_dir_size
+      properties:
+        data_dir_size:
+          type: string
+        image_digest:
+          type: string
+        image_repository:
+          type: string
+        image_size:
+          type: string
+        image_tag:
+          type: string
+        image_uri:
+          description: |-
+            ImageURI is the full uri of the image.
+            This can be used to download the image
+
+            +OutputOnly
+          type: string
+        snapshot_id:
+          type: string
+        snapshot_size:
+          type: string
+        volume_id:
+          type: string
+        volume_size_gb:
+          description: |-
+            VolumeSizeGB is the size of the volume in GB.
+            This is used when creating a snapshot out of the volume.
+
+            This is rounded up to the nearest GiB.
+          type: integer
+      type: object
     commons.CostSummary:
       example:
         cache:
@@ -2969,6 +3574,44 @@ components:
       - integration_id
       - name
       - owner
+      type: object
+    commons.CreateRunnerImageInput:
+      properties:
+        alias:
+          type: string
+        arch:
+          type: string
+        container_runner_image:
+          $ref: '#/components/schemas/commons.ContainerRunnerImage'
+        hooks:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImageHook'
+          type: array
+        os:
+          type: string
+        runner_image_pull_secret_id:
+          type: string
+        settings:
+          $ref: '#/components/schemas/commons.RunnerImageSettings'
+        type:
+          type: string
+      type: object
+    commons.CreateRunnerImagePullSecretInput:
+      properties:
+        alias:
+          type: string
+        aws:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretAWS'
+        docker_credentials:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretDockerCredentials'
+        type:
+          enum:
+          - docker_credentials
+          - aws
+          type: string
+      required:
+      - alias
+      - type
       type: object
     commons.DaywiseCost:
       example:
@@ -3175,6 +3818,169 @@ components:
           type: string
         vcs_repo:
           type: string
+      type: object
+    commons.ListRunnerImagePullSecretsOutput:
+      example:
+        runner_image_pull_secrets:
+        - updated_at: updated_at
+          organization_id: organization_id
+          alias: alias
+          created_at: created_at
+          id: id
+          aws:
+            access_key_id: access_key_id
+            secret_access_key: secret_access_key
+            aws_ecr_repository: aws_ecr_repository
+            region: region
+          type: docker_credentials
+          docker_credentials:
+            password: password
+            host: host
+            username: username
+        - updated_at: updated_at
+          organization_id: organization_id
+          alias: alias
+          created_at: created_at
+          id: id
+          aws:
+            access_key_id: access_key_id
+            secret_access_key: secret_access_key
+            aws_ecr_repository: aws_ecr_repository
+            region: region
+          type: docker_credentials
+          docker_credentials:
+            password: password
+            host: host
+            username: username
+      properties:
+        runner_image_pull_secrets:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImagePullSecret'
+          type: array
+      type: object
+    commons.ListRunnerImageVersionsOutput:
+      example:
+        runner_image_versions:
+        - runner_image_pull_secret_id: runner_image_pull_secret_id
+          os: os
+          runner_image_id: runner_image_id
+          created_at: created_at
+          external_id: external_id
+          type: type
+          container_runner_image:
+            image_repository: image_repository
+            volume_size_gb: 0
+            image_digest: image_digest
+            snapshot_size: snapshot_size
+            volume_id: volume_id
+            image_size: image_size
+            image_uri: image_uri
+            snapshot_id: snapshot_id
+            image_tag: image_tag
+            data_dir_size: data_dir_size
+          version_time_id: 6
+          updated_at: updated_at
+          organization_id: organization_id
+          arch: arch
+          id: id
+          status: status
+        - runner_image_pull_secret_id: runner_image_pull_secret_id
+          os: os
+          runner_image_id: runner_image_id
+          created_at: created_at
+          external_id: external_id
+          type: type
+          container_runner_image:
+            image_repository: image_repository
+            volume_size_gb: 0
+            image_digest: image_digest
+            snapshot_size: snapshot_size
+            volume_id: volume_id
+            image_size: image_size
+            image_uri: image_uri
+            snapshot_id: snapshot_id
+            image_tag: image_tag
+            data_dir_size: data_dir_size
+          version_time_id: 6
+          updated_at: updated_at
+          organization_id: organization_id
+          arch: arch
+          id: id
+          status: status
+      properties:
+        runner_image_versions:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImageVersion'
+          type: array
+      type: object
+    commons.ListRunnerImagesOutput:
+      example:
+        runner_images:
+        - runner_image_pull_secret_id: runner_image_pull_secret_id
+          settings:
+            purge_image_versions_offset: 0
+          os: os
+          created_at: created_at
+          type: type
+          container_runner_image:
+            args:
+            - args
+            - args
+            environment_variables:
+              key: environment_variables
+            image_repository: image_repository
+            entrypoint: entrypoint
+            image_tag: image_tag
+            command: command
+          warpbuild_image:
+            cloud_init_template: cloud_init_template
+            image_uri: image_uri
+          updated_at: updated_at
+          organization_id: organization_id
+          alias: alias
+          arch: arch
+          id: id
+          hooks:
+          - file: file
+            type: type
+          - file: file
+            type: type
+          status: status
+        - runner_image_pull_secret_id: runner_image_pull_secret_id
+          settings:
+            purge_image_versions_offset: 0
+          os: os
+          created_at: created_at
+          type: type
+          container_runner_image:
+            args:
+            - args
+            - args
+            environment_variables:
+              key: environment_variables
+            image_repository: image_repository
+            entrypoint: entrypoint
+            image_tag: image_tag
+            command: command
+          warpbuild_image:
+            cloud_init_template: cloud_init_template
+            image_uri: image_uri
+          updated_at: updated_at
+          organization_id: organization_id
+          alias: alias
+          arch: arch
+          id: id
+          hooks:
+          - file: file
+            type: type
+          - file: file
+            type: type
+          status: status
+      properties:
+        runner_images:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImage'
+          type: array
       type: object
     commons.ListTokensOptions:
       properties:
@@ -3557,6 +4363,235 @@ components:
         visibility:
           type: string
       type: object
+    commons.RunnerImage:
+      example:
+        runner_image_pull_secret_id: runner_image_pull_secret_id
+        settings:
+          purge_image_versions_offset: 0
+        os: os
+        created_at: created_at
+        type: type
+        container_runner_image:
+          args:
+          - args
+          - args
+          environment_variables:
+            key: environment_variables
+          image_repository: image_repository
+          entrypoint: entrypoint
+          image_tag: image_tag
+          command: command
+        warpbuild_image:
+          cloud_init_template: cloud_init_template
+          image_uri: image_uri
+        updated_at: updated_at
+        organization_id: organization_id
+        alias: alias
+        arch: arch
+        id: id
+        hooks:
+        - file: file
+          type: type
+        - file: file
+          type: type
+        status: status
+      properties:
+        alias:
+          type: string
+        arch:
+          type: string
+        container_runner_image:
+          $ref: '#/components/schemas/commons.ContainerRunnerImage'
+        created_at:
+          type: string
+        hooks:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImageHook'
+          type: array
+        id:
+          type: string
+        organization_id:
+          type: string
+        os:
+          type: string
+        runner_image_pull_secret_id:
+          type: string
+        settings:
+          $ref: '#/components/schemas/commons.RunnerImageSettings'
+        status:
+          type: string
+        type:
+          type: string
+        updated_at:
+          type: string
+        warpbuild_image:
+          $ref: '#/components/schemas/commons.WarpbuildImage'
+      type: object
+    commons.RunnerImageHook:
+      example:
+        file: file
+        type: type
+      properties:
+        file:
+          description: |-
+            File is the base64 encoded file.
+            This must be a shell script which is encoded in base64.
+          type: string
+        type:
+          description: Type is the type of hook.
+          type: string
+      type: object
+    commons.RunnerImagePullSecret:
+      example:
+        updated_at: updated_at
+        organization_id: organization_id
+        alias: alias
+        created_at: created_at
+        id: id
+        aws:
+          access_key_id: access_key_id
+          secret_access_key: secret_access_key
+          aws_ecr_repository: aws_ecr_repository
+          region: region
+        type: docker_credentials
+        docker_credentials:
+          password: password
+          host: host
+          username: username
+      properties:
+        alias:
+          type: string
+        aws:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretAWS'
+        created_at:
+          type: string
+        docker_credentials:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretDockerCredentials'
+        id:
+          type: string
+        organization_id:
+          type: string
+        type:
+          enum:
+          - docker_credentials
+          - aws
+          type: string
+        updated_at:
+          type: string
+      required:
+      - alias
+      - created_at
+      - id
+      - organization_id
+      - type
+      - updated_at
+      type: object
+    commons.RunnerImagePullSecretAWS:
+      example:
+        access_key_id: access_key_id
+        secret_access_key: secret_access_key
+        aws_ecr_repository: aws_ecr_repository
+        region: region
+      properties:
+        access_key_id:
+          type: string
+        aws_ecr_repository:
+          description: |-
+            AWSECRRepository is the short name of the ecr repository
+            For example, if the complete uri for an image is
+            <account_id>.dkr.ecr.<region>.amazonaws.com/acme/customrunners:v1.5.0
+            The AWS ECR Repo is `acme/customrunners`
+          type: string
+        region:
+          type: string
+        secret_access_key:
+          type: string
+      type: object
+    commons.RunnerImagePullSecretDockerCredentials:
+      example:
+        password: password
+        host: host
+        username: username
+      properties:
+        host:
+          type: string
+        password:
+          type: string
+        username:
+          type: string
+      required:
+      - host
+      - password
+      - username
+      type: object
+    commons.RunnerImageSettings:
+      example:
+        purge_image_versions_offset: 0
+      properties:
+        purge_image_versions_offset:
+          description: |-
+            PurgeImageVersionsOffset is the number of versions to keep.
+            Each time a new version is created, the oldest version is purged.
+            Allowed values range [1, inf).
+
+            Default value is 2.
+          type: integer
+      type: object
+    commons.RunnerImageVersion:
+      example:
+        runner_image_pull_secret_id: runner_image_pull_secret_id
+        os: os
+        runner_image_id: runner_image_id
+        created_at: created_at
+        external_id: external_id
+        type: type
+        container_runner_image:
+          image_repository: image_repository
+          volume_size_gb: 0
+          image_digest: image_digest
+          snapshot_size: snapshot_size
+          volume_id: volume_id
+          image_size: image_size
+          image_uri: image_uri
+          snapshot_id: snapshot_id
+          image_tag: image_tag
+          data_dir_size: data_dir_size
+        version_time_id: 6
+        updated_at: updated_at
+        organization_id: organization_id
+        arch: arch
+        id: id
+        status: status
+      properties:
+        arch:
+          type: string
+        container_runner_image:
+          $ref: '#/components/schemas/commons.ContainerRunnerImageVersion'
+        created_at:
+          type: string
+        external_id:
+          description: ExternalID is the ID of the runner image version in the external
+            system.
+          type: string
+        id:
+          type: string
+        organization_id:
+          type: string
+        os:
+          type: string
+        runner_image_id:
+          type: string
+        runner_image_pull_secret_id:
+          type: string
+        status:
+          type: string
+        type:
+          type: string
+        updated_at:
+          type: string
+        version_time_id:
+          type: integer
+      type: object
     commons.RunnerInfo:
       example:
         os: os
@@ -3852,6 +4887,7 @@ components:
           - ondemand
           type: string
         image:
+          description: Refer
           type: string
         provider_sku_mapping:
           items:
@@ -4093,6 +5129,60 @@ components:
         email:
           type: string
       type: object
+    commons.UpdateContainerRunnerImageVersion:
+      properties:
+        data_dir_size:
+          type: string
+        image_digest:
+          type: string
+        image_size:
+          description: |-
+            ImageSize is the size of the image.
+            Expected format: "4G"
+          type: string
+        snapshot_id:
+          type: string
+        snapshot_size:
+          description: SnapshotSize is the size of the snapshot in human readable
+            format.
+          type: string
+        volume_id:
+          type: string
+        volume_size_gb:
+          description: |-
+            VolumeSizeGB is the size of the volume in GB.
+            This is used when creating a snapshot out of the volume.
+
+            This is rounded up to the nearest GiB.
+          type: integer
+      type: object
+    commons.UpdateRunnerImageInput:
+      properties:
+        container_runner_image:
+          $ref: '#/components/schemas/commons.ContainerRunnerImageUpdate'
+        hooks:
+          items:
+            $ref: '#/components/schemas/commons.RunnerImageHook'
+          type: array
+        id:
+          type: string
+        runner_image_pull_secret_id:
+          type: string
+        settings:
+          $ref: '#/components/schemas/commons.RunnerImageSettings'
+      type: object
+    commons.UpdateRunnerImagePullSecretInput:
+      properties:
+        aws:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretAWS'
+        docker_credentials:
+          $ref: '#/components/schemas/commons.RunnerImagePullSecretDockerCredentials'
+      type: object
+    commons.UpdateRunnerImageVersionInput:
+      properties:
+        container_runner_image_version:
+          $ref: '#/components/schemas/commons.UpdateContainerRunnerImageVersion'
+      type: object
     commons.UpdateRunnerInput:
       properties:
         Active:
@@ -4153,6 +5243,16 @@ components:
       - connection_status
       - id
       - target_type
+      type: object
+    commons.WarpbuildImage:
+      example:
+        cloud_init_template: cloud_init_template
+        image_uri: image_uri
+      properties:
+        cloud_init_template:
+          type: string
+        image_uri:
+          type: string
       type: object
     commons.Workflow:
       example:
