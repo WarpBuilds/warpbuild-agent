@@ -9,16 +9,18 @@ import (
 	"syscall"
 	"time"
 
+	cacheproxy "github.com/warpbuilds/warpbuild-agent/pkg/cache-proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
 type ApplicationOptions struct {
-	SettingsFile    string `json:"settings_file"`
-	StdoutFile      string `json:"stdout_file"`
-	StderrFile      string `json:"stderr_file"`
-	LaunchTelemetry bool   `json:"launch_telemetry"`
+	SettingsFile           string `json:"settings_file"`
+	StdoutFile             string `json:"stdout_file"`
+	StderrFile             string `json:"stderr_file"`
+	LaunchTelemetry        bool   `json:"launch_telemetry"`
+	LaunchCacheProxyServer bool   `json:"launch_cache_proxy_server"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -166,6 +168,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
 
+	} else if opts.LaunchCacheProxyServer {
+		cacheproxy.StartCacheProxyServer(ctx, &cacheproxy.CacheProxyServerOptions{})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,
