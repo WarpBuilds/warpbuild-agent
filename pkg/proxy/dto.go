@@ -1,4 +1,4 @@
-package cacheproxy
+package proxy
 
 import (
 	"time"

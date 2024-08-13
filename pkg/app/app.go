@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	cacheproxy "github.com/warpbuilds/warpbuild-agent/pkg/cache-proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
+	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
@@ -169,7 +169,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 
 	} else if opts.LaunchCacheProxyServer {
-		cacheproxy.StartCacheProxyServer(ctx, &cacheproxy.CacheProxyServerOptions{})
+		proxy.StartCacheProxyServer(ctx, &proxy.CacheProxyServerOptions{})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,
