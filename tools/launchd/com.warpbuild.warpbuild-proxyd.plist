@@ -14,10 +14,6 @@
     <dict>
       <key>LANG</key>
       <string>en_US.UTF-8</string>
-      <key>WARPBUILD_RUNNER_VERIFICATION_TOKEN</key>
-      <string>$WARPBUILD_RUNNER_VERIFICATION_TOKEN</string>
-      <key>WARPBUILD_CACHE_URL</key>
-      <string>$WARPBUILD_CACHE_URL</string>
     </dict>
     <key>UserName</key>
     <string>$USERNAME</string>
