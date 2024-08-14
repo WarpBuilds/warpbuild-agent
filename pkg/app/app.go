@@ -16,11 +16,11 @@ import (
 )
 
 type ApplicationOptions struct {
-	SettingsFile           string `json:"settings_file"`
-	StdoutFile             string `json:"stdout_file"`
-	StderrFile             string `json:"stderr_file"`
-	LaunchTelemetry        bool   `json:"launch_telemetry"`
-	LaunchCacheProxyServer bool   `json:"launch_cache_proxy_server"`
+	SettingsFile      string `json:"settings_file"`
+	StdoutFile        string `json:"stdout_file"`
+	StderrFile        string `json:"stderr_file"`
+	LaunchTelemetry   bool   `json:"launch_telemetry"`
+	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -168,7 +168,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
 
-	} else if opts.LaunchCacheProxyServer {
+	} else if opts.LaunchProxyServer {
 		proxy.StartCacheProxyServer(ctx, &proxy.CacheProxyServerOptions{})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{

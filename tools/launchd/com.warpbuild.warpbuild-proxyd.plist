@@ -8,7 +8,7 @@
     <integer>-10</integer>
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/local/bin/warpbuild-agentd-launcher.sh --launch-cache-proxy-server</string>
+      <string>/usr/local/bin/warpbuild-agentd-launcher.sh --launch-proxy-server</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
