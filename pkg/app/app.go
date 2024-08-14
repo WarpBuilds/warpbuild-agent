@@ -169,7 +169,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 
 	} else if opts.LaunchProxyServer {
-		proxy.StartCacheProxyServer(ctx, &proxy.CacheProxyServerOptions{})
+		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,

@@ -7,17 +7,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type CacheProxyServerOptions struct {
+type ProxyServerOptions struct {
 }
 
-func StartCacheProxyServer(ctx context.Context, opts *CacheProxyServerOptions) error {
+func StartProxyServer(ctx context.Context, opts *ProxyServerOptions) error {
 	app := fiber.New(fiber.Config{
 		BodyLimit: 1024 * 1024 * 1024, // 1GB limit for body.
 	})
 
 	registerRoutes(app)
 
-	port := os.Getenv("WARPBUILD_CACHE_PROXY_PORT")
+	port := os.Getenv("WARPBUILD_PROXY_PORT")
 	if port == "" {
 		// Use a rarely used port by default
 		port = "49160"
