@@ -3,8 +3,7 @@ Description=Systemd service to manage warpbuild-proxy lifecycle
 After=network.target
 
 [Service]
-User=runner
-ExecStart=/usr/local/bin/warpbuild-agentd --launch-proxy-server
+ExecStart=/bin/bash -lc "/usr/local/bin/warpbuild-agentd --launch-proxy-server"
 WorkingDirectory=/
 Restart=always
 RestartSec=5
