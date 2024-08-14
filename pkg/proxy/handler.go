@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,20 +24,19 @@ func sendErrorResponse(c *fiber.Ctx, status int, message, typeName, typeKey stri
 	return c.Status(status).JSON(errorResponse)
 }
 
-func getAuthorizationToken() string {
-	return os.Getenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN")
+func getAuthorizationToken(c *fiber.Ctx) string {
+	opts := c.Locals(PROXY_SERVER_OPTIONS_CONTEXT_KEY).(*ProxyServerOptions)
+	return opts.WarpBuildRunnerVerificationToken
 }
 
-func getAuthorizationTokenFromHeader(c *fiber.Ctx) string {
-	// Extract the Authorization header
-	// This is removed for the time being as the token passing mechanism in GitHub is very finnicky
-	// authHeader := c.Get("Authorization")
-	// if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-	// 	return strings.TrimPrefix(authHeader, "Bearer ")
-	// }
+func getCacheBackendURL(c *fiber.Ctx) string {
+	opts := c.Locals(PROXY_SERVER_OPTIONS_CONTEXT_KEY).(*ProxyServerOptions)
+	backendURL := opts.CacheBackendHost
+	if backendURL == "" {
+		backendURL = "https://cache.warpbuild.com"
+	}
 
-	// Fall back to environment variable if header is not present
-	return getAuthorizationToken()
+	return backendURL
 }
 
 func GetCacheEntryHandler(c *fiber.Ctx) error {
@@ -54,7 +52,7 @@ func GetCacheEntryHandler(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "No keys provided.", "InvalidRequest", "InvalidRequest", 1002)
 	}
 
-	resp, err := GetCache(c.Context(), DockerGHAGetCacheRequest{Keys: keys, Version: version, AuthToken: getAuthorizationTokenFromHeader(c)})
+	resp, err := GetCache(c.Context(), DockerGHAGetCacheRequest{Keys: keys, Version: version, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error getting cache: %v\n", err)
 		// GHA backend expects a 200 response even if the cache is not found. It checks if the cache key is empty.
@@ -71,7 +69,7 @@ func ReserveCacheHandler(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Failed to parse request body.", "InvalidRequest", "InvalidRequest", 2001)
 	}
 
-	resp, err := ReserveCache(c.Context(), DockerGHAReserveCacheRequest{Key: req.Key, Version: req.Version, AuthToken: getAuthorizationTokenFromHeader(c)})
+	resp, err := ReserveCache(c.Context(), DockerGHAReserveCacheRequest{Key: req.Key, Version: req.Version, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error reserving cache: %v\n", err)
 		return sendErrorResponse(c, fiber.StatusInternalServerError, "Failed to reserve cache.", "CacheReserveFailed", "CacheReserveFailed", 2002)
@@ -93,7 +91,7 @@ func UploadCacheHandler(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Content-Range header is missing.", "MissingHeader", "MissingHeader", 3002)
 	}
 
-	resp, err := UploadCache(c.Context(), DockerGHAUploadCacheRequest{CacheID: id, Content: c.Body(), ContentRange: contentRange, AuthToken: getAuthorizationTokenFromHeader(c)})
+	resp, err := UploadCache(c.Context(), DockerGHAUploadCacheRequest{CacheID: id, Content: c.Body(), ContentRange: contentRange, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error uploading cache: %v\n", err)
 		return sendErrorResponse(c, fiber.StatusInternalServerError, "Failed to upload cache.", "CacheUploadFailed", "CacheUploadFailed", 3003)
@@ -109,7 +107,7 @@ func CommitCacheHandler(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Invalid cache ID.", "InvalidCacheID", "InvalidCacheID", 4001)
 	}
 
-	resp, err := CommitCache(c.Context(), DockerGHACommitCacheRequest{CacheID: id, AuthToken: getAuthorizationTokenFromHeader(c)})
+	resp, err := CommitCache(c.Context(), DockerGHACommitCacheRequest{CacheID: id, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error committing cache: %v\n", err)
 		return sendErrorResponse(c, fiber.StatusInternalServerError, "Failed to commit cache.", "CacheCommitFailed", "CacheCommitFailed", 4003)

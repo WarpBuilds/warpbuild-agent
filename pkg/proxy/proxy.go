@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -26,19 +25,8 @@ type CacheEntryData struct {
 	CacheVersion           string
 }
 
-func getCacheBackendURL() string {
-	backendURL := os.Getenv("WARPBUILD_CACHE_URL")
-	if backendURL == "" {
-		backendURL = "https://cache.warpbuild.com"
-	}
-
-	return backendURL
-}
-
 func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGetCacheResponse, error) {
-	cacheBackendURL := getCacheBackendURL()
-
-	requestURL := fmt.Sprintf("%s/v1/cache/get", cacheBackendURL)
+	requestURL := fmt.Sprintf("%s/v1/cache/get", input.HostURL)
 
 	primaryKey := input.Keys[0]
 	restoreKeys := []string{}
@@ -105,9 +93,7 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 }
 
 func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*DockerGHAReserveCacheResponse, error) {
-	cacheBackendURL := getCacheBackendURL()
-
-	requestURL := fmt.Sprintf("%s/v1/cache/reserve", cacheBackendURL)
+	requestURL := fmt.Sprintf("%s/v1/cache/reserve", input.HostURL)
 
 	payload := ReserveCacheRequest{
 		CacheKey:       input.Key,
@@ -273,12 +259,10 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(CacheEntryData)
 
-	cacheBackendURL := getCacheBackendURL()
-
 	defer bufferStore.Delete(input.CacheID)
 
 	if cacheEntry.BackendReserveResponse.Provider == ProviderS3 {
-		requestURL := fmt.Sprintf("%s/v1/cache/commit", cacheBackendURL)
+		requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
 
 		payload := CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,

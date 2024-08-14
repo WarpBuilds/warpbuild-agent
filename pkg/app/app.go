@@ -33,6 +33,7 @@ type Settings struct {
 	Agent     *AgentSettings     `json:"agent"`
 	Runner    *RunnerSettings    `json:"runner"`
 	Telemetry *TelemetrySettings `json:"telemetry"`
+	Proxy     *ProxySettings     `json:"proxy"`
 }
 
 type AgentSettings struct {
@@ -49,6 +50,12 @@ type TelemetrySettings struct {
 	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
+}
+
+type ProxySettings struct {
+	CacheProxyPort                   string `json:"cache_proxy_port"`
+	CacheBackendHost                 string `json:"cache_backend_host"`
+	WarpBuildRunnerVerificationToken string `json:"warpbuild_runner_verification_token"`
 }
 
 type RunnerSettings struct {
@@ -169,7 +176,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 
 	} else if opts.LaunchProxyServer {
-		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{})
+		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{
+			CacheBackendHost:                 settings.Proxy.CacheBackendHost,
+			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
+			WarpBuildRunnerVerificationToken: settings.Proxy.WarpBuildRunnerVerificationToken,
+		})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,

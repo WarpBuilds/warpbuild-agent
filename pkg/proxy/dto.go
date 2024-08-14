@@ -5,10 +5,16 @@ import (
 )
 
 // Docker GHA backend dto
+
+type CacheBackendInfo struct {
+	HostURL   string `json:"hostURL"`
+	AuthToken string `json:"authToken"`
+}
+
 type DockerGHAGetCacheRequest struct {
-	Keys      []string `json:"keys"`
-	Version   string   `json:"version"`
-	AuthToken string   `json:"authToken"`
+	Keys    []string `json:"keys"`
+	Version string   `json:"version"`
+	CacheBackendInfo
 }
 
 type DockerGHAGetCacheResponse struct {
@@ -18,9 +24,9 @@ type DockerGHAGetCacheResponse struct {
 }
 
 type DockerGHAReserveCacheRequest struct {
-	Key       string `json:"key"`
-	Version   string `json:"version"`
-	AuthToken string `json:"authToken"`
+	Key     string `json:"key"`
+	Version string `json:"version"`
+	CacheBackendInfo
 }
 
 type DockerGHAReserveCacheResponse struct {
@@ -31,15 +37,15 @@ type DockerGHAUploadCacheRequest struct {
 	CacheID      int    `json:"cacheID"`
 	Content      []byte `json:"content"`
 	ContentRange string `json:"contentRange"`
-	AuthToken    string `json:"authToken"`
+	CacheBackendInfo
 }
 
 type DockerGHAUploadCacheResponse struct{}
 
 type DockerGHACommitCacheRequest struct {
-	CacheID   int    `json:"cacheID"`
-	Size      int64  `json:"size"`
-	AuthToken string `json:"authToken"`
+	CacheID int   `json:"cacheID"`
+	Size    int64 `json:"size"`
+	CacheBackendInfo
 }
 
 type DockerGHACommitCacheResponse struct{}
