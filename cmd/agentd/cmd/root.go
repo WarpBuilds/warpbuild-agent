@@ -8,11 +8,11 @@ import (
 )
 
 type flagsStruct struct {
-	stdoutFile             string
-	stderrFile             string
-	settingsFile           string
-	launchTelemetry        bool
-	launchCacheProxyServer bool
+	stdoutFile        string
+	stderrFile        string
+	settingsFile      string
+	launchTelemetry   bool
+	launchProxyServer bool
 }
 
 var flags flagsStruct
@@ -25,11 +25,11 @@ var rootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
-			SettingsFile:           flags.settingsFile,
-			StdoutFile:             flags.stdoutFile,
-			StderrFile:             flags.stderrFile,
-			LaunchTelemetry:        flags.launchTelemetry,
-			LaunchCacheProxyServer: flags.launchCacheProxyServer,
+			SettingsFile:      flags.settingsFile,
+			StdoutFile:        flags.stdoutFile,
+			StderrFile:        flags.stderrFile,
+			LaunchTelemetry:   flags.launchTelemetry,
+			LaunchProxyServer: flags.launchProxyServer,
 		})
 		if err != nil {
 			return err
@@ -62,5 +62,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.stderrFile, "stderr", "", "stderr file")
 	rootCmd.PersistentFlags().StringVar(&flags.settingsFile, "settings", "", "settings file")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchTelemetry, "launch-telemetry", false, "launch telemetry")
-	rootCmd.PersistentFlags().BoolVar(&flags.launchCacheProxyServer, "launch-cache-proxy-server", false, "launch cache proxy server")
+	rootCmd.PersistentFlags().BoolVar(&flags.launchProxyServer, "launch-proxy-server", false, "launch proxy server")
 }
