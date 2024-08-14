@@ -31,10 +31,11 @@ func getAuthorizationToken() string {
 
 func getAuthorizationTokenFromHeader(c *fiber.Ctx) string {
 	// Extract the Authorization header
-	authHeader := c.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		return strings.TrimPrefix(authHeader, "Bearer ")
-	}
+	// This is removed for the time being as the token passing mechanism in GitHub is very finnicky
+	// authHeader := c.Get("Authorization")
+	// if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+	// 	return strings.TrimPrefix(authHeader, "Bearer ")
+	// }
 
 	// Fall back to environment variable if header is not present
 	return getAuthorizationToken()
