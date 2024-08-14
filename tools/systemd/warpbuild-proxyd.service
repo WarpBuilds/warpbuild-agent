@@ -7,6 +7,8 @@ ExecStart=/usr/local/bin/warpbuild-agentd --launch-proxy-server
 WorkingDirectory=/
 Restart=always
 RestartSec=5
+Environment=WARPBUILD_RUNNER_VERIFICATION_TOKEN=$WARPBUILD_RUNNER_VERIFICATION_TOKEN
+Environment=WARPBUILD_CACHE_URL=$WARPBUILD_CACHE_URL
 
 [Install]
 WantedBy=multi-user.target
