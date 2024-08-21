@@ -71,7 +71,7 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 	}
 
 	dockerGetResponse := DockerGHAGetCacheResponse{
-		CacheKey: cacheResponse.CacheEntry.CacheKey,
+		CacheKey: cacheResponse.CacheEntry.CacheUserGivenKey,
 	}
 
 	presignedURL := ""
