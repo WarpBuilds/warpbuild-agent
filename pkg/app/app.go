@@ -37,10 +37,11 @@ type Settings struct {
 }
 
 type AgentSettings struct {
-	ID               string `json:"id"`
-	PollingSecret    string `json:"polling_secret"`
-	HostURL          string `json:"host_url"`
-	ExitFileLocation string `json:"exit_file_location"`
+	ID                      string `json:"id"`
+	PollingSecret           string `json:"polling_secret"`
+	RunnerVerificationToken string `json:"runner_verification_token"`
+	HostURL                 string `json:"host_url"`
+	ExitFileLocation        string `json:"exit_file_location"`
 }
 
 type TelemetrySettings struct {
@@ -53,9 +54,8 @@ type TelemetrySettings struct {
 }
 
 type ProxySettings struct {
-	CacheProxyPort                   string `json:"cache_proxy_port"`
-	CacheBackendHost                 string `json:"cache_backend_host"`
-	WarpBuildRunnerVerificationToken string `json:"warpbuild_runner_verification_token"`
+	CacheProxyPort   string `json:"cache_proxy_port"`
+	CacheBackendHost string `json:"cache_backend_host"`
 }
 
 type RunnerSettings struct {
@@ -179,7 +179,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{
 			CacheBackendHost:                 settings.Proxy.CacheBackendHost,
 			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
-			WarpBuildRunnerVerificationToken: settings.Proxy.WarpBuildRunnerVerificationToken,
+			WarpBuildRunnerVerificationToken: settings.Agent.RunnerVerificationToken,
 		})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
