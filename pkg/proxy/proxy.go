@@ -29,11 +29,8 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 	requestURL := fmt.Sprintf("%s/v1/cache/get", input.HostURL)
 
 	primaryKey := input.Keys[0]
-	restoreKeys := []string{}
-
-	if len(input.Keys) > 1 {
-		restoreKeys = input.Keys[1:]
-	}
+	// Docker backend weirdly sends impartial key as primary key sometimes.
+	restoreKeys := input.Keys
 
 	payload := GetCacheRequest{
 		CacheKey:     primaryKey,
