@@ -234,10 +234,10 @@ func uploadToBlobStorage(ctx context.Context, cacheID int, buffer *BufferData) (
 		}
 
 		partNumberPtr := int32(1)
-		cacheEntry.S3Parts = append(cacheEntry.S3Parts, S3CompletedPart{
+		cacheEntry.S3Parts = []S3CompletedPart{{
 			ETag:       &etag,
 			PartNumber: &partNumberPtr,
-		})
+		}}
 
 		cacheStore.Store(cacheID, cacheEntry)
 
