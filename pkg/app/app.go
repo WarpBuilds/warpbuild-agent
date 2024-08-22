@@ -11,14 +11,16 @@ import (
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
+	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
 type ApplicationOptions struct {
-	SettingsFile    string `json:"settings_file"`
-	StdoutFile      string `json:"stdout_file"`
-	StderrFile      string `json:"stderr_file"`
-	LaunchTelemetry bool   `json:"launch_telemetry"`
+	SettingsFile      string `json:"settings_file"`
+	StdoutFile        string `json:"stdout_file"`
+	StderrFile        string `json:"stderr_file"`
+	LaunchTelemetry   bool   `json:"launch_telemetry"`
+	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -31,13 +33,15 @@ type Settings struct {
 	Agent     *AgentSettings     `json:"agent"`
 	Runner    *RunnerSettings    `json:"runner"`
 	Telemetry *TelemetrySettings `json:"telemetry"`
+	Proxy     *ProxySettings     `json:"proxy"`
 }
 
 type AgentSettings struct {
-	ID               string `json:"id"`
-	PollingSecret    string `json:"polling_secret"`
-	HostURL          string `json:"host_url"`
-	ExitFileLocation string `json:"exit_file_location"`
+	ID                      string `json:"id"`
+	PollingSecret           string `json:"polling_secret"`
+	RunnerVerificationToken string `json:"runner_verification_token"`
+	HostURL                 string `json:"host_url"`
+	ExitFileLocation        string `json:"exit_file_location"`
 }
 
 type TelemetrySettings struct {
@@ -47,6 +51,11 @@ type TelemetrySettings struct {
 	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
+}
+
+type ProxySettings struct {
+	CacheProxyPort   string `json:"cache_proxy_port"`
+	CacheBackendHost string `json:"cache_backend_host"`
 }
 
 type RunnerSettings struct {
@@ -166,6 +175,12 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
 
+	} else if opts.LaunchProxyServer {
+		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{
+			CacheBackendHost:                 settings.Proxy.CacheBackendHost,
+			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
+			WarpBuildRunnerVerificationToken: settings.Agent.RunnerVerificationToken,
+		})
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,
