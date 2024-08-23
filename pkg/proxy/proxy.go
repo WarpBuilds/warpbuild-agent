@@ -172,7 +172,10 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		return nil, fmt.Errorf("buffer data not found for cache ID %d", cacheID)
 	}
 
-	buffer := bufferData.(*BufferData)
+	buffer, ok := bufferData.(*BufferData)
+	if !ok {
+		return nil, fmt.Errorf("buffer data is not of type BufferData")
+	}
 
 	cacheEntryData, ok := cacheStore.Load(cacheID)
 	if !ok {
