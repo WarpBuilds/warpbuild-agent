@@ -32,7 +32,7 @@ func StartProxyServer(ctx context.Context, opts *ProxyServerOptions) error {
 	}
 
 	app := fiber.New(fiber.Config{
-		BodyLimit: 1024 * 1024 * 1024, // 1GB limit for body.
+		BodyLimit: 1024 * 1024 * 1024 * 10, // 10GB limit for body.
 	})
 
 	app.Use(func(c *fiber.Ctx) error {
