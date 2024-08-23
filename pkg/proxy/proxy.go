@@ -230,18 +230,18 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 }
 
 func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*DockerGHACommitCacheResponse, error) {
+	// Trigger upload to S3 now that we are sure all chunks have been received
+	_, err := uploadToBlobStorage(ctx, input.CacheID)
+	if err != nil {
+		return nil, err
+	}
+
 	cacheEntryData, ok := cacheStore.Load(input.CacheID)
 	if !ok {
 		return nil, fmt.Errorf("cache ID not found")
 	}
 
 	cacheEntry := cacheEntryData.(CacheEntryData)
-
-	// Trigger upload to S3 now that we are sure all chunks have been received
-	_, err := uploadToBlobStorage(ctx, input.CacheID)
-	if err != nil {
-		return nil, err
-	}
 
 	defer bufferStore.Delete(input.CacheID)
 
