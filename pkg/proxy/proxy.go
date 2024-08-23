@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -164,38 +163,20 @@ func UploadCache(ctx context.Context, input DockerGHAUploadCacheRequest) (*Docke
 	buffer.Content = append(buffer.Content, input.Content...)
 	buffer.mu.Unlock()
 
-	isLastChunk, err := isLastChunk(input.ContentRange)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine if this is the last chunk: %w", err)
-	}
-
-	if isLastChunk {
-		return uploadToBlobStorage(ctx, input.CacheID, buffer)
-	}
-
 	return &DockerGHAUploadCacheResponse{}, nil
 }
 
-func isLastChunk(contentRange string) (bool, error) {
-	parts := strings.Split(contentRange, " ")
-	if len(parts) != 2 || parts[0] != "bytes" {
-		return false, fmt.Errorf("invalid Content-Range format")
+func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCacheResponse, error) {
+	bufferData, ok := bufferStore.Load(cacheID)
+	if !ok {
+		return nil, fmt.Errorf("buffer data not found for cache ID %d", cacheID)
 	}
 
-	rangeParts := strings.Split(parts[1], "-")
-	if len(rangeParts) != 2 {
-		return false, fmt.Errorf("invalid Content-Range format")
+	buffer, ok := bufferData.(*BufferData)
+	if !ok {
+		return nil, fmt.Errorf("buffer data is not of type BufferData")
 	}
 
-	// Check if the range ends with "/*", which implies it's the last chunk
-	if strings.HasSuffix(rangeParts[1], "/*") {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func uploadToBlobStorage(ctx context.Context, cacheID int, buffer *BufferData) (*DockerGHAUploadCacheResponse, error) {
 	cacheEntryData, ok := cacheStore.Load(cacheID)
 	if !ok {
 		return nil, fmt.Errorf("cache ID not found")
@@ -255,6 +236,12 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 	}
 
 	cacheEntry := cacheEntryData.(CacheEntryData)
+
+	// Trigger upload to S3 now that we are sure all chunks have been received
+	_, err := uploadToBlobStorage(ctx, input.CacheID)
+	if err != nil {
+		return nil, err
+	}
 
 	defer bufferStore.Delete(input.CacheID)
 
