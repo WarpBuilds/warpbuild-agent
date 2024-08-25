@@ -18,8 +18,7 @@ type DockerGHAGetCacheRequest struct {
 }
 
 type DockerGHAGetCacheResponse struct {
-	CacheKey string `json:"cacheKey"`
-	// Scope           string `json:"scope"`
+	CacheKey        string `json:"cacheKey"`
 	ArchiveLocation string `json:"archiveLocation"`
 }
 
