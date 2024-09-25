@@ -17,6 +17,10 @@ echo "RUNNER_NAME=$RUNNER_NAME"
 echo "RUNNER_OS=$RUNNER_OS"
 echo "WARPBUILD_RUNNER_SET_ID=$WARPBUILD_RUNNER_SET_ID"
 
+if [ -n "$WARPBUILD_SNAPSHOT_KEY" ]; then
+    echo "WARPBUILD_SNAPSHOT_KEY=$WARPBUILD_SNAPSHOT_KEY"
+fi
+
 if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
     echo "WARPBUILD_SCOPE_TOKEN is not set."
     exit 1
@@ -68,4 +72,4 @@ fi
 
 rm warpbuild_body.json
 
-echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed succesfully."
+echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
