@@ -55,8 +55,13 @@ func GetCacheEntryHandler(c *fiber.Ctx) error {
 	resp, err := GetCache(c.Context(), DockerGHAGetCacheRequest{Keys: keys, Version: version, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error getting cache: %v\n", err)
-		// GHA backend expects a 200 response even if the cache is not found. It checks if the cache key is empty.
+		c.Status(204)
+		// GHA backend expects a 204 response if the cache is not found.
 		return c.JSON(DockerGHAGetCacheResponse{CacheKey: "", ArchiveLocation: ""})
+	}
+
+	if resp.ArchiveLocation == "" {
+		c.Status(204)
 	}
 
 	return c.JSON(resp)
