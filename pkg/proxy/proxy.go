@@ -345,10 +345,13 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	if cacheEntry.BackendReserveResponse.Provider == ProviderS3 {
-		requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
+	requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
 
-		payload := CommitCacheRequest{
+	var payload CommitCacheRequest
+
+	switch cacheEntry.BackendReserveResponse.Provider {
+	case ProviderS3:
+		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,
 			UploadKey:    cacheEntry.BackendReserveResponse.S3.UploadKey,
@@ -357,43 +360,50 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 			VCSType:      "github",
 		}
 
-		payloadBytes, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	case ProviderGCS:
+		payload = CommitCacheRequest{
+			CacheKey:     cacheEntry.CacheKey,
+			CacheVersion: cacheEntry.CacheVersion,
+			VCSType:      "github",
 		}
 
-		serviceURL, err := url.Parse(requestURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse service URL: %w", err)
-		}
-
-		agent := fiber.Post(serviceURL.String())
-
-		agent.Body(payloadBytes)
-
-		agent.Add("Content-Type", "application/json")
-		agent.Add("Accept", "application/json")
-		agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-		statusCode, body, errs := agent.Bytes()
-		if len(errs) > 0 {
-			return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-		}
-
-		if statusCode < 200 || statusCode >= 300 {
-			return nil, fmt.Errorf("failed to commit cache: %s", string(body))
-		}
-
-		var commitCacheResponse CommitCacheResponse
-		if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
-			return nil, fmt.Errorf("failed to parse backend response: %w", err)
-		}
-
-		cacheStore.Delete(input.CacheID)
-
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	serviceURL, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service URL: %w", err)
+	}
+
+	agent := fiber.Post(serviceURL.String())
+
+	agent.Body(payloadBytes)
+
+	agent.Add("Content-Type", "application/json")
+	agent.Add("Accept", "application/json")
+	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
+
+	statusCode, body, errs := agent.Bytes()
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
+	}
+
+	if statusCode < 200 || statusCode >= 300 {
+		return nil, fmt.Errorf("failed to commit cache: %s", string(body))
+	}
+
+	var commitCacheResponse CommitCacheResponse
+	if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+	}
+
+	cacheStore.Delete(input.CacheID)
 
 	return &DockerGHACommitCacheResponse{}, nil
 }
