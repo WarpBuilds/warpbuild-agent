@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/oauth2"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
@@ -283,7 +284,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 				defer resp.Body.Close()
 				if attempt < maxRetries-1 {
 					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-					time.Sleep(time.Duration(1<<attempt) * time.Second) // Exponential backoff
+					time.Sleep(1 << attempt * time.Second) // Exponential backoff
 				}
 			}
 		}
@@ -293,7 +294,9 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 			return nil, fmt.Errorf("no short lived token found")
 		}
 
-		creds := option.WithCredentialsJSON([]byte(cacheEntry.BackendReserveResponse.GCS.ShortLivedToken.AccessToken))
+		creds := option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: cacheEntry.BackendReserveResponse.GCS.ShortLivedToken.AccessToken,
+		}))
 		client, err := storage.NewClient(ctx, creds)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create GCS client: %w", err)
@@ -317,7 +320,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 
 			if attempt < maxRetries-1 {
 				fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-				time.Sleep(time.Duration(1<<attempt) * time.Second)
+				time.Sleep(1 << attempt * time.Second)
 			}
 		}
 
