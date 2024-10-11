@@ -367,6 +367,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,
+			Parts:        []S3CompletedPart{},
 			VCSType:      "github",
 		}
 
