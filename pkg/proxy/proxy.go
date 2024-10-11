@@ -307,7 +307,11 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		bucket := client.Bucket(cacheEntry.BackendReserveResponse.GCS.BucketName)
 		object := bucket.Object(cacheEntry.BackendReserveResponse.GCS.CacheKey)
 
-		wc := object.NewWriter(ctx)
+		// Upload context
+		uploadCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		wc := object.NewWriter(uploadCtx)
 
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			_, err = wc.Write(finalBuffer.Bytes())
