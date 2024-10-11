@@ -316,10 +316,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			_, err = wc.Write(finalBuffer.Bytes())
 			if err == nil {
-				err = wc.Close()
-				if err == nil {
-					return &DockerGHAUploadCacheResponse{}, nil
-				}
+				break
 			}
 
 			if attempt < maxRetries-1 {
@@ -328,7 +325,12 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 			}
 		}
 
-		return nil, fmt.Errorf("failed to upload to GCS: %w", err)
+		err = wc.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload to GCS: %w", err)
+		}
+
+		return &DockerGHAUploadCacheResponse{}, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
