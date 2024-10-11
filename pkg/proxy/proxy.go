@@ -15,6 +15,10 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/oauth2"
+
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/option"
 )
 
 var cacheStore = sync.Map{}
@@ -241,15 +245,14 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		finalBuffer.Write(cacheEntry.Chunks[offset].Content)
 	}
 
-	if cacheEntry.BackendReserveResponse.Provider == ProviderS3 {
+	switch cacheEntry.BackendReserveResponse.Provider {
+	case ProviderS3:
 		if len(cacheEntry.BackendReserveResponse.S3.PreSignedURLs) != 1 {
 			return nil, fmt.Errorf("no presigned URLs found")
 		}
 
 		s3PresignedURL := cacheEntry.BackendReserveResponse.S3.PreSignedURLs[0]
 
-		// Implementing retry with exponential backoff
-		var err error
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			contentReader := bytes.NewReader(finalBuffer.Bytes())
 			req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3PresignedURL, contentReader)
@@ -273,7 +276,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 				}}
 
 				// Success, break out of retry loop
-				return &DockerGHAUploadCacheResponse{}, nil
+				break
 			}
 
 			// If response is not OK, log and prepare for retry
@@ -281,17 +284,55 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 				defer resp.Body.Close()
 				if attempt < maxRetries-1 {
 					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-					time.Sleep(time.Duration(1<<attempt) * time.Second) // Exponential backoff
+					time.Sleep((1 << attempt) * time.Second) // Exponential backoff
 				}
 			}
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("upload to S3 failed after %d attempts: %w", maxRetries, err)
+	case ProviderGCS:
+		if cacheEntry.BackendReserveResponse.GCS.ShortLivedToken == nil {
+			return nil, fmt.Errorf("no short lived token found")
 		}
 
-	} else {
+		creds := option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: cacheEntry.BackendReserveResponse.GCS.ShortLivedToken.AccessToken,
+		}))
+		client, err := storage.NewClient(ctx, creds)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create GCS client: %w", err)
+		}
+
+		defer client.Close()
+
+		bucket := client.Bucket(cacheEntry.BackendReserveResponse.GCS.BucketName)
+		object := bucket.Object(cacheEntry.BackendReserveResponse.GCS.CacheKey)
+
+		// Upload context
+		uploadCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		wc := object.NewWriter(uploadCtx)
+
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			_, err = wc.Write(finalBuffer.Bytes())
+			if err == nil {
+				err = wc.Close()
+				if err != nil {
+					return nil, fmt.Errorf("failed to close GCS writer: %w", err)
+				}
+
+				break
+			}
+
+			if attempt < maxRetries-1 {
+				fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
+				time.Sleep((1 << attempt) * time.Second)
+			}
+		}
+
+	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
+
 	}
 
 	return &DockerGHAUploadCacheResponse{}, nil
@@ -311,10 +352,13 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	if cacheEntry.BackendReserveResponse.Provider == ProviderS3 {
-		requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
+	requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
 
-		payload := CommitCacheRequest{
+	var payload CommitCacheRequest
+
+	switch cacheEntry.BackendReserveResponse.Provider {
+	case ProviderS3:
+		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,
 			UploadKey:    cacheEntry.BackendReserveResponse.S3.UploadKey,
@@ -323,43 +367,51 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 			VCSType:      "github",
 		}
 
-		payloadBytes, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	case ProviderGCS:
+		payload = CommitCacheRequest{
+			CacheKey:     cacheEntry.CacheKey,
+			CacheVersion: cacheEntry.CacheVersion,
+			Parts:        []S3CompletedPart{},
+			VCSType:      "github",
 		}
 
-		serviceURL, err := url.Parse(requestURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse service URL: %w", err)
-		}
-
-		agent := fiber.Post(serviceURL.String())
-
-		agent.Body(payloadBytes)
-
-		agent.Add("Content-Type", "application/json")
-		agent.Add("Accept", "application/json")
-		agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-		statusCode, body, errs := agent.Bytes()
-		if len(errs) > 0 {
-			return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-		}
-
-		if statusCode < 200 || statusCode >= 300 {
-			return nil, fmt.Errorf("failed to commit cache: %s", string(body))
-		}
-
-		var commitCacheResponse CommitCacheResponse
-		if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
-			return nil, fmt.Errorf("failed to parse backend response: %w", err)
-		}
-
-		cacheStore.Delete(input.CacheID)
-
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	serviceURL, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service URL: %w", err)
+	}
+
+	agent := fiber.Post(serviceURL.String())
+
+	agent.Body(payloadBytes)
+
+	agent.Add("Content-Type", "application/json")
+	agent.Add("Accept", "application/json")
+	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
+
+	statusCode, body, errs := agent.Bytes()
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
+	}
+
+	if statusCode < 200 || statusCode >= 300 {
+		return nil, fmt.Errorf("failed to commit cache: %s", string(body))
+	}
+
+	var commitCacheResponse CommitCacheResponse
+	if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+	}
+
+	cacheStore.Delete(input.CacheID)
 
 	return &DockerGHACommitCacheResponse{}, nil
 }
