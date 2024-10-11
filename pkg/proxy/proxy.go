@@ -276,7 +276,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 				}}
 
 				// Success, break out of retry loop
-				return &DockerGHAUploadCacheResponse{}, nil
+				break
 			}
 
 			// If response is not OK, log and prepare for retry
@@ -284,7 +284,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 				defer resp.Body.Close()
 				if attempt < maxRetries-1 {
 					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-					time.Sleep(1 << attempt * time.Second) // Exponential backoff
+					time.Sleep((1 << attempt) * time.Second) // Exponential backoff
 				}
 			}
 		}
@@ -316,21 +316,19 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			_, err = wc.Write(finalBuffer.Bytes())
 			if err == nil {
+				err = wc.Close()
+				if err != nil {
+					return nil, fmt.Errorf("failed to close GCS writer: %w", err)
+				}
+
 				break
 			}
 
 			if attempt < maxRetries-1 {
 				fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-				time.Sleep(1 << attempt * time.Second)
+				time.Sleep((1 << attempt) * time.Second)
 			}
 		}
-
-		err = wc.Close()
-		if err != nil {
-			return nil, fmt.Errorf("failed to upload to GCS: %w", err)
-		}
-
-		return &DockerGHAUploadCacheResponse{}, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
