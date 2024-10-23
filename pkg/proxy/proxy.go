@@ -19,6 +19,8 @@ import (
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
 var cacheStore = sync.Map{}
@@ -93,6 +95,8 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 		presignedURL = cacheResponse.S3.PreSignedURL
 	case ProviderGCS:
 		presignedURL = cacheResponse.GCS.PreSignedURL
+	case ProviderAzureBlob:
+		presignedURL = cacheResponse.AzureBlob.PreSignedURL
 	}
 
 	if cacheResponse.CacheEntry != nil {
@@ -330,6 +334,21 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 			}
 		}
 
+	case ProviderAzureBlob:
+		if cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL == "" {
+			return nil, fmt.Errorf("no presigned URL found")
+		}
+
+		client, err := azblob.NewClientWithNoCredential(cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Azure Blob client: %w", err)
+		}
+
+		_, err = client.UploadBuffer(ctx, cacheEntry.BackendReserveResponse.AzureBlob.ContainerName, cacheEntry.BackendReserveResponse.AzureBlob.BlobName, finalBuffer.Bytes(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload to Azure Blob: %w", err)
+		}
+
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 
@@ -368,6 +387,14 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 		}
 
 	case ProviderGCS:
+		payload = CommitCacheRequest{
+			CacheKey:     cacheEntry.CacheKey,
+			CacheVersion: cacheEntry.CacheVersion,
+			Parts:        []S3CompletedPart{},
+			VCSType:      "github",
+		}
+
+	case ProviderAzureBlob:
 		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,
