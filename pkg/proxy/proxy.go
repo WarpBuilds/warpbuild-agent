@@ -93,6 +93,8 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 		presignedURL = cacheResponse.S3.PreSignedURL
 	case ProviderGCS:
 		presignedURL = cacheResponse.GCS.PreSignedURL
+	case ProviderAzureBlob:
+		presignedURL = cacheResponse.AzureBlob.PreSignedURL
 	}
 
 	if cacheResponse.CacheEntry != nil {
@@ -330,6 +332,33 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 			}
 		}
 
+	case ProviderAzureBlob:
+		if cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL == "" {
+			return nil, fmt.Errorf("no presigned URL found")
+		}
+
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			contentReader := bytes.NewReader(finalBuffer.Bytes())
+			req, err := http.NewRequestWithContext(ctx, http.MethodPut, cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, contentReader)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create Azure Blob request: %w", err)
+			}
+			req.Header.Set("Content-Type", "application/octet-stream")
+			req.Header.Set("x-ms-blob-type", "BlockBlob")
+
+			resp, err := http.DefaultClient.Do(req)
+			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				resp.Body.Close()
+				break
+			} else {
+				defer resp.Body.Close()
+				if attempt < maxRetries-1 {
+					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
+					time.Sleep((1 << attempt) * time.Second) // Exponential backoff
+				}
+			}
+		}
+
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 
@@ -368,6 +397,14 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 		}
 
 	case ProviderGCS:
+		payload = CommitCacheRequest{
+			CacheKey:     cacheEntry.CacheKey,
+			CacheVersion: cacheEntry.CacheVersion,
+			Parts:        []S3CompletedPart{},
+			VCSType:      "github",
+		}
+
+	case ProviderAzureBlob:
 		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,

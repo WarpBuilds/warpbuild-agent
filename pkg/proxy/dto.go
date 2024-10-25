@@ -53,8 +53,9 @@ type DockerGHACommitCacheResponse struct{}
 type Provider string
 
 const (
-	ProviderGCS Provider = "gcs"
-	ProviderS3  Provider = "s3"
+	ProviderGCS       Provider = "gcs"
+	ProviderS3        Provider = "s3"
+	ProviderAzureBlob Provider = "azure_blob"
 )
 
 type AuthMethod string
@@ -77,7 +78,7 @@ type CacheEntry struct {
 	VCSRepositoryName      string             `json:"vcs_repository_name"`
 	VCSRef                 string             `json:"vcs_ref"`
 	OrganizationID         string             `json:"organization_id"`
-	Provider               Provider           `json:"provider" enum:"gcs,s3"`
+	Provider               Provider           `json:"provider" enum:"gcs,s3,azure_blob"`
 	Metadata               CacheEntryMetadata `json:"metadata"`
 }
 
@@ -88,10 +89,11 @@ type GetCacheRequest struct {
 }
 
 type GetCacheResponse struct {
-	Provider   Provider             `json:"provider" enum:"gcs,s3"`
-	GCS        *GCSGetCacheResponse `json:"gcs,omitempty"`
-	S3         *S3GetCacheResponse  `json:"s3,omitempty"`
-	CacheEntry *CacheEntry          `json:"cache_entry"`
+	Provider   Provider                   `json:"provider" enum:"gcs,s3"`
+	GCS        *GCSGetCacheResponse       `json:"gcs,omitempty"`
+	S3         *S3GetCacheResponse        `json:"s3,omitempty"`
+	AzureBlob  *AzureBlobGetCacheResponse `json:"azure_blob,omitempty"`
+	CacheEntry *CacheEntry                `json:"cache_entry"`
 }
 
 type CacheEntryMetadata struct {
@@ -116,6 +118,13 @@ type GCSGetCacheResponse struct {
 	CacheVersion    string           `json:"cache_version"`
 }
 
+type AzureBlobGetCacheResponse struct {
+	PreSignedURL string `json:"pre_signed_url"`
+	CacheKey     string `json:"cache_key"`
+	CacheVersion string `json:"cache_version"`
+	BucketName   string `json:"bucket_name"`
+}
+
 type ShortLivedToken struct {
 	AccessToken string    `json:"access_token"`
 	ExpiresAt   time.Time `json:"expires_at"`
@@ -129,9 +138,10 @@ type ReserveCacheRequest struct {
 }
 
 type ReserveCacheResponse struct {
-	Provider Provider                 `json:"provider" enum:"gcs,s3"`
-	GCS      *GCSReserveCacheResponse `json:"gcs,omitempty"`
-	S3       *S3ReserveCacheResponse  `json:"s3,omitempty"`
+	Provider  Provider                       `json:"provider" enum:"gcs,s3"`
+	GCS       *GCSReserveCacheResponse       `json:"gcs,omitempty"`
+	S3        *S3ReserveCacheResponse        `json:"s3,omitempty"`
+	AzureBlob *AzureBlobReserveCacheResponse `json:"azure_blob,omitempty"`
 }
 
 type GCSReserveCacheResponse struct {
@@ -148,6 +158,12 @@ type S3ReserveCacheResponse struct {
 	UploadID      string   `json:"upload_id"`
 }
 
+type AzureBlobReserveCacheResponse struct {
+	PreSignedURL  string `json:"pre_signed_url"`
+	ContainerName string `json:"container_name"`
+	BlobName      string `json:"blob_name"`
+}
+
 type CommitCacheRequest struct {
 	CacheKey     string            `json:"cache_key" validate:"required"`
 	CacheVersion string            `json:"cache_version" validate:"required"`
@@ -159,10 +175,11 @@ type CommitCacheRequest struct {
 }
 
 type CommitCacheResponse struct {
-	CacheEntry *CacheEntry             `json:"cache_entry"`
-	Provider   Provider                `json:"provider" enum:"gcs,s3"`
-	GCS        *GCSCommitCacheResponse `json:"gcs,omitempty"`
-	S3         *S3CommitCacheResponse  `json:"s3,omitempty"`
+	CacheEntry *CacheEntry                   `json:"cache_entry"`
+	Provider   Provider                      `json:"provider" enum:"gcs,s3"`
+	GCS        *GCSCommitCacheResponse       `json:"gcs,omitempty"`
+	S3         *S3CommitCacheResponse        `json:"s3,omitempty"`
+	AzureBlob  *AzureBlobCommitCacheResponse `json:"azure_blob,omitempty"`
 }
 
 type GCSCommitCacheResponse struct {
@@ -178,16 +195,22 @@ type S3CommitCacheResponse struct {
 	CacheVersion string `json:"cache_version" validate:"required"`
 }
 
+type AzureBlobCommitCacheResponse struct {
+	CacheKey     string `json:"cache_key" validate:"required"`
+	CacheVersion string `json:"cache_version" validate:"required"`
+}
+
 type DeleteCacheRequest struct {
 	CacheKey     string `json:"cache_key" validate:"required"`
 	CacheVersion string `json:"cache_version" validate:"required"`
 }
 
 type DeleteCacheResponse struct {
-	CacheEntry *CacheEntry             `json:"cache_entry"`
-	Provider   Provider                `json:"provider" enum:"gcs,s3"`
-	GCS        *GCSDeleteCacheResponse `json:"gcs,omitempty"`
-	S3         *S3DeleteCacheResponse  `json:"s3,omitempty"`
+	CacheEntry *CacheEntry                   `json:"cache_entry"`
+	Provider   Provider                      `json:"provider" enum:"gcs,s3,azure_blob"`
+	GCS        *GCSDeleteCacheResponse       `json:"gcs,omitempty"`
+	S3         *S3DeleteCacheResponse        `json:"s3,omitempty"`
+	AzureBlob  *AzureBlobDeleteCacheResponse `json:"azure_blob,omitempty"`
 }
 
 type GCSDeleteCacheResponse struct {
@@ -196,6 +219,11 @@ type GCSDeleteCacheResponse struct {
 }
 
 type S3DeleteCacheResponse struct {
+	CacheKey     string `json:"cache_key" validate:"required"`
+	CacheVersion string `json:"cache_version" validate:"required"`
+}
+
+type AzureBlobDeleteCacheResponse struct {
 	CacheKey     string `json:"cache_key" validate:"required"`
 	CacheVersion string `json:"cache_version" validate:"required"`
 }
