@@ -348,7 +348,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 
 			resp, err := http.DefaultClient.Do(req)
 			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				defer resp.Body.Close()
+				resp.Body.Close()
 				break
 			} else {
 				defer resp.Body.Close()
