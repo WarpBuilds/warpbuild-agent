@@ -13,7 +13,7 @@ import (
 	"golang.org/x/sys/windows/svc/debug"
 )
 
-const SERVICE_NAME = "warpbuild-agent"
+const SERVICE_NAME = "warpbuild-agentd"
 
 type myService struct{}
 
