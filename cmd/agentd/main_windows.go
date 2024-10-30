@@ -25,7 +25,13 @@ func (m *myService) Execute(args []string, r <-chan svc.ChangeRequest, status ch
 	log.Println("Service is starting...")
 
 	log.Println("Executing command as goroutine...")
-	go cmd.Execute()
+	go func() {
+		if err := cmd.ExecuteWithErr(); err != nil {
+			log.Printf("Error in cmd.Execute: %v", err)
+			status <- svc.Status{State: svc.StopPending}
+		}
+		log.Println("cmd.Execute() finished")
+	}()
 
 	status <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	log.Println("Service is now running")
@@ -36,13 +42,16 @@ loop:
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Interrogate:
+				log.Printf("Interrogate received: %v", c.CurrentStatus)
 				status <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				log.Print("Shutting service...!")
 				break loop
 			case svc.Pause:
+				log.Print("Pausing service...!")
 				status <- svc.Status{State: svc.Paused, Accepts: cmdsAccepted}
 			case svc.Continue:
+				log.Print("Continuing service...!")
 				status <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 			default:
 				log.Printf("Unexpected service control request #%d", c)
