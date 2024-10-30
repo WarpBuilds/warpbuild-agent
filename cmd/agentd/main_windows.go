@@ -81,6 +81,6 @@ func main() {
 	log.SetOutput(f)
 
 	log.Println("Starting warpbuild-agent service...")
-	runService(SERVICE_NAME, false)
+	runService(SERVICE_NAME, true)
 	log.Println("warpbuild-agent service stopped.")
 }
