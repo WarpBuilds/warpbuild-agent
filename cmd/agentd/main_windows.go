@@ -4,7 +4,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/warpbuilds/warpbuild-agent/cmd/agentd/cmd"
 	"golang.org/x/sys/windows/svc"
@@ -20,10 +22,13 @@ func (m *myService) Execute(args []string, r <-chan svc.ChangeRequest, status ch
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 
 	status <- svc.Status{State: svc.StartPending}
+	log.Println("Service is starting...")
 
+	log.Println("Executing command as goroutine...")
 	go cmd.Execute()
 
 	status <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
+	log.Println("Service is now running")
 
 loop:
 	for {
@@ -46,6 +51,7 @@ loop:
 	}
 
 	status <- svc.Status{State: svc.StopPending}
+	log.Println("Service is stopping")
 	return false, 1
 }
 
@@ -65,12 +71,16 @@ func runService(name string, isDebug bool) {
 
 func main() {
 
-	// f, err := os.OpenFile("E:/awesomeProject/debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalln(fmt.Errorf("error opening file: %v", err))
-	// }
-	// defer f.Close()
+	f, err := os.OpenFile("C:/warpbuild-agentd-debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln(fmt.Errorf("error opening file: %v", err))
+	}
+	defer f.Close()
 
-	// log.SetOutput(f)
+	// Set log output to the file
+	log.SetOutput(f)
+
+	log.Println("Starting warpbuild-agent service...")
 	runService(SERVICE_NAME, false)
+	log.Println("warpbuild-agent service stopped.")
 }
