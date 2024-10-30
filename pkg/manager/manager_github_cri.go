@@ -119,11 +119,11 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	for {
 		select {
 		case out := <-stdoutChan:
+			log.Logger().Infof(out)
 			fmt.Fprintln(stdoutFile, out)
-			fmt.Fprintln(os.Stdout, out)
 		case err := <-stderrChan:
+			log.Logger().Errorf(err)
 			fmt.Fprintln(stderrFile, err)
-			fmt.Fprintln(os.Stderr, err)
 		case <-doneChan:
 
 			wg.Wait()

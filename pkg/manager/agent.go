@@ -29,6 +29,12 @@ type AgentOptions struct {
 	PollingSecret    string `json:"polling_secret"`
 	HostURL          string `json:"host_url"`
 	ExitFileLocation string `json:"exit_file_location"`
+	// WindowsOptions are options for the windows agent.
+	WindowsOptions *WindowsOptions `json:"windows_options"`
+}
+
+type WindowsOptions struct {
+	ServiceName string `json:"service_name"`
 }
 
 func NewAgent(opts *AgentOptions) (IAgent, error) {
