@@ -49,6 +49,13 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
 	}
+
+	log.Logger().Infof("Adding all available envs to command...")
+	for _, env := range os.Environ() {
+		log.Logger().Infof("env: %s", env)
+		cmd.Env = append(cmd.Env, env)
+	}
+
 	cmd.Dir = m.CMDOptions.Dir
 
 	log.Logger().Infof("starting runner with command: %s", cmd.String())
