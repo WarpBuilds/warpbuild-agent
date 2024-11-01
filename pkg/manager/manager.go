@@ -18,9 +18,10 @@ type StartRunnerOptions struct {
 }
 
 type ManagerOptions struct {
-	Provider  Provider          `json:"provider"`
-	Github    *GithubOptions    `json:"github"`
-	GithubCRI *GithubCRIOptions `json:"github_cri"`
+	Provider         Provider                 `json:"provider"`
+	Github           *GithubOptions           `json:"github"`
+	GithubCRI        *GithubCRIOptions        `json:"github_cri"`
+	GithubWindowsCRI *GithubWindowsCRIOptions `json:"github_windows_cri"`
 }
 
 func NewManager(opts *ManagerOptions) IManager {
@@ -29,6 +30,8 @@ func NewManager(opts *ManagerOptions) IManager {
 		return newGithubManager(opts)
 	case ProviderGithubCRI:
 		return newGithubCRIManager(opts)
+	case ProviderGithubWindowsCRI:
+		return newGithubWindowsCRIManager(opts)
 	default:
 		panic("unknown provider")
 	}
