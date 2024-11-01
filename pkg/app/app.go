@@ -59,9 +59,10 @@ type ProxySettings struct {
 }
 
 type RunnerSettings struct {
-	Provider  Provider                  `json:"provider"`
-	Github    *GithubSettings           `json:"github"`
-	GithubCRI *manager.GithubCRIOptions `json:"github_cri"`
+	Provider         Provider                         `json:"provider"`
+	Github           *GithubSettings                  `json:"github"`
+	GithubCRI        *manager.GithubCRIOptions        `json:"github_cri"`
+	GithubWindowsCRI *manager.GithubWindowsCRIOptions `json:"github_windows_cri"`
 }
 
 type ContainerOptionsVolume struct {
@@ -209,6 +210,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			}
 		case manager.ProviderGithubCRI:
 			startAgentOpts.Manager.GithubCRI = settings.Runner.GithubCRI
+		case manager.ProviderGithubWindowsCRI:
+			startAgentOpts.Manager.GithubWindowsCRI = settings.Runner.GithubWindowsCRI
 		default:
 			log.Logger().Errorf("unknown provider: %s", startAgentOpts.Manager.Provider)
 			return errors.New("unknown provider")
