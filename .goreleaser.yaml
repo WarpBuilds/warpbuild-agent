@@ -42,6 +42,7 @@ archives:
       - tools/launchd/**
       - tools/systemd/**
       - tools/github/hooks/prerun.sh
+      - tools/github/hooks/prerun.ps1
       - pkg/telemetry/binaries/**
       - pkg/telemetry/otel-collector-config.tmpl
 
