@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    branches:
-      - prashant-warp-313
     tags:
       - "*"
 
