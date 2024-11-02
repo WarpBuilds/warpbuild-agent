@@ -23,23 +23,14 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: WarpBuilds/setup-go@v5
         with:
           go-version: "1.21" # Replace with your Go version
+          cache: true
 
       - name: Define S3 Path
         id: vars
         run: echo "s3_path=warpbuild-agentd/${GITHUB_REF_NAME}/" >> $GITHUB_ENV
-
-      - name: Fetch cache
-        uses: WarpBuilds/cache@v1
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-rt-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-rt-go-
 
       - name: Run GoReleaser (Snapshot)
         uses: goreleaser/goreleaser-action@v6
