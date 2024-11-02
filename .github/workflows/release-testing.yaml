@@ -34,7 +34,9 @@ jobs:
       - name: Fetch cache
         uses: WarpBuilds/cache@v1
         with:
-          path: ${{ env.GOPATH }}/pkg/mod
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-rt-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-rt-go-
