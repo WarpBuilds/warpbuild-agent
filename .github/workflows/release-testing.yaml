@@ -51,10 +51,9 @@ jobs:
           aws-region: us-east-1 # Set your AWS region
 
       - name: Sync to S3
-        uses: aws-actions/s3-sync@v2
-        with:
-          bucket: ${{ env.AWS_S3_BUCKET }}
-          source-dir: dist
-          dest-dir: ${{ env.s3_path }}
-          region: ${{ env.AWS_S3_REGION }} # Ensure this matches the S3 bucket's region
-          delete: true # Deletes any extra files in the destination that aren't in the source
+        run: |
+          echo "Syncing to S3 bucket: ${{ env.AWS_S3_BUCKET }}"
+          echo "Source directory: dist"
+          echo "Destination directory: ${{ env.s3_path }}"
+          echo "Region: ${{ env.AWS_S3_REGION }}"
+          aws s3 sync dist s3://${{ env.AWS_S3_BUCKET }}/${{ env.s3_path }} --region ${{ env.AWS_S3_REGION }} --delete
