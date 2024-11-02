@@ -31,6 +31,14 @@ jobs:
         id: vars
         run: echo "s3_path=${GITHUB_REF_NAME}/" >> $GITHUB_ENV
 
+      - name: Fetch cache
+        uses: WarpBuilds/cache@v1
+        with:
+          path: ${{ env.GOPATH }}/pkg/mod
+          key: ${{ runner.os }}-rt-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-rt-go-
+
       - name: Run GoReleaser (Snapshot)
         uses: goreleaser/goreleaser-action@v6
         with:
