@@ -5,9 +5,11 @@ package cmd
 import (
 	"os"
 	"time"
+	"unsafe"
 
 	"github.com/spf13/cobra"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/mgr"
 )
@@ -15,6 +17,9 @@ import (
 type flagsStruct struct {
 	stdoutFile        string
 	stderrFile        string
+	elevateUser       string
+	elevatePassword   string
+	domain            string
 	agentdServiceName string
 	restartInterval   time.Duration
 }
@@ -125,9 +130,75 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.stderrFile, "stderr", "", "stderr file")
 	rootCmd.PersistentFlags().StringVar(&flags.agentdServiceName, "agentd-service-name", "warpbuild-agentd", "agentd service name")
 	rootCmd.PersistentFlags().DurationVar(&flags.restartInterval, "restart-interval", 1*time.Minute, "restart interval")
+	rootCmd.PersistentFlags().StringVar(&flags.elevateUser, "elevate-user", "", "elevate user")
+	rootCmd.PersistentFlags().StringVar(&flags.elevatePassword, "elevate-password", "", "elevate password")
+	rootCmd.PersistentFlags().StringVar(&flags.domain, "domain", "", "domain")
+}
+
+var (
+	advapi32                    = windows.NewLazySystemDLL("advapi32.dll")
+	procLogonUser               = advapi32.NewProc("LogonUserW")
+	procImpersonateLoggedOnUser = advapi32.NewProc("ImpersonateLoggedOnUser")
+	procRevertToSelf            = advapi32.NewProc("RevertToSelf")
+)
+
+const (
+	LOGON32_LOGON_INTERACTIVE = 2
+	LOGON32_PROVIDER_DEFAULT  = 0
+)
+
+func impersonate(username, domain, password string) (uintptr, error) {
+	var token windows.Handle
+	u, _ := windows.UTF16PtrFromString(username)
+	d, _ := windows.UTF16PtrFromString(domain)
+	p, _ := windows.UTF16PtrFromString(password)
+
+	// Logon user
+	ret, _, err := procLogonUser.Call(
+		uintptr(unsafe.Pointer(u)),
+		uintptr(unsafe.Pointer(d)),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(LOGON32_LOGON_INTERACTIVE),
+		uintptr(LOGON32_PROVIDER_DEFAULT),
+		uintptr(unsafe.Pointer(&token)),
+	)
+	if ret == 0 {
+		return 0, err
+	}
+
+	// Impersonate logged-on user
+	ret, _, err = procImpersonateLoggedOnUser.Call(uintptr(token))
+	if ret == 0 {
+		windows.CloseHandle(token)
+		return 0, err
+	}
+
+	return uintptr(token), nil
+}
+
+func revertImpersonation() error {
+	ret, _, err := procRevertToSelf.Call()
+	if ret == 0 {
+		return err
+	}
+	return nil
 }
 
 func killServiceProcess(service *mgr.Service) error {
+	// If elevation credentials are provided, impersonate the user
+	if flags.elevateUser != "" {
+		token, err := impersonate(flags.elevateUser, flags.domain, flags.elevatePassword)
+		if err != nil {
+			log.Logger().Errorf("Failed to impersonate user: %v", err)
+			return err
+		}
+		log.Logger().Infof("impersonated user %s", flags.elevateUser)
+		defer func() {
+			windows.CloseHandle(windows.Handle(token))
+			revertImpersonation()
+		}()
+	}
+
 	// Get the process ID of the service
 	status, err := service.Query()
 	if err != nil {
