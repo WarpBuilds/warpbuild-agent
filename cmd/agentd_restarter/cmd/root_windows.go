@@ -34,11 +34,10 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
 		defer lm.Sync()
 
 		for {
-			lm.Logger().Infof("sleeping for %v", flags.restartInterval)
+			log.Logger().Infof("sleeping for %v", flags.restartInterval)
 
 			time.Sleep(flags.restartInterval)
 
@@ -47,7 +46,7 @@ var rootCmd = &cobra.Command{
 			// Connect to the service manager
 			m, err := mgr.Connect()
 			if err != nil {
-				lm.Logger().Errorf("Failed to connect to service manager: %v", err)
+				log.Logger().Errorf("Failed to connect to service manager: %v", err)
 				continue
 			}
 			defer m.Disconnect()
@@ -55,7 +54,7 @@ var rootCmd = &cobra.Command{
 			// Open the specified service
 			service, err := m.OpenService(serviceName)
 			if err != nil {
-				lm.Logger().Errorf("Could not access service %s: %v", serviceName, err)
+				log.Logger().Errorf("Could not access service %s: %v", serviceName, err)
 				continue
 			}
 			defer service.Close()
@@ -63,24 +62,33 @@ var rootCmd = &cobra.Command{
 			// Query the current status of the service
 			status, err := service.Query()
 			if err != nil {
-				lm.Logger().Errorf("Could not query service %s: %v", serviceName, err)
+				log.Logger().Errorf("Could not query service %s: %v", serviceName, err)
 				continue
 			}
 
 			if status.State == svc.Stopped {
-				lm.Logger().Infof("service %s is stopped, restarting", serviceName)
+				log.Logger().Infof("service %s is stopped, restarting", serviceName)
 				// restart the service
 				err := service.Start()
 				if err != nil {
-					lm.Logger().Errorf("Could not start service %s: %v", serviceName, err)
+					log.Logger().Errorf("Could not start service %s: %v", serviceName, err)
 					continue
 				}
 
-				lm.Logger().Infof("service %s restarted", serviceName)
+				log.Logger().Infof("service %s restarted", serviceName)
+			}
+
+			if status.State == svc.StopPending {
+				// kill the service process
+				err := killServiceProcess(service)
+				if err != nil {
+					log.Logger().Errorf("Could not kill service %s: %v", serviceName, err)
+					continue
+				}
 			}
 
 			if status.State == svc.Running {
-				lm.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
+				log.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
 				time.Sleep(flags.restartInterval)
 				continue
 			}
@@ -117,4 +125,42 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.stderrFile, "stderr", "", "stderr file")
 	rootCmd.PersistentFlags().StringVar(&flags.agentdServiceName, "agentd-service-name", "warpbuild-agentd", "agentd service name")
 	rootCmd.PersistentFlags().DurationVar(&flags.restartInterval, "restart-interval", 1*time.Minute, "restart interval")
+}
+
+func killServiceProcess(service *mgr.Service) error {
+	// Get the process ID of the service
+	status, err := service.Query()
+	if err != nil {
+		log.Logger().Errorf("Could not query service %s: %v", service.Name, err)
+		return err
+	}
+
+	log.Logger().Infof("service %s has process id %d", service.Name, status.ProcessId)
+
+	if status.ProcessId == 0 {
+		log.Logger().Infof("service %s has no process id", service.Name)
+		return nil // Process is already gone
+	}
+
+	log.Logger().Infof("finding process %d", status.ProcessId)
+
+	// Open the process
+	process, err := os.FindProcess(int(status.ProcessId))
+	if err != nil {
+		log.Logger().Errorf("Could not find process %d: %v", status.ProcessId, err)
+		return err
+	}
+
+	log.Logger().Infof("killing process %d", status.ProcessId)
+
+	// Kill the process
+	err = process.Kill()
+	if err != nil {
+		log.Logger().Errorf("Could not kill process %d: %v", status.ProcessId, err)
+		return err
+	}
+
+	log.Logger().Infof("killed process %d", status.ProcessId)
+
+	return nil
 }
