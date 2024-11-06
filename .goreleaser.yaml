@@ -8,7 +8,8 @@ before:
     # you may remove this if you don't need go generate
     - go generate ./...
 builds:
-  - env:
+  - id: warpbuild-agentd
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
@@ -20,10 +21,21 @@ builds:
     hooks:
       pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
     main: ./cmd/agentd
+  - id: warpbuild-agentd-restarter
+    binary: warpbuild-agentd-restarter
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+    main: ./cmd/agentd_restarter
 
 archives:
-  - id: agentd
+  - id: warpbuild-agentd
     format: tar.gz
+    builds:
+      - warpbuild-agentd
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
       {{ .ProjectName }}_
@@ -45,6 +57,16 @@ archives:
       - tools/github/hooks/prerun.ps1
       - pkg/telemetry/binaries/**
       - pkg/telemetry/otel-collector-config.tmpl
+  - id: warpbuild-agentd-restarter
+    format: zip
+    builds:
+      - warpbuild-agentd-restarter
+    name_template: >-
+      {{ .Binary }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}.zip
 
 checksum:
   name_template: "checksums.txt"
