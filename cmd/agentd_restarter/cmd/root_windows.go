@@ -3,11 +3,11 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/mgr"
 )
@@ -27,7 +27,19 @@ var rootCmd = &cobra.Command{
 	Long:  `Restarts the agentd service`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
+		lm, err := log.Init(&log.InitOptions{
+			StdoutFile: flags.stdoutFile,
+			StderrFile: flags.stderrFile,
+		})
+		if err != nil {
+			return err
+		}
+
+		defer lm.Sync()
+
 		for {
+			lm.Logger().Infof("sleeping for %v", flags.restartInterval)
+
 			time.Sleep(flags.restartInterval)
 
 			serviceName := flags.agentdServiceName
@@ -35,31 +47,43 @@ var rootCmd = &cobra.Command{
 			// Connect to the service manager
 			m, err := mgr.Connect()
 			if err != nil {
-				log.Fatalf("Failed to connect to service manager: %v", err)
+				lm.Logger().Errorf("Failed to connect to service manager: %v", err)
+				continue
 			}
 			defer m.Disconnect()
 
 			// Open the specified service
 			service, err := m.OpenService(serviceName)
 			if err != nil {
-				log.Fatalf("Could not access service %s: %v", serviceName, err)
+				lm.Logger().Errorf("Could not access service %s: %v", serviceName, err)
+				continue
 			}
 			defer service.Close()
 
 			// Query the current status of the service
 			status, err := service.Query()
 			if err != nil {
-				log.Fatalf("Could not query service %s: %v", serviceName, err)
+				lm.Logger().Errorf("Could not query service %s: %v", serviceName, err)
+				continue
 			}
 
 			if status.State == svc.Stopped {
+				lm.Logger().Infof("service %s is stopped, restarting", serviceName)
 				// restart the service
 				err := service.Start()
 				if err != nil {
-					log.Fatalf("Could not start service %s: %v", serviceName, err)
+					lm.Logger().Errorf("Could not start service %s: %v", serviceName, err)
+					continue
 				}
+
+				lm.Logger().Infof("service %s restarted", serviceName)
 			}
 
+			if status.State == svc.Running {
+				lm.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
+				time.Sleep(flags.restartInterval)
+				continue
+			}
 		}
 
 		return nil
