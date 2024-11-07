@@ -44,6 +44,9 @@ $requestBody = @{
 
 Write-Host "`nMaking a request to WarpBuild..."
 
+# Bypass SSL certificate validation
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+
 try {
     $headers = @{
         'Content-Type' = 'application/json'
@@ -61,7 +64,6 @@ try {
                 -Method Post `
                 -Headers $headers `
                 -Body $requestBody `
-                -SkipCertificateCheck `
                 -ErrorAction Stop
             $success = $true
         }
