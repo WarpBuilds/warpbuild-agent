@@ -8,6 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version is set from goreleaser
+var Version = "dev"
+
 var rootCmd = &cobra.Command{
 	Use:   "agentd-restarter",
 	Short: "Restarts the agentd service",

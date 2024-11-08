@@ -14,6 +14,9 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
+// Version is set from goreleaser
+var Version = "dev"
+
 type flagsStruct struct {
 	stdoutFile        string
 	stderrFile        string
@@ -42,6 +45,7 @@ var rootCmd = &cobra.Command{
 		defer lm.Sync()
 
 		for {
+			log.Logger().Infof("version: %s", Version)
 			log.Logger().Infof("sleeping for %v", flags.restartInterval)
 
 			time.Sleep(flags.restartInterval)

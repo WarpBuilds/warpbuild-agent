@@ -30,6 +30,8 @@ builds:
     goarch:
       - amd64
     main: ./cmd/agentd_restarter
+    ldflags:
+      - -X github.com/warpbuilds/warpbuild-agent/cmd/agentd_restarter/cmd.Version={{.Version}}
 
 archives:
   - id: warpbuild-agentd
