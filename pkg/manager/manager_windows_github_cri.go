@@ -45,22 +45,6 @@ func (m *ghWindowsCriManager) StartRunner(ctx context.Context, opts *StartRunner
 		return nil, err
 	}
 
-	// Logon and impersonate the user
-	token, err := logonUser(m.Username, m.Password, m.Domain)
-	if err != nil {
-		log.Logger().Errorf("LogonUser failed: %v", err)
-		return nil, err
-	}
-	defer windows.CloseHandle(token)
-
-	err = impersonateLoggedOnUser(token)
-	if err != nil {
-		log.Logger().Errorf("ImpersonateLoggedOnUser failed: %v", err)
-		return nil, err
-	}
-
-	log.Logger().Infof("Logged in as %s", m.Username)
-
 	// log all the envs
 	log.Logger().Infof("Environment variables available to the warpbuild agent:")
 	for _, env := range os.Environ() {
