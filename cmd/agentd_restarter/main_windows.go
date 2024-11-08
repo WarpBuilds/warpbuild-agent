@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -24,11 +25,12 @@ func (m *myService) Execute(args []string, r <-chan svc.ChangeRequest, status ch
 	status <- svc.Status{State: svc.StartPending}
 	log.Println("Service is starting...")
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	log.Println("Executing command as goroutine...")
 	go func() {
-		if err := cmd.ExecuteWithErr(); err != nil {
+		if err := cmd.ExecuteWithContextErr(ctx); err != nil {
 			log.Printf("Error in cmd.Execute: %v", err)
-			status <- svc.Status{State: svc.StopPending}
 		}
 		log.Println("cmd.Execute() finished")
 	}()
@@ -46,6 +48,7 @@ loop:
 				status <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				log.Print("Shutting service...!")
+				cancel()
 				break loop
 			case svc.Pause:
 				log.Print("Pausing service...!")

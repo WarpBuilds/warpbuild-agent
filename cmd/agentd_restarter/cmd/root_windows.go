@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"time"
 	"unsafe"
@@ -117,8 +118,8 @@ func Execute() {
 	}
 }
 
-func ExecuteWithErr() error {
-	return rootCmd.Execute()
+func ExecuteWithContextErr(ctx context.Context) error {
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func init() {
@@ -213,26 +214,40 @@ func killServiceProcess(service *mgr.Service) error {
 		return err
 	}
 
-	log.Logger().Infof("service %s has process id %d", service.Name, status.ProcessId)
-
 	if status.ProcessId == 0 {
 		log.Logger().Infof("service %s has no process id", service.Name)
-		return nil // Process is already gone
+		return nil
 	}
 
 	log.Logger().Infof("finding process %d", status.ProcessId)
 
-	// Open the process using Windows API
-	processHandle, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, uint32(status.ProcessId))
+	// Request all necessary access rights
+	const processAccess = windows.PROCESS_TERMINATE |
+		windows.PROCESS_QUERY_INFORMATION |
+		windows.PROCESS_VM_READ |
+		windows.SYNCHRONIZE
+
+	// Try to open with SE_DEBUG_PRIVILEGE first
+	if err := enableDebugPrivilege(); err != nil {
+		log.Logger().Warnf("Failed to enable debug privilege: %v", err)
+	}
+
+	processHandle, err := windows.OpenProcess(processAccess, false, uint32(status.ProcessId))
 	if err != nil {
-		log.Logger().Errorf("Could not open process %d: %v", status.ProcessId, err)
-		return err
+		// If direct access fails, try using the service control manager to stop the service
+		log.Logger().Warnf("Could not open process directly, attempting to stop via service control: %v", err)
+		_, err = service.Control(svc.Stop)
+		if err != nil {
+			log.Logger().Errorf("Failed to stop service via control: %v", err)
+			return err
+		}
+		return nil
 	}
 	defer windows.CloseHandle(processHandle)
 
 	log.Logger().Infof("killing process %d", status.ProcessId)
 
-	// Terminate the process using Windows API
+	// Terminate the process
 	err = windows.TerminateProcess(processHandle, 1)
 	if err != nil {
 		log.Logger().Errorf("Could not terminate process %d: %v", status.ProcessId, err)
@@ -240,6 +255,38 @@ func killServiceProcess(service *mgr.Service) error {
 	}
 
 	log.Logger().Infof("killed process %d", status.ProcessId)
+	return nil
+}
+
+// Add this new function to enable debug privilege
+func enableDebugPrivilege() error {
+	var token windows.Token
+	current := windows.CurrentProcess()
+
+	err := windows.OpenProcessToken(current, windows.TOKEN_ADJUST_PRIVILEGES|windows.TOKEN_QUERY, &token)
+	if err != nil {
+		return err
+	}
+	defer token.Close()
+
+	var luid windows.LUID
+	err = windows.LookupPrivilegeValue(nil, windows.StringToUTF16Ptr("SeDebugPrivilege"), &luid)
+	if err != nil {
+		return err
+	}
+
+	privileges := windows.Tokenprivileges{
+		PrivilegeCount: 1,
+		Privileges: [1]windows.LUIDAndAttributes{{
+			Luid:       luid,
+			Attributes: windows.SE_PRIVILEGE_ENABLED,
+		}},
+	}
+
+	err = windows.AdjustTokenPrivileges(token, false, &privileges, 0, nil, nil)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
