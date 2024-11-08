@@ -185,9 +185,12 @@ func revertImpersonation() error {
 }
 
 func killServiceProcess(service *mgr.Service) error {
+	var token uintptr
+	var err error
+
 	// If elevation credentials are provided, impersonate the user
 	if flags.elevateUser != "" {
-		token, err := impersonate(flags.elevateUser, flags.domain, flags.elevatePassword)
+		token, err = impersonate(flags.elevateUser, flags.domain, flags.elevatePassword)
 		if err != nil {
 			log.Logger().Errorf("Failed to impersonate user: %v", err)
 			return err
@@ -215,19 +218,20 @@ func killServiceProcess(service *mgr.Service) error {
 
 	log.Logger().Infof("finding process %d", status.ProcessId)
 
-	// Open the process
-	process, err := os.FindProcess(int(status.ProcessId))
+	// Open the process using Windows API
+	processHandle, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, uint32(status.ProcessId))
 	if err != nil {
-		log.Logger().Errorf("Could not find process %d: %v", status.ProcessId, err)
+		log.Logger().Errorf("Could not open process %d: %v", status.ProcessId, err)
 		return err
 	}
+	defer windows.CloseHandle(processHandle)
 
 	log.Logger().Infof("killing process %d", status.ProcessId)
 
-	// Kill the process
-	err = process.Kill()
+	// Terminate the process using Windows API
+	err = windows.TerminateProcess(processHandle, 1)
 	if err != nil {
-		log.Logger().Errorf("Could not kill process %d: %v", status.ProcessId, err)
+		log.Logger().Errorf("Could not terminate process %d: %v", status.ProcessId, err)
 		return err
 	}
 
