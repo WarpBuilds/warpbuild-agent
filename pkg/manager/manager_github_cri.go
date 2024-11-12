@@ -16,11 +16,10 @@ type ghcriManager struct {
 }
 
 type GithubCRIOptions struct {
-	PassAllEnvs bool        `json:"pass_all_envs"`
-	StdoutFile  string      `json:"stdout_file"`
-	StderrFile  string      `json:"stderr_file"`
-	RunnerDir   string      `json:"runner_dir"`
-	CMDOptions  *CMDOptions `json:"cmd_options"`
+	StdoutFile string      `json:"stdout_file"`
+	StderrFile string      `json:"stderr_file"`
+	RunnerDir  string      `json:"runner_dir"`
+	CMDOptions *CMDOptions `json:"cmd_options"`
 }
 
 type CMDOptions struct {
@@ -49,14 +48,6 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	for _, env := range m.CMDOptions.Envs {
 		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
-	}
-
-	if m.PassAllEnvs {
-		log.Logger().Infof("Adding all available envs to command...")
-		for _, env := range os.Environ() {
-			log.Logger().Infof("env: %s", env)
-			cmd.Env = append(cmd.Env, env)
-		}
 	}
 
 	cmd.Dir = m.CMDOptions.Dir
