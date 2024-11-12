@@ -1,6 +1,3 @@
-//go:build windows
-// +build windows
-
 package manager
 
 import (
@@ -10,17 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
-	"unsafe"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
-	"golang.org/x/sys/windows"
 )
 
 type GithubWindowsCRIOptions struct {
 	PassAllEnvs bool        `json:"pass_all_envs"`
-	Username    string      `json:"username"`
-	Password    string      `json:"password"`
-	Domain      string      `json:"domain"`
 	StdoutFile  string      `json:"stdout_file"`
 	StderrFile  string      `json:"stderr_file"`
 	RunnerDir   string      `json:"runner_dir"`
@@ -213,47 +205,5 @@ func (m *ghWindowsCriManager) createFiles(ctx context.Context) error {
 		}
 	}
 
-	return nil
-}
-
-const (
-	LOGON32_LOGON_INTERACTIVE = 2
-	LOGON32_PROVIDER_DEFAULT  = 0
-)
-
-// Load the necessary Windows API DLLs and functions
-var (
-	modAdvapi32                 = windows.NewLazySystemDLL("advapi32.dll")
-	procLogonUserW              = modAdvapi32.NewProc("LogonUserW")
-	procImpersonateLoggedOnUser = modAdvapi32.NewProc("ImpersonateLoggedOnUser")
-)
-
-func logonUser(username, password, domain string) (windows.Handle, error) {
-	var token windows.Handle
-	usernamePtr, _ := windows.UTF16PtrFromString(username)
-	domainPtr, _ := windows.UTF16PtrFromString(domain)
-	passwordPtr, _ := windows.UTF16PtrFromString(password)
-
-	// Call LogonUserW from advapi32.dll
-	ret, _, err := procLogonUserW.Call(
-		uintptr(unsafe.Pointer(usernamePtr)),
-		uintptr(unsafe.Pointer(domainPtr)),
-		uintptr(unsafe.Pointer(passwordPtr)),
-		uintptr(LOGON32_LOGON_INTERACTIVE),
-		uintptr(LOGON32_PROVIDER_DEFAULT),
-		uintptr(unsafe.Pointer(&token)),
-	)
-	if ret == 0 {
-		return 0, err
-	}
-	return token, nil
-}
-
-func impersonateLoggedOnUser(token windows.Handle) error {
-	// Call ImpersonateLoggedOnUser from advapi32.dll
-	ret, _, err := procImpersonateLoggedOnUser.Call(uintptr(token))
-	if ret == 0 {
-		return err
-	}
 	return nil
 }
