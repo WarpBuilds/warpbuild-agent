@@ -11,36 +11,36 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-type ghcriManager struct {
-	*GithubCRIOptions
+type GithubWindowsCRIOptions struct {
+	PassAllEnvs bool        `json:"pass_all_envs"`
+	StdoutFile  string      `json:"stdout_file"`
+	StderrFile  string      `json:"stderr_file"`
+	RunnerDir   string      `json:"runner_dir"`
+	CMDOptions  *CMDOptions `json:"cmd_options"`
 }
 
-type GithubCRIOptions struct {
-	StdoutFile string      `json:"stdout_file"`
-	StderrFile string      `json:"stderr_file"`
-	RunnerDir  string      `json:"runner_dir"`
-	CMDOptions *CMDOptions `json:"cmd_options"`
+type ghWindowsCriManager struct {
+	*GithubWindowsCRIOptions
 }
 
-type CMDOptions struct {
-	CMD  string               `json:"cmd"`
-	Args []string             `json:"args"`
-	Dir  string               `json:"dir"`
-	Envs EnvironmentVariables `json:"envs"`
-}
+var _ IManager = &ghWindowsCriManager{}
 
-var _ IManager = &ghcriManager{}
-
-func newGithubCRIManager(opts *ManagerOptions) IManager {
-	return &ghcriManager{
-		GithubCRIOptions: opts.GithubCRI,
+func newGithubWindowsCRIManager(opts *ManagerOptions) IManager {
+	return &ghWindowsCriManager{
+		GithubWindowsCRIOptions: opts.GithubWindowsCRI,
 	}
 }
 
-func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error) {
+func (m *ghWindowsCriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error) {
 	err := m.init(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// log all the envs
+	log.Logger().Infof("Environment variables available to the warpbuild agent:")
+	for _, env := range os.Environ() {
+		log.Logger().Infof("env: %s", env)
 	}
 
 	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
@@ -48,6 +48,14 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	for _, env := range m.CMDOptions.Envs {
 		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
+	}
+
+	if m.PassAllEnvs {
+		log.Logger().Infof("Adding all available envs to command...")
+		for _, env := range os.Environ() {
+			log.Logger().Infof("env: %s", env)
+			cmd.Env = append(cmd.Env, env)
+		}
 	}
 
 	cmd.Dir = m.CMDOptions.Dir
@@ -71,8 +79,8 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 		err := hook.PreStartHook(ctx, &PreStartHookOptions{
 			StartRunnerOptions: opts,
 			ManagerOptions: &ManagerOptions{
-				Provider:  ProviderGithubCRI,
-				GithubCRI: m.GithubCRIOptions,
+				Provider:         ProviderGithubWindowsCRI,
+				GithubWindowsCRI: m.GithubWindowsCRIOptions,
 			},
 		})
 		if err != nil {
@@ -135,8 +143,8 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 				err := hook.PostEndHook(ctx, &PostEndHookOptions{
 					StartRunnerOptions: opts,
 					ManagerOptions: &ManagerOptions{
-						Provider:  ProviderGithubCRI,
-						GithubCRI: m.GithubCRIOptions,
+						Provider:         ProviderGithubWindowsCRI,
+						GithubWindowsCRI: m.GithubWindowsCRIOptions,
 					},
 				})
 				if err != nil {
@@ -153,7 +161,7 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 
 }
 
-func (m *ghcriManager) init(ctx context.Context) error {
+func (m *ghWindowsCriManager) init(ctx context.Context) error {
 
 	err := m.createFiles(ctx)
 	if err != nil {
@@ -165,7 +173,7 @@ func (m *ghcriManager) init(ctx context.Context) error {
 
 }
 
-func (m *ghcriManager) createFiles(ctx context.Context) error {
+func (m *ghWindowsCriManager) createFiles(ctx context.Context) error {
 
 	fullPaths := []string{
 		m.StderrFile,
