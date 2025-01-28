@@ -137,6 +137,9 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
 	}
 
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randomCacheID := r.Intn(1000000)
+
 	if statusCode < 200 || statusCode >= 300 {
 		return nil, fmt.Errorf("failed to reserve cache: %s", string(body))
 	}
@@ -145,9 +148,6 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 	if err := json.Unmarshal(body, &reserveCacheResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse backend response: %w", err)
 	}
-
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	randomCacheID := r.Intn(1000000)
 
 	dockerReserveResponse := DockerGHAReserveCacheResponse{
 		CacheID: randomCacheID,
