@@ -76,7 +76,7 @@ func ReserveCacheHandler(c *fiber.Ctx) error {
 	resp, err := ReserveCache(c.Context(), DockerGHAReserveCacheRequest{Key: req.Key, Version: req.Version, CacheBackendInfo: CacheBackendInfo{HostURL: getCacheBackendURL(c), AuthToken: getAuthorizationToken(c)}})
 	if err != nil {
 		fmt.Printf("Error reserving cache: %v\n", err)
-		return sendErrorResponse(c, fiber.StatusInternalServerError, "Failed to reserve cache.", "CacheReserveFailed", "CacheReserveFailed", 2002)
+		return sendErrorResponse(c, fiber.StatusInternalServerError, "Failed to reserve cache. Already exists.", "CacheReserveFailed", "AlreadyExists", 2002)
 	}
 
 	return c.JSON(resp)
