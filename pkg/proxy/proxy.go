@@ -35,8 +35,8 @@ type CacheEntryData struct {
 	CacheKey               string
 	CacheVersion           string
 	Chunks                 map[int64]ChunkData
-	AlreadyExists          bool
-	Mutex                  sync.Mutex // Mutex to protect access to chunks
+	// AlreadyExists          bool
+	Mutex sync.Mutex // Mutex to protect access to chunks
 }
 
 func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGetCacheResponse, error) {
@@ -141,18 +141,18 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randomCacheID := r.Intn(1000000)
 
-	if statusCode == http.StatusBadRequest {
-		// Cache already exists. Mark it as "AlreadyExists"
-		cacheStore.Store(randomCacheID, &CacheEntryData{
-			CacheKey:      input.Key,
-			CacheVersion:  input.Version,
-			AlreadyExists: true,
-		})
+	// if statusCode == http.StatusBadRequest {
+	// 	// Cache already exists. Mark it as "AlreadyExists"
+	// 	cacheStore.Store(randomCacheID, &CacheEntryData{
+	// 		CacheKey:      input.Key,
+	// 		CacheVersion:  input.Version,
+	// 		AlreadyExists: true,
+	// 	})
 
-		return &DockerGHAReserveCacheResponse{
-			CacheID: randomCacheID,
-		}, nil
-	}
+	// 	return &DockerGHAReserveCacheResponse{
+	// 		CacheID: randomCacheID,
+	// 	}, nil
+	// }
 
 	if statusCode < 200 || statusCode >= 300 {
 		return nil, fmt.Errorf("failed to reserve cache: %s", string(body))
@@ -184,9 +184,9 @@ func UploadCache(ctx context.Context, input DockerGHAUploadCacheRequest) (*Docke
 	})
 	cacheEntry := cacheData.(*CacheEntryData)
 
-	if cacheEntry.AlreadyExists {
-		return &DockerGHAUploadCacheResponse{}, nil
-	}
+	// if cacheEntry.AlreadyExists {
+	// 	return &DockerGHAUploadCacheResponse{}, nil
+	// }
 
 	start, end, err := parseContentRange(input.ContentRange)
 	if err != nil {
@@ -399,9 +399,9 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	if cacheEntry.AlreadyExists {
-		return &DockerGHACommitCacheResponse{}, nil
-	}
+	// if cacheEntry.AlreadyExists {
+	// 	return &DockerGHACommitCacheResponse{}, nil
+	// }
 
 	requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
 
