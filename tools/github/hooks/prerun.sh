@@ -52,21 +52,17 @@ echo -e "\nMaking a request to WarpBuild..."
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
   --retry-on-host-error --retry-on-http-error=502 \
+  --retry-on-http-error=504 --retry-on-http-error=401 \
   --content-on-error \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
   --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-  -O warpbuild_response.json --post-file=warpbuild_body.json \
+  -O warpbuild_response --post-file=warpbuild_body.json \
   "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
 if [ -n "$exit_code" ]; then
     echo "Failed to send request to warpbuild. Logging response. Exiting..."
-    # check if jq is installed if so then pretty print the json response
-    if ! command -v jq &> /dev/null; then
-        cat warpbuild_response.json
-    else
-        jq . warpbuild_response.json
-    fi
+    cat warpbuild_response
     exit 1
 fi
 
