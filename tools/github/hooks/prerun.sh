@@ -51,7 +51,7 @@ echo -e "\nMaking a request to WarpBuild..."
 
 # Use wget with retries, retry interval, no certificate check, and exit on failure
 wget --tries=5 --waitretry=2 --retry-connrefused \
-  --retry-on-host-error --retry-on-http-error=502 \
+  --retry-on-host-error --retry-on-http-error=502 --retry-on-http-error=401 \
   --content-on-error \
   --no-check-certificate --continue --no-verbose \
   --header="Content-Type: application/json" \
