@@ -56,6 +56,7 @@ const (
 	ProviderGCS       Provider = "gcs"
 	ProviderS3        Provider = "s3"
 	ProviderAzureBlob Provider = "azure_blob"
+	ProviderR2        Provider = "r2"
 )
 
 type AuthMethod string
