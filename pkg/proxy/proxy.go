@@ -90,6 +90,7 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 	presignedURL := ""
 	switch cacheResponse.Provider {
 	case ProviderS3:
+	case ProviderR2:
 		presignedURL = cacheResponse.S3.PreSignedURL
 	case ProviderGCS:
 		presignedURL = cacheResponse.GCS.PreSignedURL
@@ -249,6 +250,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 
 	switch cacheEntry.BackendReserveResponse.Provider {
 	case ProviderS3:
+	case ProviderR2:
 		if len(cacheEntry.BackendReserveResponse.S3.PreSignedURLs) != 1 {
 			return nil, fmt.Errorf("no presigned URLs found")
 		}
@@ -387,6 +389,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	switch cacheEntry.BackendReserveResponse.Provider {
 	case ProviderS3:
+	case ProviderR2:
 		payload = CommitCacheRequest{
 			CacheKey:     cacheEntry.CacheKey,
 			CacheVersion: cacheEntry.CacheVersion,
