@@ -49,22 +49,31 @@ EOF
 
 echo -e "\nMaking a request to WarpBuild..."
 
-# Use wget with retries, retry interval, no certificate check, and exit on failure
-wget --tries=5 --waitretry=2 --retry-connrefused \
-  --retry-on-host-error --retry-on-http-error=502 \
-  --retry-on-http-error=504 --retry-on-http-error=401 \
-  --content-on-error \
-  --no-check-certificate --continue --no-verbose \
-  --header="Content-Type: application/json" \
-  --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
-  -O warpbuild_response --post-file=warpbuild_body.json \
-  "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
+max_parent_retries=3
 
-if [ -n "$exit_code" ]; then
-    echo "Failed to send request to warpbuild. Logging response. Exiting..."
-    cat warpbuild_response
-    exit 1
-fi
+while [[ max_parent_retries -gt 0 ]]; do
+  # Use wget with retries, retry interval, no certificate check, and exit on failure
+  wget --tries=5 --waitretry=2 --retry-connrefused \
+    --retry-on-host-error --retry-on-http-error=502 \
+    --retry-on-http-error=504 --retry-on-http-error=401 \
+    --content-on-error \
+    --no-check-certificate --continue --no-verbose \
+    --header="Content-Type: application/json" \
+    --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
+    -O warpbuild_response --post-file=warpbuild_body.json \
+    "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
+
+  if [ -n "$exit_code" ]; then
+      echo "Failed to send request to warpbuild. Logging response..." 
+      cat warpbuild_response
+      max_parent_retries=$(expr $max_parent_retries - 1)
+      echo "Retries left: $max_parent_retries"
+      rm warpbuild_response
+  else
+      break
+  fi
+
+done
 
 rm warpbuild_body.json
 
