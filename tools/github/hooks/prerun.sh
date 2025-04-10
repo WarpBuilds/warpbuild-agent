@@ -70,6 +70,7 @@ while [[ max_parent_retries -gt 0 ]]; do
       echo "Retries left: $max_parent_retries"
       rm warpbuild_response
   else
+      echo "Request completed successfully."
       break
   fi
 
