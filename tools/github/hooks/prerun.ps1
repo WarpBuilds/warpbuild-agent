@@ -40,45 +40,52 @@ $requestBody = @{
     repo_head_ref = $env:GITHUB_HEAD_REF
     repo_ref = $env:GITHUB_REF
     repo_ref_type = $env:GITHUB_REF_TYPE
-} | ConvertTo-Json -Depth 10
+} | ConvertTo-Json
 
 Write-Host "`nMaking a request to WarpBuild..."
 
-# Bypass SSL certificate validation (only if needed)
+# Bypass SSL certificate validation
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 
-$headers = @{
-    'Content-Type' = 'application/json'
-    'X-Warpbuild-Scope-Token' = $env:WARPBUILD_SCOPE_TOKEN
-}
-
-# Retry logic
-$maxRetries = 5
-$retryCount = 0
-$success = $false
-$response = $null
-
-while (-not $success -and $retryCount -lt $maxRetries) {
-    try {
-        $response = Invoke-RestMethod -Uri "$env:WARPBUILD_HOST_URL/api/v1/job" `
-            -Method Post `
-            -Headers $headers `
-            -Body $requestBody `
-            -ContentType 'application/json' `
-            -ErrorAction Stop
-
-        $success = $true
+try {
+    $headers = @{
+        'Content-Type' = 'application/json'
+        'X-Warpbuild-Scope-Token' = $env:WARPBUILD_SCOPE_TOKEN
     }
-    catch {
-        $retryCount++
-        Write-Host "Request failed (attempt $retryCount/$maxRetries): $($_.Exception.Message)"
-        if ($retryCount -lt $maxRetries) {
+
+    # PowerShell equivalent of wget with retries
+    $maxRetries = 5
+    $retryCount = 0
+    $success = $false
+
+    while (-not $success -and $retryCount -lt $maxRetries) {
+        try {
+            $response = Invoke-WebRequest -Uri "$env:WARPBUILD_HOST_URL/api/v1/job" `
+                -Method Post `
+                -Headers $headers `
+                -Body $requestBody `
+                -UseBasicParsing `
+                -ErrorAction Stop
+            $success = $true
+        }
+        catch {
+            $retryCount++
+            if ($retryCount -eq $maxRetries) {
+                throw
+            }
             Start-Sleep -Seconds 2
-        } else {
-            Write-Host "`nFailed to send request to warpbuild. Exiting..."
-            exit 1
         }
     }
+}
+catch {
+    Write-Host "Failed to send request to warpbuild. Logging response. Exiting..."
+    if ($response) {
+        $response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 100
+    }
+    else {
+        Write-Host $_.Exception.Message
+    }
+    exit 1
 }
 
 Write-Host "`nPrehook for WarpBuild runner instance '$env:RUNNER_NAME' completed successfully."
