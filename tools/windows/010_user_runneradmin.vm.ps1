@@ -37,8 +37,11 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies
 # Enable PowerShell remoting
 Enable-PSRemoting -Force
 
-# Grant 'Log on as a service' right to the user
 $UserName = $MACHINE_USER
+
+Write-Host "UserName for service elevate access: $UserName"
+
+# Define the path for the temporary policy file
 $policyPath = "C:\temp\secpol.cfg"
 
 # Ensure the temporary directory exists
@@ -46,34 +49,27 @@ if (-not (Test-Path -Path "C:\temp")) {
     New-Item -ItemType Directory -Path "C:\temp" | Out-Null
 }
 
-# Export the current security policy
+# Export the current security policy to a temporary file
 secedit /export /cfg $policyPath
 
 # Read the exported policy content
 $content = Get-Content $policyPath
 
-# Check if the user already has 'Log on as a service' right
-if ($content -match "SeServiceLogonRight\s*=\s*(.*)") {
-    $existingUsers = $matches[1].Split(",") | ForEach-Object { $_.Trim() }
-    if ($existingUsers -contains $UserName) {
-        Write-Host "User '$UserName' already has 'Log on as a service' permission."
-    } else {
-        # Add the user to the policy
-        $updatedUsers = ($existingUsers + $UserName) -join ","
-        $updatedContent = $content -replace "SeServiceLogonRight\s*=.*", "SeServiceLogonRight = $updatedUsers"
-        $updatedContent | Set-Content $policyPath
-
-        # Apply the updated policy
-        secedit /configure /db secedit.sdb /cfg $policyPath /overwrite
-        gpupdate /force
-
-        Write-Host "Granted 'Log on as a service' permission to user '$UserName'."
-    }
+# Check if warpbuild is already in the SeServiceLogonRight policy
+if ($content -match "SeServiceLogonRight = .*?($UserName)") {
+    Write-Host "User $UserName already has 'Log on as a Service' permission."
 } else {
-    # If the policy line doesn't exist, add it
-    Add-Content -Path $policyPath -Value "SeServiceLogonRight = $UserName"
-    secedit /configure /db secedit.sdb /cfg $policyPath /overwrite
+    # Add the username to the "Log on as a service" policy (SeServiceLogonRight)
+    $updatedContent = $content -replace "(SeServiceLogonRight = .*)", "`$1,$UserName"
+
+    # Save the modified policy file
+    $updatedContent | Set-Content $policyPath
+
+    # Apply the modified policy non-interactively
+    echo y | secedit /configure /db secedit.sdb /cfg $policyPath /overwrite
+
+    # Force policy update
     gpupdate /force
 
-    Write-Host "Added 'Log on as a service' permission for user '$UserName'."
+    Write-Host "User $UserName has been granted the 'Log on as a Service' permission."
 }
