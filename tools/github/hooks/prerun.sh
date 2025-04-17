@@ -5,8 +5,6 @@
 echo "Running prehook for WarpBuild runner instance '$RUNNER_NAME'..."
 echo -e "\nLogging environment variables..."
 
-export BUCKET_BASE_URL="https://github.com/WarpBuilds/warpbuild-agent/releases/download/"
-
 echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
 echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
 echo "GITHUB_JOB=$GITHUB_JOB"
