@@ -19,8 +19,9 @@ $latestAgentTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/WarpBuil
 # $latestAgentTag = "v0.3.1"  # Uncomment this line to use a specific version
 
 # Download and extract the agent
-$agentUrl = "$BUCKET_BASE_URL/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
-Invoke-WebRequest -Uri $agentUrl -OutFile "$AGENT_DIR\warpbuild-agent.zip"
+$agentUrl = "https://packages.warpbuild.com/WarpBuilds/warpbuild-agent/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+Write-Host "Downloading warpbuild-agent using aria2..."
+aria2c --max-connection-per-server=16 --split=16 --min-split-size=1M --allow-overwrite=true --out="$AGENT_DIR\warpbuild-agent.zip" $agentUrl
 Expand-Archive -Path "$AGENT_DIR\warpbuild-agent.zip" -DestinationPath "$AGENT_DIR" -Force
 Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
 
@@ -28,9 +29,9 @@ Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
 Copy-Item -Path "$AGENT_DIR\warpbuild-agentd.exe" -Destination "C:\Windows\System32\warpbuild-agentd.exe"
 
 $restarterZipPath = "warpbuild-agentd-restarter_Windows_x86_64.zip"
-$restarterUrl = "$BUCKET_BASE_URL/$latestAgentTag/$restarterZipPath"
-Write-Host "Downloading warpbuild-agentd-restarter from $restarterUrl"
-Invoke-WebRequest -Uri $restarterUrl -OutFile "$AGENT_DIR\$restarterZipPath"
+$restarterUrl = "https://packages.warpbuild.com/WarpBuilds/warpbuild-agent/$latestAgentTag/$restarterZipPath"
+Write-Host "Downloading warpbuild-agentd-restarter using aria2..."
+aria2c --max-connection-per-server=16 --split=16 --min-split-size=1M --allow-overwrite=true --out="$AGENT_DIR\$restarterZipPath" $restarterUrl
 Write-Host "Downloaded $restarterZipPath"
 Expand-Archive -Path "$AGENT_DIR\$restarterZipPath" -DestinationPath "$AGENT_DIR" -Force
 Remove-Item -Path "$AGENT_DIR\$restarterZipPath"
