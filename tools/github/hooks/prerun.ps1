@@ -64,6 +64,7 @@ try {
                 -Method Post `
                 -Headers $headers `
                 -Body $requestBody `
+                -UseBasicParsing `
                 -ErrorAction Stop
             $success = $true
         }
