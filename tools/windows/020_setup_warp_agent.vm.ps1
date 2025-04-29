@@ -82,7 +82,7 @@ $services = @(
         Name = "warpbuild-telemetryd"
         DisplayName = "WarpBuild Telemetry"
         Description = "WarpBuild Telemetry Service"
-        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
+        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
         StartupType = "Automatic"
         Dependencies = @()
         Environment = @{}
@@ -91,7 +91,7 @@ $services = @(
         Name = "warpbuild-proxyd"
         DisplayName = "WarpBuild Proxy"
         Description = "WarpBuild Proxy Service"
-        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --launch-proxy-server=true --stdout $PROXY_STDOUT_FILE --stderr $PROXY_STDERR_FILE"
+        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-proxy-server=true --stdout $PROXY_STDOUT_FILE --stderr $PROXY_STDERR_FILE"
         StartupType = "Automatic"
         Dependencies = @()
         Environment = @{}

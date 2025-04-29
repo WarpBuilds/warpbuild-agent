@@ -57,7 +57,7 @@ archives:
       - tools/systemd/**
       - tools/github/hooks/prerun.sh
       - tools/github/hooks/prerun.ps1
-      - pkg/telemetry/binaries/**
+      - pkg/telemetry/binaries/{{ .Os }}/{{ .Arch }}/**
       - pkg/telemetry/otel-collector-config.tmpl
   - id: warpbuild-agentd-restarter
     format: zip

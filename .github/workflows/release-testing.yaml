@@ -3,7 +3,7 @@ name: Branch Build and Upload to S3
 on:
   push:
     branches:
-      - "windows-runners"
+      - "feat/windows-telemetry"
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.PREPROD_AWS_ACCESS_KEY_ID }}
