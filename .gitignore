@@ -22,3 +22,4 @@ openapitools.json
 bin
 dist/
 .DS_Store
+pkg/telemetry/binaries/windows/amd64/otelcol-contrib.exe

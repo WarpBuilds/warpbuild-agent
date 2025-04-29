@@ -1,74 +1,73 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
+version: 2
 project_name: warpbuild-agentd
+env:
+- OTEL_VERSION=0.125.0
 before:
   hooks:
-    # You may remove this if you don't use go modules.
-    - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
+  # You may remove this if you don't use go modules.
+  - go mod tidy
+  # you may remove this if you don't need go generate
+  - go generate ./...
+  - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_windows_amd64.tar.gz -O otelcol-contrib_windows_amd64.tar.gz
+  - tar -xzf otelcol-contrib_windows_amd64.tar.gz
+  - mkdir -p pkg/telemetry/binaries/windows/amd64
+  - mv otelcol-contrib.exe pkg/telemetry/binaries/windows/amd64/
+  - rm otelcol-contrib_windows_amd64.tar.gz
 builds:
-  - id: warpbuild-agentd
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
-    hooks:
-      pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
-    main: ./cmd/agentd
-  - id: warpbuild-agentd-restarter
-    binary: warpbuild-agentd-restarter
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - windows
-    goarch:
-      - amd64
-    main: ./cmd/agentd_restarter
-    ldflags:
-      - -X github.com/warpbuilds/warpbuild-agent/cmd/agentd_restarter/cmd.Version={{.Version}}
+- id: warpbuild-agentd
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - darwin
+  - windows
+  goarch:
+  - amd64
+  - arm64
+  hooks:
+    pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
+  main: ./cmd/agentd
+- id: warpbuild-agentd-restarter
+  binary: warpbuild-agentd-restarter
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - windows
+  goarch:
+  - amd64
+  main: ./cmd/agentd_restarter
+  ldflags:
+  - -X github.com/warpbuilds/warpbuild-agent/cmd/agentd_restarter/cmd.Version={{.Version}}
 
 archives:
-  - id: warpbuild-agentd
-    format: tar.gz
-    builds:
-      - warpbuild-agentd
-    # this name template makes the OS and Arch compatible with the results of uname.
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        format: zip
-    files:
-      - LICENSE
-      - README.md
-      - tools/launchd/**
-      - tools/systemd/**
-      - tools/github/hooks/prerun.sh
-      - tools/github/hooks/prerun.ps1
-      - pkg/telemetry/binaries/{{ .Os }}/{{ .Arch }}/**
-      - pkg/telemetry/otel-collector-config.tmpl
-  - id: warpbuild-agentd-restarter
+- id: warpbuild-agentd
+  format: tar.gz
+  builds:
+  - warpbuild-agentd
+  # this name template makes the OS and Arch compatible with the results of uname.
+  name_template: >-
+    {{ .ProjectName }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }} {{- if .Arm }}v{{ .Arm }}{{ end }}
+  # use zip for windows archives
+  format_overrides:
+  - goos: windows
     format: zip
-    builds:
-      - warpbuild-agentd-restarter
-    name_template: >-
-      {{ .Binary }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+  files:
+  - LICENSE
+  - README.md
+  - tools/launchd/**
+  - tools/systemd/**
+  - tools/github/hooks/prerun.sh
+  - tools/github/hooks/prerun.ps1
+  - pkg/telemetry/binaries/**
+  - pkg/telemetry/otel-collector-config.tmpl
+- id: warpbuild-agentd-restarter
+  format: zip
+  builds:
+  - warpbuild-agentd-restarter
+  name_template: >-
+    {{ .Binary }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }}
 
 checksum:
   name_template: "checksums.txt"
@@ -80,8 +79,8 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
+    - "^docs:"
+    - "^test:"
 
 release:
   github:
@@ -89,6 +88,7 @@ release:
     name: warpbuild-agent
   prerelease: auto
   make_latest: false
+
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
