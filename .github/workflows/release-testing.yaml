@@ -1,4 +1,4 @@
-name: Branch Build and Upload to S3
+name: Branch Build and Upload to R2
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
     - name: Set up Go
       uses: WarpBuilds/setup-go@v5
       with:
-        go-version: "1.21" # Replace with your Go version
+        go-version: "1.21"
         cache: true
 
     - name: Define S3 Path
@@ -45,18 +45,25 @@ jobs:
     - name: List all dist files
       run: ls -l dist
 
-    # - name: Configure AWS Credentials
-    #   uses: aws-actions/configure-aws-credentials@v3
-    #   with:
-    #     aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-    #     aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-    #     aws-region: us-east-1 # Set your AWS region
-
-    - name: Sync to S3
+    - name: Install rclone
       run: |
-        echo "Syncing to S3 bucket: ${{ env.AWS_S3_BUCKET }}"
-        echo "Source directory: dist"
-        echo "Destination directory: ${{ env.s3_path }}"
-        echo "Region: ${{ env.AWS_S3_REGION }}"
-        echo "Endpoint: ${{ env.AWS_S3_BUCKET_HOST }}"
-        aws s3 sync dist s3://${{ env.AWS_S3_BUCKET }}/${{ env.s3_path }} --region ${{ env.AWS_S3_REGION }} --endpoint-url ${{ env.AWS_S3_BUCKET_HOST }} --delete
+        curl https://rclone.org/install.sh | sudo bash
+
+    - name: Configure rclone for Cloudflare R2
+      run: |
+        mkdir -p ~/.config/rclone
+        cat <<EOF > ~/.config/rclone/rclone.conf
+        [r2]
+        type            = s3
+        provider        = Cloudflare
+        env_auth        = false
+        access_key_id   = ${AWS_ACCESS_KEY_ID}
+        secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+        endpoint        = ${AWS_S3_BUCKET_HOST}
+        region          = ${AWS_S3_REGION}
+        acl             = private
+        EOF
+
+    - name: Sync to R2 with rclone
+      run: |
+        rclone sync dist r2:${AWS_S3_BUCKET}/${{ env.s3_path }} --progress
