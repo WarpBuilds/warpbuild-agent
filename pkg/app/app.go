@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -120,7 +121,9 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			// read the settings file
 			settingsData, err := os.ReadFile(opts.SettingsFile)
 			if err != nil {
-				if os.IsNotExist(err) {
+				// The file doesn't exist or is not completely written to the system, i.e., not a vaild
+				// json file, we will continue on the retry.
+				if os.IsNotExist(err) || strings.Contains(err.Error(), "unexpected end of JSON input") {
 					continue
 				}
 				log.Logger().Errorf("failed to read settings file: %v", err)
