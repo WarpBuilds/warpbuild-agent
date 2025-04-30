@@ -20,7 +20,7 @@ $latestAgentTag = "feat/windows-telemetry"  # Uncomment this line to use a speci
 
 # Download and extract the agent
 $agentUrl = "https://bcfda61174f1fa286a9ecf6b2dde0c49.r2.cloudflarestorage.com/warpbuild-packages-dev/warpbuild-agentd/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
-Write-Host "Downloading warpbuild-agent using aria2..."
+Write-Host "Downloading warpbuild-agent using aria2 from r2..."
 aria2c -s16 -x16 $agentUrl -d "$AGENT_DIR" -o "warpbuild-agent.zip"
 Expand-Archive -Path "$AGENT_DIR\warpbuild-agent.zip" -DestinationPath "$AGENT_DIR" -Force
 Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
