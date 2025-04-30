@@ -121,9 +121,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			// read the settings file
 			settingsData, err := os.ReadFile(opts.SettingsFile)
 			if err != nil {
-				// The file doesn't exist or is not completely written to the system, i.e., not a vaild
-				// json file, we will continue on the retry.
-				if os.IsNotExist(err) || strings.Contains(err.Error(), "unexpected end of JSON input") {
+				if os.IsNotExist(err) {
+					continue
+				}
+				if strings.Contains(err.Error(), "unexpected end of JSON input") {
+					log.Logger().Infof("unexpected end of JSON input. We'll retry.")
 					continue
 				}
 				log.Logger().Errorf("failed to read settings file: %v", err)
