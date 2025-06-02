@@ -66,6 +66,7 @@ while [[ max_parent_retries -gt 0 ]]; do
 
   if [ -n "$exit_code" ]; then
       echo "Failed to send request to warpbuild. Logging response..."
+      cat warpbuild_body.json
       cat warpbuild_response
       max_parent_retries=$(expr $max_parent_retries - 1)
       echo "Retries left: $max_parent_retries"
