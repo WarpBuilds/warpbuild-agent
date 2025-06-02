@@ -49,7 +49,8 @@ EOF
 
 echo -e "\nMaking a request to WarpBuild..."
 
-max_parent_retries=3
+max_parent_retries=10
+retry_delay_seconds=2 # Define delay between parent retries (in seconds)
 
 while [[ max_parent_retries -gt 0 ]]; do
   # Use wget with retries, retry interval, no certificate check, and exit on failure
@@ -57,18 +58,20 @@ while [[ max_parent_retries -gt 0 ]]; do
     --retry-on-host-error --retry-on-http-error=502 \
     --retry-on-http-error=504 --retry-on-http-error=401 \
     --content-on-error \
-    --no-check-certificate --continue --no-verbose \
+    --no-check-certificate --continue \
     --header="Content-Type: application/json" \
     --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
     -O warpbuild_response --post-file=warpbuild_body.json \
     "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
 
   if [ -n "$exit_code" ]; then
-      echo "Failed to send request to warpbuild. Logging response..." 
+      echo "Failed to send request to warpbuild. Logging response..."
+      cat warpbuild_body.json
       cat warpbuild_response
       max_parent_retries=$(expr $max_parent_retries - 1)
       echo "Retries left: $max_parent_retries"
       rm warpbuild_response
+      sleep $retry_delay_seconds
   else
       echo "Request completed successfully."
       break
