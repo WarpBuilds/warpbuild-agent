@@ -70,6 +70,7 @@ while [[ max_parent_retries -gt 0 ]]; do
       cat warpbuild_response
       max_parent_retries=$(expr $max_parent_retries - 1)
       echo "Retries left: $max_parent_retries"
+      unset exit_code
       rm warpbuild_response
       sleep $retry_delay_seconds
   else
