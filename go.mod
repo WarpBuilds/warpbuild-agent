@@ -10,7 +10,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/spf13/cobra v1.8.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sys v0.31.0
 	google.golang.org/api v0.197.0
 )
