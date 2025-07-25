@@ -33,6 +33,11 @@ func StartProxyServer(ctx context.Context, opts *ProxyServerOptions) error {
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 1024 * 1024 * 1024 * 10, // 10GB limit for body.
+		// Increase header size limits for BuildKit requests
+		// ReadBufferSize:  16 * 1024, // 16KB read buffer (default is 4KB)
+		// WriteBufferSize: 16 * 1024, // 16KB write buffer (default is 4KB)
+		ReadBufferSize:  32 * 1024, // 32KB
+		WriteBufferSize: 32 * 1024, // 32KB
 	})
 
 	app.Use(func(c *fiber.Ctx) error {
