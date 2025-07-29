@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/warpbuild-agentd
 WorkingDirectory=/
+StartLimitIntervalSec=0
 Restart=always
 RestartSec=5
 
