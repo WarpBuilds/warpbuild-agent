@@ -21,6 +21,11 @@ func readLastNLines(filePath string, n int) ([]byte, error) {
 	defer file.Close()
 	var lines []string
 	scanner := bufio.NewScanner(file)
+
+	// Increase buffer size to handle very long lines (up to 1MB)
+	buf := make([]byte, 1024*1024)
+	scanner.Buffer(buf, 1024*1024)
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 		if len(lines) > n {
