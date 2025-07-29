@@ -19,7 +19,7 @@ if (-not (Test-Path -Path $AGENT_DIR)) {
 $latestAgentTag = "feat/windows-telemetry"  # Uncomment this line to use a specific version
 
 # Download and extract the agent
-$agentUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-packages-dev/warpbuild-agentd/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+$agentUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-agentd/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
 Write-Host "Downloading warpbuild-agent using aria2 from r2..."
 aria2c -s16 -x16 $agentUrl -d "$AGENT_DIR" -o "warpbuild-agent.zip"
 Expand-Archive -Path "$AGENT_DIR\warpbuild-agent.zip" -DestinationPath "$AGENT_DIR" -Force
@@ -29,7 +29,7 @@ Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
 Copy-Item -Path "$AGENT_DIR\warpbuild-agentd.exe" -Destination "C:\Windows\System32\warpbuild-agentd.exe"
 
 $restarterZipPath = "warpbuild-agentd-restarter_Windows_x86_64.zip"
-$restarterUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-packages-dev/warpbuild-agentd/$latestAgentTag/$restarterZipPath"
+$restarterUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-agentd/$latestAgentTag/$restarterZipPath"
 Write-Host "Downloading warpbuild-agentd-restarter using aria2..."
 aria2c -s16 -x16 $restarterUrl -d "$AGENT_DIR" -o "$restarterZipPath"
 Write-Host "Downloaded $restarterZipPath"
