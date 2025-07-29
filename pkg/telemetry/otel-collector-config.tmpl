@@ -1,7 +1,7 @@
 receivers:
   filelog:
     include: ['{{.SyslogFilePath}}']
-    start_at: "end"
+    start_at: 'end'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
@@ -29,7 +29,7 @@ processors:
 
 exporters:
   file:
-    path: "{{.ExportFilePath}}"
+    path: '{{.ExportFilePath}}'
     format: json
     append: false
     rotation:
