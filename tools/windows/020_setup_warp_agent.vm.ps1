@@ -83,7 +83,9 @@ $services = @(
         DisplayName = "WarpBuild Telemetry"
         Description = "WarpBuild Telemetry Service"
         BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
-        StartupType = "Automatic"
+        UserName = ".\$MACHINE_USER"
+        Password = $MACHINE_PASSWORD
+        StartupType = "Automatic(Delayed)"
         Dependencies = @()
         Environment = @{}
     },
