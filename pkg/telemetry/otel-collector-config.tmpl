@@ -1,6 +1,6 @@
 receivers:
   filelog:
-    include: ["{{.SyslogFilePath}}"]
+    include: ['{{.SyslogFilePath}}']
     start_at: "end"
     max_log_size: 200KiB
     include_file_name: false
@@ -49,3 +49,5 @@ service:
   telemetry:
     metrics:
       level: none
+    logs:
+      level: DEBUG
