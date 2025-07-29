@@ -1,4 +1,9 @@
 receivers:
+{{- if eq .OS "windows"}}
+  # Windows Event Log receiver
+  windowseventlog/system:
+    channel: system
+{{- else}}
   filelog:
     include: ['{{.SyslogFilePath}}']
     start_at: 'end'
@@ -6,6 +11,7 @@ receivers:
     include_file_name: false
     include_file_path: false
     poll_interval: 20s
+{{- end}}
 
   hostmetrics:
     collection_interval: 20s
@@ -39,7 +45,7 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [filelog]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/system{{- else}}filelog{{- end}}]
       processors: [batch]
       exporters: [file]
     metrics:

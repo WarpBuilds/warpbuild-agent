@@ -118,10 +118,14 @@ func writeOtelCollectorConfig(baseDirectory string, pushFrequency time.Duration)
 		SyslogFilePath string
 		ExportFilePath string
 		PushFrequency  time.Duration
+		OS             string
+		Arch           string
 	}{
 		SyslogFilePath: syslogFilePath,
 		ExportFilePath: getOtelCollectorOutputFilePath(baseDirectory),
 		PushFrequency:  pushFrequency,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
 	}
 
 	err = tmpl.Execute(file, data)
