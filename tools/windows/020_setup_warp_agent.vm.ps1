@@ -85,7 +85,8 @@ $services = @(
         BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
         UserName = ".\$MACHINE_USER"
         Password = $MACHINE_PASSWORD
-        StartupType = "Automatic(Delayed)"
+        StartupType = "Automatic"
+        IsDelayed = $true
         Dependencies = @()
         Environment = @{}
     },
@@ -134,6 +135,12 @@ foreach ($service in $services) {
     }
     if ($envString -ne "") {
         sc.exe config $service.Name env= $envString
+    }
+
+    # if this is the telemetry service, flip on delayed auto‑start
+    if ($service.IsDelayed) {
+        Write-Host "Enabling Delayed‑AutoStart for $($service.Name)…"
+        sc.exe config $service.Name start= delayed-auto
     }
 
     # Define variables for the service configuration
