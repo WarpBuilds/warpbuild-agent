@@ -34,8 +34,6 @@ processors:
     send_batch_size: 1000
 
 exporters:
-  console:                              # ← print logs to stdout (needed for debug)
-    pretty_print: true
   file:
     path: '{{.ExportFilePath}}'
     format: json
@@ -49,7 +47,7 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/system{{- else}}filelog{{- end}}]
       processors: [batch]
-      exporters: [file, console]
+      exporters: [file]
     metrics:
       receivers: [hostmetrics]
       processors: [batch]

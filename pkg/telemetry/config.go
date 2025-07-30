@@ -23,8 +23,13 @@ func getConfigTemplatePath(baseDirectory string) string {
 	return filepath.Join(baseDirectory, "pkg/telemetry/otel-collector-config.tmpl")
 }
 
-func getOtelCollectorOutputFilePath(baseDirectory string) string {
-	return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.log")
+func getOtelCollectorOutputFilePath(baseDirectory string, os string) string {
+	switch os {
+	case "windows":
+		return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.json")
+	default:
+		return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.log")
+	}
 }
 
 func getBinariesDir(baseDirectory string) string {
@@ -122,7 +127,7 @@ func writeOtelCollectorConfig(baseDirectory string, pushFrequency time.Duration)
 		Arch           string
 	}{
 		SyslogFilePath: syslogFilePath,
-		ExportFilePath: getOtelCollectorOutputFilePath(baseDirectory),
+		ExportFilePath: getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS),
 		PushFrequency:  pushFrequency,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
