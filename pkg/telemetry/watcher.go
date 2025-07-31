@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -33,15 +34,15 @@ func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 	defer watcher.Close()
 
 	// Ensure the log file exists
-	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory)); os.IsNotExist(err) {
-		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory))
+	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS)); os.IsNotExist(err) {
+		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS))
 		if err != nil {
 			log.Logger().Errorf("failed to create log file: %v", err)
 		}
 		file.Close()
 	}
 
-	err := watcher.Add(getOtelCollectorOutputFilePath(baseDirectory))
+	err := watcher.Add(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS))
 	if err != nil {
 		log.Logger().Errorf("failed to watch file: %v", err)
 	}

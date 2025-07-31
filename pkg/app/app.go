@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -131,6 +132,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 			// found the settings file, parse it
 			if err := json.Unmarshal(settingsData, &settings); err != nil {
+				if strings.Contains(err.Error(), "unexpected end of JSON input") {
+					log.Logger().Infof("unexpected end of JSON input. We'll retry.")
+					continue
+				}
 				log.Logger().Errorf("failed to parse settings file: %v", err)
 				return err
 			}

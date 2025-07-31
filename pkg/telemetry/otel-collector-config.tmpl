@@ -1,35 +1,71 @@
 receivers:
+{{- if eq .OS "windows"}}
+  windowseventlog/application:
+    channel: application
+  windowseventlog/security:
+    channel: security
+
+  # Tail your service log files
+  filelog/services:
+    include:
+      - 'C:\warpbuilds\runner.github.stdout.log'
+      - 'C:\warpbuilds\runner.github.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+    start_at: end
+    max_log_size: 200KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 20s
+{{- else}}
   filelog:
-    include: ["{{.SyslogFilePath}}"]
-    start_at: "end"
+    include: ['{{.SyslogFilePath}}']
+    start_at: 'end'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
     poll_interval: 20s
+{{- end}}
 
   hostmetrics:
     collection_interval: 20s
     scrapers:
       memory:
+      network:
       filesystem:
-        metrics:
-          system.filesystem.inodes.usage:
-            enabled: false
-      load:
-        metrics:
-          system.cpu.load_average.1m:
-            enabled: false
-          system.cpu.load_average.5m:
-            enabled: false
+
+  windowsperfcounters/processor:
+    collection_interval: 30s
+    metrics:
+      system.cpu.time:
+        description: percentage of cpu time
+        unit: "%"
+        gauge:
+    perfcounters:
+      - object: "Processor"
+        instances: "_Total"
+        counters:
+          - name: "% Processor Time"
+            metric: system.cpu.time
+            attributes:
+              state: active
+          - name: "% Idle Time"
+            metric: system.cpu.time
+            attributes:
+              state: idle
 
 processors:
   batch:
     timeout: {{.PushFrequency}}
-    send_batch_size: 1000
+    send_batch_size: 100
 
 exporters:
   file:
-    path: "{{.ExportFilePath}}"
+    path: '{{.ExportFilePath}}'
     format: json
     append: false
     rotation:
@@ -39,13 +75,15 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [filelog]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else}}filelog{{- end}}]
       processors: [batch]
       exporters: [file]
     metrics:
-      receivers: [hostmetrics]
+      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors: [batch]
       exporters: [file]
   telemetry:
     metrics:
       level: none
+    logs:
+      level: DEBUG
