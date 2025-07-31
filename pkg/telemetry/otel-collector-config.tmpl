@@ -35,16 +35,28 @@ receivers:
     collection_interval: 20s
     scrapers:
       memory:
+      network:
       filesystem:
-        metrics:
-          system.filesystem.inodes.usage:
-            enabled: false
-      load:
-        metrics:
-          system.cpu.load_average.1m:
-            enabled: true
-          system.cpu.load_average.5m:
-            enabled: false
+
+  windowsperfcounters/processor:
+    collection_interval: 30s
+    metrics:
+      system.cpu.time:
+        description: percentage of cpu time
+        unit: "%"
+        gauge:
+    perfcounters:
+      - object: "Processor"
+        instances: "_Total"
+        counters:
+          - name: "% Processor Time"
+            metric: system.cpu.time
+            attributes:
+              state: active
+          - name: "% Idle Time"
+            metric: system.cpu.time
+            attributes:
+              state: idle
 
 processors:
   batch:
@@ -66,7 +78,7 @@ service:
       processors: [batch]
       exporters: [file]
     metrics:
-      receivers: [hostmetrics]
+      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors: [batch]
       exporters: [file]
   telemetry:
