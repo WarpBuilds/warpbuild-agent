@@ -1,8 +1,26 @@
 receivers:
 {{- if eq .OS "windows"}}
-  # Windows Event Log receiver
-  windowseventlog/system:
-    channel: system
+  windowseventlog/application:
+    channel: application
+  windowseventlog/security:
+    channel: security
+
+  # Tail your service log files
+  filelog/services:
+    include:
+      - 'C:\warpbuilds\runner.github.stdout.log'
+      - 'C:\warpbuilds\runner.github.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+    start_at: end
+    max_log_size: 200KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 20s
 {{- else}}
   filelog:
     include: ['{{.SyslogFilePath}}']
@@ -45,7 +63,7 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/system{{- else}}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else}}filelog{{- end}}]
       processors: [batch]
       exporters: [file]
     metrics:
