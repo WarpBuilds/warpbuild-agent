@@ -98,7 +98,7 @@ var rootCmd = &cobra.Command{
 			}
 
 			if status.State == svc.Running {
-				log.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
+				// log.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
 				time.Sleep(flags.restartInterval)
 				continue
 			}
