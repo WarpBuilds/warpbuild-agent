@@ -65,7 +65,8 @@ func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 				log.Logger().Infof("Unknown event")
 				return
 			}
-			if event.Op == fsnotify.Write {
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Chmod) != 0 {
+
 				log.Logger().Infof("Watching the following paths: %+v", watcher.WatchList())
 				log.Logger().Infof("Modified file:", event.Name)
 				debouncedOtelUpload(ctx, baseDirectory)
