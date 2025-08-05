@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/fsnotify/fsnotify"
@@ -42,7 +43,17 @@ func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 		file.Close()
 	}
 
-	err := watcher.Add(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS))
+	watchPath := getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS)
+	if runtime.GOOS == "windows" {
+		// ? on windows we try to watch the path for the directory
+		// ? since apparently the events are only transmitted on dir level
+		// ? not on path level.
+		//
+		// TODO: validate that the above statement is true.
+		watchPath = filepath.Dir(watchPath)
+	}
+
+	err := watcher.Add(watchPath)
 	if err != nil {
 		log.Logger().Errorf("failed to watch file: %v", err)
 	}
