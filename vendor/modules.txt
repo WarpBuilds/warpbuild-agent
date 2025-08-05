@@ -39,6 +39,11 @@ cloud.google.com/go/storage/internal/apiv2/storagepb
 # github.com/andybalholm/brotli v1.0.5
 ## explicit; go 1.12
 github.com/andybalholm/brotli
+# github.com/elazarl/goproxy v1.7.2
+## explicit; go 1.20
+github.com/elazarl/goproxy
+github.com/elazarl/goproxy/internal/http1parser
+github.com/elazarl/goproxy/internal/signer
 # github.com/felixge/httpsnoop v1.0.4
 ## explicit; go 1.13
 github.com/felixge/httpsnoop

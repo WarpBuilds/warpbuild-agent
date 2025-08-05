@@ -6,6 +6,7 @@ toolchain go1.24.1
 
 require (
 	cloud.google.com/go/storage v1.43.0
+	github.com/elazarl/goproxy v1.7.2
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/spf13/cobra v1.8.0
