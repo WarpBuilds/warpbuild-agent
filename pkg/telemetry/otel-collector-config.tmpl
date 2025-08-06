@@ -68,16 +68,10 @@ exporters:
     path: '{{.LogExportFilePath}}'
     format: json
     append: true
-    rotation:
-      max_megabytes: 1
-      max_backups: 1
   file/metrics:
     path: '{{.MetricsExportFilePath}}'
     format: json
     append: true
-    rotation:
-      max_megabytes: 1
-      max_backups: 1
 
 service:
   pipelines:
