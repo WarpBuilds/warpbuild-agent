@@ -20,7 +20,7 @@ var (
 	uploadMu      sync.Mutex
 )
 
-func debouncedOtelUpload(ctx context.Context, baseDirectory string) {
+func debouncedOtelUpload(ctx context.Context, baseDirectory string, isMetrics bool) {
 	debounceMu.Lock()
 	defer debounceMu.Unlock()
 
@@ -29,7 +29,7 @@ func debouncedOtelUpload(ctx context.Context, baseDirectory string) {
 	}
 	debounceTimer = time.AfterFunc(debounceDelay, func() {
 		defer handlePanic()
-		if err := readAndUploadFileToS3(ctx, baseDirectory, getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS), 0, true); err != nil {
+		if err := readAndUploadFileToS3(ctx, baseDirectory, getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, isMetrics), 0, true); err != nil {
 			log.Logger().Errorf("Error during upload: %v", err)
 		}
 	})

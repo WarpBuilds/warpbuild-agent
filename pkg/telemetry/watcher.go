@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -35,23 +36,26 @@ func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 	defer watcher.Close()
 
 	// Ensure the log file exists
-	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS)); os.IsNotExist(err) {
-		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS))
+	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)); os.IsNotExist(err) {
+		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
 		if err != nil {
 			log.Logger().Errorf("failed to create log file: %v", err)
 		}
 		file.Close()
 	}
 
-	watchPath := getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS)
-	if runtime.GOOS == "windows" {
-		// ? on windows we try to watch the path for the directory
-		// ? since apparently the events are only transmitted on dir level
-		// ? not on path level.
-		//
-		// TODO: validate that the above statement is true.
-		watchPath = filepath.Dir(watchPath)
+	// Ensure the metrics file exists
+	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true)); os.IsNotExist(err) {
+		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
+		if err != nil {
+			log.Logger().Errorf("failed to create log file: %v", err)
+		}
+		file.Close()
 	}
+
+	// We watch the directory for fs notification events
+	watchPath := getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)
+	watchPath = filepath.Dir(watchPath)
 
 	err := watcher.Add(watchPath)
 	if err != nil {
@@ -66,10 +70,21 @@ func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
 				return
 			}
 			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Chmod) != 0 {
-
 				log.Logger().Infof("Watching the following paths: %+v", watcher.WatchList())
 				log.Logger().Infof("Modified file:", event.Name)
-				debouncedOtelUpload(ctx, baseDirectory)
+
+				metricsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
+				if strings.Contains(event.Name, metricsPath) {
+					log.Logger().Infof("Path is metrics path: %v", metricsPath)
+					debouncedOtelUpload(ctx, baseDirectory, true)
+				}
+
+				logsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
+				if strings.Contains(event.Name, logsPath) {
+					log.Logger().Infof("Path is logs path: %v", logsPath)
+					debouncedOtelUpload(ctx, baseDirectory, false)
+				}
+
 				// TODO: remove below log
 				log.Logger().Infof("Completed upload for event:", event.Name)
 			}

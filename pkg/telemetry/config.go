@@ -23,10 +23,15 @@ func getConfigTemplatePath(baseDirectory string) string {
 	return filepath.Join(baseDirectory, "pkg/telemetry/otel-collector-config.tmpl")
 }
 
-func getOtelCollectorOutputFilePath(baseDirectory string, os string) string {
+func getOtelCollectorOutputFilePath(baseDirectory string, os string, isMetrics bool) string {
+	if isMetrics {
+		switch os {
+		default:
+			return filepath.Join(baseDirectory, "pkg/telemetry/otel-metrics-out.log")
+		}
+	}
+
 	switch os {
-	case "windows":
-		return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.json")
 	default:
 		return filepath.Join(baseDirectory, "pkg/telemetry/otel-out.log")
 	}
@@ -120,17 +125,19 @@ func writeOtelCollectorConfig(baseDirectory string, pushFrequency time.Duration)
 	defer file.Close()
 
 	data := struct {
-		SyslogFilePath string
-		ExportFilePath string
-		PushFrequency  time.Duration
-		OS             string
-		Arch           string
+		SyslogFilePath        string
+		LogExportFilePath     string
+		MetricsExportFilePath string
+		PushFrequency         time.Duration
+		OS                    string
+		Arch                  string
 	}{
-		SyslogFilePath: syslogFilePath,
-		ExportFilePath: getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS),
-		PushFrequency:  pushFrequency,
-		OS:             runtime.GOOS,
-		Arch:           runtime.GOARCH,
+		SyslogFilePath:        syslogFilePath,
+		LogExportFilePath:     getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false),
+		MetricsExportFilePath: getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true),
+		PushFrequency:         pushFrequency,
+		OS:                    runtime.GOOS,
+		Arch:                  runtime.GOARCH,
 	}
 
 	err = tmpl.Execute(file, data)

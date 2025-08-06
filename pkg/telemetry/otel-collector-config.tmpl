@@ -64,8 +64,15 @@ processors:
     send_batch_size: 100
 
 exporters:
-  file:
-    path: '{{.ExportFilePath}}'
+  file/logs:
+    path: '{{.LogExportFilePath}}'
+    format: json
+    append: true
+    rotation:
+      max_megabytes: 1
+      max_backups: 1
+  file/metrics:
+    path: '{{.MetricsExportFilePath}}'
     format: json
     append: true
     rotation:
@@ -77,11 +84,11 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else}}filelog{{- end}}]
       processors: [batch]
-      exporters: [file]
+      exporters: [file/logs]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors: [batch]
-      exporters: [file]
+      exporters: [file/metrics]
   telemetry:
     metrics:
       level: none
