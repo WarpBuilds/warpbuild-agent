@@ -32,12 +32,13 @@ receivers:
 {{- end}}
 
   hostmetrics:
-    collection_interval: 20s
+    collection_interval: 1s
     scrapers:
       memory:
       network:
       filesystem:
 
+{{- if eq .OS "windows"}}
   windowsperfcounters/processor:
     collection_interval: 30s
     metrics:
@@ -57,6 +58,7 @@ receivers:
             metric: system.cpu.time
             attributes:
               state: idle
+{{- end}}
 
 processors:
   batch:
@@ -64,25 +66,22 @@ processors:
     send_batch_size: 100
 
 exporters:
-  otlphttp/logs:
-    endpoint: "http://localhost:{{.Port}}/v1/logs"
-    headers:
-      Content-Type: "application/json"
-  otlphttp/metrics:
-    endpoint: "http://localhost:{{.Port}}/v1/metrics"
-    headers:
-      Content-Type: "application/json"
+  otlphttp:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
+    metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
+    encoding: "json"
+    compression: "none"
 
 service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else}}filelog{{- end}}]
       processors: [batch]
-      exporters: [otlphttp/logs]
+      exporters: [otlphttp]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors: [batch]
-      exporters: [otlphttp/metrics]
+      exporters: [otlphttp]
   telemetry:
     metrics:
       level: none

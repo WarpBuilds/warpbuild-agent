@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
 // TelemetryProcessor defines the interface for processing telemetry data
@@ -76,15 +78,17 @@ func (s *TelemetryService) ProcessMetrics(ctx context.Context, data []byte) erro
 		return fmt.Errorf("empty metrics data")
 	}
 
-	// Process the metrics and add to buffer
-	s.buffer.AddLine(string(data))
+	log.Logger().Debugf("Processing %d bytes of metrics data", len(data))
+
+	// Process the metrics and add to buffer with metrics event type
+	s.buffer.AddLineWithType(string(data), "metrics")
 
 	// Update statistics
 	if count, ok := s.stats["metrics_processed"].(int); ok {
 		s.stats["metrics_processed"] = count + 1
 	}
 
-	// log.Logger().Debugf("Processed %d bytes of metrics data", len(data))
+	log.Logger().Debugf("Processed %d bytes of metrics data", len(data))
 	return nil
 }
 

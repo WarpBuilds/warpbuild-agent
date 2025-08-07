@@ -45,7 +45,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		opts.PushFrequency = 60 * time.Second
 	}
 	if opts.SysLogNumberOfLinesToRead == 0 {
-		opts.SysLogNumberOfLinesToRead = 1000
+		opts.SysLogNumberOfLinesToRead = 100
 	}
 	if opts.BaseDirectory == "" {
 		opts.BaseDirectory = "/runner/warpbuild-agent"
@@ -77,10 +77,11 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	}
 
 	log.Logger().Infof("OTEL receiver telemetry system started on port %d with buffer size %d", port, maxBufferSize)
+	log.Logger().Infof("OpenTelemetry Collector logs will be displayed to stdout and stderr")
 
 	// Wait for context cancellation
 	<-ctx.Done()
-	log.Logger().Infof("Context cancelled, initiating shutdown...")
+	log.Logger().Infof("Context cancelled, initiating graceful shutdown...")
 
 	// Stop the telemetry manager
 	if err := manager.Stop(); err != nil {

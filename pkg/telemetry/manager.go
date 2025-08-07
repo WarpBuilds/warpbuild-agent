@@ -72,10 +72,14 @@ func (tm *TelemetryManager) Start() error {
 	// Create S3 uploader
 	tm.s3Uploader = uploader.NewS3Uploader(tm.ctx, tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL)
 
+	log.Logger().Infof("Starting S3 Uploader")
+
 	// Start S3 uploader
 	if err := tm.s3Uploader.Start(); err != nil {
 		return fmt.Errorf("failed to start S3 uploader: %w", err)
 	}
+
+	log.Logger().Infof("Started S3 Uploader")
 
 	// Create buffer with upload channel
 	tm.buffer = uploader.NewBuffer(tm.maxBufferSize, tm.s3Uploader.GetUploadChannel())
@@ -92,6 +96,8 @@ func (tm *TelemetryManager) Start() error {
 		tm.s3Uploader.Stop()
 		return fmt.Errorf("failed to start receiver: %w", err)
 	}
+
+	log.Logger().Infof("Started receiver")
 
 	// Start periodic buffer flush
 	tm.wg.Add(1)
@@ -173,6 +179,8 @@ func (tm *TelemetryManager) periodicFlush() {
 func (tm *TelemetryManager) startOtelCollector() {
 	defer tm.wg.Done()
 
+	log.Logger().Infof("Starting OpenTelemetry Collector process...")
+
 	// Get the appropriate OpenTelemetry Collector Contrib binary
 	collectorPath, err := tm.getOtelCollectorPath()
 	if err != nil {
@@ -188,12 +196,15 @@ func (tm *TelemetryManager) startOtelCollector() {
 		return
 	}
 
+	log.Logger().Infof("OpenTelemetry Collector configuration written successfully")
+
 	// Channel to signal when the application should terminate
 	done := make(chan bool, 1)
 
 	// Start OpenTelemetry Collector Contrib
 	go func() {
 		defer tm.handlePanic()
+		log.Logger().Infof("Launching OpenTelemetry Collector in background...")
 		tm.runOtelCollector(collectorPath, done)
 	}()
 
@@ -207,18 +218,34 @@ func (tm *TelemetryManager) startOtelCollector() {
 
 // runOtelCollector runs the OTEL collector process
 func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan bool) {
-	cmd := exec.Command(collectorPath, "--config", tm.getConfigFilePath())
+	configPath := tm.getConfigFilePath()
+	log.Logger().Infof("Starting OpenTelemetry Collector with config: %s", configPath)
+
+	cmd := exec.Command(collectorPath, "--config", configPath)
+
+	// Ensure OpenTelemetry collector logs are captured and displayed
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// Set environment variables for better logging
+	cmd.Env = append(os.Environ(),
+		"OTEL_LOG_LEVEL=info",
+		"OTEL_SERVICE_NAME=warpbuild-agent",
+	)
+
+	log.Logger().Infof("OpenTelemetry Collector command: %s --config %s", collectorPath, configPath)
+
 	err := cmd.Start()
 	if err != nil {
-		log.Logger().Errorf("failed to start OpenTelemetry Collector: %v", err)
+		log.Logger().Errorf("Failed to start OpenTelemetry Collector: %v", err)
 		return
 	}
 
+	log.Logger().Infof("OpenTelemetry Collector started with PID: %d", cmd.Process.Pid)
+
 	go func() {
 		<-done
+		log.Logger().Infof("Signaling OpenTelemetry Collector to terminate...")
 		if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
 			log.Logger().Errorf("Failed to terminate OpenTelemetry Collector: %v", err)
 		}
@@ -227,6 +254,8 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan boo
 	go func() {
 		if err := cmd.Wait(); err != nil {
 			log.Logger().Errorf("OpenTelemetry Collector exited with error: %v", err)
+		} else {
+			log.Logger().Infof("OpenTelemetry Collector exited successfully")
 		}
 	}()
 }
@@ -327,6 +356,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		Port:                  tm.port,
 	}
 
+	log.Logger().Infof("Parsing template with vars: %+v", data)
+
 	err = tmpl.Execute(file, data)
 	if err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
@@ -337,17 +368,17 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 
 // getConfigFilePath gets the path to the OTEL collector config file
 func (tm *TelemetryManager) getConfigFilePath() string {
-	return filepath.Join(tm.baseDirectory, "otel-collector-config.yaml")
+	return filepath.Join(tm.baseDirectory, "pkg/telemetry/otel-collector-config.yaml")
 }
 
 // getConfigTemplatePath gets the path to the OTEL collector config template
 func (tm *TelemetryManager) getConfigTemplatePath() string {
-	return filepath.Join(tm.baseDirectory, "otel-collector-config.tmpl")
+	return filepath.Join(tm.baseDirectory, "pkg/telemetry/otel-collector-config.tmpl")
 }
 
 // getBinariesDir gets the binaries directory
 func (tm *TelemetryManager) getBinariesDir() string {
-	return filepath.Join(tm.baseDirectory, "binaries")
+	return filepath.Join(tm.baseDirectory, "pkg/telemetry/binaries")
 }
 
 // getSyslogFilePath gets the syslog file path

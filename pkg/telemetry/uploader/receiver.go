@@ -153,6 +153,8 @@ func (r *Receiver) handleMetrics(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	log.Logger().Debugf("Received metrics request with %d bytes from %s", len(body), req.RemoteAddr)
+
 	// Process the metrics and add to buffer
 	r.processMetrics(body)
 

@@ -53,9 +53,13 @@ func (s *S3Uploader) Start() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	log.Logger().Infof("[S3Uploader] Starting upload")
+
 	if s.isRunning {
 		return fmt.Errorf("S3 uploader is already running")
 	}
+
+	log.Logger().Infof("[S3Uploader] Fetching initial presigned url")
 
 	// Get initial presigned URL (default to logs)
 	if err := s.refreshPresignedURL("logs"); err != nil {
@@ -131,6 +135,8 @@ func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 	presignedURL := s.presignedURL
 	s.mu.RUnlock()
 
+	log.Logger().Infof("Uploading lines: %v", string(data))
+
 	if presignedURL == "" {
 		return fmt.Errorf("no presigned URL available")
 	}
@@ -197,9 +203,7 @@ func (s *S3Uploader) refreshPresignedURL(eventType string) error {
 		return fmt.Errorf("no URL received in response")
 	}
 
-	s.mu.Lock()
 	s.presignedURL = *out.Url
-	s.mu.Unlock()
 
 	log.Logger().Debugf("Refreshed presigned URL")
 	return nil
