@@ -106,8 +106,8 @@ func (s *TelemetryService) ProcessTraces(ctx context.Context, data []byte) error
 		return fmt.Errorf("empty trace data")
 	}
 
-	// Process the traces and add to buffer
-	s.buffer.AddLine(string(data))
+	// Process the traces and add to buffer with traces event type
+	s.buffer.AddLineWithType(string(data), "traces")
 
 	// Update statistics
 	if count, ok := s.stats["traces_processed"].(int); ok {

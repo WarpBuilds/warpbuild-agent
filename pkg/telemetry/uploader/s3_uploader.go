@@ -19,7 +19,7 @@ type S3Uploader struct {
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
 	uploadChan    chan UploadRequest
-	presignedURL  string
+	presignedURLs map[string]string // Map of eventType to presigned URL
 	mu            sync.RWMutex
 	warpbuildAPI  *warpbuild.APIClient
 	runnerID      string
@@ -41,6 +41,7 @@ func NewS3Uploader(ctx context.Context, warpbuildAPI *warpbuild.APIClient, runne
 		ctx:           uploadCtx,
 		cancel:        cancel,
 		uploadChan:    make(chan UploadRequest, 100), // Buffer for 100 upload requests
+		presignedURLs: make(map[string]string),
 		warpbuildAPI:  warpbuildAPI,
 		runnerID:      runnerID,
 		pollingSecret: pollingSecret,
@@ -59,11 +60,19 @@ func (s *S3Uploader) Start() error {
 		return fmt.Errorf("S3 uploader is already running")
 	}
 
-	log.Logger().Infof("[S3Uploader] Fetching initial presigned url")
+	log.Logger().Infof("[S3Uploader] Fetching initial presigned urls")
 
-	// Get initial presigned URL (default to logs)
+	// Get initial presigned URLs for logs, metrics, and traces
 	if err := s.refreshPresignedURL("logs"); err != nil {
-		return fmt.Errorf("failed to get initial presigned URL: %w", err)
+		return fmt.Errorf("failed to get initial logs presigned URL: %w", err)
+	}
+
+	if err := s.refreshPresignedURL("metrics"); err != nil {
+		return fmt.Errorf("failed to get initial metrics presigned URL: %w", err)
+	}
+
+	if err := s.refreshPresignedURL("traces"); err != nil {
+		return fmt.Errorf("failed to get initial traces presigned URL: %w", err)
 	}
 
 	s.isRunning = true
@@ -132,13 +141,13 @@ func (s *S3Uploader) uploadWorker() {
 // uploadToS3 uploads data to S3 using the presigned URL
 func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 	s.mu.RLock()
-	presignedURL := s.presignedURL
+	presignedURL := s.presignedURLs[eventType]
 	s.mu.RUnlock()
 
 	log.Logger().Infof("Uploading lines: %v", string(data))
 
 	if presignedURL == "" {
-		return fmt.Errorf("no presigned URL available")
+		return fmt.Errorf("no presigned URL available for event type: %s", eventType)
 	}
 
 	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
@@ -203,9 +212,9 @@ func (s *S3Uploader) refreshPresignedURL(eventType string) error {
 		return fmt.Errorf("no URL received in response")
 	}
 
-	s.presignedURL = *out.Url
+	s.presignedURLs[eventType] = *out.Url
 
-	log.Logger().Debugf("Refreshed presigned URL")
+	log.Logger().Debugf("Refreshed presigned URL for event type: %s", eventType)
 	return nil
 }
 
