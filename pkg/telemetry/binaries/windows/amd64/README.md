@@ -1,0 +1,1 @@
+Use `.goreleaser.yaml` to change the otel contrib for windows.

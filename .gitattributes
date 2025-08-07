@@ -3,3 +3,4 @@ docs/swagger.json linguist-generated=true
 docs/swagger.yaml linguist-generated=true
 pkg/telemetry/binaries/**/otel-contrib* filter=lfs diff=lfs merge=lfs -text
 pkg/telemetry/binaries/**/otelcol-contrib* filter=lfs diff=lfs merge=lfs -text
+pkg/telemetry/binaries/windows/amd64/otelcol-contrib.exe filter=lfs diff=lfs merge=lfs -text

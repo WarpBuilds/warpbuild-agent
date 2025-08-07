@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -36,6 +37,10 @@ type Settings struct {
 	Proxy     *ProxySettings     `json:"proxy"`
 }
 
+func (s *Settings) ApplyDefaults() {
+	s.Telemetry.ApplyDefaults()
+}
+
 type AgentSettings struct {
 	ID                      string `json:"id"`
 	PollingSecret           string `json:"polling_secret"`
@@ -51,6 +56,18 @@ type TelemetrySettings struct {
 	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
+	// Port is the port on which the otel receiver is exposed.
+	//
+	// Default: 33931
+	Port int `json:"port"`
+}
+
+func (t *TelemetrySettings) ApplyDefaults() {
+
+	if t.Port == 0 {
+		t.Port = 33931
+	}
+
 }
 
 type ProxySettings struct {
@@ -131,6 +148,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 			// found the settings file, parse it
 			if err := json.Unmarshal(settingsData, &settings); err != nil {
+				if strings.Contains(err.Error(), "unexpected end of JSON input") {
+					log.Logger().Infof("unexpected end of JSON input. We'll retry.")
+					continue
+				}
 				log.Logger().Errorf("failed to parse settings file: %v", err)
 				return err
 			}
@@ -148,6 +169,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			break
 		}
 	}
+
+	settings.ApplyDefaults()
 
 	if opts.LaunchTelemetry {
 		telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
@@ -172,6 +195,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			Enabled:                   settings.Telemetry.Enabled,
 			PushFrequency:             pushFrequency,
 			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
+			Port:                      settings.Telemetry.Port,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
