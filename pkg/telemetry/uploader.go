@@ -1,111 +1,98 @@
 package telemetry
 
-import (
-	"bytes"
-	"context"
-	"fmt"
-	"net/http"
-	"os"
-	"runtime"
-	"sync"
-	"time"
+// var (
+// 	debounceDelay = 10 * time.Second
+// 	debounceTimer *time.Timer
+// 	debounceMu    sync.Mutex
+// 	uploadMu      sync.Mutex
+// )
 
-	"github.com/warpbuilds/warpbuild-agent/pkg/log"
-)
+// func debouncedOtelUpload(ctx context.Context, baseDirectory string, isMetrics bool) {
+// 	debounceMu.Lock()
+// 	defer debounceMu.Unlock()
 
-var (
-	debounceDelay = 10 * time.Second
-	debounceTimer *time.Timer
-	debounceMu    sync.Mutex
-	uploadMu      sync.Mutex
-)
+// 	if debounceTimer != nil {
+// 		debounceTimer.Stop()
+// 	}
+// 	debounceTimer = time.AfterFunc(debounceDelay, func() {
+// 		defer handlePanic()
+// 		if err := readAndUploadFileToS3(ctx, baseDirectory, getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, isMetrics), 0, true); err != nil {
+// 			log.Logger().Errorf("Error during upload: %v", err)
+// 		}
+// 	})
+// }
 
-func debouncedOtelUpload(ctx context.Context, baseDirectory string, isMetrics bool) {
-	debounceMu.Lock()
-	defer debounceMu.Unlock()
+// func readAndUploadFileToS3(ctx context.Context, baseDirectory string, filePath string, linesToRead int, shouldTruncateAfterRead bool) error {
+// 	uploadMu.Lock()
+// 	defer uploadMu.Unlock()
 
-	if debounceTimer != nil {
-		debounceTimer.Stop()
-	}
-	debounceTimer = time.AfterFunc(debounceDelay, func() {
-		defer handlePanic()
-		if err := readAndUploadFileToS3(ctx, baseDirectory, getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, isMetrics), 0, true); err != nil {
-			log.Logger().Errorf("Error during upload: %v", err)
-		}
-	})
-}
+// 	var data []byte
+// 	var err error
+// 	if linesToRead > 0 {
+// 		data, err = readLastNLines(filePath, 1000)
+// 	} else {
+// 		data, err = os.ReadFile(filePath)
+// 	}
+// 	if err != nil {
+// 		return fmt.Errorf("failed to read file: %w", err)
+// 	}
 
-func readAndUploadFileToS3(ctx context.Context, baseDirectory string, filePath string, linesToRead int, shouldTruncateAfterRead bool) error {
-	uploadMu.Lock()
-	defer uploadMu.Unlock()
+// 	// Remove null bytes from the data. OTEL collector prepends null bytes to the log file
+// 	data = bytes.ReplaceAll(data, []byte{0}, []byte{})
+// 	if len(data) == 0 {
+// 		return nil
+// 	}
 
-	var data []byte
-	var err error
-	if linesToRead > 0 {
-		data, err = readLastNLines(filePath, 1000)
-	} else {
-		data, err = os.ReadFile(filePath)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
+// 	err = uploadToPresignedURL(presignedS3URL, data)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to upload data to S3 using presigned URL: %w", err)
+// 	}
 
-	// Remove null bytes from the data. OTEL collector prepends null bytes to the log file
-	data = bytes.ReplaceAll(data, []byte{0}, []byte{})
-	if len(data) == 0 {
-		return nil
-	}
+// 	// Refresh the presigned url
+// 	url, err := fetchPresignedURL(ctx)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to fetch presigned URL: %w", err)
+// 	}
+// 	presignedS3URL = url
 
-	err = uploadToPresignedURL(presignedS3URL, data)
-	if err != nil {
-		return fmt.Errorf("failed to upload data to S3 using presigned URL: %w", err)
-	}
+// 	if shouldTruncateAfterRead {
+// 		// Disable watcher before truncating the file. Otherwise, it will go into infinite loop
+// 		disableOtelOutputFileWatcher()
 
-	// Refresh the presigned url
-	url, err := fetchPresignedURL(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to fetch presigned URL: %w", err)
-	}
-	presignedS3URL = url
+// 		// Truncate the log file after successful upload
+// 		err = os.WriteFile(filePath, []byte{}, 0)
+// 		if err != nil {
+// 			return fmt.Errorf("failed to truncate otel collector output file: %w", err)
+// 		}
 
-	if shouldTruncateAfterRead {
-		// Disable watcher before truncating the file. Otherwise, it will go into infinite loop
-		disableOtelOutputFileWatcher()
+// 		// Re-enable watcher after truncating
+// 		err = enableOtelOutputFileWatcher(ctx, baseDirectory)
+// 		if err != nil {
+// 			return fmt.Errorf("failed to re-enable watcher: %w", err)
+// 		}
+// 	}
 
-		// Truncate the log file after successful upload
-		err = os.WriteFile(filePath, []byte{}, 0)
-		if err != nil {
-			return fmt.Errorf("failed to truncate otel collector output file: %w", err)
-		}
+// 	return nil
+// }
 
-		// Re-enable watcher after truncating
-		err = enableOtelOutputFileWatcher(ctx, baseDirectory)
-		if err != nil {
-			return fmt.Errorf("failed to re-enable watcher: %w", err)
-		}
-	}
+// func uploadToPresignedURL(presignedURL string, data []byte) error {
+// 	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
+// 	if err != nil {
+// 		return fmt.Errorf("failed to create HTTP request: %w", err)
+// 	}
 
-	return nil
-}
+// 	req.Header.Set("Content-Type", "text/plain")
 
-func uploadToPresignedURL(presignedURL string, data []byte) error {
-	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", err)
-	}
+// 	client := &http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to execute HTTP request: %w", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	req.Header.Set("Content-Type", "text/plain")
+// 	if resp.StatusCode != http.StatusOK {
+// 		return fmt.Errorf("failed to upload data, status: %v", resp.Status)
+// 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute HTTP request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to upload data, status: %v", resp.Status)
-	}
-
-	return nil
-}
+// 	return nil
+// }

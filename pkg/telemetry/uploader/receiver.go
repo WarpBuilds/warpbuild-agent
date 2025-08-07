@@ -1,0 +1,237 @@
+package uploader
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/warpbuilds/warpbuild-agent/pkg/log"
+)
+
+// Receiver handles incoming OTEL telemetry data
+type Receiver struct {
+	port      int
+	service   TelemetryProcessor
+	server    *http.Server
+	ctx       context.Context
+	cancel    context.CancelFunc
+	wg        sync.WaitGroup
+	mu        sync.RWMutex
+	isRunning bool
+}
+
+// NewReceiver creates a new OTEL receiver
+func NewReceiver(port int, service TelemetryProcessor) *Receiver {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Receiver{
+		port:    port,
+		service: service,
+		ctx:     ctx,
+		cancel:  cancel,
+	}
+}
+
+// Start starts the receiver on the specified port
+func (r *Receiver) Start() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.isRunning {
+		return fmt.Errorf("receiver is already running")
+	}
+
+	mux := http.NewServeMux()
+
+	// Handle OTEL logs endpoint
+	mux.HandleFunc("/v1/logs", r.handleLogs)
+
+	// Handle OTEL metrics endpoint
+	mux.HandleFunc("/v1/metrics", r.handleMetrics)
+
+	// Handle OTEL traces endpoint
+	mux.HandleFunc("/v1/traces", r.handleTraces)
+
+	// Health check endpoint
+	mux.HandleFunc("/health", r.handleHealth)
+
+	r.server = &http.Server{
+		Addr:    fmt.Sprintf(":%d", r.port),
+		Handler: mux,
+	}
+
+	r.isRunning = true
+
+	// Start the server in a goroutine
+	r.wg.Add(1)
+	go func() {
+		defer r.wg.Done()
+		log.Logger().Infof("Starting OTEL receiver on port %d", r.port)
+
+		if err := r.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Logger().Errorf("OTEL receiver error: %v", err)
+		}
+	}()
+
+	// Wait a moment to ensure server is starting
+	time.Sleep(100 * time.Millisecond)
+
+	// Check if server is actually listening
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", r.port), time.Second)
+	if err != nil {
+		return fmt.Errorf("failed to start receiver: %w", err)
+	}
+	conn.Close()
+
+	log.Logger().Infof("OTEL receiver started successfully on port %d", r.port)
+	return nil
+}
+
+// Stop stops the receiver
+func (r *Receiver) Stop() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if !r.isRunning {
+		return nil
+	}
+
+	log.Logger().Infof("Stopping OTEL receiver...")
+
+	r.cancel()
+
+	if r.server != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := r.server.Shutdown(ctx); err != nil {
+			log.Logger().Errorf("Error shutting down server: %v", err)
+		}
+	}
+
+	r.wg.Wait()
+	r.isRunning = false
+
+	log.Logger().Infof("OTEL receiver stopped")
+	return nil
+}
+
+// handleLogs handles incoming log data
+func (r *Receiver) handleLogs(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the request body
+	body, err := r.readRequestBody(req)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Process the logs and add to buffer
+	r.processLogs(body)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleMetrics handles incoming metrics data
+func (r *Receiver) handleMetrics(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the request body
+	body, err := r.readRequestBody(req)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Process the metrics and add to buffer
+	r.processMetrics(body)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleTraces handles incoming trace data
+func (r *Receiver) handleTraces(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the request body
+	body, err := r.readRequestBody(req)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Process the traces and add to buffer
+	r.processTraces(body)
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleHealth handles health check requests
+func (r *Receiver) handleHealth(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
+}
+
+// readRequestBody reads and returns the request body
+func (r *Receiver) readRequestBody(req *http.Request) ([]byte, error) {
+	// Limit body size to prevent memory issues
+	req.Body = http.MaxBytesReader(nil, req.Body, 10*1024*1024) // 10MB limit
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body: %w", err)
+	}
+
+	return body, nil
+}
+
+// processLogs processes log data using the service layer
+func (r *Receiver) processLogs(data []byte) {
+	if err := r.service.ProcessLogs(r.ctx, data); err != nil {
+		log.Logger().Errorf("Failed to process logs: %v", err)
+		if service, ok := r.service.(*TelemetryService); ok {
+			service.RecordError()
+		}
+	}
+}
+
+// processMetrics processes metrics data using the service layer
+func (r *Receiver) processMetrics(data []byte) {
+	if err := r.service.ProcessMetrics(r.ctx, data); err != nil {
+		log.Logger().Errorf("Failed to process metrics: %v", err)
+		if service, ok := r.service.(*TelemetryService); ok {
+			service.RecordError()
+		}
+	}
+}
+
+// processTraces processes trace data using the service layer
+func (r *Receiver) processTraces(data []byte) {
+	if err := r.service.ProcessTraces(r.ctx, data); err != nil {
+		log.Logger().Errorf("Failed to process traces: %v", err)
+		if service, ok := r.service.(*TelemetryService); ok {
+			service.RecordError()
+		}
+	}
+}
+
+// IsRunning returns whether the receiver is currently running
+func (r *Receiver) IsRunning() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.isRunning
+}

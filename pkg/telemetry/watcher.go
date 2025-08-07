@@ -1,98 +1,86 @@
 package telemetry
 
-import (
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
+// var watcher *fsnotify.Watcher
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/warpbuilds/warpbuild-agent/pkg/log"
-)
+// func disableOtelOutputFileWatcher() {
+// 	watcher.Close()
+// }
 
-var watcher *fsnotify.Watcher
+// func enableOtelOutputFileWatcher(ctx context.Context, baseDirectory string) error {
+// 	var err error
+// 	watcher, err = fsnotify.NewWatcher()
+// 	if err != nil {
+// 		return fmt.Errorf("failed to create file watcher: %w", err)
+// 	}
 
-func disableOtelOutputFileWatcher() {
-	watcher.Close()
-}
+// 	go func() {
+// 		defer handlePanic()
+// 		watchOtelOutputFile(ctx, baseDirectory)
+// 	}()
+// 	return nil
+// }
 
-func enableOtelOutputFileWatcher(ctx context.Context, baseDirectory string) error {
-	var err error
-	watcher, err = fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to create file watcher: %w", err)
-	}
+// func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
+// 	defer watcher.Close()
 
-	go func() {
-		defer handlePanic()
-		watchOtelOutputFile(ctx, baseDirectory)
-	}()
-	return nil
-}
+// 	// Ensure the log file exists
+// 	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)); os.IsNotExist(err) {
+// 		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
+// 		if err != nil {
+// 			log.Logger().Errorf("failed to create log file: %v", err)
+// 		}
+// 		file.Close()
+// 	}
 
-func watchOtelOutputFile(ctx context.Context, baseDirectory string) {
-	defer watcher.Close()
+// 	// Ensure the metrics file exists
+// 	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true)); os.IsNotExist(err) {
+// 		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
+// 		if err != nil {
+// 			log.Logger().Errorf("failed to create log file: %v", err)
+// 		}
+// 		file.Close()
+// 	}
 
-	// Ensure the log file exists
-	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)); os.IsNotExist(err) {
-		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
-		if err != nil {
-			log.Logger().Errorf("failed to create log file: %v", err)
-		}
-		file.Close()
-	}
+// 	// We watch the directory for fs notification events
+// 	watchPath := getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)
+// 	watchPath = filepath.Dir(watchPath)
 
-	// Ensure the metrics file exists
-	if _, err := os.Stat(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true)); os.IsNotExist(err) {
-		file, err := os.Create(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
-		if err != nil {
-			log.Logger().Errorf("failed to create log file: %v", err)
-		}
-		file.Close()
-	}
+// 	err := watcher.Add(watchPath)
+// 	if err != nil {
+// 		log.Logger().Errorf("failed to watch file: %v", err)
+// 	}
 
-	// We watch the directory for fs notification events
-	watchPath := getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false)
-	watchPath = filepath.Dir(watchPath)
+// 	for {
+// 		select {
+// 		case event, ok := <-watcher.Events:
+// 			if !ok {
+// 				log.Logger().Infof("Unknown event")
+// 				return
+// 			}
+// 			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Chmod) != 0 {
+// 				log.Logger().Infof("Watching the following paths: %+v", watcher.WatchList())
+// 				log.Logger().Infof("Modified file:", event.Name)
 
-	err := watcher.Add(watchPath)
-	if err != nil {
-		log.Logger().Errorf("failed to watch file: %v", err)
-	}
+// 				metricsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
+// 				if strings.Contains(event.Name, metricsPath) {
+// 					log.Logger().Infof("Path is metrics path: %v", metricsPath)
+// 					debouncedOtelUpload(ctx, baseDirectory, true)
+// 				}
 
-	for {
-		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				log.Logger().Infof("Unknown event")
-				return
-			}
-			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Chmod) != 0 {
-				log.Logger().Infof("Watching the following paths: %+v", watcher.WatchList())
-				log.Logger().Infof("Modified file:", event.Name)
+// 				logsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
+// 				if strings.Contains(event.Name, logsPath) {
+// 					log.Logger().Infof("Path is logs path: %v", logsPath)
+// 					debouncedOtelUpload(ctx, baseDirectory, false)
+// 				}
 
-				metricsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, true))
-				if strings.Contains(event.Name, metricsPath) {
-					log.Logger().Infof("Path is metrics path: %v", metricsPath)
-					debouncedOtelUpload(ctx, baseDirectory, true)
-				}
-
-				logsPath := filepath.Base(getOtelCollectorOutputFilePath(baseDirectory, runtime.GOOS, false))
-				if strings.Contains(event.Name, logsPath) {
-					log.Logger().Infof("Path is logs path: %v", logsPath)
-					debouncedOtelUpload(ctx, baseDirectory, false)
-				}
-
-				// TODO: remove below log
-				log.Logger().Infof("Completed upload for event:", event.Name)
-			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return
-			}
-			log.Logger().Errorf("Error watching file:", err)
-		}
-	}
-}
+// 				// TODO: remove below log
+// 				log.Logger().Infof("Completed upload for event:", event.Name)
+// 			}
+// 		case err, ok := <-watcher.Errors:
+// 			if !ok {
+// 				return
+// 			}
+// 			log.Logger().Errorf("Error watching file:", err)
+// 		}
+// 	}
+// }
