@@ -316,6 +316,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		PushFrequency         time.Duration
 		OS                    string
 		Arch                  string
+		Port                  int
 	}{
 		SyslogFilePath:        tm.getSyslogFilePath(),
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
@@ -323,6 +324,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		PushFrequency:         60 * time.Second, // Default push frequency
 		OS:                    runtime.GOOS,
 		Arch:                  runtime.GOARCH,
+		Port:                  tm.port,
 	}
 
 	err = tmpl.Execute(file, data)
