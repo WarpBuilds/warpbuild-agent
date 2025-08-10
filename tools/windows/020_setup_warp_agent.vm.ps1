@@ -15,11 +15,35 @@ if (-not (Test-Path -Path $AGENT_DIR)) {
 }
 
 # Get the latest agent tag
-# $latestAgentTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/WarpBuilds/warpbuild-agent/releases/latest").tag_name
-$latestAgentTag = "feat/windows-telemetry"  # Uncomment this line to use a specific version
+$latestAgentTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/WarpBuilds/warpbuild-agent/releases/latest").tag_name
+$defaultAgentTag = "v0.9.0"
+$bucketPrefix = "https://bcfda61174f1fa286a9ecf6b2dde0c49.r2.cloudflarestorage.com/warpbuild-packages/WarpBuilds/warpbuild-agent"
+
+# Check if the latest agent tag exists in the bucket
+$latestAgentUrl = "$bucketPrefix/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+$latestAgentExists = $false
+
+try {
+    $response = Invoke-WebRequest -Uri $latestAgentUrl -Method Head -UseBasicParsing -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+        $latestAgentExists = $true
+        Write-Host "Latest agent tag '$latestAgentTag' exists in bucket. Using it."
+    }
+} catch {
+    Write-Host "Latest agent tag '$latestAgentTag' not found in bucket. Error: $($_.Exception.Message)"
+}
+
+# Use default tag if latest doesn't exist
+if (-not $latestAgentExists) {
+    Write-Host "Using default agent tag '$defaultAgentTag' instead."
+    $latestAgentTag = $defaultAgentTag
+}
+
+Write-Host "Selected agent tag: $latestAgentTag"
+# $latestAgentTag = "feat/windows-telemetry"  # Uncomment this line to use a specific version
 
 # Download and extract the agent
-$agentUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-agentd/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+$agentUrl = "$bucketPrefix/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
 Write-Host "Downloading warpbuild-agent using aria2 from r2..."
 aria2c -s16 -x16 $agentUrl -d "$AGENT_DIR" -o "warpbuild-agent.zip"
 Expand-Archive -Path "$AGENT_DIR\warpbuild-agent.zip" -DestinationPath "$AGENT_DIR" -Force
@@ -29,8 +53,28 @@ Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
 Copy-Item -Path "$AGENT_DIR\warpbuild-agentd.exe" -Destination "C:\Windows\System32\warpbuild-agentd.exe"
 
 $restarterZipPath = "warpbuild-agentd-restarter_Windows_x86_64.zip"
-$restarterUrl = "https://pub-b4f7dbd911ef411ca27c8befa94bb744.r2.dev/warpbuild-agentd/$latestAgentTag/$restarterZipPath"
-Write-Host "Downloading warpbuild-agentd-restarter using aria2..."
+$latestRestarterAgentUrl = "$bucketPrefix/$latestAgentTag/$restarterZipPath"
+$restarterUrl = $latestRestarterAgentUrl
+
+# Check if the restarter exists in the bucket for the selected tag
+$restarterExists = $false
+try {
+    $response = Invoke-WebRequest -Uri $latestRestarterAgentUrl -Method Head -UseBasicParsing -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+        $restarterExists = $true
+        Write-Host "Restarter exists in bucket for tag '$latestAgentTag'. Using it."
+    }
+} catch {
+    Write-Host "Restarter not found in bucket for tag '$latestAgentTag'. Error: $($_.Exception.Message)"
+}
+
+# Use default tag if latest doesn't exist
+if (-not $restarterExists) {
+    Write-Host "Using default agent tag '$defaultAgentTag' for restarter instead."
+    $restarterUrl = "$bucketPrefix/$defaultAgentTag/$restarterZipPath"
+}
+
+Write-Host "Downloading warpbuild-agentd-restarter using aria2 from: $restarterUrl"
 aria2c -s16 -x16 $restarterUrl -d "$AGENT_DIR" -o "$restarterZipPath"
 Write-Host "Downloaded $restarterZipPath"
 Expand-Archive -Path "$AGENT_DIR\$restarterZipPath" -DestinationPath "$AGENT_DIR" -Force
