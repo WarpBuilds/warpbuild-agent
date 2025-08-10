@@ -16,7 +16,7 @@ if (-not (Test-Path -Path $AGENT_DIR)) {
 
 # Get the latest agent tag
 $latestAgentTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/WarpBuilds/warpbuild-agent/releases/latest").tag_name
-$defaultAgentTag = "v0.9.0"
+$defaultAgentTag = "v0.8.3"
 $bucketPrefix = "https://bcfda61174f1fa286a9ecf6b2dde0c49.r2.cloudflarestorage.com/warpbuild-packages/WarpBuilds/warpbuild-agent"
 
 # Check if the latest agent tag exists in the bucket
