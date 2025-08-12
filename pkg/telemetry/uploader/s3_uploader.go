@@ -144,7 +144,7 @@ func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 	presignedURL := s.presignedURLs[eventType]
 	s.mu.RUnlock()
 
-	log.Logger().Infof("Uploading lines: %v", string(data))
+	log.Logger().Infof("Uploading %d bytes of %s data to S3", len(data), eventType)
 
 	if presignedURL == "" {
 		return fmt.Errorf("no presigned URL available for event type: %s", eventType)
@@ -171,7 +171,7 @@ func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 		return fmt.Errorf("failed to upload data, status: %v", resp.Status)
 	}
 
-	log.Logger().Debugf("Successfully uploaded %d bytes to S3", len(data))
+	log.Logger().Debugf("Successfully uploaded %d bytes of %s data to S3", len(data), eventType)
 
 	// Refresh presigned URL for next upload
 	if err := s.refreshPresignedURL(eventType); err != nil {

@@ -134,6 +134,12 @@ func (s *TelemetryService) GetStats() map[string]interface{} {
 		bufferSize, isFull := s.buffer.GetStats()
 		stats["buffer_size"] = bufferSize
 		stats["buffer_is_full"] = isFull
+
+		// Add detailed buffer stats
+		detailedStats := s.buffer.GetDetailedStats()
+		for k, v := range detailedStats {
+			stats["buffer_"+k] = v
+		}
 	}
 
 	return stats
@@ -147,6 +153,20 @@ func (s *TelemetryService) RecordError() {
 	if count, ok := s.stats["errors"].(int); ok {
 		s.stats["errors"] = count + 1
 	}
+}
+
+// ClearBuffer clears the buffer to prevent duplicate event uploads
+func (s *TelemetryService) ClearBuffer() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.buffer == nil {
+		return fmt.Errorf("buffer is not initialized")
+	}
+
+	s.buffer.Clear()
+	log.Logger().Debugf("Telemetry service buffer cleared")
+	return nil
 }
 
 // ResetStats resets all statistics

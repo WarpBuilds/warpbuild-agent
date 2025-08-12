@@ -69,8 +69,8 @@ func (b *Buffer) AddLineWithType(line string, eventType string) {
 
 // sendToUploadChannel sends the current buffer content to the upload channel
 func (b *Buffer) sendToUploadChannel() {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	// Group data by event type
 	dataByType := make(map[string]*bytes.Buffer)
@@ -110,7 +110,12 @@ func (b *Buffer) sendToUploadChannel() {
 		}
 	}
 
+	// Log the upload process
 	log.Logger().Debugf("Sending %d event types to upload channel", len(dataByType))
+	log.Logger().Debugf("Event types to send: %v", getKeys(dataByType))
+
+	// Track which event types were successfully sent
+	sentEventTypes := make(map[string]bool)
 
 	// Send each event type separately
 	for eventType, buf := range dataByType {
@@ -120,16 +125,105 @@ func (b *Buffer) sendToUploadChannel() {
 				Data:      data,
 				EventType: eventType,
 			}
+
+			// Try to send to upload channel
 			select {
 			case b.uploadChan <- req:
 				log.Logger().Debugf("Sent %d bytes of %s data to upload channel", len(data), eventType)
+				sentEventTypes[eventType] = true
 			case <-b.ctx.Done():
 				log.Logger().Debugf("Context cancelled, not sending to upload channel")
+				return
 			default:
 				log.Logger().Warnf("Upload channel is full, dropping %s data", eventType)
+				// Don't mark as sent if we couldn't send it
+				continue
 			}
 		}
 	}
+
+	log.Logger().Debugf("Successfully sent event types: %v", getBoolKeys(sentEventTypes))
+
+	// Only drop events of successfully sent event types to prevent duplicates
+	for eventType := range sentEventTypes {
+		b.dropEventsOfType(eventType)
+		log.Logger().Debugf("Dropped all %s events after successful upload", eventType)
+	}
+}
+
+// getKeys returns the keys of a map as a slice
+func getKeys(m map[string]*bytes.Buffer) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// getBoolKeys returns the keys of a map[string]bool as a slice
+func getBoolKeys(m map[string]bool) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// dropEventsOfType removes all events of a specific type from the buffer
+func (b *Buffer) dropEventsOfType(eventType string) {
+	droppedCount := 0
+
+	// Clear all lines of the specified event type
+	for i := 0; i < b.maxLines; i++ {
+		if b.lines[i].EventType == eventType {
+			b.lines[i] = BufferLine{}
+			droppedCount++
+		}
+	}
+
+	// If we dropped all events, reset the buffer state
+	if droppedCount > 0 {
+		// Check if buffer is now empty
+		remainingEvents := 0
+		for i := 0; i < b.maxLines; i++ {
+			if b.lines[i].Data != "" {
+				remainingEvents++
+			}
+		}
+
+		if remainingEvents == 0 {
+			// Buffer is completely empty, reset state
+			b.currentIndex = 0
+			b.isFull = false
+		} else {
+			// Compact the buffer by removing empty lines
+			b.compactBuffer()
+		}
+
+		log.Logger().Debugf("Dropped %d %s events, %d events remaining", droppedCount, eventType, remainingEvents)
+	}
+}
+
+// compactBuffer removes empty lines and compacts the buffer
+func (b *Buffer) compactBuffer() {
+	// Create a new compacted buffer
+	compacted := make([]BufferLine, b.maxLines)
+	compactedIndex := 0
+
+	// Copy non-empty lines to the beginning
+	for i := 0; i < b.maxLines; i++ {
+		if b.lines[i].Data != "" {
+			compacted[compactedIndex] = b.lines[i]
+			compactedIndex++
+		}
+	}
+
+	// Update the buffer with compacted data
+	b.lines = compacted
+	b.currentIndex = compactedIndex
+	b.isFull = false
+
+	log.Logger().Debugf("Buffer compacted, new size: %d", compactedIndex)
 }
 
 // Flush sends all current data to the upload channel
@@ -152,4 +246,60 @@ func (b *Buffer) GetStats() (int, bool) {
 		return b.maxLines, true
 	}
 	return b.currentIndex, false
+}
+
+// GetDetailedStats returns detailed buffer statistics including event type counts
+func (b *Buffer) GetDetailedStats() map[string]interface{} {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	stats := map[string]interface{}{
+		"max_lines":     b.maxLines,
+		"current_index": b.currentIndex,
+		"is_full":       b.isFull,
+	}
+
+	// Count events by type
+	eventTypeCounts := make(map[string]int)
+	totalLines := 0
+
+	if b.isFull {
+		// Count all lines in the buffer
+		for i := 0; i < b.maxLines; i++ {
+			if b.lines[i].Data != "" {
+				eventTypeCounts[b.lines[i].EventType]++
+				totalLines++
+			}
+		}
+	} else {
+		// Count lines from beginning to current position
+		for i := 0; i < b.currentIndex; i++ {
+			if b.lines[i].Data != "" {
+				eventTypeCounts[b.lines[i].EventType]++
+				totalLines++
+			}
+		}
+	}
+
+	stats["total_lines"] = totalLines
+	stats["event_type_counts"] = eventTypeCounts
+
+	return stats
+}
+
+// Clear clears the entire buffer and resets its state
+func (b *Buffer) Clear() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	// Clear all lines in the buffer
+	for i := 0; i < b.maxLines; i++ {
+		b.lines[i] = BufferLine{}
+	}
+
+	// Reset buffer state
+	b.currentIndex = 0
+	b.isFull = false
+
+	log.Logger().Debugf("Buffer manually cleared")
 }
