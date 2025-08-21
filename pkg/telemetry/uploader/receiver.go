@@ -14,14 +14,13 @@ import (
 
 // Receiver handles incoming OTEL telemetry data
 type Receiver struct {
-	port      int
-	service   TelemetryProcessor
-	server    *http.Server
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-	mu        sync.RWMutex
-	isRunning bool
+	port    int
+	service TelemetryProcessor
+	server  *http.Server
+	ctx     context.Context
+	cancel  context.CancelFunc
+	wg      sync.WaitGroup
+	mu      sync.RWMutex
 }
 
 // NewReceiver creates a new OTEL receiver
@@ -39,10 +38,6 @@ func NewReceiver(port int, service TelemetryProcessor) *Receiver {
 func (r *Receiver) Start() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	if r.isRunning {
-		return fmt.Errorf("receiver is already running")
-	}
 
 	mux := http.NewServeMux()
 
@@ -62,8 +57,6 @@ func (r *Receiver) Start() error {
 		Addr:    fmt.Sprintf(":%d", r.port),
 		Handler: mux,
 	}
-
-	r.isRunning = true
 
 	// Start the server in a goroutine
 	r.wg.Add(1)
@@ -95,10 +88,6 @@ func (r *Receiver) Stop() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if !r.isRunning {
-		return nil
-	}
-
 	log.Logger().Infof("Stopping OTEL receiver...")
 
 	r.cancel()
@@ -113,7 +102,6 @@ func (r *Receiver) Stop() error {
 	}
 
 	r.wg.Wait()
-	r.isRunning = false
 
 	log.Logger().Infof("OTEL receiver stopped")
 	return nil
@@ -205,9 +193,6 @@ func (r *Receiver) readRequestBody(req *http.Request) ([]byte, error) {
 func (r *Receiver) processLogs(data []byte) {
 	if err := r.service.ProcessLogs(r.ctx, data); err != nil {
 		log.Logger().Errorf("Failed to process logs: %v", err)
-		if service, ok := r.service.(*TelemetryService); ok {
-			service.RecordError()
-		}
 	}
 }
 
@@ -215,9 +200,6 @@ func (r *Receiver) processLogs(data []byte) {
 func (r *Receiver) processMetrics(data []byte) {
 	if err := r.service.ProcessMetrics(r.ctx, data); err != nil {
 		log.Logger().Errorf("Failed to process metrics: %v", err)
-		if service, ok := r.service.(*TelemetryService); ok {
-			service.RecordError()
-		}
 	}
 }
 
@@ -225,15 +207,5 @@ func (r *Receiver) processMetrics(data []byte) {
 func (r *Receiver) processTraces(data []byte) {
 	if err := r.service.ProcessTraces(r.ctx, data); err != nil {
 		log.Logger().Errorf("Failed to process traces: %v", err)
-		if service, ok := r.service.(*TelemetryService); ok {
-			service.RecordError()
-		}
 	}
-}
-
-// IsRunning returns whether the receiver is currently running
-func (r *Receiver) IsRunning() bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.isRunning
 }

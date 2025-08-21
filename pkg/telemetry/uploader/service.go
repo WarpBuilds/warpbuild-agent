@@ -13,28 +13,18 @@ type TelemetryProcessor interface {
 	ProcessLogs(ctx context.Context, data []byte) error
 	ProcessMetrics(ctx context.Context, data []byte) error
 	ProcessTraces(ctx context.Context, data []byte) error
-	GetStats() map[string]interface{}
 }
 
 // TelemetryService implements the TelemetryProcessor interface
 type TelemetryService struct {
-	buffer     *Buffer
-	s3Uploader *S3Uploader
-	mu         sync.RWMutex
-	stats      map[string]interface{}
+	buffer map[string]*Buffer
+	mu     sync.RWMutex
 }
 
 // NewTelemetryService creates a new telemetry service
-func NewTelemetryService(buffer *Buffer, s3Uploader *S3Uploader) *TelemetryService {
+func NewTelemetryService(buffer map[string]*Buffer) *TelemetryService {
 	return &TelemetryService{
-		buffer:     buffer,
-		s3Uploader: s3Uploader,
-		stats: map[string]interface{}{
-			"logs_processed":    0,
-			"metrics_processed": 0,
-			"traces_processed":  0,
-			"errors":            0,
-		},
+		buffer: buffer,
 	}
 }
 
@@ -43,7 +33,7 @@ func (s *TelemetryService) ProcessLogs(ctx context.Context, data []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.buffer == nil {
+	if s.buffer["logs"] == nil {
 		return fmt.Errorf("buffer is not initialized")
 	}
 
@@ -53,12 +43,7 @@ func (s *TelemetryService) ProcessLogs(ctx context.Context, data []byte) error {
 	}
 
 	// Process the logs and add to buffer
-	s.buffer.AddLine(string(data))
-
-	// Update statistics
-	if count, ok := s.stats["logs_processed"].(int); ok {
-		s.stats["logs_processed"] = count + 1
-	}
+	s.buffer["logs"].AddLineWithType(data)
 
 	// log.Logger().Debugf("Processed %d bytes of log data", len(data))
 	return nil
@@ -69,7 +54,7 @@ func (s *TelemetryService) ProcessMetrics(ctx context.Context, data []byte) erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.buffer == nil {
+	if s.buffer["metrics"] == nil {
 		return fmt.Errorf("buffer is not initialized")
 	}
 
@@ -81,12 +66,7 @@ func (s *TelemetryService) ProcessMetrics(ctx context.Context, data []byte) erro
 	log.Logger().Debugf("Processing %d bytes of metrics data", len(data))
 
 	// Process the metrics and add to buffer with metrics event type
-	s.buffer.AddLineWithType(string(data), "metrics")
-
-	// Update statistics
-	if count, ok := s.stats["metrics_processed"].(int); ok {
-		s.stats["metrics_processed"] = count + 1
-	}
+	s.buffer["metrics"].AddLineWithType(data)
 
 	log.Logger().Debugf("Processed %d bytes of metrics data", len(data))
 	return nil
@@ -97,7 +77,7 @@ func (s *TelemetryService) ProcessTraces(ctx context.Context, data []byte) error
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.buffer == nil {
+	if s.buffer["traces"] == nil {
 		return fmt.Errorf("buffer is not initialized")
 	}
 
@@ -107,77 +87,8 @@ func (s *TelemetryService) ProcessTraces(ctx context.Context, data []byte) error
 	}
 
 	// Process the traces and add to buffer with traces event type
-	s.buffer.AddLineWithType(string(data), "traces")
-
-	// Update statistics
-	if count, ok := s.stats["traces_processed"].(int); ok {
-		s.stats["traces_processed"] = count + 1
-	}
+	s.buffer["traces"].AddLineWithType(data)
 
 	// log.Logger().Debugf("Processed %d bytes of trace data", len(data))
 	return nil
-}
-
-// GetStats returns the current statistics
-func (s *TelemetryService) GetStats() map[string]interface{} {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	// Create a copy of stats to avoid race conditions
-	stats := make(map[string]interface{})
-	for k, v := range s.stats {
-		stats[k] = v
-	}
-
-	// Add buffer stats if available
-	if s.buffer != nil {
-		bufferSize, isFull := s.buffer.GetStats()
-		stats["buffer_size"] = bufferSize
-		stats["buffer_is_full"] = isFull
-
-		// Add detailed buffer stats
-		detailedStats := s.buffer.GetDetailedStats()
-		for k, v := range detailedStats {
-			stats["buffer_"+k] = v
-		}
-	}
-
-	return stats
-}
-
-// RecordError records an error in the statistics
-func (s *TelemetryService) RecordError() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if count, ok := s.stats["errors"].(int); ok {
-		s.stats["errors"] = count + 1
-	}
-}
-
-// ClearBuffer clears the buffer to prevent duplicate event uploads
-func (s *TelemetryService) ClearBuffer() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.buffer == nil {
-		return fmt.Errorf("buffer is not initialized")
-	}
-
-	s.buffer.Clear()
-	log.Logger().Debugf("Telemetry service buffer cleared")
-	return nil
-}
-
-// ResetStats resets all statistics
-func (s *TelemetryService) ResetStats() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.stats = map[string]interface{}{
-		"logs_processed":    0,
-		"metrics_processed": 0,
-		"traces_processed":  0,
-		"errors":            0,
-	}
 }

@@ -15,37 +15,47 @@ import (
 
 // S3Uploader handles uploading telemetry data to S3
 type S3Uploader struct {
-	ctx           context.Context
-	cancel        context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
+	// eventType is the otel type, can be 'metrics', 'logs', 'traces'
+	eventType     string
 	wg            sync.WaitGroup
 	uploadChan    chan UploadRequest
-	presignedURLs map[string]string // Map of eventType to presigned URL
+	presignedURL  string // Map of eventType to presigned URL
 	mu            sync.RWMutex
 	warpbuildAPI  *warpbuild.APIClient
 	runnerID      string
 	pollingSecret string
 	hostURL       string
-	isRunning     bool
 }
 
 // UploadRequest represents a request to upload data with event type
 type UploadRequest struct {
-	Data      []byte
-	EventType string // "logs", "metrics", "traces"
+	Data []byte
+}
+
+// S3UploaderOptions contains all the configuration options for creating a new S3Uploader
+type S3UploaderOptions struct {
+	WarpbuildAPI  *warpbuild.APIClient
+	EventType     string
+	RunnerID      string
+	PollingSecret string
+	HostURL       string
 }
 
 // NewS3Uploader creates a new S3 uploader
-func NewS3Uploader(ctx context.Context, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *S3Uploader {
+func NewS3Uploader(ctx context.Context, opts S3UploaderOptions) *S3Uploader {
 	uploadCtx, cancel := context.WithCancel(ctx)
 	return &S3Uploader{
 		ctx:           uploadCtx,
 		cancel:        cancel,
+		eventType:     opts.EventType,
 		uploadChan:    make(chan UploadRequest, 100), // Buffer for 100 upload requests
-		presignedURLs: make(map[string]string),
-		warpbuildAPI:  warpbuildAPI,
-		runnerID:      runnerID,
-		pollingSecret: pollingSecret,
-		hostURL:       hostURL,
+		presignedURL:  "",
+		warpbuildAPI:  opts.WarpbuildAPI,
+		runnerID:      opts.RunnerID,
+		pollingSecret: opts.PollingSecret,
+		hostURL:       opts.HostURL,
 	}
 }
 
@@ -56,26 +66,12 @@ func (s *S3Uploader) Start() error {
 
 	log.Logger().Infof("[S3Uploader] Starting upload")
 
-	if s.isRunning {
-		return fmt.Errorf("S3 uploader is already running")
-	}
-
 	log.Logger().Infof("[S3Uploader] Fetching initial presigned urls")
 
 	// Get initial presigned URLs for logs, metrics, and traces
-	if err := s.refreshPresignedURL("logs"); err != nil {
+	if err := s.refreshPresignedURL(); err != nil {
 		return fmt.Errorf("failed to get initial logs presigned URL: %w", err)
 	}
-
-	if err := s.refreshPresignedURL("metrics"); err != nil {
-		return fmt.Errorf("failed to get initial metrics presigned URL: %w", err)
-	}
-
-	if err := s.refreshPresignedURL("traces"); err != nil {
-		return fmt.Errorf("failed to get initial traces presigned URL: %w", err)
-	}
-
-	s.isRunning = true
 
 	// Start the upload worker
 	s.wg.Add(1)
@@ -85,41 +81,6 @@ func (s *S3Uploader) Start() error {
 	return nil
 }
 
-// Stop stops the S3 uploader
-func (s *S3Uploader) Stop() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if !s.isRunning {
-		return nil
-	}
-
-	log.Logger().Infof("Stopping S3 uploader...")
-
-	s.cancel()
-	s.wg.Wait()
-	s.isRunning = false
-
-	log.Logger().Infof("S3 uploader stopped")
-	return nil
-}
-
-// Upload uploads data to S3
-func (s *S3Uploader) Upload(data []byte, eventType string) error {
-	req := UploadRequest{
-		Data:      data,
-		EventType: eventType,
-	}
-	select {
-	case s.uploadChan <- req:
-		return nil
-	case <-s.ctx.Done():
-		return fmt.Errorf("uploader is stopped")
-	default:
-		return fmt.Errorf("upload channel is full")
-	}
-}
-
 // uploadWorker processes upload requests
 func (s *S3Uploader) uploadWorker() {
 	defer s.wg.Done()
@@ -127,7 +88,7 @@ func (s *S3Uploader) uploadWorker() {
 	for {
 		select {
 		case req := <-s.uploadChan:
-			if err := s.uploadToS3(req.Data, req.EventType); err != nil {
+			if err := s.uploadToS3(req.Data); err != nil {
 				log.Logger().Errorf("Failed to upload data to S3: %v", err)
 				// Continue processing other uploads
 			}
@@ -139,9 +100,10 @@ func (s *S3Uploader) uploadWorker() {
 }
 
 // uploadToS3 uploads data to S3 using the presigned URL
-func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
+func (s *S3Uploader) uploadToS3(data []byte) error {
 	s.mu.RLock()
-	presignedURL := s.presignedURLs[eventType]
+	presignedURL := s.presignedURL
+	eventType := s.eventType
 	s.mu.RUnlock()
 
 	log.Logger().Infof("Uploading %d bytes of %s data to S3", len(data), eventType)
@@ -174,7 +136,7 @@ func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 	log.Logger().Debugf("Successfully uploaded %d bytes of %s data to S3", len(data), eventType)
 
 	// Refresh presigned URL for next upload
-	if err := s.refreshPresignedURL(eventType); err != nil {
+	if err := s.refreshPresignedURL(); err != nil {
 		log.Logger().Errorf("Failed to refresh presigned URL: %v", err)
 	}
 
@@ -182,7 +144,8 @@ func (s *S3Uploader) uploadToS3(data []byte, eventType string) error {
 }
 
 // refreshPresignedURL fetches a new presigned URL from the API
-func (s *S3Uploader) refreshPresignedURL(eventType string) error {
+func (s *S3Uploader) refreshPresignedURL() error {
+	eventType := s.eventType
 	// Create context with timeout for the API call
 	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
 	defer cancel()
@@ -212,7 +175,7 @@ func (s *S3Uploader) refreshPresignedURL(eventType string) error {
 		return fmt.Errorf("no URL received in response")
 	}
 
-	s.presignedURLs[eventType] = *out.Url
+	s.presignedURL = *out.Url
 
 	log.Logger().Debugf("Refreshed presigned URL for event type: %s", eventType)
 	return nil
@@ -221,11 +184,4 @@ func (s *S3Uploader) refreshPresignedURL(eventType string) error {
 // GetUploadChannel returns the upload channel for external use
 func (s *S3Uploader) GetUploadChannel() chan UploadRequest {
 	return s.uploadChan
-}
-
-// IsRunning returns whether the uploader is currently running
-func (s *S3Uploader) IsRunning() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.isRunning
 }

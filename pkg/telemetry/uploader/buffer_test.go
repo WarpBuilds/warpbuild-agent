@@ -1,6 +1,8 @@
 package uploader
 
 import (
+	"bytes"
+	"context"
 	"testing"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -14,186 +16,151 @@ func init() {
 	}
 }
 
-func TestBufferCleanupAfterUpload(t *testing.T) {
-	// Create a small buffer for testing with a large upload channel
-	uploadChan := make(chan UploadRequest, 100)
-	buffer := NewBuffer(5, uploadChan)
+// createTestBuffer creates a minimal buffer for testing without S3Uploader
+func createTestBuffer(maxLines int) *Buffer {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Buffer{
+		buf:          bytes.NewBufferString(""),
+		maxLines:     maxLines,
+		currentIndex: 0,
+		uploadChan:   make(chan UploadRequest, 100),
+		ctx:          ctx,
+		cancel:       cancel,
+	}
+}
 
-	// Start a consumer goroutine to consume from the upload channel
+func TestBufferAddLine(t *testing.T) {
+	buffer := createTestBuffer(5)
+
+	// Add a line
+	buffer.AddLineWithType([]byte("test line"))
+
+	// Check that line was added
+	if buffer.currentIndex != 1 {
+		t.Errorf("Expected current index 1, got %d", buffer.currentIndex)
+	}
+
+	// Check buffer content
+	content := buffer.buf.String()
+	expected := "test line\n"
+	if content != expected {
+		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
+	}
+}
+
+func TestBufferFull(t *testing.T) {
+	buffer := createTestBuffer(3)
+
+	// Add lines until buffer is full
+	buffer.AddLineWithType([]byte("line1"))
+	buffer.AddLineWithType([]byte("line2"))
+	buffer.AddLineWithType([]byte("line3"))
+
+	// Buffer should be full and reset
+	if buffer.currentIndex != 0 {
+		t.Errorf("Expected current index 0 after buffer full, got %d", buffer.currentIndex)
+	}
+
+	// Buffer should be empty after reset
+	content := buffer.buf.String()
+	if content != "" {
+		t.Errorf("Expected empty buffer after reset, got '%s'", content)
+	}
+}
+
+func TestBufferSendToUploadChannel(t *testing.T) {
+	buffer := createTestBuffer(2)
+
+	// Add some data
+	buffer.AddLineWithType([]byte("line1"))
+	buffer.AddLineWithType([]byte("line2"))
+
+	// Start a consumer goroutine
+	received := make(chan []byte, 1)
 	go func() {
-		for range uploadChan {
-			// Consume all upload requests
-		}
+		req := <-buffer.uploadChan
+		received <- req.Data
 	}()
 
-	// Add some lines of different event types
-	buffer.AddLineWithType("log1", "logs")
-	buffer.AddLineWithType("metric1", "metrics")
-	buffer.AddLineWithType("log2", "logs")
-	buffer.AddLineWithType("trace1", "traces")
-	buffer.AddLineWithType("log3", "logs")
-
-	// Buffer should be full now
-	if !buffer.isFull {
-		t.Error("Buffer should be full after adding 5 lines to a 5-line buffer")
-	}
-
-	// Get initial stats
-	initialSize, initialFull := buffer.GetStats()
-	if initialSize != 5 || !initialFull {
-		t.Errorf("Expected buffer size 5 and full=true, got size=%d, full=%v", initialSize, initialFull)
-	}
-
-	// Check initial event type counts
-	initialStats := buffer.GetDetailedStats()
-	initialEventTypeCounts := initialStats["event_type_counts"].(map[string]int)
-	t.Logf("Initial event counts: %v", initialEventTypeCounts)
-
-	// Simulate sending data to upload channel (this will trigger cleanup)
+	// Manually trigger send to upload channel
 	buffer.sendToUploadChannel()
 
-	// Check that all events were dropped (since they were all sent to upload channel)
-	stats := buffer.GetDetailedStats()
-	eventTypeCounts := stats["event_type_counts"].(map[string]int)
-	t.Logf("After upload event counts: %v", eventTypeCounts)
+	// Check that data was sent
+	select {
+	case data := <-received:
+		expected := "line1\nline2\n"
+		if string(data) != expected {
+			t.Errorf("Expected sent data '%s', got '%s'", expected, string(data))
+		}
+	case <-buffer.ctx.Done():
+		t.Error("Context was cancelled unexpectedly")
+	}
+}
 
-	// All event types should be dropped (0 remaining) since they were all sent
-	if eventTypeCounts["logs"] != 0 {
-		t.Errorf("Expected 0 logs after upload, got %d", eventTypeCounts["logs"])
+func TestBufferContextCancellation(t *testing.T) {
+	buffer := createTestBuffer(5)
+
+	// Add some data
+	buffer.AddLineWithType([]byte("line1"))
+
+	// Cancel the context
+	buffer.cancel()
+
+	// Try to send to upload channel (should not block due to context cancellation)
+	buffer.sendToUploadChannel()
+
+	// Test should complete without hanging
+}
+
+func TestBufferMultipleAdds(t *testing.T) {
+	buffer := createTestBuffer(10)
+
+	// Add multiple lines
+	lines := []string{"line1", "line2", "line3", "line4", "line5"}
+	for _, line := range lines {
+		buffer.AddLineWithType([]byte(line))
 	}
 
-	if eventTypeCounts["metrics"] != 0 {
-		t.Errorf("Expected 0 metrics after upload, got %d", eventTypeCounts["metrics"])
+	// Check current index
+	if buffer.currentIndex != 5 {
+		t.Errorf("Expected current index 5, got %d", buffer.currentIndex)
 	}
 
-	if eventTypeCounts["traces"] != 0 {
-		t.Errorf("Expected 0 traces after upload, got %d", eventTypeCounts["traces"])
+	// Check buffer content
+	content := buffer.buf.String()
+	expected := "line1\nline2\nline3\nline4\nline5\n"
+	if content != expected {
+		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
 	}
+}
 
-	// Buffer should not be full anymore since all events were dropped
-	if buffer.isFull {
-		t.Error("Buffer should not be full after dropping all events")
+func TestBufferEmptySend(t *testing.T) {
+	buffer := createTestBuffer(5)
+
+	// Try to send empty buffer
+	buffer.sendToUploadChannel()
+
+	// Should not panic or hang
+	// Buffer should remain empty
+	if buffer.currentIndex != 0 {
+		t.Errorf("Expected current index 0, got %d", buffer.currentIndex)
+	}
+}
+
+func TestBufferMaxLines(t *testing.T) {
+	buffer := createTestBuffer(1)
+
+	// Add one line
+	buffer.AddLineWithType([]byte("single line"))
+
+	// Buffer should be full and reset
+	if buffer.currentIndex != 0 {
+		t.Errorf("Expected current index 0 after single line in 1-line buffer, got %d", buffer.currentIndex)
 	}
 
 	// Buffer should be empty
-	if buffer.currentIndex != 0 {
-		t.Error("Buffer current index should be 0 after dropping all events")
-	}
-}
-
-func TestBufferManualClear(t *testing.T) {
-	buffer := NewBuffer(5, make(chan UploadRequest, 10))
-
-	// Add some lines
-	buffer.AddLineWithType("line1", "logs")
-	buffer.AddLineWithType("line2", "metrics")
-
-	// Manually clear the buffer
-	buffer.Clear()
-
-	// Buffer should be cleared
-	size, _ := buffer.GetStats()
-	if size != 0 {
-		t.Errorf("Expected 0 lines after manual clear, got %d", size)
-	}
-
-	if buffer.currentIndex != 0 {
-		t.Error("Buffer current index should be 0 after manual clear")
-	}
-}
-
-func TestDetailedStats(t *testing.T) {
-	buffer := NewBuffer(5, make(chan UploadRequest, 10))
-
-	// Add lines with different event types
-	buffer.AddLineWithType("log1", "logs")
-	buffer.AddLineWithType("log2", "logs")
-	buffer.AddLineWithType("metric1", "metrics")
-
-	// Get detailed stats
-	stats := buffer.GetDetailedStats()
-
-	// Check basic stats
-	if stats["max_lines"] != 5 {
-		t.Errorf("Expected max_lines=5, got %v", stats["max_lines"])
-	}
-
-	if stats["total_lines"] != 3 {
-		t.Errorf("Expected total_lines=3, got %v", stats["total_lines"])
-	}
-
-	// Check event type counts
-	eventTypeCounts := stats["event_type_counts"].(map[string]int)
-	if eventTypeCounts["logs"] != 2 {
-		t.Errorf("Expected 2 logs, got %d", eventTypeCounts["logs"])
-	}
-
-	if eventTypeCounts["metrics"] != 1 {
-		t.Errorf("Expected 1 metric, got %d", eventTypeCounts["metrics"])
-	}
-}
-
-func TestDropEventsOfType(t *testing.T) {
-	buffer := NewBuffer(5, make(chan UploadRequest, 10))
-
-	// Add mixed event types
-	buffer.AddLineWithType("log1", "logs")
-	buffer.AddLineWithType("metric1", "metrics")
-	buffer.AddLineWithType("log2", "logs")
-	buffer.AddLineWithType("trace1", "traces")
-
-	// Drop all logs events
-	buffer.dropEventsOfType("logs")
-
-	// Check that logs are gone but others remain
-	stats := buffer.GetDetailedStats()
-	eventTypeCounts := stats["event_type_counts"].(map[string]int)
-
-	if eventTypeCounts["logs"] != 0 {
-		t.Errorf("Expected 0 logs after dropping, got %d", eventTypeCounts["logs"])
-	}
-
-	if eventTypeCounts["metrics"] != 1 {
-		t.Errorf("Expected 1 metric after dropping logs, got %d", eventTypeCounts["metrics"])
-	}
-
-	if eventTypeCounts["traces"] != 1 {
-		t.Errorf("Expected 1 trace after dropping logs, got %d", eventTypeCounts["traces"])
-	}
-}
-
-func TestCompactBuffer(t *testing.T) {
-	buffer := NewBuffer(5, make(chan UploadRequest, 10))
-
-	// Add some events
-	buffer.AddLineWithType("log1", "logs")
-	buffer.AddLineWithType("metric1", "metrics")
-	buffer.AddLineWithType("log2", "logs")
-
-	// Drop logs events (this will create gaps)
-	buffer.dropEventsOfType("logs")
-
-	// Compact the buffer
-	buffer.compactBuffer()
-
-	// Check that buffer is compacted
-	stats := buffer.GetDetailedStats()
-	eventTypeCounts := stats["event_type_counts"].(map[string]int)
-
-	if eventTypeCounts["logs"] != 0 {
-		t.Errorf("Expected 0 logs after compacting, got %d", eventTypeCounts["logs"])
-	}
-
-	if eventTypeCounts["metrics"] != 1 {
-		t.Errorf("Expected 1 metric after compacting, got %d", eventTypeCounts["metrics"])
-	}
-
-	// Buffer should not be full and current index should be correct
-	if buffer.isFull {
-		t.Error("Buffer should not be full after compacting")
-	}
-
-	if buffer.currentIndex != 1 {
-		t.Errorf("Expected current index 1 after compacting, got %d", buffer.currentIndex)
+	content := buffer.buf.String()
+	if content != "" {
+		t.Errorf("Expected empty buffer after reset, got '%s'", content)
 	}
 }

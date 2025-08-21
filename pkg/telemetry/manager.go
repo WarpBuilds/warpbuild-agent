@@ -25,7 +25,6 @@ type TelemetryManager struct {
 	mu     sync.RWMutex
 
 	// Components
-	buffer     *uploader.Buffer
 	receiver   *uploader.Receiver
 	s3Uploader *uploader.S3Uploader
 
@@ -37,9 +36,6 @@ type TelemetryManager struct {
 	runnerID      string
 	pollingSecret string
 	hostURL       string
-
-	// State
-	isRunning bool
 }
 
 // NewTelemetryManager creates a new telemetry manager
@@ -63,51 +59,27 @@ func (tm *TelemetryManager) Start() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	if tm.isRunning {
-		return fmt.Errorf("telemetry manager is already running")
-	}
-
 	log.Logger().Infof("Starting telemetry manager on port %d with buffer size %d", tm.port, tm.maxBufferSize)
-
-	// Create S3 uploader
-	tm.s3Uploader = uploader.NewS3Uploader(tm.ctx, tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL)
-
-	log.Logger().Infof("Starting S3 Uploader")
-
-	// Start S3 uploader
-	if err := tm.s3Uploader.Start(); err != nil {
-		return fmt.Errorf("failed to start S3 uploader: %w", err)
-	}
 
 	log.Logger().Infof("Started S3 Uploader")
 
-	// Create buffer with upload channel
-	tm.buffer = uploader.NewBuffer(tm.maxBufferSize, tm.s3Uploader.GetUploadChannel())
-
 	// Create telemetry service
-	service := uploader.NewTelemetryService(tm.buffer, tm.s3Uploader)
+	service := uploader.NewTelemetryService(map[string]*uploader.Buffer{})
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)
 
 	// Start receiver
 	if err := tm.receiver.Start(); err != nil {
-		// Clean up S3 uploader
-		tm.s3Uploader.Stop()
 		return fmt.Errorf("failed to start receiver: %w", err)
 	}
 
 	log.Logger().Infof("Started receiver")
 
-	// Start periodic buffer flush
-	tm.wg.Add(1)
-	go tm.periodicFlush()
-
 	// Start OTEL collector
 	tm.wg.Add(1)
 	go tm.startOtelCollector()
 
-	tm.isRunning = true
 	log.Logger().Infof("Telemetry manager started successfully")
 	return nil
 }
@@ -116,10 +88,6 @@ func (tm *TelemetryManager) Start() error {
 func (tm *TelemetryManager) Stop() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
-
-	if !tm.isRunning {
-		return nil
-	}
 
 	log.Logger().Infof("Stopping telemetry manager...")
 
@@ -133,46 +101,11 @@ func (tm *TelemetryManager) Stop() error {
 		}
 	}
 
-	// Flush buffer before stopping
-	if tm.buffer != nil {
-		tm.buffer.Flush()
-		tm.buffer.Close()
-	}
-
-	// Stop S3 uploader
-	if tm.s3Uploader != nil {
-		if err := tm.s3Uploader.Stop(); err != nil {
-			log.Logger().Errorf("Error stopping S3 uploader: %v", err)
-		}
-	}
-
 	// Wait for all goroutines to finish
 	tm.wg.Wait()
 
-	tm.isRunning = false
 	log.Logger().Infof("Telemetry manager stopped")
 	return nil
-}
-
-// periodicFlush periodically flushes the buffer to ensure data is uploaded even if buffer doesn't fill up
-func (tm *TelemetryManager) periodicFlush() {
-	defer tm.wg.Done()
-
-	ticker := time.NewTicker(60 * time.Second) // Flush every minute
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if tm.buffer != nil {
-				tm.buffer.Flush()
-				log.Logger().Debugf("Periodic buffer flush completed")
-			}
-		case <-tm.ctx.Done():
-			log.Logger().Debugf("Periodic flush worker shutting down")
-			return
-		}
-	}
 }
 
 // startOtelCollector starts the OTEL collector process
@@ -226,12 +159,6 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan boo
 	// Ensure OpenTelemetry collector logs are captured and displayed
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	// Set environment variables for better logging
-	cmd.Env = append(os.Environ(),
-		"OTEL_LOG_LEVEL=info",
-		"OTEL_SERVICE_NAME=warpbuild-agent",
-	)
 
 	log.Logger().Infof("OpenTelemetry Collector command: %s --config %s", collectorPath, configPath)
 
@@ -402,39 +329,4 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 		return filepath.Join(tm.baseDirectory, "otel-metrics-out.log")
 	}
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
-}
-
-// GetStats returns statistics about the telemetry manager
-func (tm *TelemetryManager) GetStats() map[string]interface{} {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
-
-	stats := map[string]interface{}{
-		"is_running":  tm.isRunning,
-		"port":        tm.port,
-		"buffer_size": tm.maxBufferSize,
-	}
-
-	if tm.buffer != nil {
-		bufferSize, isFull := tm.buffer.GetStats()
-		stats["current_buffer_size"] = bufferSize
-		stats["buffer_is_full"] = isFull
-	}
-
-	if tm.receiver != nil {
-		stats["receiver_running"] = tm.receiver.IsRunning()
-	}
-
-	if tm.s3Uploader != nil {
-		stats["s3_uploader_running"] = tm.s3Uploader.IsRunning()
-	}
-
-	return stats
-}
-
-// IsRunning returns whether the telemetry manager is currently running
-func (tm *TelemetryManager) IsRunning() bool {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
-	return tm.isRunning
 }
