@@ -34,7 +34,7 @@ func (s *TelemetryService) ProcessLogs(ctx context.Context, data []byte) error {
 	defer s.mu.Unlock()
 
 	if s.buffer["logs"] == nil {
-		return fmt.Errorf("buffer is not initialized")
+		s.buffer["logs"] = &Buffer{}
 	}
 
 	// Validate input
@@ -55,7 +55,7 @@ func (s *TelemetryService) ProcessMetrics(ctx context.Context, data []byte) erro
 	defer s.mu.Unlock()
 
 	if s.buffer["metrics"] == nil {
-		return fmt.Errorf("buffer is not initialized")
+		s.buffer["metrics"] = &Buffer{}
 	}
 
 	// Validate input
@@ -78,7 +78,7 @@ func (s *TelemetryService) ProcessTraces(ctx context.Context, data []byte) error
 	defer s.mu.Unlock()
 
 	if s.buffer["traces"] == nil {
-		return fmt.Errorf("buffer is not initialized")
+		s.buffer["traces"] = &Buffer{}
 	}
 
 	// Validate input
