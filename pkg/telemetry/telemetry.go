@@ -52,6 +52,8 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	}
 
 	log.Logger().Infof("Starting OTEL receiver-based telemetry collection...")
+	log.Logger().Infof("Telemetry configuration: port=%d, buffer_size=%d, push_frequency=%v",
+		opts.Port, opts.SysLogNumberOfLinesToRead, opts.PushFrequency)
 
 	// Initialize WarpBuild API client
 	cfg := warpbuild.NewConfiguration()

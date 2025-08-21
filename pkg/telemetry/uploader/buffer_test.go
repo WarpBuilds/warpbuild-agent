@@ -164,3 +164,38 @@ func TestBufferMaxLines(t *testing.T) {
 		t.Errorf("Expected empty buffer after reset, got '%s'", content)
 	}
 }
+
+func TestBufferNilBufRecovery(t *testing.T) {
+	// Create a buffer with nil buf to test recovery
+	ctx, cancel := context.WithCancel(context.Background())
+	buffer := &Buffer{
+		buf:          nil, // Intentionally nil to test recovery
+		maxLines:     5,
+		currentIndex: 0,
+		uploadChan:   make(chan UploadRequest, 100),
+		ctx:          ctx,
+		cancel:       cancel,
+		eventType:    "test",
+	}
+
+	// This should not panic and should recover by creating a new buf
+	buffer.AddLineWithType([]byte("recovery test"))
+
+	// Check that buf was created and line was added
+	if buffer.buf == nil {
+		t.Error("Buffer buf should not be nil after recovery")
+	}
+
+	if buffer.currentIndex != 1 {
+		t.Errorf("Expected current index 1 after recovery, got %d", buffer.currentIndex)
+	}
+
+	// Check buffer content
+	content := buffer.buf.String()
+	expected := "recovery test\n"
+	if content != expected {
+		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
+	}
+
+	cancel()
+}

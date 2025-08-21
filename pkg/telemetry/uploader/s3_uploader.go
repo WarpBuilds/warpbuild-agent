@@ -85,15 +85,20 @@ func (s *S3Uploader) Start() error {
 func (s *S3Uploader) uploadWorker() {
 	defer s.wg.Done()
 
+	log.Logger().Infof("S3Uploader[%s]: Upload worker started", s.eventType)
+
 	for {
 		select {
 		case req := <-s.uploadChan:
+			log.Logger().Infof("S3Uploader[%s]: Received upload request with %d bytes", s.eventType, len(req.Data))
 			if err := s.uploadToS3(req.Data); err != nil {
-				log.Logger().Errorf("Failed to upload data to S3: %v", err)
+				log.Logger().Errorf("S3Uploader[%s]: Failed to upload data to S3: %v", s.eventType, err)
 				// Continue processing other uploads
+			} else {
+				log.Logger().Infof("S3Uploader[%s]: Successfully processed upload request", s.eventType)
 			}
 		case <-s.ctx.Done():
-			log.Logger().Debugf("S3 upload worker shutting down")
+			log.Logger().Debugf("S3Uploader[%s]: Upload worker shutting down", s.eventType)
 			return
 		}
 	}

@@ -34,7 +34,7 @@ receivers:
   hostmetrics:
     collection_interval: 1s
     scrapers:
-      {{- if ne .OS "windows" }}
+      {{- if eq .OS "linux" }}
       cpu:
       {{- end }}
       memory:

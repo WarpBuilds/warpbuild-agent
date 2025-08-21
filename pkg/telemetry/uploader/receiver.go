@@ -129,7 +129,10 @@ func (r *Receiver) handleLogs(w http.ResponseWriter, req *http.Request) {
 
 // handleMetrics handles incoming metrics data
 func (r *Receiver) handleMetrics(w http.ResponseWriter, req *http.Request) {
+	log.Logger().Debugf("handleMetrics called from %s with method %s", req.RemoteAddr, req.Method)
+
 	if req.Method != http.MethodPost {
+		log.Logger().Warnf("Invalid method %s for metrics endpoint", req.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -137,6 +140,7 @@ func (r *Receiver) handleMetrics(w http.ResponseWriter, req *http.Request) {
 	// Read the request body
 	body, err := r.readRequestBody(req)
 	if err != nil {
+		log.Logger().Errorf("Failed to read metrics request body: %v", err)
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
@@ -146,6 +150,7 @@ func (r *Receiver) handleMetrics(w http.ResponseWriter, req *http.Request) {
 	// Process the metrics and add to buffer
 	r.processMetrics(body)
 
+	log.Logger().Debugf("Metrics processing completed for %d bytes", len(body))
 	w.WriteHeader(http.StatusOK)
 }
 
