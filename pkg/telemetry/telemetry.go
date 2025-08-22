@@ -31,6 +31,7 @@ type TelemetryOptions struct {
 	RunnerID                  string        `json:"id"`
 	PollingSecret             string        `json:"polling_secret"`
 	HostURL                   string        `json:"host_url"`
+	Port                      int           `json:"port"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
@@ -44,14 +45,17 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		opts.PushFrequency = 60 * time.Second
 	}
 	if opts.SysLogNumberOfLinesToRead == 0 {
-		opts.SysLogNumberOfLinesToRead = 1000
+		opts.SysLogNumberOfLinesToRead = 100
 	}
 	if opts.BaseDirectory == "" {
 		opts.BaseDirectory = "/runner/warpbuild-agent"
 	}
 
-	log.Logger().Infof("Starting telemetry collection...")
+	log.Logger().Debugf("Starting OTEL receiver-based telemetry collection...")
+	log.Logger().Debugf("Telemetry configuration: port=%d, buffer_size=%d, push_frequency=%v",
+		opts.Port, opts.SysLogNumberOfLinesToRead, opts.PushFrequency)
 
+	// Initialize WarpBuild API client
 	cfg := warpbuild.NewConfiguration()
 	if opts.HostURL == "" {
 		return fmt.Errorf("host url is required")
@@ -59,65 +63,33 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	cfg.Servers[0].URL = opts.HostURL
 	wb := warpbuild.NewAPIClient(cfg)
 
-	ctx = context.WithValue(ctx, WarpBuildAgentContextKey, wb)
-	ctx = context.WithValue(ctx, WarpBuildRunnerIDContextKey, opts.RunnerID)
-	ctx = context.WithValue(ctx, WarpBuildRunnerPollingSecretContextKey, opts.PollingSecret)
+	log.Logger().Debugf("WarpBuild API client initialized with host URL: %s", opts.HostURL)
 
-	log.Logger().Infof("WarpBuild API client initialized with values: [%+v]", wb)
+	// Create telemetry manager with OTEL receiver
+	// Use the port from settings, default to 33931 if not specified
+	port := opts.Port
+	maxBufferSize := opts.SysLogNumberOfLinesToRead
 
-	// Get the appropriate OpenTelemetry Collector Contrib binary
-	collectorPath, err := getOtelCollectorPath(opts.BaseDirectory)
-	if err != nil {
-		log.Logger().Errorf("Failed to get OpenTelemetry Collector binary: %v", err)
+	manager := NewTelemetryManager(ctx, port, maxBufferSize, opts.BaseDirectory, wb, opts.RunnerID, opts.PollingSecret, opts.HostURL)
+
+	// Start the telemetry manager
+	if err := manager.Start(); err != nil {
+		log.Logger().Errorf("Failed to start telemetry manager: %v", err)
 		return err
 	}
 
-	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
+	log.Logger().Debugf("OTEL receiver telemetry system started on port %d with buffer size %d", port, maxBufferSize)
+	log.Logger().Debugf("OpenTelemetry Collector logs will be displayed to stdout and stderr")
 
-	// Write the OpenTelemetry Collector configuration file
-	writeOtelCollectorConfig(opts.BaseDirectory, opts.PushFrequency)
-
-	log.Logger().Infof("OpenTelemetry Collector configuration file written to: %s", getConfigFilePath(opts.BaseDirectory))
-
-	url, err := fetchPresignedURL(ctx)
-	if err != nil {
-		log.Logger().Errorf("failed to fetch presigned URL: %v", err)
-		return err
-	}
-	presignedS3URL = url
-
-	log.Logger().Infof("Fetched initial Presigned S3 URL: %s", presignedS3URL)
-
-	// Do an initial syslog upload
-	if err := readAndUploadFileToS3(ctx, opts.BaseDirectory, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
-		log.Logger().Errorf("Error during initial Syslog upload: %v", err)
-	}
-
-	// Channel to signal when the application should terminate
-	done := make(chan bool, 1)
-
-	// Start OpenTelemetry Collector Contrib
-	go func() {
-		defer handlePanic()
-		startOtelCollector(opts.BaseDirectory, collectorPath, done)
-	}()
-
-	// Setup a filewatcher to monitor changes in the otel output file
-	if err := enableOtelOutputFileWatcher(ctx, opts.BaseDirectory); err != nil {
-		log.Logger().Errorf("Failed to enable file watcher: %v", err)
-	}
-
+	// Wait for context cancellation
 	<-ctx.Done()
-	log.Logger().Infof("Context cancelled, initiating shutdown...")
+	log.Logger().Debugf("Context cancelled, initiating graceful shutdown...")
 
-	// Perform final upload before shutting down
-	if err := readAndUploadFileToS3(ctx, opts.BaseDirectory, syslogFilePath, opts.SysLogNumberOfLinesToRead, false); err != nil {
-		log.Logger().Errorf("Error during final Syslog upload: %v", err)
+	// Stop the telemetry manager
+	if err := manager.Stop(); err != nil {
+		log.Logger().Errorf("Error stopping telemetry manager: %v", err)
 	}
 
-	// Signal the OpenTelemetry Collector process to terminate
-	done <- true
-	log.Logger().Infof("Shutdown complete.")
-
+	log.Logger().Debugf("OTEL receiver telemetry system shutdown complete.")
 	return nil
 }

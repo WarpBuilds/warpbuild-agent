@@ -16,11 +16,35 @@ if (-not (Test-Path -Path $AGENT_DIR)) {
 
 # Get the latest agent tag
 $latestAgentTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/WarpBuilds/warpbuild-agent/releases/latest").tag_name
-# $latestAgentTag = "v0.3.1"  # Uncomment this line to use a specific version
+$defaultAgentTag = "v0.8.3"
+$bucketPrefix = "https://packages.warpbuild.com/warpbuild-packages/WarpBuilds/warpbuild-agent"
+
+# Check if the latest agent tag exists in the bucket
+$latestAgentUrl = "$bucketPrefix/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+$latestAgentExists = $false
+
+try {
+    $response = Invoke-WebRequest -Uri $latestAgentUrl -Method Head -UseBasicParsing -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+        $latestAgentExists = $true
+        Write-Host "Latest agent tag '$latestAgentTag' exists in bucket. Using it."
+    }
+} catch {
+    Write-Host "Latest agent tag '$latestAgentTag' not found in bucket. Error: $($_.Exception.Message)"
+}
+
+# Use default tag if latest doesn't exist
+if (-not $latestAgentExists) {
+    Write-Host "Using default agent tag '$defaultAgentTag' instead."
+    $latestAgentTag = $defaultAgentTag
+}
+
+Write-Host "Selected agent tag: $latestAgentTag"
+# $latestAgentTag = "feat/windows-telemetry"  # Uncomment this line to use a specific version
 
 # Download and extract the agent
-$agentUrl = "https://packages.warpbuild.com/WarpBuilds/warpbuild-agent/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
-Write-Host "Downloading warpbuild-agent using aria2..."
+$agentUrl = "$bucketPrefix/$latestAgentTag/warpbuild-agentd_Windows_x86_64.zip"
+Write-Host "Downloading warpbuild-agent using aria2 from r2..."
 aria2c -s16 -x16 $agentUrl -d "$AGENT_DIR" -o "warpbuild-agent.zip"
 Expand-Archive -Path "$AGENT_DIR\warpbuild-agent.zip" -DestinationPath "$AGENT_DIR" -Force
 Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
@@ -29,8 +53,28 @@ Remove-Item -Path "$AGENT_DIR\warpbuild-agent.zip"
 Copy-Item -Path "$AGENT_DIR\warpbuild-agentd.exe" -Destination "C:\Windows\System32\warpbuild-agentd.exe"
 
 $restarterZipPath = "warpbuild-agentd-restarter_Windows_x86_64.zip"
-$restarterUrl = "https://packages.warpbuild.com/WarpBuilds/warpbuild-agent/$latestAgentTag/$restarterZipPath"
-Write-Host "Downloading warpbuild-agentd-restarter using aria2..."
+$latestRestarterAgentUrl = "$bucketPrefix/$latestAgentTag/$restarterZipPath"
+$restarterUrl = $latestRestarterAgentUrl
+
+# Check if the restarter exists in the bucket for the selected tag
+$restarterExists = $false
+try {
+    $response = Invoke-WebRequest -Uri $latestRestarterAgentUrl -Method Head -UseBasicParsing -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+        $restarterExists = $true
+        Write-Host "Restarter exists in bucket for tag '$latestAgentTag'. Using it."
+    }
+} catch {
+    Write-Host "Restarter not found in bucket for tag '$latestAgentTag'. Error: $($_.Exception.Message)"
+}
+
+# Use default tag if latest doesn't exist
+if (-not $restarterExists) {
+    Write-Host "Using default agent tag '$defaultAgentTag' for restarter instead."
+    $restarterUrl = "$bucketPrefix/$defaultAgentTag/$restarterZipPath"
+}
+
+Write-Host "Downloading warpbuild-agentd-restarter using aria2 from: $restarterUrl"
 aria2c -s16 -x16 $restarterUrl -d "$AGENT_DIR" -o "$restarterZipPath"
 Write-Host "Downloaded $restarterZipPath"
 Expand-Archive -Path "$AGENT_DIR\$restarterZipPath" -DestinationPath "$AGENT_DIR" -Force
@@ -82,8 +126,11 @@ $services = @(
         Name = "warpbuild-telemetryd"
         DisplayName = "WarpBuild Telemetry"
         Description = "WarpBuild Telemetry Service"
-        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
+        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-telemetry=true --stdout $TELEMETRY_STDOUT_FILE --stderr $TELEMETRY_STDERR_FILE"
+        UserName = ".\$MACHINE_USER"
+        Password = $MACHINE_PASSWORD
         StartupType = "Automatic"
+        IsDelayed = $true
         Dependencies = @()
         Environment = @{}
     },
@@ -91,7 +138,7 @@ $services = @(
         Name = "warpbuild-proxyd"
         DisplayName = "WarpBuild Proxy"
         Description = "WarpBuild Proxy Service"
-        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --launch-proxy-server=true --stdout $PROXY_STDOUT_FILE --stderr $PROXY_STDERR_FILE"
+        BinaryPath = "C:\Windows\System32\warpbuild-agentd.exe --settings $SETTINGS_FILE --launch-proxy-server=true --stdout $PROXY_STDOUT_FILE --stderr $PROXY_STDERR_FILE"
         StartupType = "Automatic"
         Dependencies = @()
         Environment = @{}
@@ -132,6 +179,12 @@ foreach ($service in $services) {
     }
     if ($envString -ne "") {
         sc.exe config $service.Name env= $envString
+    }
+
+    # if this is the telemetry service, flip on delayed auto‑start
+    if ($service.IsDelayed) {
+        Write-Host "Enabling Delayed‑AutoStart for $($service.Name)…"
+        sc.exe config $service.Name start= delayed-auto
     }
 
     # Define variables for the service configuration

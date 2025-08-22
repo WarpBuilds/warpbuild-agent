@@ -1,51 +1,94 @@
 receivers:
+{{- if eq .OS "windows"}}
+  windowseventlog/application:
+    channel: application
+  windowseventlog/security:
+    channel: security
+
+  # Tail your service log files
+  filelog/services:
+    include:
+      - 'C:\warpbuilds\runner.github.stdout.log'
+      - 'C:\warpbuilds\runner.github.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+    start_at: end
+    max_log_size: 200KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 20s
+{{- else}}
   filelog:
-    include: ["{{.SyslogFilePath}}"]
-    start_at: "end"
+    {{- if eq .OS "darwin"}}
+    include: ['/var/log/system.log']
+    {{- else if eq .OS "linux"}}
+    include: ['/var/log/syslog']
+    {{- end}}
+    start_at: 'beginning'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
-    poll_interval: 20s
+    poll_interval: 1s
+{{- end}}
 
   hostmetrics:
-    collection_interval: 20s
+    collection_interval: 1s
     scrapers:
+      {{- if eq .OS "linux" }}
+      cpu:
+      {{- end }}
       memory:
+      network:
       filesystem:
-        metrics:
-          system.filesystem.inodes.usage:
-            enabled: false
-      load:
-        metrics:
-          system.cpu.load_average.1m:
-            enabled: false
-          system.cpu.load_average.5m:
-            enabled: false
+
+{{- if eq .OS "windows"}}
+  windowsperfcounters/processor:
+    collection_interval: 30s
+    metrics:
+      system.cpu.time:
+        description: percentage of cpu time
+        unit: "%"
+        gauge:
+    perfcounters:
+      - object: "Processor"
+        instances: "_Total"
+        counters:
+          - name: "% Processor Time"
+            metric: system.cpu.time
+            attributes:
+              state: active
+          - name: "% Idle Time"
+            metric: system.cpu.time
+            attributes:
+              state: idle
+{{- end}}
 
 processors:
   batch:
     timeout: {{.PushFrequency}}
-    send_batch_size: 1000
+    send_batch_size: 1
 
 exporters:
-  file:
-    path: "{{.ExportFilePath}}"
-    format: json
-    append: false
-    rotation:
-      max_megabytes: 1
-      max_backups: 1
+  otlphttp:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
+    metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
+    encoding: "json"
+    compression: "none"
 
 service:
   pipelines:
     logs:
-      receivers: [filelog]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
       processors: [batch]
-      exporters: [file]
+      exporters: [otlphttp]
     metrics:
-      receivers: [hostmetrics]
+      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors: [batch]
-      exporters: [file]
+      exporters: [otlphttp]
   telemetry:
     metrics:
       level: none

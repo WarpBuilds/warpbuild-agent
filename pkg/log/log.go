@@ -17,6 +17,7 @@ var loggerManager ILoggerManager
 type InitOptions struct {
 	StdoutFile string
 	StderrFile string
+	LogLevel   string
 }
 
 func Init(opts *InitOptions) (ILoggerManager, error) {
