@@ -24,11 +24,11 @@ receivers:
 {{- else}}
   filelog:
     include: ['{{.SyslogFilePath}}']
-    start_at: 'end'
+    start_at: 'beginning'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
-    poll_interval: 20s
+    poll_interval: 1s
 {{- end}}
 
   hostmetrics:
@@ -66,7 +66,7 @@ receivers:
 processors:
   batch:
     timeout: {{.PushFrequency}}
-    send_batch_size: 100
+    send_batch_size: 1
 
 exporters:
   otlphttp:
