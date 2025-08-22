@@ -64,7 +64,7 @@ func (tm *TelemetryManager) Start() error {
 	log.Logger().Debugf("Started S3 Uploader")
 
 	// Create telemetry service with required parameters
-	service := uploader.NewTelemetryService(tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL)
+	service := uploader.NewTelemetryService(tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL, tm.maxBufferSize)
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)
