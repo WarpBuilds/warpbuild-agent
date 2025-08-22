@@ -266,7 +266,6 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	defer file.Close()
 
 	data := struct {
-		SyslogFilePath        string
 		LogExportFilePath     string
 		MetricsExportFilePath string
 		PushFrequency         time.Duration
@@ -274,7 +273,6 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		Arch                  string
 		Port                  int
 	}{
-		SyslogFilePath:        tm.getSyslogFilePath(),
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
 		PushFrequency:         60 * time.Second, // Default push frequency
@@ -306,21 +304,6 @@ func (tm *TelemetryManager) getConfigTemplatePath() string {
 // getBinariesDir gets the binaries directory
 func (tm *TelemetryManager) getBinariesDir() string {
 	return filepath.Join(tm.baseDirectory, "pkg/telemetry/binaries")
-}
-
-// getSyslogFilePath gets the syslog file path
-func (tm *TelemetryManager) getSyslogFilePath() string {
-	switch runtime.GOOS {
-	case "darwin":
-		return "/var/log/system.log"
-	case "linux":
-		return "/var/log/syslog"
-	case "windows":
-		return `C:\Windows\System32\winevt\Logs\System.evtx`
-	default:
-		log.Logger().Errorf("Unsupported OS: %s", runtime.GOOS)
-		return ""
-	}
 }
 
 // getOtelCollectorOutputFilePath gets the OTEL collector output file path

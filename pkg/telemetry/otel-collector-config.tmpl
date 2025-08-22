@@ -23,7 +23,11 @@ receivers:
     poll_interval: 20s
 {{- else}}
   filelog:
-    include: ['{{.SyslogFilePath}}']
+    {{- if eq .OS "darwin"}}
+    include: ['/var/log/system.log']
+    {{- else if eq .OS "linux"}}
+    include: ['/var/log/syslog']
+    {{- end}}
     start_at: 'beginning'
     max_log_size: 200KiB
     include_file_name: false
@@ -78,7 +82,7 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else}}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
       processors: [batch]
       exporters: [otlphttp]
     metrics:
