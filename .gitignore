@@ -2,6 +2,8 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
+*.exe
+*.exe~
 *.dll
 *.so
 *.dylib
@@ -22,4 +24,3 @@ openapitools.json
 bin
 dist/
 .DS_Store
-pkg/telemetry/binaries/windows/amd64/otelcol-contrib.exe
