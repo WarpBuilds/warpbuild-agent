@@ -194,14 +194,13 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
-			BaseDirectory: settings.Telemetry.BaseDirectory,
-			RunnerID:      settings.Agent.ID,
-			PollingSecret: settings.Agent.PollingSecret,
-			HostURL:       settings.Agent.HostURL,
-			Enabled:       settings.Telemetry.Enabled,
-			PushFrequency: pushFrequency,
-			// SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
-			SysLogNumberOfLinesToRead: 1,
+			BaseDirectory:             settings.Telemetry.BaseDirectory,
+			RunnerID:                  settings.Agent.ID,
+			PollingSecret:             settings.Agent.PollingSecret,
+			HostURL:                   settings.Agent.HostURL,
+			Enabled:                   settings.Telemetry.Enabled,
+			PushFrequency:             pushFrequency,
+			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
 			Port:                      settings.Telemetry.Port,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
