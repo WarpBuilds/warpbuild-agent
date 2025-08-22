@@ -59,9 +59,9 @@ func (tm *TelemetryManager) Start() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	log.Logger().Infof("Starting telemetry manager on port %d with buffer size %d", tm.port, tm.maxBufferSize)
+	log.Logger().Debugf("Starting telemetry manager on port %d with buffer size %d", tm.port, tm.maxBufferSize)
 
-	log.Logger().Infof("Started S3 Uploader")
+	log.Logger().Debugf("Started S3 Uploader")
 
 	// Create telemetry service with required parameters
 	service := uploader.NewTelemetryService(tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL)
@@ -74,7 +74,7 @@ func (tm *TelemetryManager) Start() error {
 		return fmt.Errorf("failed to start receiver: %w", err)
 	}
 
-	log.Logger().Infof("Started receiver")
+	log.Logger().Debugf("Started receiver")
 
 	// Start OTEL collector
 	tm.wg.Add(1)
@@ -89,7 +89,7 @@ func (tm *TelemetryManager) Stop() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	log.Logger().Infof("Stopping telemetry manager...")
+	log.Logger().Debugf("Stopping telemetry manager...")
 
 	// Cancel context to stop all goroutines
 	tm.cancel()

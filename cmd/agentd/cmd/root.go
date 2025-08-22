@@ -14,6 +14,7 @@ type flagsStruct struct {
 	settingsFile      string
 	launchTelemetry   bool
 	launchProxyServer bool
+	logLevel          string
 }
 
 var flags flagsStruct
@@ -31,6 +32,7 @@ var rootCmd = &cobra.Command{
 			StderrFile:        flags.stderrFile,
 			LaunchTelemetry:   flags.launchTelemetry,
 			LaunchProxyServer: flags.launchProxyServer,
+			LogLevel:          flags.logLevel,
 		})
 		if err != nil {
 			return err
@@ -74,4 +76,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.settingsFile, "settings", "", "settings file")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchTelemetry, "launch-telemetry", false, "launch telemetry")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchProxyServer, "launch-proxy-server", false, "launch proxy server")
+	rootCmd.PersistentFlags().StringVar(&flags.logLevel, "log-level", "info", "log level (debug, info, warn, error)")
 }

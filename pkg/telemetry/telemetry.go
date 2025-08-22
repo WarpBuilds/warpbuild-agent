@@ -51,8 +51,8 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		opts.BaseDirectory = "/runner/warpbuild-agent"
 	}
 
-	log.Logger().Infof("Starting OTEL receiver-based telemetry collection...")
-	log.Logger().Infof("Telemetry configuration: port=%d, buffer_size=%d, push_frequency=%v",
+	log.Logger().Debugf("Starting OTEL receiver-based telemetry collection...")
+	log.Logger().Debugf("Telemetry configuration: port=%d, buffer_size=%d, push_frequency=%v",
 		opts.Port, opts.SysLogNumberOfLinesToRead, opts.PushFrequency)
 
 	// Initialize WarpBuild API client
@@ -63,7 +63,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	cfg.Servers[0].URL = opts.HostURL
 	wb := warpbuild.NewAPIClient(cfg)
 
-	log.Logger().Infof("WarpBuild API client initialized with host URL: %s", opts.HostURL)
+	log.Logger().Debugf("WarpBuild API client initialized with host URL: %s", opts.HostURL)
 
 	// Create telemetry manager with OTEL receiver
 	// Use the port from settings, default to 33931 if not specified
@@ -78,18 +78,18 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		return err
 	}
 
-	log.Logger().Infof("OTEL receiver telemetry system started on port %d with buffer size %d", port, maxBufferSize)
-	log.Logger().Infof("OpenTelemetry Collector logs will be displayed to stdout and stderr")
+	log.Logger().Debugf("OTEL receiver telemetry system started on port %d with buffer size %d", port, maxBufferSize)
+	log.Logger().Debugf("OpenTelemetry Collector logs will be displayed to stdout and stderr")
 
 	// Wait for context cancellation
 	<-ctx.Done()
-	log.Logger().Infof("Context cancelled, initiating graceful shutdown...")
+	log.Logger().Debugf("Context cancelled, initiating graceful shutdown...")
 
 	// Stop the telemetry manager
 	if err := manager.Stop(); err != nil {
 		log.Logger().Errorf("Error stopping telemetry manager: %v", err)
 	}
 
-	log.Logger().Infof("OTEL receiver telemetry system shutdown complete.")
+	log.Logger().Debugf("OTEL receiver telemetry system shutdown complete.")
 	return nil
 }

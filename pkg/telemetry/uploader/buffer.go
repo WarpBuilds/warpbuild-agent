@@ -35,7 +35,7 @@ type Buffer struct {
 
 // NewBuffer creates a new buffer with the specified options
 func NewBuffer(ctx context.Context, opts BufferOptions) (*Buffer, error) {
-	log.Logger().Infof("Creating new buffer for event type: %s with max lines: %d", opts.EventType, opts.MaxLines)
+	log.Logger().Debugf("Creating new buffer for event type: %s with max lines: %d", opts.EventType, opts.MaxLines)
 
 	// Create S3 uploader
 	s3Uploader := NewS3Uploader(ctx, S3UploaderOptions{
@@ -46,7 +46,7 @@ func NewBuffer(ctx context.Context, opts BufferOptions) (*Buffer, error) {
 		HostURL:       opts.HostURL,
 	})
 
-	log.Logger().Infof("Starting S3 Uploader for event type: %s", opts.EventType)
+	log.Logger().Debugf("Starting S3 Uploader for event type: %s", opts.EventType)
 
 	// Start S3 uploader
 	if err := s3Uploader.Start(); err != nil {
@@ -54,7 +54,7 @@ func NewBuffer(ctx context.Context, opts BufferOptions) (*Buffer, error) {
 		return nil, fmt.Errorf("failed to start S3 uploader for %v: %w", opts.EventType, err)
 	}
 
-	log.Logger().Infof("S3 Uploader started successfully for event type: %s", opts.EventType)
+	log.Logger().Debugf("S3 Uploader started successfully for event type: %s", opts.EventType)
 
 	ctx, cancel := context.WithCancel(ctx)
 	buffer := &Buffer{
@@ -69,7 +69,7 @@ func NewBuffer(ctx context.Context, opts BufferOptions) (*Buffer, error) {
 		s3Uploader:   s3Uploader,
 	}
 
-	log.Logger().Infof("Buffer created successfully for event type: %s, upload channel capacity: %d",
+	log.Logger().Debugf("Buffer created successfully for event type: %s, upload channel capacity: %d",
 		opts.EventType, cap(s3Uploader.uploadChan))
 
 	return buffer, nil
@@ -98,7 +98,7 @@ func (b *Buffer) AddLineWithType(line []byte) {
 		b.eventType, b.currentIndex, b.maxLines, b.buf.Len())
 
 	if b.currentIndex >= b.maxLines {
-		log.Logger().Infof("Buffer[%s]: Buffer is full (%d/%d), triggering upload",
+		log.Logger().Debugf("Buffer[%s]: Buffer is full (%d/%d), triggering upload",
 			b.eventType, b.currentIndex, b.maxLines)
 		b.sendToUploadChannel()
 		b.buf.Reset()
@@ -127,7 +127,7 @@ func (b *Buffer) sendToUploadChannel() {
 		// Try to send to upload channel
 		select {
 		case b.uploadChan <- req:
-			log.Logger().Infof("Buffer[%s]: Successfully sent %d bytes to upload channel",
+			log.Logger().Debugf("Buffer[%s]: Successfully sent %d bytes to upload channel",
 				b.eventType, len(data))
 		case <-b.ctx.Done():
 			log.Logger().Debugf("Buffer[%s]: Context cancelled, not sending to upload channel", b.eventType)

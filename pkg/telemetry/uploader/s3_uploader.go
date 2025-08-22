@@ -64,9 +64,9 @@ func (s *S3Uploader) Start() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	log.Logger().Infof("[S3Uploader] Starting upload")
+	log.Logger().Debugf("[S3Uploader] Starting upload")
 
-	log.Logger().Infof("[S3Uploader] Fetching initial presigned urls")
+	log.Logger().Debugf("[S3Uploader] Fetching initial presigned urls")
 
 	// Get initial presigned URLs for logs, metrics, and traces
 	if err := s.refreshPresignedURL(); err != nil {
@@ -77,7 +77,7 @@ func (s *S3Uploader) Start() error {
 	s.wg.Add(1)
 	go s.uploadWorker()
 
-	log.Logger().Infof("S3 uploader started")
+	log.Logger().Debugf("S3 uploader started")
 	return nil
 }
 
@@ -85,17 +85,17 @@ func (s *S3Uploader) Start() error {
 func (s *S3Uploader) uploadWorker() {
 	defer s.wg.Done()
 
-	log.Logger().Infof("S3Uploader[%s]: Upload worker started", s.eventType)
+	log.Logger().Debugf("S3Uploader[%s]: Upload worker started", s.eventType)
 
 	for {
 		select {
 		case req := <-s.uploadChan:
-			log.Logger().Infof("S3Uploader[%s]: Received upload request with %d bytes", s.eventType, len(req.Data))
+			log.Logger().Debugf("S3Uploader[%s]: Received upload request with %d bytes", s.eventType, len(req.Data))
 			if err := s.uploadToS3(req.Data); err != nil {
 				log.Logger().Errorf("S3Uploader[%s]: Failed to upload data to S3: %v", s.eventType, err)
 				// Continue processing other uploads
 			} else {
-				log.Logger().Infof("S3Uploader[%s]: Successfully processed upload request", s.eventType)
+				log.Logger().Debugf("S3Uploader[%s]: Successfully processed upload request", s.eventType)
 			}
 		case <-s.ctx.Done():
 			log.Logger().Debugf("S3Uploader[%s]: Upload worker shutting down", s.eventType)
@@ -111,7 +111,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 	eventType := s.eventType
 	s.mu.RUnlock()
 
-	log.Logger().Infof("Uploading %d bytes of %s data to S3", len(data), eventType)
+	log.Logger().Debugf("Uploading %d bytes of %s data to S3", len(data), eventType)
 
 	if presignedURL == "" {
 		return fmt.Errorf("no presigned URL available for event type: %s", eventType)

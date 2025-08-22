@@ -22,11 +22,15 @@ type ApplicationOptions struct {
 	StderrFile        string `json:"stderr_file"`
 	LaunchTelemetry   bool   `json:"launch_telemetry"`
 	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
+	LogLevel          string `json:"log_level"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
 	if opts.SettingsFile == "" {
 		opts.SettingsFile = "/var/lib/warpbuild-agentd/settings.json"
+	}
+	if opts.LogLevel == "" {
+		opts.LogLevel = "info"
 	}
 }
 
@@ -108,9 +112,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 	opts.ApplyDefaults()
 
+	// Initialize logger with default level first
 	lm, err := log.Init(&log.InitOptions{
 		StdoutFile: opts.StdoutFile,
 		StderrFile: opts.StderrFile,
+		LogLevel:   opts.LogLevel, // Use application-level log level
 	})
 	if err != nil {
 		return err

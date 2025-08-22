@@ -13,6 +13,21 @@ func NewZapLogger(opts *InitOptions) (*zap.Logger, error) {
 	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
 	fileEncoder := zapcore.NewJSONEncoder(encoderConfig)
 
+	// Parse log level
+	var logLevel zapcore.Level
+	switch opts.LogLevel {
+	case "debug":
+		logLevel = zapcore.DebugLevel
+	case "info":
+		logLevel = zapcore.InfoLevel
+	case "warn":
+		logLevel = zapcore.WarnLevel
+	case "error":
+		logLevel = zapcore.ErrorLevel
+	default:
+		logLevel = zapcore.InfoLevel // Default to info level
+	}
+
 	var cores []zapcore.Core
 
 	// Setup stdout logger
@@ -22,9 +37,9 @@ func NewZapLogger(opts *InitOptions) (*zap.Logger, error) {
 			fmt.Fprintf(os.Stderr, "Failed to open stdout log file: %v\n", err)
 			return nil, err
 		}
-		cores = append(cores, zapcore.NewCore(fileEncoder, zapcore.AddSync(stdoutFile), zapcore.InfoLevel))
+		cores = append(cores, zapcore.NewCore(fileEncoder, zapcore.AddSync(stdoutFile), logLevel))
 	} else {
-		cores = append(cores, zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.InfoLevel))
+		cores = append(cores, zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), logLevel))
 	}
 
 	// Setup stderr logger
