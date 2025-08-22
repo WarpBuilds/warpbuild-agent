@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
@@ -85,14 +86,18 @@ func (b *Buffer) AddLineWithType(line []byte) {
 	log.Logger().Debugf("Buffer[%s]: Adding line of %d bytes, current index: %d/%d",
 		b.eventType, len(line), b.currentIndex, b.maxLines)
 
+	// one line can multiple \n
+	lineStr := string(line)
+	newlineCount := strings.Count(lineStr, "\n")
+
 	b.buf.Write(line)
 	b.buf.WriteString("\n")
-	b.currentIndex++
+	b.currentIndex += newlineCount + 1
 
 	log.Logger().Debugf("Buffer[%s]: After adding line, current index: %d/%d, buffer size: %d bytes",
 		b.eventType, b.currentIndex, b.maxLines, b.buf.Len())
 
-	if b.currentIndex == b.maxLines {
+	if b.currentIndex >= b.maxLines {
 		log.Logger().Infof("Buffer[%s]: Buffer is full (%d/%d), triggering upload",
 			b.eventType, b.currentIndex, b.maxLines)
 		b.sendToUploadChannel()

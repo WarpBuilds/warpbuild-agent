@@ -1,6 +1,7 @@
 package uploader
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -34,6 +35,38 @@ func NewReceiver(port int, service TelemetryProcessor) *Receiver {
 	}
 }
 
+// loggingMiddleware logs request details and body content
+func (r *Receiver) loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		// Log request details
+		log.Logger().Infof("Request received: %s %s from %s", req.Method, req.URL.Path, req.RemoteAddr)
+
+		// Only log body for POST requests to telemetry endpoints
+		if req.Method == http.MethodPost && (req.URL.Path == "/v1/logs" || req.URL.Path == "/v1/metrics" || req.URL.Path == "/v1/traces") {
+			// Read the body
+			bodyBytes, err := io.ReadAll(req.Body)
+			if err != nil {
+				log.Logger().Errorf("Failed to read request body for logging: %v", err)
+				http.Error(w, "Failed to read request body", http.StatusBadRequest)
+				return
+			}
+
+			// Log body content (truncate if too long)
+			bodyStr := string(bodyBytes)
+			if len(bodyStr) > 1000 {
+				bodyStr = bodyStr[:1000] + "... [truncated]"
+			}
+			log.Logger().Infof("Request body (%d bytes): %s", len(bodyBytes), bodyStr)
+
+			// Restore the body for the actual handler
+			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
+
+		// Call the next handler
+		next(w, req)
+	}
+}
+
 // Start starts the receiver on the specified port
 func (r *Receiver) Start() error {
 	r.mu.Lock()
@@ -41,16 +74,16 @@ func (r *Receiver) Start() error {
 
 	mux := http.NewServeMux()
 
-	// Handle OTEL logs endpoint
-	mux.HandleFunc("/v1/logs", r.handleLogs)
+	// Handle OTEL logs endpoint with logging middleware
+	mux.HandleFunc("/v1/logs", r.loggingMiddleware(r.handleLogs))
 
-	// Handle OTEL metrics endpoint
-	mux.HandleFunc("/v1/metrics", r.handleMetrics)
+	// Handle OTEL metrics endpoint with logging middleware
+	mux.HandleFunc("/v1/metrics", r.loggingMiddleware(r.handleMetrics))
 
-	// Handle OTEL traces endpoint
-	mux.HandleFunc("/v1/traces", r.handleTraces)
+	// Handle OTEL traces endpoint with logging middleware
+	mux.HandleFunc("/v1/traces", r.loggingMiddleware(r.handleTraces))
 
-	// Health check endpoint
+	// Health check endpoint (no middleware needed)
 	mux.HandleFunc("/health", r.handleHealth)
 
 	r.server = &http.Server{
