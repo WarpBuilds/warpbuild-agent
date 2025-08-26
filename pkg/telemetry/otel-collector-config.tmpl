@@ -28,7 +28,7 @@ receivers:
     {{- else if eq .OS "linux"}}
     include: ['/var/log/syslog']
     {{- end}}
-    start_at: 'beginning'
+    start_at: 'end'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
@@ -114,10 +114,13 @@ receivers:
 {{- end}}
 
 processors:
-  # Logs batcher: ~256 records per request (count-based, not bytes)
   batch/logs:
-    send_batch_size: 256
-    send_batch_max_size: 512
+    timeout: 30s
+    send_batch_size: 10_000
+
+  batch/metrics:
+    timeout: 60s
+    send_batch_size: 10_000_000
 
   # Keep ONLY these 4 metrics in the pipeline
   filter/only_needed:
@@ -183,16 +186,13 @@ exporters:
     metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
     encoding: "json"
     compression: "none"
-  debug:
-    verbosity: detailed   # dump full log records to stdout/stderr
-
 
 service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp, debug]   # tee: still send to your HTTP service, and also print locally
+      exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -202,5 +202,5 @@ service:
         - cumulativetodelta
         - deltatorate
         - transform/normalize
-        - batch/logs
+        - batch/metrics
       exporters: [otlphttp]
