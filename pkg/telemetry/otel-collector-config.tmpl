@@ -40,10 +40,56 @@ receivers:
     scrapers:
       {{- if eq .OS "linux" }}
       cpu:
+        metrics:
+          # keep % utilization, drop raw times
+          system.cpu.utilization:
+            enabled: true
+          system.cpu.time:
+            enabled: false
       {{- end }}
       memory:
+        metrics:
+          # keep % utilization, drop byte counters
+          system.memory.utilization:
+            enabled: true
+          system.memory.usage:
+            enabled: false
       network:
+        metrics:
+          # only keep IO; disable packets/errors/dropped
+          system.network.io:
+            enabled: true
+          system.network.packets:
+            enabled: false
+          system.network.errors:
+            enabled: false
+          system.network.dropped:
+            enabled: false
       filesystem:
+        # Drop pseudo/virtual/container overlay mounts; keep real disks
+        exclude_fs_types:
+          match_type: strict
+          fs_types:
+            - overlay
+            - squashfs
+            - tmpfs
+            - devtmpfs
+            - proc
+            - sysfs
+            - cgroup2
+        exclude_mount_points:
+          match_type: regexp
+          mount_points:
+            - ^/var/lib/docker/overlay2/.*
+            - ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.overlayfs/.*
+            - ^/run/containerd/io\.containerd\.runtime\.v2\.task/.*/rootfs.*
+            - ^/snap/.*
+        metrics:
+          # keep % utilization, drop byte usage
+          system.filesystem.utilization:
+            enabled: true
+          system.filesystem.usage:
+            enabled: false
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
@@ -72,43 +118,86 @@ processors:
     timeout: {{.PushFrequency}}
     send_batch_size: 1
 
-  # Convert cumulative counters to deltas…
+  # Keep ONLY these 4 metrics in the pipeline
+  filter/only_needed:
+    metrics:
+      include:
+        match_type: strict
+        metric_names:
+          - system.cpu.utilization
+          - system.memory.utilization
+          - system.filesystem.utilization
+          - system.network.io
+
+  filter/drop_non_internet_nics:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
+
+  # Convert cumulative network counters -> delta
   cumulativetodelta:
     include:
+      match_type: strict
       metrics:
         - system.network.io
-        - system.network.packets
-        - system.network.errors
-        - system.network.dropped
-        - system.cpu.time
-      # (filesystem/memory usage are gauges; leave them as-is)
-    
-  # …then deltas to per-second rates
+
+  # Convert delta -> per-second rate (required list syntax)
   deltatorate:
-    include:
-      metrics:
-        - system.network.io
-        - system.network.packets
-        - system.network.errors
-        - system.network.dropped
-        - system.cpu.time
-  
+    metrics:
+      - system.network.io
+
+  transform/normalize:
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Rename NIC attribute to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
+          # Convert CPU, memory, and filesystem utilization ratios to percentages
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.filesystem.utilization"'
+
+  # Collapse CPU to a single % series: sum non-idle states, then average across CPUs.
+  metricstransform/cpu_collapse:
+    transforms:
+      - include: system.cpu.utilization
+        match_type: strict
+        action: update
+        operations:
+          # 1) Combine all non-idle states into one "active" value per CPU
+          - action: aggregate_label_values
+            label: state
+            aggregated_values: [user, system, nice, irq, softirq, steal, wait]
+            new_value: active
+            aggregation_type: sum
+          # 2) Average across CPUs and drop labels -> single timeseries
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: mean
+
 exporters:
   otlphttp:
     logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
     metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
     encoding: "json"
     compression: "none"
+  debug:
+    verbosity: detailed   # dump full log records to stdout/stderr
+
 
 service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
-      exporters: [otlphttp]
+      exporters: [otlphttp, debug]   # tee: still send to your HTTP service, and also print locally
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
-      processors: [cumulativetodelta, deltatorate]
+      processors:
+        - filter/only_needed
+        - filter/drop_non_internet_nics
+        - metricstransform/cpu_collapse
+        - cumulativetodelta
+        - deltatorate
+        - transform/normalize
       exporters: [otlphttp]
-  telemetry:
-    metrics:
-      level: none
