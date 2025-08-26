@@ -1,7 +1,6 @@
 package uploader
 
 import (
-	"bytes"
 	"context"
 	"testing"
 
@@ -17,78 +16,33 @@ func init() {
 }
 
 // createTestBuffer creates a minimal buffer for testing without S3Uploader
-func createTestBuffer(maxLines int) *Buffer {
+func createTestBuffer() *Buffer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Buffer{
-		buf:          bytes.NewBufferString(""),
-		maxLines:     maxLines,
-		currentIndex: 0,
-		uploadChan:   make(chan UploadRequest, 100),
-		ctx:          ctx,
-		cancel:       cancel,
+		eventType:  "test",
+		uploadChan: make(chan UploadRequest, 100),
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 }
 
 func TestBufferAddLine(t *testing.T) {
-	buffer := createTestBuffer(5)
+	buffer := createTestBuffer()
 
-	// Add a line
-	buffer.AddLineWithType([]byte("test line"))
-
-	// Check that line was added
-	if buffer.currentIndex != 1 {
-		t.Errorf("Expected current index 1, got %d", buffer.currentIndex)
-	}
-
-	// Check buffer content
-	content := buffer.buf.String()
-	expected := "test line\n"
-	if content != expected {
-		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
-	}
-}
-
-func TestBufferFull(t *testing.T) {
-	buffer := createTestBuffer(3)
-
-	// Add lines until buffer is full
-	buffer.AddLineWithType([]byte("line1"))
-	buffer.AddLineWithType([]byte("line2"))
-	buffer.AddLineWithType([]byte("line3"))
-
-	// Buffer should be full and reset
-	if buffer.currentIndex != 0 {
-		t.Errorf("Expected current index 0 after buffer full, got %d", buffer.currentIndex)
-	}
-
-	// Buffer should be empty after reset
-	content := buffer.buf.String()
-	if content != "" {
-		t.Errorf("Expected empty buffer after reset, got '%s'", content)
-	}
-}
-
-func TestBufferSendToUploadChannel(t *testing.T) {
-	buffer := createTestBuffer(2)
-
-	// Add some data
-	buffer.AddLineWithType([]byte("line1"))
-	buffer.AddLineWithType([]byte("line2"))
-
-	// Start a consumer goroutine
+	// Start a consumer goroutine to receive data
 	received := make(chan []byte, 1)
 	go func() {
 		req := <-buffer.uploadChan
 		received <- req.Data
 	}()
 
-	// Manually trigger send to upload channel
-	buffer.sendToUploadChannel()
+	// Add a line - should immediately send to uploader
+	buffer.AddLineWithType([]byte("test line"))
 
-	// Check that data was sent
+	// Check that data was sent immediately
 	select {
 	case data := <-received:
-		expected := "line1\nline2\n"
+		expected := "test line"
 		if string(data) != expected {
 			t.Errorf("Expected sent data '%s', got '%s'", expected, string(data))
 		}
@@ -97,105 +51,82 @@ func TestBufferSendToUploadChannel(t *testing.T) {
 	}
 }
 
-func TestBufferContextCancellation(t *testing.T) {
-	buffer := createTestBuffer(5)
+func TestBufferEmptyData(t *testing.T) {
+	buffer := createTestBuffer()
 
-	// Add some data
-	buffer.AddLineWithType([]byte("line1"))
+	// Try to add empty data - should be skipped
+	buffer.AddLineWithType([]byte(""))
 
-	// Cancel the context
-	buffer.cancel()
-
-	// Try to send to upload channel (should not block due to context cancellation)
-	buffer.sendToUploadChannel()
-
-	// Test should complete without hanging
+	// Should not panic or hang
+	// No data should be sent to upload channel
 }
 
 func TestBufferMultipleAdds(t *testing.T) {
-	buffer := createTestBuffer(10)
+	buffer := createTestBuffer()
 
-	// Add multiple lines
-	lines := []string{"line1", "line2", "line3", "line4", "line5"}
+	// Start a consumer goroutine to receive data
+	received := make(chan []byte, 3)
+	go func() {
+		for i := 0; i < 3; i++ {
+			req := <-buffer.uploadChan
+			received <- req.Data
+		}
+	}()
+
+	// Add multiple lines - each should be sent immediately
+	lines := []string{"line1", "line2", "line3"}
 	for _, line := range lines {
 		buffer.AddLineWithType([]byte(line))
 	}
 
-	// Check current index
-	if buffer.currentIndex != 5 {
-		t.Errorf("Expected current index 5, got %d", buffer.currentIndex)
-	}
-
-	// Check buffer content
-	content := buffer.buf.String()
-	expected := "line1\nline2\nline3\nline4\nline5\n"
-	if content != expected {
-		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
-	}
-}
-
-func TestBufferEmptySend(t *testing.T) {
-	buffer := createTestBuffer(5)
-
-	// Try to send empty buffer
-	buffer.sendToUploadChannel()
-
-	// Should not panic or hang
-	// Buffer should remain empty
-	if buffer.currentIndex != 0 {
-		t.Errorf("Expected current index 0, got %d", buffer.currentIndex)
+	// Check that all data was sent immediately
+	for i, expected := range lines {
+		select {
+		case data := <-received:
+			if string(data) != expected {
+				t.Errorf("Expected sent data '%s' at index %d, got '%s'", expected, i, string(data))
+			}
+		case <-buffer.ctx.Done():
+			t.Error("Context was cancelled unexpectedly")
+		}
 	}
 }
 
-func TestBufferMaxLines(t *testing.T) {
-	buffer := createTestBuffer(1)
+func TestBufferContextCancellation(t *testing.T) {
+	buffer := createTestBuffer()
 
-	// Add one line
-	buffer.AddLineWithType([]byte("single line"))
+	// Cancel the context
+	buffer.cancel()
 
-	// Buffer should be full and reset
-	if buffer.currentIndex != 0 {
-		t.Errorf("Expected current index 0 after single line in 1-line buffer, got %d", buffer.currentIndex)
-	}
+	// Try to add data - should not send due to context cancellation
+	buffer.AddLineWithType([]byte("test line"))
 
-	// Buffer should be empty
-	content := buffer.buf.String()
-	if content != "" {
-		t.Errorf("Expected empty buffer after reset, got '%s'", content)
-	}
+	// Test should complete without hanging
 }
 
-func TestBufferNilBufRecovery(t *testing.T) {
-	// Create a buffer with nil buf to test recovery
-	ctx, cancel := context.WithCancel(context.Background())
-	buffer := &Buffer{
-		buf:          nil, // Intentionally nil to test recovery
-		maxLines:     5,
-		currentIndex: 0,
-		uploadChan:   make(chan UploadRequest, 100),
-		ctx:          ctx,
-		cancel:       cancel,
-		eventType:    "test",
+func TestBufferUploadChannelFull(t *testing.T) {
+	buffer := createTestBuffer()
+
+	// Fill the upload channel
+	for i := 0; i < 100; i++ {
+		select {
+		case buffer.uploadChan <- UploadRequest{Data: []byte("test")}:
+		default:
+			break
+		}
 	}
 
-	// This should not panic and should recover by creating a new buf
-	buffer.AddLineWithType([]byte("recovery test"))
+	// Try to add data - should not block due to full channel
+	buffer.AddLineWithType([]byte("test line"))
 
-	// Check that buf was created and line was added
-	if buffer.buf == nil {
-		t.Error("Buffer buf should not be nil after recovery")
-	}
+	// Test should complete without hanging
+}
 
-	if buffer.currentIndex != 1 {
-		t.Errorf("Expected current index 1 after recovery, got %d", buffer.currentIndex)
-	}
+func TestBufferNilData(t *testing.T) {
+	buffer := createTestBuffer()
 
-	// Check buffer content
-	content := buffer.buf.String()
-	expected := "recovery test\n"
-	if content != expected {
-		t.Errorf("Expected buffer content '%s', got '%s'", expected, content)
-	}
+	// Try to add nil data - should not panic
+	buffer.AddLineWithType(nil)
 
-	cancel()
+	// Test should complete without panic
 }

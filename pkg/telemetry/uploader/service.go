@@ -21,7 +21,6 @@ type TelemetryService struct {
 	buffer map[string]*Buffer
 	mu     sync.RWMutex
 	// Store API client and other required fields for creating buffers
-	maxLines      int
 	warpbuildAPI  *warpbuild.APIClient
 	runnerID      string
 	pollingSecret string
@@ -29,10 +28,9 @@ type TelemetryService struct {
 }
 
 // NewTelemetryService creates a new telemetry service
-func NewTelemetryService(warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string, maxLines int) *TelemetryService {
+func NewTelemetryService(warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *TelemetryService {
 	return &TelemetryService{
 		buffer:        map[string]*Buffer{},
-		maxLines:      maxLines,
 		warpbuildAPI:  warpbuildAPI,
 		runnerID:      runnerID,
 		pollingSecret: pollingSecret,
@@ -51,7 +49,6 @@ func (s *TelemetryService) createBufferIfNil(eventType string) error {
 			RunnerID:      s.runnerID,
 			PollingSecret: s.pollingSecret,
 			HostURL:       s.hostURL,
-			MaxLines:      s.maxLines, // Default max lines
 		})
 		if err != nil {
 			log.Logger().Errorf("Failed to create buffer for %s: %v", eventType, err)

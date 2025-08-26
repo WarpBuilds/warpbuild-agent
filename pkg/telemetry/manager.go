@@ -30,7 +30,6 @@ type TelemetryManager struct {
 
 	// Configuration
 	port          int
-	maxBufferSize int
 	baseDirectory string
 	warpbuildAPI  *warpbuild.APIClient
 	runnerID      string
@@ -39,13 +38,12 @@ type TelemetryManager struct {
 }
 
 // NewTelemetryManager creates a new telemetry manager
-func NewTelemetryManager(ctx context.Context, port, maxBufferSize int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *TelemetryManager {
+func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *TelemetryManager {
 	managerCtx, cancel := context.WithCancel(ctx)
 	return &TelemetryManager{
 		ctx:           managerCtx,
 		cancel:        cancel,
 		port:          port,
-		maxBufferSize: maxBufferSize,
 		baseDirectory: baseDirectory,
 		warpbuildAPI:  warpbuildAPI,
 		runnerID:      runnerID,
@@ -59,12 +57,12 @@ func (tm *TelemetryManager) Start() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	log.Logger().Debugf("Starting telemetry manager on port %d with buffer size %d", tm.port, tm.maxBufferSize)
+	log.Logger().Debugf("Starting telemetry manager on port %d", tm.port)
 
 	log.Logger().Debugf("Started S3 Uploader")
 
 	// Create telemetry service with required parameters
-	service := uploader.NewTelemetryService(tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL, tm.maxBufferSize)
+	service := uploader.NewTelemetryService(tm.warpbuildAPI, tm.runnerID, tm.pollingSecret, tm.hostURL)
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)

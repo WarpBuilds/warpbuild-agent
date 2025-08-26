@@ -114,9 +114,10 @@ receivers:
 {{- end}}
 
 processors:
-  batch:
-    timeout: {{.PushFrequency}}
-    send_batch_size: 1
+  # Logs batcher: ~256 records per request (count-based, not bytes)
+  batch/logs:
+    send_batch_size: 256
+    send_batch_max_size: 512
 
   # Keep ONLY these 4 metrics in the pipeline
   filter/only_needed:
@@ -190,6 +191,7 @@ service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
+      processors: [batch/logs]
       exporters: [otlphttp, debug]   # tee: still send to your HTTP service, and also print locally
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
@@ -200,4 +202,5 @@ service:
         - cumulativetodelta
         - deltatorate
         - transform/normalize
+        - batch/logs
       exporters: [otlphttp]

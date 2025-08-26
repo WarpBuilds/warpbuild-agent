@@ -56,8 +56,6 @@ type AgentSettings struct {
 type TelemetrySettings struct {
 	BaseDirectory string `json:"base_directory"`
 	Enabled       bool   `json:"enabled"`
-	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
-	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
 	// Port is the port on which the otel receiver is exposed.
@@ -194,14 +192,13 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
-			BaseDirectory:             settings.Telemetry.BaseDirectory,
-			RunnerID:                  settings.Agent.ID,
-			PollingSecret:             settings.Agent.PollingSecret,
-			HostURL:                   settings.Agent.HostURL,
-			Enabled:                   settings.Telemetry.Enabled,
-			PushFrequency:             pushFrequency,
-			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
-			Port:                      settings.Telemetry.Port,
+			BaseDirectory: settings.Telemetry.BaseDirectory,
+			RunnerID:      settings.Agent.ID,
+			PollingSecret: settings.Agent.PollingSecret,
+			HostURL:       settings.Agent.HostURL,
+			Enabled:       settings.Telemetry.Enabled,
+			PushFrequency: pushFrequency,
+			Port:          settings.Telemetry.Port,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
