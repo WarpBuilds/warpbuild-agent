@@ -72,6 +72,27 @@ processors:
     timeout: {{.PushFrequency}}
     send_batch_size: 1
 
+  # Convert cumulative counters to deltas…
+  cumulativetodelta:
+    include:
+      metrics:
+        - system.network.io
+        - system.network.packets
+        - system.network.errors
+        - system.network.dropped
+        - system.cpu.time
+      # (filesystem/memory usage are gauges; leave them as-is)
+    
+  # …then deltas to per-second rates
+  deltatorate:
+    include:
+      metrics:
+        - system.network.io
+        - system.network.packets
+        - system.network.errors
+        - system.network.dropped
+        - system.cpu.time
+  
 exporters:
   otlphttp:
     logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
@@ -83,11 +104,10 @@ service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
-      processors: [batch]
       exporters: [otlphttp]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
-      processors: [batch]
+      processors: [cumulativetodelta, deltatorate]
       exporters: [otlphttp]
   telemetry:
     metrics:
