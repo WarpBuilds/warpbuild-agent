@@ -157,28 +157,53 @@ processors:
         statements:
           # Rename NIC attribute to "internet"
           - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
-          # Convert CPU, memory, and filesystem utilization ratios to percentages
+          # Convert CPU and filesystem utilization ratios to percentages
           - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
-          - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
           - 'set(value_double, value_double * 100.0) where metric.name == "system.filesystem.utilization"'
 
-  # Collapse CPU to a single % series: sum non-idle states, then average across CPUs.
-  metricstransform/cpu_collapse:
+  # Drop idle before aggregating
+  filter/drop_cpu_idle:
+    metrics:
+      datapoint:
+        - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
+  
+  # Aggregate CPU utilization across cores and states
+  transform/cpu_util_agg:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert to percentage
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
+      - context: metric
+        statements:
+          # Set unit to percentage
+          - 'set(unit, "%") where metric.name == "system.cpu.utilization"'
+
+  # Aggregate CPU utilization across all cores and states to get average
+  metricstransform/cpu_aggregate:
     transforms:
       - include: system.cpu.utilization
-        match_type: strict
         action: update
         operations:
-          # 1) Combine all non-idle states into one "active" value per CPU
-          - action: aggregate_label_values
-            label: state
-            aggregated_values: [user, system, nice, irq, softirq, steal, wait]
-            new_value: active
-            aggregation_type: sum
-          # 2) Average across CPUs and drop labels -> single timeseries
           - action: aggregate_labels
+            # Remove cpu and state labels to aggregate across all cores and states
             label_set: []
             aggregation_type: mean
+
+  # Convert memory utilization from ratio to percentage
+  transform/mem_to_percentage:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert ratio to percentage: multiply by 100
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
+      - context: metric
+        statements:
+          # Set unit to percentage
+          - 'set(unit, "%") where metric.name == "system.memory.utilization"'
+
 
 exporters:
   otlphttp:
@@ -198,9 +223,12 @@ service:
       processors:
         - filter/only_needed
         - filter/drop_non_internet_nics
-        - metricstransform/cpu_collapse
+        - filter/drop_cpu_idle
         - cumulativetodelta
         - deltatorate
+        - transform/mem_to_percentage
+        - transform/cpu_util_agg
+        - metricstransform/cpu_aggregate
         - transform/normalize
         - batch/metrics
       exporters: [otlphttp]
