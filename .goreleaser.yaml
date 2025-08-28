@@ -3,7 +3,7 @@
 version: 2
 project_name: warpbuild-agentd
 env:
-  - OTEL_VERSION=0.133.0
+  - OTEL_VERSION=0.132.4
 before:
   hooks:
     # You may remove this if you don't use go modules.
