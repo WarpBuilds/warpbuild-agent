@@ -24,3 +24,6 @@ openapitools.json
 bin
 dist/
 .DS_Store
+pkg/telemetry/otel-collector-config.yaml
+pkg/telemetry/binaries/*/*/otelcol-contrib
+pkg/telemetry/binaries/*/*/otelcol-contrib.exe

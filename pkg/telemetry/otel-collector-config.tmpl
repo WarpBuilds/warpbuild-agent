@@ -157,8 +157,6 @@ processors:
         statements:
           # Rename NIC attribute to "internet"
           - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
-          # Convert filesystem utilization ratios to percentages
-          - 'set(value_double, value_double * 100.0) where metric.name == "system.filesystem.utilization"'
 
   # Drop idle before aggregating
   filter/drop_cpu_idle:
@@ -216,6 +214,28 @@ processors:
           # Set unit to percentage
           - 'set(unit, "%") where metric.name == "system.memory.utilization"'
 
+  transform/fs_to_percent:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'set(value_double, value_double * 100.0)
+              where metric.name == "system.filesystem.utilization" and value_double <= 1.0'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.filesystem.utilization"'
+
+  metricstransform/fs_max_percent:
+    transforms:
+      - include: system.filesystem.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []            # drop device/mount/type → one series per host
+            aggregation_type: max
+          - action: add_label
+            new_label: scope
+            new_value: fs_max_percent
 
 exporters:
   otlphttp:
@@ -237,11 +257,20 @@ service:
         - filter/drop_non_internet_nics
         - cumulativetodelta
         - deltatorate
+
+        # fs
+        - transform/fs_to_percent
+        - metricstransform/fs_max_percent
+
+        # cpu
         - filter/drop_cpu_idle
         - transform/cpu_to_percent
         - metricstransform/cpu_sum_states
         - metricstransform/cpu_total_percent
+
+        # memory
         - transform/mem_to_percentage
+
         - transform/normalize
         - batch/metrics
       exporters: [otlphttp]
