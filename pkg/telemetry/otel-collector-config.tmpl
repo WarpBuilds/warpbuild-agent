@@ -157,8 +157,7 @@ processors:
         statements:
           # Rename NIC attribute to "internet"
           - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
-          # Convert CPU and filesystem utilization ratios to percentages
-          - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
+          # Convert filesystem utilization ratios to percentages
           - 'set(value_double, value_double * 100.0) where metric.name == "system.filesystem.utilization"'
 
   # Drop idle before aggregating
@@ -167,29 +166,42 @@ processors:
       datapoint:
         - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
   
-  # Aggregate CPU utilization across cores and states
-  transform/cpu_util_agg:
+  # 2) Convert ratio -> percent ONCE
+  transform/cpu_to_percent:
     error_mode: ignore
     metric_statements:
       - context: datapoint
         statements:
-          # Convert to percentage
           - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
       - context: metric
         statements:
-          # Set unit to percentage
-          - 'set(unit, "%") where metric.name == "system.cpu.utilization"'
+          - 'set(unit, "percent") where metric.name == "system.cpu.utilization"'
 
-  # Aggregate CPU utilization across all cores and states to get average
-  metricstransform/cpu_aggregate:
+  # 3) Sum across states (user + system + nice + iowait + …), keep per-CPU series
+  metricstransform/cpu_sum_states:
     transforms:
       - include: system.cpu.utilization
         action: update
         operations:
           - action: aggregate_labels
-            # Remove cpu and state labels to aggregate across all cores and states
-            label_set: []
-            aggregation_type: mean
+            # Remove only "state", keep per-CPU time series
+            label_set: ["cpu"]
+            aggregation_type: sum
+
+  # 4a) TOTAL CPU (sum across CPUs) => 0..(N*100). For 8 vCPU, max 800%
+  metricstransform/cpu_total_percent:
+    transforms:
+      - include: system.cpu.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []         # drop "cpu" -> single series per host
+            aggregation_type: sum
+          - action: update_label
+            label: aggregation
+            new_label: aggregation
+            value_actions:
+              - value: total
 
   # Convert memory utilization from ratio to percentage
   transform/mem_to_percentage:
@@ -223,12 +235,13 @@ service:
       processors:
         - filter/only_needed
         - filter/drop_non_internet_nics
-        - filter/drop_cpu_idle
         - cumulativetodelta
         - deltatorate
+        - filter/drop_cpu_idle
+        - transform/cpu_to_percent
+        - metricstransform/cpu_sum_states
+        - metricstransform/cpu_total_percent
         - transform/mem_to_percentage
-        - transform/cpu_util_agg
-        - metricstransform/cpu_aggregate
         - transform/normalize
         - batch/metrics
       exporters: [otlphttp]
