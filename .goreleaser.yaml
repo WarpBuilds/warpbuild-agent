@@ -10,7 +10,7 @@ before:
     - go mod tidy
     # you may remove this if you don't need go generate
     - go generate ./...
-    # Download OpenTelemetry Collector v0.133.0 for all platforms and architectures
+    # Download OpenTelemetry Collector $OTEL_VERSION for all platforms and architectures
     # Linux AMD64
     - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_linux_amd64.tar.gz -O otelcol-contrib_linux_amd64.tar.gz
     - tar -xzf otelcol-contrib_linux_amd64.tar.gz
