@@ -18,6 +18,8 @@ type BufferOptions struct {
 }
 
 // Buffer manages a simple buffer that immediately pushes data to the uploader
+//
+// Buffer is no longer required and can be cleaned up.
 type Buffer struct {
 	api        *warpbuild.APIClient
 	s3Uploader *S3Uploader
