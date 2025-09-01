@@ -28,7 +28,7 @@ receivers:
     {{- else if eq .OS "linux"}}
     include: ['/var/log/syslog']
     {{- end}}
-    start_at: 'beginning'
+    start_at: 'end'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
@@ -40,10 +40,56 @@ receivers:
     scrapers:
       {{- if eq .OS "linux" }}
       cpu:
+        metrics:
+          # keep % utilization, drop raw times
+          system.cpu.utilization:
+            enabled: true
+          system.cpu.time:
+            enabled: false
       {{- end }}
       memory:
+        metrics:
+          # keep % utilization, drop byte counters
+          system.memory.utilization:
+            enabled: true
+          system.memory.usage:
+            enabled: false
       network:
+        metrics:
+          # only keep IO; disable packets/errors/dropped
+          system.network.io:
+            enabled: true
+          system.network.packets:
+            enabled: false
+          system.network.errors:
+            enabled: false
+          system.network.dropped:
+            enabled: false
       filesystem:
+        # Drop pseudo/virtual/container overlay mounts; keep real disks
+        exclude_fs_types:
+          match_type: strict
+          fs_types:
+            - overlay
+            - squashfs
+            - tmpfs
+            - devtmpfs
+            - proc
+            - sysfs
+            - cgroup2
+        exclude_mount_points:
+          match_type: regexp
+          mount_points:
+            - ^/var/lib/docker/overlay2/.*
+            - ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.overlayfs/.*
+            - ^/run/containerd/io\.containerd\.runtime\.v2\.task/.*/rootfs.*
+            - ^/snap/.*
+        metrics:
+          # keep % utilization, drop byte usage
+          system.filesystem.utilization:
+            enabled: true
+          system.filesystem.usage:
+            enabled: false
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
@@ -68,9 +114,128 @@ receivers:
 {{- end}}
 
 processors:
-  batch:
-    timeout: {{.PushFrequency}}
-    send_batch_size: 1
+  batch/logs:
+    timeout: 30s
+    send_batch_size: 10_000
+
+  batch/metrics:
+    timeout: 60s
+    send_batch_size: 10_000_000
+
+  # Keep ONLY these 4 metrics in the pipeline
+  filter/only_needed:
+    metrics:
+      include:
+        match_type: strict
+        metric_names:
+          - system.cpu.utilization
+          - system.memory.utilization
+          - system.filesystem.utilization
+          - system.network.io
+
+  filter/drop_non_internet_nics:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
+
+  # Convert cumulative network counters -> delta
+  cumulativetodelta:
+    include:
+      match_type: strict
+      metrics:
+        - system.network.io
+
+  # Convert delta -> per-second rate (required list syntax)
+  deltatorate:
+    metrics:
+      - system.network.io
+
+  transform/normalize:
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Rename NIC attribute to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
+
+  # Drop idle before aggregating
+  filter/drop_cpu_idle:
+    metrics:
+      datapoint:
+        - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
+  
+  # 2) Convert ratio -> percent ONCE
+  transform/cpu_to_percent:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.cpu.utilization"'
+
+  # 3) Sum across states (user + system + nice + iowait + …), keep per-CPU series
+  metricstransform/cpu_sum_states:
+    transforms:
+      - include: system.cpu.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            # Remove only "state", keep per-CPU time series
+            label_set: ["cpu"]
+            aggregation_type: sum
+
+  # 4a) TOTAL CPU (sum across CPUs) => 0..(N*100). For 8 vCPU, max 800%
+  metricstransform/cpu_total_percent:
+    transforms:
+      - include: system.cpu.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []         # drop "cpu" -> single series per host
+            aggregation_type: sum
+          - action: update_label
+            label: aggregation
+            new_label: aggregation
+            value_actions:
+              - value: total
+
+  # Convert memory utilization from ratio to percentage
+  transform/mem_to_percentage:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert ratio to percentage: multiply by 100
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
+      - context: metric
+        statements:
+          # Set unit to percentage
+          - 'set(unit, "%") where metric.name == "system.memory.utilization"'
+
+  transform/fs_to_percent:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'set(value_double, value_double * 100.0)
+              where metric.name == "system.filesystem.utilization" and value_double <= 1.0'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.filesystem.utilization"'
+
+  metricstransform/fs_max_percent:
+    transforms:
+      - include: system.filesystem.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []            # drop device/mount/type → one series per host
+            aggregation_type: max
+          - action: add_label
+            new_label: scope
+            new_value: fs_max_percent
 
 exporters:
   otlphttp:
@@ -83,12 +248,29 @@ service:
   pipelines:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
-      processors: [batch]
-      exporters: [otlphttp]
+      processors: [batch/logs]
+      exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
-      processors: [batch]
+      processors:
+        - filter/only_needed
+        - filter/drop_non_internet_nics
+        - cumulativetodelta
+        - deltatorate
+
+        # fs
+        - transform/fs_to_percent
+        - metricstransform/fs_max_percent
+
+        # cpu
+        - filter/drop_cpu_idle
+        - transform/cpu_to_percent
+        - metricstransform/cpu_sum_states
+        - metricstransform/cpu_total_percent
+
+        # memory
+        - transform/mem_to_percentage
+
+        - transform/normalize
+        - batch/metrics
       exporters: [otlphttp]
-  telemetry:
-    metrics:
-      level: none

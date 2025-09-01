@@ -24,14 +24,13 @@ const (
 )
 
 type TelemetryOptions struct {
-	Enabled                   bool          `json:"enabled"`
-	BaseDirectory             string        `json:"base_directory"`
-	SysLogNumberOfLinesToRead int           `json:"syslog_number_of_lines_to_read"`
-	PushFrequency             time.Duration `json:"push_frequency"`
-	RunnerID                  string        `json:"id"`
-	PollingSecret             string        `json:"polling_secret"`
-	HostURL                   string        `json:"host_url"`
-	Port                      int           `json:"port"`
+	Enabled       bool          `json:"enabled"`
+	BaseDirectory string        `json:"base_directory"`
+	PushFrequency time.Duration `json:"push_frequency"`
+	RunnerID      string        `json:"id"`
+	PollingSecret string        `json:"polling_secret"`
+	HostURL       string        `json:"host_url"`
+	Port          int           `json:"port"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
@@ -44,16 +43,13 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	if opts.PushFrequency == 0 {
 		opts.PushFrequency = 60 * time.Second
 	}
-	if opts.SysLogNumberOfLinesToRead == 0 {
-		opts.SysLogNumberOfLinesToRead = 100
-	}
 	if opts.BaseDirectory == "" {
 		opts.BaseDirectory = "/runner/warpbuild-agent"
 	}
 
 	log.Logger().Debugf("Starting OTEL receiver-based telemetry collection...")
-	log.Logger().Debugf("Telemetry configuration: port=%d, buffer_size=%d, push_frequency=%v",
-		opts.Port, opts.SysLogNumberOfLinesToRead, opts.PushFrequency)
+	log.Logger().Debugf("Telemetry configuration: port=%d, push_frequency=%v",
+		opts.Port, opts.PushFrequency)
 
 	// Initialize WarpBuild API client
 	cfg := warpbuild.NewConfiguration()
@@ -68,9 +64,8 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	// Create telemetry manager with OTEL receiver
 	// Use the port from settings, default to 33931 if not specified
 	port := opts.Port
-	maxBufferSize := opts.SysLogNumberOfLinesToRead
 
-	manager := NewTelemetryManager(ctx, port, maxBufferSize, opts.BaseDirectory, wb, opts.RunnerID, opts.PollingSecret, opts.HostURL)
+	manager := NewTelemetryManager(ctx, port, opts.BaseDirectory, wb, opts.RunnerID, opts.PollingSecret, opts.HostURL)
 
 	// Start the telemetry manager
 	if err := manager.Start(); err != nil {
@@ -78,7 +73,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		return err
 	}
 
-	log.Logger().Debugf("OTEL receiver telemetry system started on port %d with buffer size %d", port, maxBufferSize)
+	log.Logger().Debugf("OTEL receiver telemetry system started on port %d", port)
 	log.Logger().Debugf("OpenTelemetry Collector logs will be displayed to stdout and stderr")
 
 	// Wait for context cancellation

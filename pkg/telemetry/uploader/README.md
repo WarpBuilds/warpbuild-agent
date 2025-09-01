@@ -45,7 +45,6 @@ The system is configured through the `TelemetrySettings` in the main application
   "telemetry": {
     "enabled": true,
     "port": 33931,
-    "syslog_number_of_lines_to_read": 1000,
     "push_frequency": "60s",
     "base_directory": "/runner/warpbuild-agent"
   }
@@ -58,7 +57,7 @@ The system is configured through the `TelemetrySettings` in the main application
 
 ```go
 // Create telemetry manager
-manager := telemetry.NewTelemetryManager(ctx, port, maxBufferSize, baseDirectory, warpbuildAPI, runnerID, pollingSecret, hostURL)
+manager := telemetry.NewTelemetryManager(ctx, port, baseDirectory, warpbuildAPI, runnerID, pollingSecret, hostURL)
 
 // Start the system
 if err := manager.Start(); err != nil {
@@ -106,8 +105,8 @@ Uploaded files are organized by event type with suffixes:
 1. **System Collection**: OTEL collector processes system logs and metrics
 2. **HTTP Ingestion**: OTEL data arrives via HTTP endpoints
 3. **Processing**: Data is processed without any prefixes
-4. **Buffering**: Data is added to circular buffer
-5. **Upload**: When buffer is full or periodically, data is sent to S3
+4. **Buffering**: Data is immediately sent to uploader (buffer size 1)
+5. **Upload**: Data is immediately uploaded to S3 via presigned URLs
 6. **Storage**: Data is uploaded to S3 with event-specific filenames (logs, metrics, traces)
 
 ## Monitoring
@@ -119,20 +118,17 @@ stats := manager.GetStats()
 // Returns map with:
 // - is_running: bool
 // - port: int
-// - buffer_size: int
-// - current_buffer_size: int
-// - buffer_is_full: bool
 // - receiver_running: bool
 // - s3_uploader_running: bool
 ```
 
 ## Benefits
 
-1. **Real-time**: Data is processed as it arrives, not from file reads
-2. **Scalable**: Buffer system prevents memory issues
+1. **Real-time**: Data is processed and uploaded immediately as it arrives
+2. **Simple**: No complex buffering logic - immediate upload to S3
 3. **Reliable**: Automatic retry and error handling
 4. **Standards-compliant**: Uses OTEL protocol
-5. **Configurable**: Port, buffer size, and other parameters are configurable
+5. **Configurable**: Port and other parameters are configurable
 6. **Event-specific**: Uploads are organized by event type (logs, metrics, traces)
 7. **Clean data**: No prefixes or formatting added to the original data
 
