@@ -1,12 +1,47 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
+version: 2
 project_name: warpbuild-agentd
+env:
+  - OTEL_VERSION=0.132.4
 before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
     # you may remove this if you don't need go generate
     - go generate ./...
+    # Download OpenTelemetry Collector $OTEL_VERSION for all platforms and architectures
+    # Linux AMD64
+    - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_linux_amd64.tar.gz -O otelcol-contrib_linux_amd64.tar.gz
+    - tar -xzf otelcol-contrib_linux_amd64.tar.gz
+    - mkdir -p pkg/telemetry/binaries/linux/amd64
+    - mv otelcol-contrib pkg/telemetry/binaries/linux/amd64/
+    - rm otelcol-contrib_linux_amd64.tar.gz
+    # Linux ARM64
+    - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_linux_arm64.tar.gz -O otelcol-contrib_linux_arm64.tar.gz
+    - tar -xzf otelcol-contrib_linux_arm64.tar.gz
+    - mkdir -p pkg/telemetry/binaries/linux/arm64
+    - mv otelcol-contrib pkg/telemetry/binaries/linux/arm64/
+    - rm otelcol-contrib_linux_arm64.tar.gz
+    # Darwin AMD64
+    - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_darwin_amd64.tar.gz -O otelcol-contrib_darwin_amd64.tar.gz
+    - tar -xzf otelcol-contrib_darwin_amd64.tar.gz
+    - mkdir -p pkg/telemetry/binaries/darwin/amd64
+    - mv otelcol-contrib pkg/telemetry/binaries/darwin/amd64/
+    - rm otelcol-contrib_darwin_amd64.tar.gz
+    # Darwin ARM64
+    - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_darwin_arm64.tar.gz -O otelcol-contrib_darwin_arm64.tar.gz
+    - tar -xzf otelcol-contrib_darwin_arm64.tar.gz
+    - mkdir -p pkg/telemetry/binaries/darwin/arm64
+    - mv otelcol-contrib pkg/telemetry/binaries/darwin/arm64/
+    - rm otelcol-contrib_darwin_arm64.tar.gz
+    # Windows AMD64
+    - wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{ .Env.OTEL_VERSION }}/otelcol-contrib_{{ .Env.OTEL_VERSION }}_windows_amd64.tar.gz -O otelcol-contrib_windows_amd64.tar.gz
+    - tar -xzf otelcol-contrib_windows_amd64.tar.gz
+    - mkdir -p pkg/telemetry/binaries/windows/amd64
+    - mv otelcol-contrib.exe pkg/telemetry/binaries/windows/amd64/
+    - rm otelcol-contrib_windows_amd64.tar.gz
+    # Note: Windows ARM64 is not available for v0.133.0
 builds:
   - id: warpbuild-agentd
     env:
@@ -18,8 +53,13 @@ builds:
     goarch:
       - amd64
       - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
     hooks:
-      pre: find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
+      pre:
+        # Set proper permissions for the telemetry binaries
+        - find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
     main: ./cmd/agentd
   - id: warpbuild-agentd-restarter
     binary: warpbuild-agentd-restarter
@@ -40,12 +80,7 @@ archives:
       - warpbuild-agentd
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+      {{ .ProjectName }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }} {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     format_overrides:
       - goos: windows
@@ -57,18 +92,15 @@ archives:
       - tools/systemd/**
       - tools/github/hooks/prerun.sh
       - tools/github/hooks/prerun.ps1
-      - pkg/telemetry/binaries/**
+      # Include only the platform-specific OpenTelemetry Collector binary
+      - pkg/telemetry/binaries/{{ .Os }}/{{ .Arch }}/**
       - pkg/telemetry/otel-collector-config.tmpl
   - id: warpbuild-agentd-restarter
     format: zip
     builds:
       - warpbuild-agentd-restarter
     name_template: >-
-      {{ .Binary }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+      {{ .Binary }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }}
 
 checksum:
   name_template: "checksums.txt"

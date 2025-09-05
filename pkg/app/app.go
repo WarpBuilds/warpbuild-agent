@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,11 +22,15 @@ type ApplicationOptions struct {
 	StderrFile        string `json:"stderr_file"`
 	LaunchTelemetry   bool   `json:"launch_telemetry"`
 	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
+	LogLevel          string `json:"log_level"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
 	if opts.SettingsFile == "" {
 		opts.SettingsFile = "/var/lib/warpbuild-agentd/settings.json"
+	}
+	if opts.LogLevel == "" {
+		opts.LogLevel = "info"
 	}
 }
 
@@ -34,6 +39,10 @@ type Settings struct {
 	Runner    *RunnerSettings    `json:"runner"`
 	Telemetry *TelemetrySettings `json:"telemetry"`
 	Proxy     *ProxySettings     `json:"proxy"`
+}
+
+func (s *Settings) ApplyDefaults() {
+	s.Telemetry.ApplyDefaults()
 }
 
 type AgentSettings struct {
@@ -47,10 +56,20 @@ type AgentSettings struct {
 type TelemetrySettings struct {
 	BaseDirectory string `json:"base_directory"`
 	Enabled       bool   `json:"enabled"`
-	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
-	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
+	// Port is the port on which the otel receiver is exposed.
+	//
+	// Default: 33931
+	Port int `json:"port"`
+}
+
+func (t *TelemetrySettings) ApplyDefaults() {
+
+	if t.Port == 0 {
+		t.Port = 33931
+	}
+
 }
 
 type ProxySettings struct {
@@ -91,9 +110,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 	opts.ApplyDefaults()
 
+	// Initialize logger with default level first
 	lm, err := log.Init(&log.InitOptions{
 		StdoutFile: opts.StdoutFile,
 		StderrFile: opts.StderrFile,
+		LogLevel:   opts.LogLevel, // Use application-level log level
 	})
 	if err != nil {
 		return err
@@ -131,6 +152,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 			// found the settings file, parse it
 			if err := json.Unmarshal(settingsData, &settings); err != nil {
+				if strings.Contains(err.Error(), "unexpected end of JSON input") {
+					log.Logger().Infof("unexpected end of JSON input. We'll retry.")
+					continue
+				}
 				log.Logger().Errorf("failed to parse settings file: %v", err)
 				return err
 			}
@@ -149,6 +174,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
+	settings.ApplyDefaults()
+
 	if opts.LaunchTelemetry {
 		telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
 		defer telemetryCtxCancel()
@@ -165,13 +192,13 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
-			BaseDirectory:             settings.Telemetry.BaseDirectory,
-			RunnerID:                  settings.Agent.ID,
-			PollingSecret:             settings.Agent.PollingSecret,
-			HostURL:                   settings.Agent.HostURL,
-			Enabled:                   settings.Telemetry.Enabled,
-			PushFrequency:             pushFrequency,
-			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
+			BaseDirectory: settings.Telemetry.BaseDirectory,
+			RunnerID:      settings.Agent.ID,
+			PollingSecret: settings.Agent.PollingSecret,
+			HostURL:       settings.Agent.HostURL,
+			Enabled:       settings.Telemetry.Enabled,
+			PushFrequency: pushFrequency,
+			Port:          settings.Telemetry.Port,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
