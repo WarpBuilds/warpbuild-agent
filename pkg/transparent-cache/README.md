@@ -178,15 +178,3 @@ graph TB
     CERT1 -.->|"Used by"| OGINY
     CERT2 -.->|"Used by"| OGINY
 ```
-
-## Tasks:
-
-- Figure out nftables alternative for Mac OS.
-- Productionize Oginy
-  - Add pass through rules for all other paths than /\_api/artifactcache
-- Productionize Derp
-- Productionize Asur
-- Add support for AWS S3 in Asur
-- Add support for temp credentials for R2 in WarpCache backend
-- Figure out a production friendly way to generate and add certs in VMs.
-- Testing
