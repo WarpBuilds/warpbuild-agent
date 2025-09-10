@@ -151,10 +151,7 @@ func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, re
 				var uploadErr error
 
 				for attempt := 1; attempt <= 3; attempt++ {
-					timeoutDuration := time.Duration(len(job.data)/(10*1024*1024)+6) * time.Minute
-					if timeoutDuration < 8*time.Minute {
-						timeoutDuration = 8 * time.Minute
-					}
+					timeoutDuration := max(time.Duration(len(job.data)/(10*1024*1024)+6)*time.Minute, 8*time.Minute)
 					uploadCtx, cancel := context.WithTimeout(ctx, timeoutDuration)
 
 					input := &s3.UploadPartInput{
@@ -341,57 +338,43 @@ func (u *S3Uploader) EnsureMultipartUpload(ctx context.Context, bucket, key stri
 
 // UploadPartStream uploads a single part with streaming support
 func (u *S3Uploader) UploadPartStream(ctx context.Context, bucket, key, uploadID string, partNumber int32, reader io.Reader, contentLength int64) (string, error) {
-	// Retry logic
-	maxRetries := 3
-	var out *s3.UploadPartOutput
-	var uploadErr error
+	// Create timeout context for streaming upload
+	timeoutDuration := max(time.Duration(contentLength/(10*1024*1024)+6)*time.Minute, 8*time.Minute)
+	uploadCtx, cancel := context.WithTimeout(ctx, timeoutDuration)
+	defer cancel()
 
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		// Create timeout context
-		timeoutDuration := time.Duration(contentLength/(10*1024*1024)+6) * time.Minute
-		if timeoutDuration < 8*time.Minute {
-			timeoutDuration = 8 * time.Minute
-		}
-		uploadCtx, cancel := context.WithTimeout(ctx, timeoutDuration)
-
-		input := &s3.UploadPartInput{
-			Bucket:        aws.String(bucket),
-			Key:           aws.String(key),
-			UploadId:      aws.String(uploadID),
-			PartNumber:    aws.Int32(partNumber),
-			Body:          reader,
-			ContentLength: aws.Int64(contentLength),
-		}
-
-		log.Printf("Uploading part %d (streaming, size=%d MB) - attempt %d/%d",
-			partNumber, contentLength/(1024*1024), attempt, maxRetries)
-		uploadStart := time.Now()
-
-		// Use s3NoRetry client since we're streaming and can't retry
-		out, uploadErr = u.s3NoRetry.UploadPart(uploadCtx, input)
-		cancel()
-
-		if uploadErr == nil {
-			uploadDuration := time.Since(uploadStart)
-			uploadSpeed := float64(contentLength) / (1024 * 1024) / uploadDuration.Seconds()
-			log.Printf("Uploaded part %d in %v (%.1f MB/s)", partNumber, uploadDuration, uploadSpeed)
-			return aws.ToString(out.ETag), nil
-		}
-
-		// Log error but can't retry with streaming body
-		logError("UploadPart (streaming)", uploadErr, map[string]interface{}{
-			"bucket":         bucket,
-			"key":            key,
-			"part_number":    partNumber,
-			"attempt":        attempt,
-			"content_length": contentLength,
-		})
-
-		// For streaming, we can't retry - break on first error
-		break
+	input := &s3.UploadPartInput{
+		Bucket:        aws.String(bucket),
+		Key:           aws.String(key),
+		UploadId:      aws.String(uploadID),
+		PartNumber:    aws.Int32(partNumber),
+		Body:          reader,
+		ContentLength: aws.Int64(contentLength),
 	}
 
-	return "", fmt.Errorf("upload part %d failed: %w", partNumber, uploadErr)
+	log.Printf("Uploading part %d (streaming, size=%d MB)",
+		partNumber, contentLength/(1024*1024))
+	uploadStart := time.Now()
+
+	// Use s3NoRetry client since we're streaming and can't retry
+	out, err := u.s3NoRetry.UploadPart(uploadCtx, input)
+
+	if err == nil {
+		uploadDuration := time.Since(uploadStart)
+		uploadSpeed := float64(contentLength) / (1024 * 1024) / uploadDuration.Seconds()
+		log.Printf("Uploaded part %d in %v (%.1f MB/s)", partNumber, uploadDuration, uploadSpeed)
+		return aws.ToString(out.ETag), nil
+	}
+
+	// Log error - streaming uploads cannot be retried
+	logError("UploadPart (streaming)", err, map[string]interface{}{
+		"bucket":         bucket,
+		"key":            key,
+		"part_number":    partNumber,
+		"content_length": contentLength,
+	})
+
+	return "", fmt.Errorf("upload part %d failed: %w", partNumber, err)
 }
 
 // CompleteMultipartUpload completes a multipart upload

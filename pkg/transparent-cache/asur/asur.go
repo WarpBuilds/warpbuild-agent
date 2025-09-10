@@ -635,10 +635,7 @@ func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, 
 			return
 		}
 
-		parts = append(parts, CompletedPart{
-			ETag:       part.ETag,
-			PartNumber: part.PartNumber,
-		})
+		parts = append(parts, CompletedPart(part))
 	}
 
 	log.Printf("Completing multipart upload with %d parts", len(parts))
@@ -664,8 +661,7 @@ func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, 
 
 func (s *server) handleGet(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
 	// Forward Range header if present
-	var rangeOpt *s3.GetObjectInput
-	rangeOpt = &s3.GetObjectInput{
+	rangeOpt := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}
@@ -831,7 +827,8 @@ func (s *server) handleDebugStats(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(stats)
 }
 
-func main() {
+// Start starts the ASUR Azure→S3 proxy service
+func Start(port int) error {
 	// Try to load .env file if it exists (optional)
 	loadEnvFile()
 
@@ -850,12 +847,12 @@ func main() {
 
 	// Validate required credentials
 	if accessKeyID == "" || secretAccessKey == "" {
-		log.Fatal("Missing required credentials. Please set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY environment variables")
+		return fmt.Errorf("missing required credentials. Please set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY environment variables")
 	}
 
 	// Validate endpoint is provided
 	if endpoint == "" {
-		log.Fatal("Missing R2_ENDPOINT environment variable")
+		return fmt.Errorf("missing R2_ENDPOINT environment variable")
 	}
 
 	// Check if HTTP/2 should be enabled (default: disabled for stability)
@@ -954,7 +951,7 @@ func main() {
 		config.WithClientLogMode(logMode),
 	)
 	if err != nil {
-		log.Fatalf("aws cfg: %v", err)
+		return fmt.Errorf("aws cfg: %v", err)
 	}
 
 	// Create S3 client
@@ -1008,7 +1005,7 @@ func main() {
 
 	// Configure server with optimized settings
 	srv := &http.Server{
-		Addr:         ":50053", // mimic Azurite port
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      loggingMiddleware(s),
 		ReadTimeout:  30 * time.Minute,
 		WriteTimeout: 30 * time.Minute,
@@ -1029,8 +1026,8 @@ func main() {
 	log.Printf("Credentials loaded from environment variables")
 
 	if debugMode {
-		log.Printf("Health check: http://localhost:10000/_debug/health")
-		log.Printf("Stats endpoint: http://localhost:10000/_debug/stats")
+		log.Printf("Health check: http://localhost:%d/_debug/health", port)
+		log.Printf("Stats endpoint: http://localhost:%d/_debug/stats", port)
 	}
 
 	// Start a goroutine to clean up old incomplete uploads
@@ -1042,7 +1039,7 @@ func main() {
 		}
 	}()
 
-	log.Fatal(srv.ListenAndServe())
+	return srv.ListenAndServe()
 }
 
 // cleanupIncompleteUploads removes incomplete multipart uploads

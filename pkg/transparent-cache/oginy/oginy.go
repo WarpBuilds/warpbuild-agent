@@ -3,7 +3,6 @@ package oginy
 import (
 	"crypto/tls"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -69,13 +68,17 @@ func loadConfig(path string) (*Config, error) {
 	return &c, nil
 }
 
-func main() {
-	cfgPath := flag.String("config", "config.json", "path to config")
-	flag.Parse()
-
-	cfg, err := loadConfig(*cfgPath)
+// Start starts the OGINY TLS reverse proxy service with the given config file
+// If port is > 0, it overrides the port in the config file
+func Start(cfgPath string, port int) error {
+	cfg, err := loadConfig(cfgPath)
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		return fmt.Errorf("config: %v", err)
+	}
+
+	// Override port if specified
+	if port > 0 {
+		cfg.ListenAddr = fmt.Sprintf(":%d", port)
 	}
 
 	// Shared, fast transport to backends.
@@ -97,11 +100,11 @@ func main() {
 	for _, s := range cfg.Servers {
 		u, err := url.Parse(s.TargetURL)
 		if err != nil {
-			log.Fatalf("target %s: %v", s.ServerName, err)
+			return fmt.Errorf("target %s: %v", s.ServerName, err)
 		}
 		c, err := tls.LoadX509KeyPair(s.CertFile, s.KeyFile)
 		if err != nil {
-			log.Fatalf("cert %s: %v", s.ServerName, err)
+			return fmt.Errorf("cert %s: %v", s.ServerName, err)
 		}
 
 		rp := httputil.NewSingleHostReverseProxy(u)
@@ -134,7 +137,7 @@ func main() {
 		GetCertificate: mp.GetCertificate, // SNI
 	}
 	if cfg.EnableHTTP2 {
-		// Let Go’s default enable h2 via ALPN; no extra tuning to keep it simple.
+		// Let Go's default enable h2 via ALPN; no extra tuning to keep it simple.
 		tlsCfg.NextProtos = []string{"h2", "http/1.1"}
 	} else {
 		tlsCfg.NextProtos = []string{"http/1.1"}
@@ -150,5 +153,5 @@ func main() {
 	}
 
 	log.Printf("listening on %s", cfg.ListenAddr)
-	log.Fatal(srv.ListenAndServeTLS("", "")) // certs come from GetCertificate
+	return srv.ListenAndServeTLS("", "") // certs come from GetCertificate
 }

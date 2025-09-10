@@ -129,7 +129,8 @@ func (s *cacheServiceImpl) GetCacheEntryDownloadURL(ctx context.Context, req *ca
 	}, nil
 }
 
-func main() {
+// Start starts the DERP cache Twirp service
+func Start(port int) error {
 	// Create cache service implementation
 	service := NewCacheService()
 
@@ -148,11 +149,9 @@ func main() {
 		w.Write([]byte(`{"status":"healthy"}`))
 	})
 
-	log.Println("Cache Twirp server starting on port 50051...")
+	log.Printf("Cache Twirp server starting on port %d...", port)
 	log.Printf("Twirp service available at: %s", cachepb.CacheServicePathPrefix)
 
 	// Start HTTP server
-	if err := http.ListenAndServe(":50051", mux); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 }
