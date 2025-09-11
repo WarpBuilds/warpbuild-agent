@@ -14,15 +14,17 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
+	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 )
 
 type ApplicationOptions struct {
-	SettingsFile      string `json:"settings_file"`
-	StdoutFile        string `json:"stdout_file"`
-	StderrFile        string `json:"stderr_file"`
-	LaunchTelemetry   bool   `json:"launch_telemetry"`
-	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
-	LogLevel          string `json:"log_level"`
+	SettingsFile           string `json:"settings_file"`
+	StdoutFile             string `json:"stdout_file"`
+	StderrFile             string `json:"stderr_file"`
+	LaunchTelemetry        bool   `json:"launch_telemetry"`
+	LaunchProxyServer      bool   `json:"launch_cache_proxy_server"`
+	LaunchTransparentCache bool   `json:"launch_transparent_cache"`
+	LogLevel               string `json:"log_level"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -35,14 +37,20 @@ func (opts *ApplicationOptions) ApplyDefaults() {
 }
 
 type Settings struct {
-	Agent     *AgentSettings     `json:"agent"`
-	Runner    *RunnerSettings    `json:"runner"`
-	Telemetry *TelemetrySettings `json:"telemetry"`
-	Proxy     *ProxySettings     `json:"proxy"`
+	Agent            *AgentSettings            `json:"agent"`
+	Runner           *RunnerSettings           `json:"runner"`
+	Telemetry        *TelemetrySettings        `json:"telemetry"`
+	Proxy            *ProxySettings            `json:"proxy"`
+	TransparentCache *TransparentCacheSettings `json:"transparent_cache"`
 }
 
 func (s *Settings) ApplyDefaults() {
-	s.Telemetry.ApplyDefaults()
+	if s.Telemetry != nil {
+		s.Telemetry.ApplyDefaults()
+	}
+	if s.TransparentCache != nil {
+		s.TransparentCache.ApplyDefaults()
+	}
 }
 
 type AgentSettings struct {
@@ -75,6 +83,24 @@ func (t *TelemetrySettings) ApplyDefaults() {
 type ProxySettings struct {
 	CacheProxyPort   string `json:"cache_proxy_port"`
 	CacheBackendHost string `json:"cache_backend_host"`
+}
+
+type TransparentCacheSettings struct {
+	DerpPort  int `json:"derp_port"`
+	OginyPort int `json:"oginy_port"`
+	AsurPort  int `json:"asur_port"`
+}
+
+func (t *TransparentCacheSettings) ApplyDefaults() {
+	if t.DerpPort == 0 {
+		t.DerpPort = 50052
+	}
+	if t.OginyPort == 0 {
+		t.OginyPort = 50051
+	}
+	if t.AsurPort == 0 {
+		t.AsurPort = 50053
+	}
 }
 
 type RunnerSettings struct {
@@ -209,6 +235,21 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
 			WarpBuildRunnerVerificationToken: settings.Agent.RunnerVerificationToken,
 		})
+	} else if opts.LaunchTransparentCache {
+		// Start the transparent cache server with configured ports
+		if settings.TransparentCache == nil {
+			log.Logger().Errorf("transparent cache settings not configured")
+			return errors.New("transparent cache settings not configured")
+		}
+
+		if err := transparentcache.Start(
+			settings.TransparentCache.DerpPort,
+			settings.TransparentCache.OginyPort,
+			settings.TransparentCache.AsurPort,
+		); err != nil {
+			log.Logger().Errorf("failed to start transparent cache: %v", err)
+			return err
+		}
 	} else {
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:               settings.Agent.ID,

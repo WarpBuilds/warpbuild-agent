@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache/derp"
 )
 
 const azureVersion = "2020-04-08" // cosmetic response header
@@ -64,7 +66,7 @@ func (s *server) getUploadState(bucket, key string) *uploadState {
 }
 
 // ensureMultipart ensures a multipart upload exists, creating if necessary
-func (s *server) ensureMultipart(ctx context.Context, bucket, key string, r *http.Request) (*uploadState, error) {
+func (s *server) ensureMultipart(ctx context.Context, bucket, key string, uploader Uploader) (*uploadState, error) {
 	stateMapKey := stateKey(bucket, key)
 
 	// Hold the mutex while checking and possibly creating to avoid races where
@@ -77,7 +79,7 @@ func (s *server) ensureMultipart(ctx context.Context, bucket, key string, r *htt
 	}
 
 	// Create new multipart upload while still holding the lock so only one is created.
-	uploadID, err := s.uploader.EnsureMultipartUpload(ctx, bucket, key)
+	uploadID, err := uploader.EnsureMultipartUpload(ctx, bucket, key)
 	if err != nil {
 		s.mu.Unlock()
 		return nil, err
@@ -92,6 +94,145 @@ func (s *server) ensureMultipart(ctx context.Context, bucket, key string, r *htt
 	s.mu.Unlock()
 
 	return us, nil
+}
+
+// getS3ClientForURL retrieves or creates S3 clients based on credentials from the URL
+func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
+	// Get credentials from derp based on the URL
+	provider, derpCreds, found := derp.GetCredentialsFromURL(urlStr)
+	if !found {
+		return nil, fmt.Errorf("no credentials found for URL: %s", urlStr)
+	}
+
+	// Create a cache key based on provider and credentials
+	cacheKey := fmt.Sprintf("%s:%v", provider, derpCreds)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check if we already have clients for these credentials
+	if clientPair, exists := s.s3ClientCache[cacheKey]; exists {
+		clientPair.lastUsed = time.Now()
+		return clientPair, nil
+	}
+
+	// Create new S3 clients based on the credentials
+	var s3Client, s3NoRetryClient *s3.Client
+	var uploader Uploader
+
+	switch provider {
+	case derp.ProviderS3, derp.ProviderR2:
+		// Handle S3/R2 credentials
+		var endpoint, accessKeyID, secretAccessKey, sessionToken string
+		var region string = "auto" // Default region
+
+		// Extract credentials based on response type
+		switch creds := derpCreds.(type) {
+		case *derp.S3GetCacheResponse:
+			// For GET operations, we have a pre-signed URL
+			if creds.PreSignedURL != "" {
+				// Parse pre-signed URL to extract endpoint
+				parsedURL, err := url.Parse(creds.PreSignedURL)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse pre-signed URL: %w", err)
+				}
+				endpoint = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+			}
+			// Use access grant if available
+			if creds.AccessGrant != nil {
+				accessKeyID = creds.AccessGrant.AccessKeyID
+				secretAccessKey = creds.AccessGrant.SecretAccessKey
+				sessionToken = creds.AccessGrant.SessionToken
+			}
+		case *derp.S3ReserveCacheResponse:
+			// For PUT operations, we might have multiple pre-signed URLs
+			if len(creds.PreSignedURLs) > 0 {
+				// Parse first pre-signed URL to extract endpoint
+				parsedURL, err := url.Parse(creds.PreSignedURLs[0])
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse pre-signed URL: %w", err)
+				}
+				endpoint = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+			}
+		}
+
+		// If we don't have explicit credentials, we'll need to use pre-signed URLs directly
+		if accessKeyID == "" || secretAccessKey == "" {
+			// For now, return an error - in a full implementation, we'd handle pre-signed URLs differently
+			return nil, fmt.Errorf("no AWS credentials available for %s provider", provider)
+		}
+
+		// Create AWS config
+		cfg, err := config.LoadDefaultConfig(context.Background(),
+			config.WithRegion(region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				accessKeyID,
+				secretAccessKey,
+				sessionToken,
+			)),
+			config.WithHTTPClient(s.httpClient),
+			config.WithRetryer(func() aws.Retryer {
+				return retry.NewStandard(func(o *retry.StandardOptions) {
+					o.MaxAttempts = 3
+				})
+			}),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create AWS config: %w", err)
+		}
+
+		// Create S3 client options
+		s3Config := func(o *s3.Options) {
+			o.UsePathStyle = true
+			o.UseARNRegion = false
+			if endpoint != "" {
+				o.BaseEndpoint = aws.String(endpoint)
+			}
+			o.DisableS3ExpressSessionAuth = aws.Bool(true)
+		}
+
+		// S3 client with no retries - for streaming operations
+		s3NoRetryConfig := func(o *s3.Options) {
+			o.UsePathStyle = true
+			o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), 1)
+			o.UseARNRegion = false
+			if endpoint != "" {
+				o.BaseEndpoint = aws.String(endpoint)
+			}
+			o.DisableS3ExpressSessionAuth = aws.Bool(true)
+		}
+
+		// Create S3 clients
+		s3Client = s3.NewFromConfig(cfg, s3Config)
+		s3NoRetryClient = s3.NewFromConfig(cfg, s3NoRetryConfig)
+
+		// Create uploader
+		uploader = NewS3Uploader(s3Client, s3NoRetryClient, s.stats, s.defaultConcurrency)
+
+	case derp.ProviderAzureBlob:
+		// For Azure, we'd typically use Azure SDK, but for now we'll return an error
+		// In a full implementation, you'd create an Azure Blob client here
+		return nil, fmt.Errorf("Azure Blob provider not yet implemented for dynamic clients")
+
+	case derp.ProviderGCS:
+		// For GCS, we'd use the GCS SDK with the short-lived token
+		// In a full implementation, you'd create a GCS client here
+		return nil, fmt.Errorf("GCS provider not yet implemented for dynamic clients")
+
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", provider)
+	}
+
+	// Create and cache the client pair
+	clientPair := &s3ClientPair{
+		client:        s3Client,
+		noRetryClient: s3NoRetryClient,
+		uploader:      uploader,
+		lastUsed:      time.Now(),
+	}
+
+	s.s3ClientCache[cacheKey] = clientPair
+	return clientPair, nil
 }
 
 // deleteUploadState removes upload state from memory
@@ -174,6 +315,7 @@ func logError(operation string, err error, context map[string]interface{}) {
 
 // -------- server --------
 type server struct {
+	// Default S3 client for fallback (if any)
 	s3 *s3.Client
 	// s3NoRetry disables automatic retries to avoid rewind requirement on streaming bodies
 	s3NoRetry *s3.Client
@@ -185,6 +327,20 @@ type server struct {
 	stats *performanceStats
 	// uploader strategy
 	uploader Uploader
+	// Dynamic S3 client cache: cacheKey -> *s3ClientPair
+	s3ClientCache map[string]*s3ClientPair
+	// Default HTTP client for creating S3 clients
+	httpClient *http.Client
+	// Default upload concurrency
+	defaultConcurrency int
+}
+
+// s3ClientPair holds both regular and no-retry S3 clients
+type s3ClientPair struct {
+	client        *s3.Client
+	noRetryClient *s3.Client
+	uploader      Uploader
+	lastUsed      time.Time
 }
 
 // performanceStats tracks upload performance metrics
@@ -412,6 +568,17 @@ func (rw *responseWriter) WriteHeader(code int) {
 }
 
 func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
+	// Build the full Azure-style URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	// Get S3 client for this URL
+	clientPair, err := s.getS3ClientForURL(fullURL)
+	if err != nil {
+		log.Printf("Failed to get S3 client for URL %s: %v", fullURL, err)
+		http.Error(w, fmt.Sprintf("Failed to get storage client: %v", err), http.StatusBadGateway)
+		return
+	}
+
 	contentLength := r.ContentLength
 	log.Printf("handlePutBlob: key=%s size=%d MB", key, contentLength/(1024*1024))
 
@@ -423,7 +590,7 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 			return
 		}
 
-		result, err := s.uploader.UploadSmallFile(ctx, bucket, key, buf)
+		result, err := clientPair.uploader.UploadSmallFile(ctx, bucket, key, buf)
 		if err != nil {
 			log.Printf("UploadSmallFile failed: %v", err)
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -440,7 +607,7 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 	// For larger files, use concurrent multipart upload
 	log.Printf("Using multipart upload for large file: %s", key)
 
-	result, err := s.uploader.UploadLargeFile(ctx, bucket, key, r.Body, contentLength)
+	result, err := clientPair.uploader.UploadLargeFile(ctx, bucket, key, r.Body, contentLength)
 	if err != nil {
 		log.Printf("UploadLargeFile failed: %v", err)
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -465,9 +632,20 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 		return
 	}
 
+	// Build the full Azure-style URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	// Get S3 client for this URL
+	clientPair, err := s.getS3ClientForURL(fullURL)
+	if err != nil {
+		log.Printf("Failed to get S3 client for URL %s: %v", fullURL, err)
+		http.Error(w, fmt.Sprintf("Failed to get storage client: %v", err), http.StatusBadGateway)
+		return
+	}
+
 	// Ensure multipart context and get state
 	log.Printf("Ensuring multipart upload for %s/%s", bucket, key)
-	us, err := s.ensureMultipart(ctx, bucket, key, r)
+	us, err := s.ensureMultipart(ctx, bucket, key, clientPair.uploader)
 	if err != nil || us == nil {
 		http.Error(w, "create multipart: "+err.Error(), http.StatusBadGateway)
 		return
@@ -489,7 +667,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 	if contentLength < 0 {
 		// If content length is unknown, we need to buffer
 		// Fall back to the original implementation for this edge case
-		s.handlePutBlockBuffered(ctx, w, r, bucket, key, blockIDB64, us, partNum)
+		s.handlePutBlockBuffered(ctx, w, r, bucket, key, blockIDB64, us, partNum, clientPair.uploader)
 		return
 	}
 
@@ -514,7 +692,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 		defer pr.Close()
 
 		// Upload part using the uploader interface
-		etag, err := s.uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, pr, contentLength)
+		etag, err := clientPair.uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, pr, contentLength)
 
 		resultChan <- uploadResult{
 			etag: etag,
@@ -561,7 +739,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 }
 
 // handlePutBlockBuffered is the fallback for when Content-Length is not known
-func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, blockIDB64 string, us *uploadState, partNum int32) {
+func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, blockIDB64 string, us *uploadState, partNum int32, uploader Uploader) {
 	// Read the entire block data into memory
 	hasher := md5.New()
 	teeReader := io.TeeReader(r.Body, hasher)
@@ -579,7 +757,7 @@ func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWrit
 		key, blockIDB64, blockSize/(1024*1024), md5Sum)
 
 	// Upload part using the uploader interface (with buffer reader)
-	etag, err := s.uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, bytes.NewReader(blockBytes), int64(blockSize))
+	etag, err := uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, bytes.NewReader(blockBytes), int64(blockSize))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("upload part %d failed: %v", partNum, err), http.StatusBadGateway)
 		return
@@ -601,6 +779,17 @@ func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWrit
 }
 
 func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
+	// Build the full Azure-style URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	// Get S3 client for this URL
+	clientPair, err := s.getS3ClientForURL(fullURL)
+	if err != nil {
+		log.Printf("Failed to get S3 client for URL %s: %v", fullURL, err)
+		http.Error(w, fmt.Sprintf("Failed to get storage client: %v", err), http.StatusBadGateway)
+		return
+	}
+
 	// Get existing upload state
 	us := s.getUploadState(bucket, key)
 	if us == nil {
@@ -641,7 +830,7 @@ func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, 
 	log.Printf("Completing multipart upload with %d parts", len(parts))
 
 	// Complete the multipart upload
-	result, err := s.uploader.CompleteMultipartUpload(ctx, bucket, key, us.UploadID, parts)
+	result, err := clientPair.uploader.CompleteMultipartUpload(ctx, bucket, key, us.UploadID, parts)
 	if err != nil {
 		http.Error(w, "complete multipart: "+err.Error(), http.StatusBadGateway)
 		return
@@ -660,6 +849,17 @@ func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, 
 }
 
 func (s *server) handleGet(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
+	// Build the full Azure-style URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	// Get S3 client for this URL
+	clientPair, err := s.getS3ClientForURL(fullURL)
+	if err != nil {
+		log.Printf("Failed to get S3 client for URL %s: %v", fullURL, err)
+		http.Error(w, fmt.Sprintf("Failed to get storage client: %v", err), http.StatusBadGateway)
+		return
+	}
+
 	// Forward Range header if present
 	rangeOpt := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -675,7 +875,7 @@ func (s *server) handleGet(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	// Get object from S3
-	out, err := s.s3.GetObject(ctx, rangeOpt)
+	out, err := clientPair.client.GetObject(ctx, rangeOpt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -732,8 +932,19 @@ func (s *server) handleGet(ctx context.Context, w http.ResponseWriter, r *http.R
 }
 
 func (s *server) handleHead(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
+	// Build the full Azure-style URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	// Get S3 client for this URL
+	clientPair, err := s.getS3ClientForURL(fullURL)
+	if err != nil {
+		log.Printf("Failed to get S3 client for URL %s: %v", fullURL, err)
+		http.Error(w, fmt.Sprintf("Failed to get storage client: %v", err), http.StatusBadGateway)
+		return
+	}
+
 	// Use HeadObject for proper HEAD request
-	out, err := s.s3.HeadObject(ctx, &s3.HeadObjectInput{
+	out, err := clientPair.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -771,24 +982,20 @@ func (s *server) handleHead(ctx context.Context, w http.ResponseWriter, r *http.
 
 // handleDebugHealth provides a health check endpoint
 func (s *server) handleDebugHealth(w http.ResponseWriter, r *http.Request) {
-	// Test S3 connectivity
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
 	health := map[string]interface{}{
 		"status":     "ok",
 		"timestamp":  time.Now().UTC().Format(time.RFC3339),
 		"debug_mode": debugMode,
+		"cache_info": map[string]interface{}{
+			"cached_clients":     len(s.s3ClientCache),
+			"active_uploads":     len(s.uploadStates),
+			"ready_for_requests": true,
+		},
 	}
 
-	// Try to list buckets as a health check
-	_, err := s.s3.ListBuckets(ctx, &s3.ListBucketsInput{})
-	if err != nil {
-		health["status"] = "unhealthy"
-		health["s3_error"] = err.Error()
-	} else {
-		health["s3_status"] = "connected"
-	}
+	// Report that we're using dynamic client creation
+	health["client_mode"] = "dynamic"
+	health["message"] = "S3 clients are created dynamically based on credentials from derp"
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(health)
@@ -829,32 +1036,6 @@ func (s *server) handleDebugStats(w http.ResponseWriter, r *http.Request) {
 
 // Start starts the ASUR Azure→S3 proxy service
 func Start(port int) error {
-	// Try to load .env file if it exists (optional)
-	loadEnvFile()
-
-	// Load credentials from environment variables
-	accessKeyID := os.Getenv("R2_ACCESS_KEY_ID")
-	secretAccessKey := os.Getenv("R2_SECRET_ACCESS_KEY")
-	endpoint := os.Getenv("R2_ENDPOINT")
-
-	// Fallback to S3 credentials if R2 not set
-	if accessKeyID == "" {
-		accessKeyID = os.Getenv("S3_ACCESS_KEY_ID")
-	}
-	if secretAccessKey == "" {
-		secretAccessKey = os.Getenv("S3_SECRET_ACCESS_KEY")
-	}
-
-	// Validate required credentials
-	if accessKeyID == "" || secretAccessKey == "" {
-		return fmt.Errorf("missing required credentials. Please set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY environment variables")
-	}
-
-	// Validate endpoint is provided
-	if endpoint == "" {
-		return fmt.Errorf("missing R2_ENDPOINT environment variable")
-	}
-
 	// Check if HTTP/2 should be enabled (default: disabled for stability)
 	forceHTTP2 := os.Getenv("AZPROXY_ENABLE_HTTP2") == "true"
 	if forceHTTP2 {
@@ -880,15 +1061,9 @@ func Start(port int) error {
 		}
 	}
 
-	// Determine upload method from environment
-	uploadMethod := os.Getenv("AZPROXY_UPLOAD_METHOD")
-	if uploadMethod == "" {
-		uploadMethod = "http" // Default to HTTP method for direct R2 uploads
-	}
-
 	// Create custom HTTP client with optimized settings for large transfers
 	httpClient := &http.Client{
-		Timeout: 30 * time.Minute, // Extended timeout for large R2 uploads
+		Timeout: 30 * time.Minute, // Extended timeout for large uploads
 		Transport: &http.Transport{
 			MaxIdleConns:        1000,            // Increased from 512
 			MaxIdleConnsPerHost: 500,             // Increased from 256
@@ -900,7 +1075,7 @@ func Start(port int) error {
 			ReadBufferSize:  1024 * 1024, // 1MB read buffer (increased from 256KB)
 			// Control HTTP/2 based on environment variable
 			ForceAttemptHTTP2: forceHTTP2,
-			// Add response header timeout - increased for R2 large uploads
+			// Add response header timeout - increased for large uploads
 			ResponseHeaderTimeout: 5 * time.Minute,
 			// Expect continue timeout
 			ExpectContinueTimeout: 30 * time.Second,
@@ -926,81 +1101,18 @@ func Start(port int) error {
 		},
 	}
 
-	// Configure AWS SDK logging based on debug mode
-	var logMode aws.ClientLogMode
-	if debugMode {
-		logMode = aws.LogRetries | aws.LogRequest | aws.LogResponse | aws.LogRequestEventMessage | aws.LogResponseEventMessage
-		log.Printf("AWS SDK verbose logging enabled")
-	} else {
-		logMode = aws.LogRetries
-	}
-
-	cfg, err := config.LoadDefaultConfig(context.Background(),
-		config.WithRegion("auto"), // R2 uses "auto" region
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			accessKeyID,
-			secretAccessKey,
-			"",
-		)),
-		config.WithHTTPClient(httpClient),
-		config.WithRetryer(func() aws.Retryer {
-			return retry.NewStandard(func(o *retry.StandardOptions) {
-				o.MaxAttempts = 3 // Reduced from 8 for faster failure feedback
-			})
-		}),
-		config.WithClientLogMode(logMode),
-	)
-	if err != nil {
-		return fmt.Errorf("aws cfg: %v", err)
-	}
-
-	// Create S3 client
-	s3Config := func(o *s3.Options) {
-		o.UsePathStyle = true
-		// Disable ARN region for R2 compatibility
-		o.UseARNRegion = false
-		// Set R2 endpoint
-		o.BaseEndpoint = aws.String(endpoint)
-		// Disable S3 Express session auth which R2 doesn't support
-		o.DisableS3ExpressSessionAuth = aws.Bool(true)
-	}
-
-	// S3 client with no retries - for streaming operations
-	s3NoRetryConfig := func(o *s3.Options) {
-		o.UsePathStyle = true
-		o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), 1)
-		// Disable ARN region for R2 compatibility
-		o.UseARNRegion = false
-		// Set R2 endpoint
-		o.BaseEndpoint = aws.String(endpoint)
-		// Disable S3 Express session auth which R2 doesn't support
-		o.DisableS3ExpressSessionAuth = aws.Bool(true)
-	}
-
 	// Create performance stats
 	stats := newPerformanceStats()
 
-	// Create S3 clients
-	s3Client := s3.NewFromConfig(cfg, s3Config)
-	s3NoRetryClient := s3.NewFromConfig(cfg, s3NoRetryConfig)
-
-	// Create the appropriate uploader based on configuration
-	var uploader Uploader
-	switch uploadMethod {
-	case "http":
-		log.Printf("Using HTTP uploader for direct R2 uploads")
-		uploader = NewHTTPUploader(endpoint, httpClient, accessKeyID, secretAccessKey, stats, defaultConcurrency)
-	default:
-		log.Printf("Using S3 SDK uploader")
-		uploader = NewS3Uploader(s3Client, s3NoRetryClient, stats, defaultConcurrency)
-	}
-
 	s := &server{
-		s3:           s3Client,
-		s3NoRetry:    s3NoRetryClient,
-		uploadStates: make(map[string]*uploadState),
-		stats:        stats,
-		uploader:     uploader,
+		s3:                 nil, // No default S3 client - will be created dynamically
+		s3NoRetry:          nil, // No default S3 client - will be created dynamically
+		uploadStates:       make(map[string]*uploadState),
+		stats:              stats,
+		uploader:           nil, // No default uploader - will be created dynamically
+		s3ClientCache:      make(map[string]*s3ClientPair),
+		httpClient:         httpClient,
+		defaultConcurrency: defaultConcurrency,
 	}
 
 	// Configure server with optimized settings
@@ -1021,21 +1133,20 @@ func Start(port int) error {
 	log.Printf("HTTP/2: %v", forceHTTP2)
 	log.Printf("Max connections per host: %d", maxConnsPerHost)
 	log.Printf("Upload concurrency: %d (set AZPROXY_UPLOAD_CONCURRENCY to change)", defaultConcurrency)
-	log.Printf("Upload method: %s (set AZPROXY_UPLOAD_METHOD to 's3' for AWS SDK uploads)", uploadMethod)
-	log.Printf("Using endpoint: %s", endpoint)
-	log.Printf("Credentials loaded from environment variables")
+	log.Printf("Dynamic credential loading enabled - no environment variables required")
+	log.Printf("Credentials will be retrieved from derp based on request URLs")
 
 	if debugMode {
 		log.Printf("Health check: http://localhost:%d/_debug/health", port)
 		log.Printf("Stats endpoint: http://localhost:%d/_debug/stats", port)
 	}
 
-	// Start a goroutine to clean up old incomplete uploads
+	// Start a goroutine to clean up old cached clients
 	go func() {
 		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 		for range ticker.C {
-			s.cleanupIncompleteUploads(context.Background())
+			s.cleanupOldClients(context.Background())
 		}
 	}()
 
@@ -1082,32 +1193,23 @@ func bucketFor(_account, _container string) string {
 	return "prajtestcacheproxyeuauto"
 }
 
-// loadEnvFile tries to load .env file if it exists
-func loadEnvFile() {
-	// Simple .env file loader - reads key=value pairs
-	data, err := os.ReadFile(".env")
-	if err != nil {
-		// .env file not found is okay, just use system env vars
-		return
-	}
+// cleanupOldClients removes cached S3 clients that haven't been used recently
+func (s *server) cleanupOldClients(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		// Skip empty lines and comments
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
+	now := time.Now()
+	expireTime := 1 * time.Hour // Remove clients not used for 1 hour
+	cleaned := 0
 
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-			// Only set if not already set in environment
-			if os.Getenv(key) == "" {
-				os.Setenv(key, value)
-			}
+	for key, clientPair := range s.s3ClientCache {
+		if now.Sub(clientPair.lastUsed) > expireTime {
+			delete(s.s3ClientCache, key)
+			cleaned++
 		}
 	}
-	log.Printf("Loaded configuration from .env file")
+
+	if cleaned > 0 {
+		log.Printf("Cleaned up %d old S3 clients", cleaned)
+	}
 }
