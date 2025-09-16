@@ -18,7 +18,7 @@ func main() {
 		derpPort       = flag.Int("derp-port", 50052, "Port for DERP (Cache Twirp) service")
 		asurPort       = flag.Int("asur-port", 50053, "Port for ASUR (Azure→S3 Proxy) service")
 		oginyPort      = flag.Int("oginy-port", 50051, "Port for OGINY (TLS Reverse Proxy) service. Set to 0 to disable")
-		backendURL     = flag.String("backend-url", "https://api.warpbuild.com", "WarpCache backend URL")
+		backendURL     = flag.String("backend-url", "http://localhost:8000", "WarpCache backend URL")
 		authToken      = flag.String("auth-token", "", "WarpCache authentication token")
 		debug          = flag.Bool("debug", true, "Enable debug mode")
 		skipNetworking = flag.Bool("skip-networking", false, "Skip networking setup (useful for local testing)")
@@ -82,6 +82,7 @@ func main() {
 }
 
 func setupEnvironment(backendURL, authToken string, debug, skipNetworking bool) {
+	os.Setenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN", "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhYyI6Ilt7XCJTY29wZVwiOlwicmVmcy9oZWFkcy9tYWluXCIsXCJQZXJtaXNzaW9uXCI6M31dIiwiY29ubmVjdGlvbklkIjoiaW50ZXJuYWwiLCJleHAiOjE3NTgxNzU4MDgsIm5iZiI6MTc1NzkxNjYwOCwicnVubmVySWQiOiJ3YXJwZGV2LTh4LXg2NC13NW5tMDNnNGNpM3Btbm5vIiwic3RhY2tJZCI6Ind3MG9oOWpvcDR4cjkweGEiLCJ4LXdhcnBidWlsZC1vcmdhbml6YXRpb24taWQiOiJ3Zm1uMDgwZWlmOHJuaXdxIn0.w0H0DfxEfN0ZscZbWfWFK3h11Ovar5DKJvBulleloCxRrrALESUcd9C4D9_qXEGXFv5Gtl7_D3J-Yyf9iq7Eyg")
 	// Set up environment variables for DERP
 	if backendURL != "" {
 		os.Setenv("WARPCACHE_BACKEND_URL", backendURL)

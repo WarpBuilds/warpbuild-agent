@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -67,6 +68,12 @@ func (s *cacheServiceImpl) CreateCacheEntry(ctx context.Context, req *cachepb.Cr
 		return nil, fmt.Errorf("failed to reserve cache: %w", err)
 	}
 
+	// Validate that S3/R2 responses have AccessGrant
+	if (reserveResp.Provider == ProviderS3 || reserveResp.Provider == ProviderR2) &&
+		(reserveResp.S3 == nil || reserveResp.S3.AccessGrant == nil) {
+		return nil, fmt.Errorf("S3/R2 response missing AccessGrant for cache key %s", req.Key)
+	}
+
 	// Store the response in memory
 	cacheKey := fmt.Sprintf("%s:%s", req.Key, req.Version)
 	cacheInfo := &CacheEntryInfo{
@@ -79,7 +86,7 @@ func (s *cacheServiceImpl) CreateCacheEntry(ctx context.Context, req *cachepb.Cr
 	cacheStore.Store(cacheKey, cacheInfo)
 
 	// Store credentials if available
-	s.storeCredentials(reserveResp)
+	s.storeCredentials(reserveResp, req.Key, req.Version)
 
 	// Generate appropriate upload URL based on provider
 	uploadURL := s.generateUploadURL(reserveResp, req.Key, req.Version)
@@ -91,7 +98,7 @@ func (s *cacheServiceImpl) CreateCacheEntry(ctx context.Context, req *cachepb.Cr
 }
 
 func (s *cacheServiceImpl) FinalizeCacheEntryUpload(ctx context.Context, req *cachepb.FinalizeCacheEntryUploadRequest) (*cachepb.FinalizeCacheEntryUploadResponse, error) {
-	log.Printf("FinalizeCacheEntryUpload: key=%s, size=%d bytes", req.Key, req.SizeBytes)
+	log.Printf("FinalizeCacheEntryUpload: key=%s, version=%s, size=%d bytes", req.Key, req.Version, req.SizeBytes)
 
 	if req.Key == "" {
 		return nil, fmt.Errorf("cache key is required")
@@ -101,7 +108,7 @@ func (s *cacheServiceImpl) FinalizeCacheEntryUpload(ctx context.Context, req *ca
 	commitReq := CommitCacheRequest{
 		CacheKey:     req.Key,
 		CacheVersion: req.Version,
-		Parts:        []S3CompletedPart{}, // Empty for non-S3 providers
+		Parts:        []S3CompletedPart{}, // Will be populated for S3/R2
 		VCSType:      "github",
 	}
 
@@ -110,6 +117,62 @@ func (s *cacheServiceImpl) FinalizeCacheEntryUpload(ctx context.Context, req *ca
 	if cacheInfo, ok := cacheStore.Load(cacheKey); ok {
 		info := cacheInfo.(*CacheEntryInfo)
 		commitReq.Provider = info.Provider
+	}
+
+	// For S3/R2, include UploadKey, UploadID and completed parts captured by asur
+	if commitReq.Provider == ProviderS3 || commitReq.Provider == ProviderR2 {
+		cacheIdentifier := fmt.Sprintf("%s--%s", req.Key, req.Version)
+
+		if uploadKey, ok := GetS3UploadKey(cacheIdentifier); ok {
+			commitReq.UploadKey = uploadKey
+		}
+		if uploadID, ok := GetS3UploadID(cacheIdentifier); ok {
+			commitReq.UploadID = uploadID
+		}
+		if parts, ok := GetS3CompletedParts(cacheIdentifier); ok {
+			commitReq.Parts = parts
+		} else {
+			log.Printf("FinalizeCacheEntryUpload: no parts found for cacheIdentifier=%s", cacheIdentifier)
+
+			// Try alternative cache identifiers if no parts found
+			alternativeIdentifiers := []string{}
+
+			// If version is empty, try with just key--
+			if req.Version == "" {
+				alternativeIdentifiers = append(alternativeIdentifiers, fmt.Sprintf("%s--", req.Key))
+			}
+
+			// Try with some common default versions
+			commonDefaultVersions := []string{"0", "1", "default"}
+			for _, defaultVer := range commonDefaultVersions {
+				if req.Version != defaultVer {
+					alternativeIdentifiers = append(alternativeIdentifiers, fmt.Sprintf("%s--%s", req.Key, defaultVer))
+				}
+			}
+
+			// Try each alternative
+			for _, altId := range alternativeIdentifiers {
+				if parts, ok := GetS3CompletedParts(altId); ok {
+					commitReq.Parts = parts
+					break
+				}
+			}
+
+			// If still no parts found, try finding by cache key prefix
+			if len(commitReq.Parts) == 0 {
+				if parts, foundId, ok := findPartsForCacheKey(req.Key); ok {
+					commitReq.Parts = parts
+
+					// Also try to get the upload key and ID with this identifier
+					if uploadKey, ok := GetS3UploadKey(foundId); ok {
+						commitReq.UploadKey = uploadKey
+					}
+					if uploadID, ok := GetS3UploadID(foundId); ok {
+						commitReq.UploadID = uploadID
+					}
+				}
+			}
+		}
 	}
 
 	commitResp, err := s.callBackendCommit(ctx, commitReq)
@@ -145,10 +208,21 @@ func (s *cacheServiceImpl) GetCacheEntryDownloadURL(ctx context.Context, req *ca
 
 	getResp, err := s.callBackendGet(ctx, getReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cache: %w", err)
+		return &cachepb.GetCacheEntryDownloadURLResponse{
+			Ok: false,
+		}, nil
 	}
 
 	if getResp.CacheEntry == nil {
+		return &cachepb.GetCacheEntryDownloadURLResponse{
+			Ok: false,
+		}, nil
+	}
+
+	// Validate that S3/R2 responses have AccessGrant
+	if (getResp.Provider == ProviderS3 || getResp.Provider == ProviderR2) &&
+		(getResp.S3 == nil || getResp.S3.AccessGrant == nil) {
+		log.Printf("WARNING: S3/R2 response missing AccessGrant for cache key %s", req.Key)
 		return &cachepb.GetCacheEntryDownloadURLResponse{
 			Ok: false,
 		}, nil
@@ -165,7 +239,7 @@ func (s *cacheServiceImpl) GetCacheEntryDownloadURL(ctx context.Context, req *ca
 	}
 	cacheStore.Store(cacheKey, cacheInfo)
 
-	s.storeCredentials(getResp)
+	s.storeCredentials(getResp, getResp.CacheEntry.CacheUserGivenKey, getResp.CacheEntry.CacheVersion)
 
 	// Generate appropriate download URL based on provider
 	downloadURL := s.generateDownloadURL(getResp)
@@ -293,7 +367,7 @@ func (s *cacheServiceImpl) callBackendCommit(ctx context.Context, req CommitCach
 }
 
 // Credential storage methods
-func (s *cacheServiceImpl) storeCredentials(response interface{}) {
+func (s *cacheServiceImpl) storeCredentials(response interface{}, cacheKey, cacheVersion string) {
 	switch resp := response.(type) {
 	case *GetCacheResponse:
 		switch resp.Provider {
@@ -303,7 +377,13 @@ func (s *cacheServiceImpl) storeCredentials(response interface{}) {
 			}
 		case ProviderS3, ProviderR2:
 			if resp.S3 != nil {
-				credentialsStore.Store("s3_url", resp.S3.PreSignedURL)
+				credentialsStore.Store("s3_access_grant", resp.S3.AccessGrant)
+				// Store the CacheKey for S3/R2 downloads
+				if resp.S3.CacheKey != "" {
+					// Store with cache identifier for lookup
+					cacheIdentifier := fmt.Sprintf("%s--%s", cacheKey, cacheVersion)
+					credentialsStore.Store(fmt.Sprintf("s3_cache_key_%s", cacheIdentifier), resp.S3.CacheKey)
+				}
 			}
 		case ProviderAzureBlob:
 			if resp.AzureBlob != nil {
@@ -318,8 +398,18 @@ func (s *cacheServiceImpl) storeCredentials(response interface{}) {
 				credentialsStore.Store("gcs_token", resp.GCS.ShortLivedToken)
 			}
 		case ProviderS3, ProviderR2:
-			if resp.S3 != nil && len(resp.S3.PreSignedURLs) > 0 {
-				credentialsStore.Store("s3_urls", resp.S3.PreSignedURLs)
+			if resp.S3 != nil && resp.S3.AccessGrant != nil {
+				credentialsStore.Store("s3_access_grant", resp.S3.AccessGrant)
+				// Store the UploadKey and UploadID for S3/R2 uploads
+				if resp.S3.UploadKey != "" || resp.S3.UploadID != "" {
+					cacheIdentifier := fmt.Sprintf("%s--%s", cacheKey, cacheVersion)
+					if resp.S3.UploadKey != "" {
+						credentialsStore.Store(fmt.Sprintf("s3_upload_key_%s", cacheIdentifier), resp.S3.UploadKey)
+					}
+					if resp.S3.UploadID != "" {
+						credentialsStore.Store(fmt.Sprintf("s3_upload_id_%s", cacheIdentifier), resp.S3.UploadID)
+					}
+				}
 			}
 		case ProviderAzureBlob:
 			if resp.AzureBlob != nil {
@@ -430,7 +520,9 @@ func GetStoredCredentials(provider string) interface{} {
 // GetCacheInfo returns stored cache information for a given cache key
 func GetCacheInfo(cacheKey string) *CacheEntryInfo {
 	if val, ok := cacheStore.Load(cacheKey); ok {
-		return val.(*CacheEntryInfo)
+		if info, ok := val.(*CacheEntryInfo); ok {
+			return info
+		}
 	}
 	return nil
 }
@@ -441,7 +533,7 @@ func Start(port int) error {
 	if backendURL == "" {
 		backendURL = "https://api.warpbuild.com"
 	}
-	authToken := os.Getenv("WARPCACHE_AUTH_TOKEN")
+	authToken := os.Getenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN")
 
 	service := NewCacheService(backendURL, authToken)
 
@@ -455,6 +547,11 @@ func Start(port int) error {
 	log.Printf("Twirp service available at: %s", cachepb.CacheServicePathPrefix)
 	log.Printf("Backend URL: %s", backendURL)
 
+	// Start cleanup routine to remove old cache entries every 30 minutes
+	// Remove entries older than 2 hours
+	StartCleanupRoutine(30*time.Minute, 2*time.Hour)
+	log.Printf("Started cleanup routine for cache entries")
+
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 }
 
@@ -465,41 +562,155 @@ func GetAzureCredentials() (presignedURL, containerName, blobName string, found 
 	blobVal, blobOk := credentialsStore.Load("azure_blob")
 
 	if urlOk {
-		presignedURL = urlVal.(string)
-		found = true
+		if url, ok := urlVal.(string); ok {
+			presignedURL = url
+			found = true
+		}
 	}
 	if containerOk {
-		containerName = containerVal.(string)
+		if container, ok := containerVal.(string); ok {
+			containerName = container
+		}
 	}
 	if blobOk {
-		blobName = blobVal.(string)
+		if blob, ok := blobVal.(string); ok {
+			blobName = blob
+		}
 	}
 
 	return
 }
 
 // GetS3Credentials returns S3-specific credentials if available
-func GetS3Credentials() (presignedURLs []string, found bool) {
-	if val, ok := credentialsStore.Load("s3_urls"); ok {
-		presignedURLs = val.([]string)
-		found = true
-		return
-	}
-
-	// Check for single URL
-	if val, ok := credentialsStore.Load("s3_url"); ok {
-		presignedURLs = []string{val.(string)}
-		found = true
+func GetS3Credentials() (accessGrant *AccessGrant, found bool) {
+	if val, ok := credentialsStore.Load("s3_access_grant"); ok {
+		if grant, ok := val.(*AccessGrant); ok {
+			accessGrant = grant
+			found = true
+		}
 		return
 	}
 
 	return
 }
 
+// GetS3UploadKey returns the S3 upload key for a given cache identifier
+func GetS3UploadKey(cacheIdentifier string) (uploadKey string, found bool) {
+	key := fmt.Sprintf("s3_upload_key_%s", cacheIdentifier)
+	if val, ok := credentialsStore.Load(key); ok {
+		if key, ok := val.(string); ok {
+			return key, true
+		}
+	}
+	return "", false
+}
+
+// GetS3CacheKey returns the S3 cache key for a given cache identifier
+func GetS3CacheKey(cacheIdentifier string) (cacheKey string, found bool) {
+	key := fmt.Sprintf("s3_cache_key_%s", cacheIdentifier)
+	if val, ok := credentialsStore.Load(key); ok {
+		if key, ok := val.(string); ok {
+			return key, true
+		}
+	}
+	return "", false
+}
+
+// GetS3UploadID returns the S3 upload ID for a given cache identifier
+func GetS3UploadID(cacheIdentifier string) (uploadID string, found bool) {
+	key := fmt.Sprintf("s3_upload_id_%s", cacheIdentifier)
+	if val, ok := credentialsStore.Load(key); ok {
+		if id, ok := val.(string); ok && id != "" {
+			return id, true
+		}
+	}
+	return "", false
+}
+
+// internal struct for uploaded part info
+type uploadedPartInfo struct {
+	PartNumber int32
+	ETag       string
+}
+
+// AddS3UploadedBlock records an uploaded block (by Azure block ID) for a cache identifier
+func AddS3UploadedBlock(cacheIdentifier, blockID string, partNumber int32, etag string) {
+	key := fmt.Sprintf("s3_parts_map_%s", cacheIdentifier)
+	val, _ := credentialsStore.LoadOrStore(key, &sync.Map{})
+	partsMap := val.(*sync.Map)
+	partsMap.Store(blockID, uploadedPartInfo{PartNumber: partNumber, ETag: etag})
+}
+
+// SetS3BlockOrder records the order of Azure block IDs used when committing
+func SetS3BlockOrder(cacheIdentifier string, order []string) {
+	key := fmt.Sprintf("s3_block_order_%s", cacheIdentifier)
+	credentialsStore.Store(key, order)
+}
+
+// GetS3CompletedParts returns the completed parts in the correct order for commit
+func GetS3CompletedParts(cacheIdentifier string) ([]S3CompletedPart, bool) {
+	// Load parts map
+	partsKey := fmt.Sprintf("s3_parts_map_%s", cacheIdentifier)
+	val, ok := credentialsStore.Load(partsKey)
+	if !ok {
+		return nil, false
+	}
+	partsMap, ok := val.(*sync.Map)
+	if !ok {
+		return nil, false
+	}
+
+	// Try to get block order
+	orderKey := fmt.Sprintf("s3_block_order_%s", cacheIdentifier)
+	var orderedIDs []string
+	if v, ok := credentialsStore.Load(orderKey); ok {
+		if ids, ok := v.([]string); ok {
+			orderedIDs = ids
+		}
+	}
+
+	buildPart := func(info uploadedPartInfo) S3CompletedPart {
+		pn := info.PartNumber
+		etag := info.ETag
+		return S3CompletedPart{PartNumber: &pn, ETag: &etag}
+	}
+
+	result := make([]S3CompletedPart, 0)
+	if len(orderedIDs) > 0 {
+		for _, bid := range orderedIDs {
+			if v, ok := partsMap.Load(bid); ok {
+				info := v.(uploadedPartInfo)
+				result = append(result, buildPart(info))
+			}
+		}
+		if len(result) == 0 {
+			return nil, false
+		}
+		return result, true
+	}
+
+	// Fallback: collect all and sort by PartNumber
+	tmp := make([]uploadedPartInfo, 0)
+	partsMap.Range(func(_, v interface{}) bool {
+		tmp = append(tmp, v.(uploadedPartInfo))
+		return true
+	})
+	if len(tmp) == 0 {
+		return nil, false
+	}
+	sort.Slice(tmp, func(i, j int) bool { return tmp[i].PartNumber < tmp[j].PartNumber })
+	for _, info := range tmp {
+		result = append(result, buildPart(info))
+	}
+	return result, true
+}
+
 // GetGCSCredentials returns GCS-specific credentials if available
 func GetGCSCredentials() (*ShortLivedToken, bool) {
 	if val, ok := credentialsStore.Load("gcs_token"); ok {
-		return val.(*ShortLivedToken), true
+		if token, ok := val.(*ShortLivedToken); ok {
+			return token, true
+		}
 	}
 	return nil, false
 }
@@ -567,8 +778,8 @@ func GetCredentialsFromURL(urlStr string) (provider Provider, credentials interf
 			return provider, url, true
 		}
 	case ProviderS3, ProviderR2:
-		if urls, ok := GetS3Credentials(); ok {
-			return provider, urls, true
+		if accessGrant, ok := GetS3Credentials(); ok {
+			return provider, accessGrant, true
 		}
 	case ProviderGCS:
 		if token, ok := GetGCSCredentials(); ok {
@@ -599,4 +810,70 @@ func ParseAzureURL(url string) (container, blob string, err error) {
 	}
 
 	return parts[0], parts[1], nil
+}
+
+// cleanupOldCacheEntries removes cache entries older than the specified duration
+func cleanupOldCacheEntries(maxAge time.Duration) {
+	now := time.Now()
+	keysToDelete := []string{}
+
+	// Find old entries
+	cacheStore.Range(func(key, value interface{}) bool {
+		if cacheKey, ok := key.(string); ok {
+			if info, ok := value.(*CacheEntryInfo); ok {
+				if now.Sub(info.CreatedAt) > maxAge {
+					keysToDelete = append(keysToDelete, cacheKey)
+				}
+			}
+		}
+		return true
+	})
+
+	// Delete old entries
+	for _, key := range keysToDelete {
+		cacheStore.Delete(key)
+	}
+
+	if len(keysToDelete) > 0 {
+		log.Printf("Cleaned up %d old cache entries", len(keysToDelete))
+	}
+}
+
+// StartCleanupRoutine starts a background goroutine to periodically clean up old cache entries
+func StartCleanupRoutine(cleanupInterval, maxAge time.Duration) {
+	go func() {
+		ticker := time.NewTicker(cleanupInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			cleanupOldCacheEntries(maxAge)
+		}
+	}()
+}
+
+// findPartsForCacheKey tries to find parts for a cache key by checking various possible cache identifiers
+func findPartsForCacheKey(cacheKey string) ([]S3CompletedPart, string, bool) {
+	var foundParts []S3CompletedPart
+	var foundIdentifier string
+
+	// Look for any parts map that starts with the cache key
+	credentialsStore.Range(func(key, value interface{}) bool {
+		if keyStr, ok := key.(string); ok {
+			if strings.HasPrefix(keyStr, "s3_parts_map_") {
+				// Extract cache identifier from the key
+				cacheId := strings.TrimPrefix(keyStr, "s3_parts_map_")
+
+				// Check if this cache identifier starts with our cache key
+				if strings.HasPrefix(cacheId, cacheKey+"--") {
+					if parts, ok := GetS3CompletedParts(cacheId); ok {
+						foundParts = parts
+						foundIdentifier = cacheId
+						return false // Stop iteration
+					}
+				}
+			}
+		}
+		return true
+	})
+
+	return foundParts, foundIdentifier, len(foundParts) > 0
 }

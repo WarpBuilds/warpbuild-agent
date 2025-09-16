@@ -59,7 +59,7 @@ type CacheEntryMetadata struct {
 type S3GetCacheResponse struct {
 	CacheKey     string       `json:"cache_key"`
 	CacheVersion string       `json:"cache_version"`
-	PreSignedURL string       `json:"pre_signed_url"`
+	PreSignedURL string       `json:"pre_signed_url"` // Not used - we rely on AccessGrant instead
 	AccessGrant  *AccessGrant `json:"access_grant,omitempty"`
 }
 
@@ -67,6 +67,8 @@ type AccessGrant struct {
 	AccessKeyID     string `json:"access_key_id"`
 	SecretAccessKey string `json:"secret_access_key"`
 	SessionToken    string `json:"session_token"`
+	BucketName      string `json:"bucket_name"`
+	AccountID       string `json:"account_id"`
 }
 
 type GCSGetCacheResponse struct {
@@ -114,9 +116,10 @@ type GCSReserveCacheResponse struct {
 }
 
 type S3ReserveCacheResponse struct {
-	PreSignedURLs []string `json:"pre_signed_urls"`
-	UploadKey     string   `json:"upload_key"`
-	UploadID      string   `json:"upload_id"`
+	AccessGrant   *AccessGrant `json:"access_grant,omitempty"`
+	PreSignedURLs []string     `json:"pre_signed_urls"` // Not used - we rely on AccessGrant instead
+	UploadKey     string       `json:"upload_key"`
+	UploadID      string       `json:"upload_id"`
 }
 
 type AzureBlobReserveCacheResponse struct {

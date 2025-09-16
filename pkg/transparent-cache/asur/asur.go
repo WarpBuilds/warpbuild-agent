@@ -13,9 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -53,49 +51,6 @@ type uploadState struct {
 	Parts    map[string]uploadedPart // blockID (base64) -> part info
 }
 
-// stateKey generates a unique key for the upload state map
-func stateKey(bucket, key string) string {
-	return bucket + "/" + key
-}
-
-// getUploadState retrieves upload state from memory
-func (s *server) getUploadState(bucket, key string) *uploadState {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.uploadStates[stateKey(bucket, key)]
-}
-
-// ensureMultipart ensures a multipart upload exists, creating if necessary
-func (s *server) ensureMultipart(ctx context.Context, bucket, key string, uploader Uploader) (*uploadState, error) {
-	stateMapKey := stateKey(bucket, key)
-
-	// Hold the mutex while checking and possibly creating to avoid races where
-	// multiple concurrent requests all create independent multipart uploads.
-	s.mu.Lock()
-	us := s.uploadStates[stateMapKey]
-	if us != nil {
-		s.mu.Unlock()
-		return us, nil
-	}
-
-	// Create new multipart upload while still holding the lock so only one is created.
-	uploadID, err := uploader.EnsureMultipartUpload(ctx, bucket, key)
-	if err != nil {
-		s.mu.Unlock()
-		return nil, err
-	}
-
-	us = &uploadState{
-		UploadID: uploadID,
-		Parts:    map[string]uploadedPart{},
-	}
-
-	s.uploadStates[stateMapKey] = us
-	s.mu.Unlock()
-
-	return us, nil
-}
-
 // getS3ClientForURL retrieves or creates S3 clients based on credentials from the URL
 func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
 	// Get credentials from derp based on the URL
@@ -121,23 +76,14 @@ func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
 	var uploader Uploader
 
 	switch provider {
-	case derp.ProviderS3, derp.ProviderR2:
-		// Handle S3/R2 credentials
-		var endpoint, accessKeyID, secretAccessKey, sessionToken string
+	case derp.ProviderS3:
+		// Handle S3 credentials - use access credentials only
+		var accessKeyID, secretAccessKey, sessionToken string
 		var region string = "auto" // Default region
 
 		// Extract credentials based on response type
 		switch creds := derpCreds.(type) {
 		case *derp.S3GetCacheResponse:
-			// For GET operations, we have a pre-signed URL
-			if creds.PreSignedURL != "" {
-				// Parse pre-signed URL to extract endpoint
-				parsedURL, err := url.Parse(creds.PreSignedURL)
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse pre-signed URL: %w", err)
-				}
-				endpoint = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
-			}
 			// Use access grant if available
 			if creds.AccessGrant != nil {
 				accessKeyID = creds.AccessGrant.AccessKeyID
@@ -145,21 +91,53 @@ func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
 				sessionToken = creds.AccessGrant.SessionToken
 			}
 		case *derp.S3ReserveCacheResponse:
-			// For PUT operations, we might have multiple pre-signed URLs
-			if len(creds.PreSignedURLs) > 0 {
-				// Parse first pre-signed URL to extract endpoint
-				parsedURL, err := url.Parse(creds.PreSignedURLs[0])
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse pre-signed URL: %w", err)
-				}
-				endpoint = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+			// Use access grant if available
+			if creds.AccessGrant != nil {
+				accessKeyID = creds.AccessGrant.AccessKeyID
+				secretAccessKey = creds.AccessGrant.SecretAccessKey
+				sessionToken = creds.AccessGrant.SessionToken
 			}
 		}
 
-		// If we don't have explicit credentials, we'll need to use pre-signed URLs directly
+		// We require explicit credentials for S3
 		if accessKeyID == "" || secretAccessKey == "" {
-			// For now, return an error - in a full implementation, we'd handle pre-signed URLs differently
-			return nil, fmt.Errorf("no AWS credentials available for %s provider", provider)
+			return nil, fmt.Errorf("no AWS credentials available for S3 provider")
+		}
+
+		// Extract bucket name for endpoint determination
+		var bucketName string
+		switch creds := derpCreds.(type) {
+		case *derp.S3GetCacheResponse:
+			if creds.AccessGrant != nil {
+				bucketName = creds.AccessGrant.BucketName
+			}
+		case *derp.S3ReserveCacheResponse:
+			if creds.AccessGrant != nil {
+				bucketName = creds.AccessGrant.BucketName
+			}
+		}
+
+		// Determine endpoint and region based on bucket
+		var endpoint string
+		if bucketName != "" && strings.Contains(bucketName, ".") {
+			// For S3, check if bucket name contains endpoint information
+			// Some S3-compatible services encode the endpoint in the bucket name
+			// e.g., "bucket.s3.us-west-2.amazonaws.com"
+			parts := strings.SplitN(bucketName, ".", 2)
+			if len(parts) > 1 && strings.Contains(parts[1], "amazonaws.com") {
+				// Extract region from bucket name if it follows AWS pattern
+				if strings.HasPrefix(parts[1], "s3.") {
+					regionParts := strings.Split(parts[1], ".")
+					if len(regionParts) >= 3 {
+						region = regionParts[1]
+					}
+				}
+			}
+		}
+
+		if debugMode {
+			log.Printf("S3 configuration: provider=%s, bucket=%s, region=%s, endpoint=%s",
+				provider, bucketName, region, endpoint)
 		}
 
 		// Create AWS config
@@ -207,7 +185,92 @@ func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
 		s3NoRetryClient = s3.NewFromConfig(cfg, s3NoRetryConfig)
 
 		// Create uploader
-		uploader = NewS3Uploader(s3Client, s3NoRetryClient, s.stats, s.defaultConcurrency)
+		uploader = NewS3Uploader(s3Client, s3NoRetryClient, s.defaultConcurrency)
+
+	case derp.ProviderR2:
+		// Handle R2 credentials - use HTTPUploader for R2
+		var accessKeyID, secretAccessKey, sessionToken string
+		var accountID string
+
+		// Extract credentials and account ID based on response type
+		switch creds := derpCreds.(type) {
+		case *derp.S3GetCacheResponse:
+			// Use access grant if available
+			if creds.AccessGrant != nil {
+				accessKeyID = creds.AccessGrant.AccessKeyID
+				secretAccessKey = creds.AccessGrant.SecretAccessKey
+				sessionToken = creds.AccessGrant.SessionToken
+				accountID = creds.AccessGrant.AccountID
+			}
+		case *derp.S3ReserveCacheResponse:
+			// Use access grant if available
+			if creds.AccessGrant != nil {
+				accessKeyID = creds.AccessGrant.AccessKeyID
+				secretAccessKey = creds.AccessGrant.SecretAccessKey
+				sessionToken = creds.AccessGrant.SessionToken
+				accountID = creds.AccessGrant.AccountID
+			}
+		}
+
+		// We require explicit credentials for R2
+		if accessKeyID == "" || secretAccessKey == "" {
+			return nil, fmt.Errorf("no AWS credentials available for R2 provider")
+		}
+
+		// We require account ID for R2
+		if accountID == "" {
+			return nil, fmt.Errorf("no account ID available for R2 provider")
+		}
+
+		// R2 endpoint format: https://<account-id>.r2.cloudflarestorage.com
+		endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)
+
+		if debugMode {
+			log.Printf("R2 configuration: accountID=%s, endpoint=%s", accountID, endpoint)
+		}
+
+		// Create AWS config for R2
+		cfg, err := config.LoadDefaultConfig(context.Background(),
+			config.WithRegion("auto"), // R2 uses "auto" region
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				accessKeyID,
+				secretAccessKey,
+				sessionToken,
+			)),
+			config.WithHTTPClient(s.httpClient),
+			config.WithRetryer(func() aws.Retryer {
+				return retry.NewStandard(func(o *retry.StandardOptions) {
+					o.MaxAttempts = 3
+				})
+			}),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create AWS config for R2: %w", err)
+		}
+
+		// Create S3 client options for R2
+		s3Config := func(o *s3.Options) {
+			o.UsePathStyle = true
+			o.BaseEndpoint = aws.String(endpoint)
+			o.UseARNRegion = false
+			o.DisableS3ExpressSessionAuth = aws.Bool(true)
+		}
+
+		// S3 client with no retries - for streaming operations
+		s3NoRetryConfig := func(o *s3.Options) {
+			o.UsePathStyle = true
+			o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), 1)
+			o.BaseEndpoint = aws.String(endpoint)
+			o.UseARNRegion = false
+			o.DisableS3ExpressSessionAuth = aws.Bool(true)
+		}
+
+		// Create S3 clients for R2 (needed for GET/HEAD operations)
+		s3Client = s3.NewFromConfig(cfg, s3Config)
+		s3NoRetryClient = s3.NewFromConfig(cfg, s3NoRetryConfig)
+
+		// Create HTTPUploader for R2 (used for upload operations)
+		uploader = NewHTTPUploader(endpoint, s.httpClient, accessKeyID, secretAccessKey, sessionToken, s.defaultConcurrency)
 
 	case derp.ProviderAzureBlob:
 		// For Azure, we'd typically use Azure SDK, but for now we'll return an error
@@ -233,13 +296,6 @@ func (s *server) getS3ClientForURL(urlStr string) (*s3ClientPair, error) {
 
 	s.s3ClientCache[cacheKey] = clientPair
 	return clientPair, nil
-}
-
-// deleteUploadState removes upload state from memory
-func (s *server) deleteUploadState(bucket, key string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.uploadStates, stateKey(bucket, key))
 }
 
 // -------- utility --------
@@ -274,6 +330,12 @@ func extractBlockNumber(blockIDB64 string) (int, error) {
 	blockNum, err := strconv.Atoi(blockNumStr)
 	if err != nil {
 		return 0, fmt.Errorf("invalid block number: %v", err)
+	}
+
+	// Validate block number is within reasonable range
+	// Azure allows up to 50,000 blocks per blob
+	if blockNum < 0 || blockNum >= 50000 {
+		return 0, fmt.Errorf("block number %d out of valid range (0-49999)", blockNum)
 	}
 
 	return blockNum, nil
@@ -323,10 +385,6 @@ type server struct {
 	mu sync.Mutex
 	// in-memory upload states: "bucket/key" -> uploadState
 	uploadStates map[string]*uploadState
-	// performance statistics
-	stats *performanceStats
-	// uploader strategy
-	uploader Uploader
 	// Dynamic S3 client cache: cacheKey -> *s3ClientPair
 	s3ClientCache map[string]*s3ClientPair
 	// Default HTTP client for creating S3 clients
@@ -343,143 +401,85 @@ type s3ClientPair struct {
 	lastUsed      time.Time
 }
 
-// performanceStats tracks upload performance metrics
-type performanceStats struct {
-	mu              sync.RWMutex
-	totalUploads    int64
-	totalBytes      int64
-	totalDuration   time.Duration
-	activeUploads   int32
-	peakConcurrency int32
-	uploadHistory   []uploadStat // Ring buffer of recent uploads
-	historyIndex    int
-}
-
-type uploadStat struct {
-	timestamp   time.Time
-	size        int64
-	duration    time.Duration
-	throughput  float64 // MB/s
-	partCount   int
-	concurrency int
-}
-
-func newPerformanceStats() *performanceStats {
-	return &performanceStats{
-		uploadHistory: make([]uploadStat, 100), // Keep last 100 uploads
-	}
-}
-
-func (ps *performanceStats) recordUpload(size int64, duration time.Duration, partCount, concurrency int) {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	ps.totalUploads++
-	ps.totalBytes += size
-	ps.totalDuration += duration
-
-	throughput := float64(size) / (1024 * 1024) / duration.Seconds()
-
-	// Add to ring buffer
-	ps.uploadHistory[ps.historyIndex] = uploadStat{
-		timestamp:   time.Now(),
-		size:        size,
-		duration:    duration,
-		throughput:  throughput,
-		partCount:   partCount,
-		concurrency: concurrency,
-	}
-	ps.historyIndex = (ps.historyIndex + 1) % len(ps.uploadHistory)
-}
-
-func (ps *performanceStats) incrementActive() {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	ps.activeUploads++
-	if ps.activeUploads > ps.peakConcurrency {
-		ps.peakConcurrency = ps.activeUploads
-	}
-}
-
-func (ps *performanceStats) decrementActive() {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	ps.activeUploads--
-}
-
-func (ps *performanceStats) getStats() map[string]interface{} {
-	ps.mu.RLock()
-	defer ps.mu.RUnlock()
-
-	avgThroughput := float64(0)
-	if ps.totalDuration > 0 {
-		avgThroughput = float64(ps.totalBytes) / (1024 * 1024) / ps.totalDuration.Seconds()
-	}
-
-	// Calculate recent performance (last 10 uploads)
-	recentStats := make([]map[string]interface{}, 0)
-	count := 0
-	for i := 0; i < len(ps.uploadHistory) && count < 10; i++ {
-		idx := (ps.historyIndex - 1 - i + len(ps.uploadHistory)) % len(ps.uploadHistory)
-		stat := ps.uploadHistory[idx]
-		if stat.timestamp.IsZero() {
-			continue
-		}
-		recentStats = append(recentStats, map[string]interface{}{
-			"timestamp":       stat.timestamp.Format(time.RFC3339),
-			"size_mb":         float64(stat.size) / (1024 * 1024),
-			"duration_s":      stat.duration.Seconds(),
-			"throughput_mbps": stat.throughput,
-			"parts":           stat.partCount,
-			"concurrency":     stat.concurrency,
-		})
-		count++
-	}
-
-	return map[string]interface{}{
-		"total_uploads":       ps.totalUploads,
-		"total_bytes_mb":      float64(ps.totalBytes) / (1024 * 1024),
-		"avg_throughput_mbps": avgThroughput,
-		"active_uploads":      ps.activeUploads,
-		"peak_concurrency":    ps.peakConcurrency,
-		"recent_uploads":      recentStats,
-	}
-}
-
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Handle debug endpoints
-	if r.URL.Path == "/_debug/health" {
-		s.handleDebugHealth(w, r)
-		return
+	ctx := r.Context()
+
+	// Build the full URL from the request
+	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
+
+	if debugMode {
+		log.Printf("ServeHTTP: Processing URL: %s", fullURL)
 	}
-	if r.URL.Path == "/_debug/stats" {
-		s.handleDebugStats(w, r)
+
+	// Get credentials from derp
+	provider, credentials, found := derp.GetCredentialsFromURL(fullURL)
+	if !found {
+		http.Error(w, "no credentials found for URL", http.StatusBadRequest)
 		return
 	}
 
-	ctx := r.Context()
-	account, container, blobKey, err := parseAzuriteStyle(r.URL.Path)
+	if debugMode {
+		log.Printf("ServeHTTP: Found provider=%s for URL=%s", provider, fullURL)
+	}
+
+	// Extract bucket name from credentials
+	bucket, err := getBucketFromCredentials(provider, credentials)
 	if err != nil {
-		http.Error(w, "invalid azure path", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to get bucket: %v", err), http.StatusBadRequest)
 		return
 	}
-	bucket := bucketFor(account, container)
+
+	// Extract the blob key from the URL path
+	// Expected format: /{provider}/{cacheKey}--{version}
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
+	if len(parts) < 2 {
+		http.Error(w, "invalid path format", http.StatusBadRequest)
+		return
+	}
+	blobKey := strings.Join(parts[1:], "/") // Everything after the provider prefix
+
+	// For S3/R2, check if we have a specific key from the backend
+	actualKey := blobKey
+	if provider == derp.ProviderS3 || provider == derp.ProviderR2 {
+		// Extract cache identifier from blobKey (format: cacheKey--version)
+		if r.Method == http.MethodPut {
+			// For uploads, check for UploadKey
+			if uploadKey, found := derp.GetS3UploadKey(blobKey); found {
+				actualKey = uploadKey
+				if debugMode {
+					log.Printf("ServeHTTP: Using backend UploadKey=%s instead of blobKey=%s", uploadKey, blobKey)
+				}
+			}
+		} else if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			// For downloads, check for CacheKey
+			if cacheKey, found := derp.GetS3CacheKey(blobKey); found {
+				actualKey = cacheKey
+				if debugMode {
+					log.Printf("ServeHTTP: Using backend CacheKey=%s instead of blobKey=%s", cacheKey, blobKey)
+				}
+			}
+		}
+	}
+
+	if debugMode {
+		log.Printf("ServeHTTP: bucket=%s, blobKey=%s, actualKey=%s", bucket, blobKey, actualKey)
+	}
 
 	switch r.Method {
 	case http.MethodPut:
 		q := r.URL.Query()
 		switch strings.ToLower(q.Get("comp")) {
 		case "block":
-			s.handlePutBlock(ctx, w, r, bucket, blobKey, q.Get("blockid"))
+			s.handlePutBlock(ctx, w, r, bucket, actualKey, blobKey, q.Get("blockid"))
 		case "blocklist":
-			s.handlePutBlockList(ctx, w, r, bucket, blobKey)
+			s.handlePutBlockList(ctx, w, r, bucket, actualKey, blobKey)
 		default:
-			s.handlePutBlob(ctx, w, r, bucket, blobKey)
+			s.handlePutBlob(ctx, w, r, bucket, actualKey)
 		}
 	case http.MethodGet:
-		s.handleGet(ctx, w, r, bucket, blobKey)
+		s.handleGet(ctx, w, r, bucket, actualKey)
 	case http.MethodHead:
-		s.handleHead(ctx, w, r, bucket, blobKey)
+		s.handleHead(ctx, w, r, bucket, actualKey)
 	default:
 		http.Error(w, "unsupported", http.StatusNotImplemented)
 	}
@@ -494,18 +494,13 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 
 		// Construct the full URL
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-
 		// Build query string with ? prefix if present
 		queryString := ""
 		if r.URL.RawQuery != "" {
 			queryString = "?" + r.URL.RawQuery
 		}
 
-		fullURL := fmt.Sprintf("%s://%s%s%s", scheme, r.Host, r.URL.Path, queryString)
+		fullURL := fmt.Sprintf("https://%s%s%s", r.Host, r.URL.Path, queryString)
 
 		// Log request
 		if debugMode {
@@ -582,6 +577,13 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 	contentLength := r.ContentLength
 	log.Printf("handlePutBlob: key=%s size=%d MB", key, contentLength/(1024*1024))
 
+	// Extract cache identifier from the URL path (format: /provider/cacheKey--version)
+	var cacheIdentifier string
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
+	if len(parts) >= 2 {
+		cacheIdentifier = parts[1] // This should be cacheKey--version
+	}
+
 	// For small files (< 5MB), use direct upload
 	if contentLength > 0 && contentLength < 5*1024*1024 {
 		buf, err := io.ReadAll(r.Body)
@@ -597,6 +599,13 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 			return
 		}
 
+		// Track small file upload completion if we have a cache identifier
+		if cacheIdentifier != "" {
+			// Store a special marker indicating direct upload completion
+			derp.AddS3UploadedBlock(cacheIdentifier, "DIRECT_UPLOAD_SMALL", 1, result.ETag)
+			derp.SetS3BlockOrder(cacheIdentifier, []string{"DIRECT_UPLOAD_SMALL"})
+		}
+
 		azureOKHeaders(w)
 		w.Header().Set("ETag", result.ETag)
 		w.Header().Set("Last-Modified", result.LastModified.Format(http.TimeFormat))
@@ -604,10 +613,28 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 		return
 	}
 
-	// For larger files, use concurrent multipart upload
+	// For larger files, use concurrent multipart upload with tracking
 	log.Printf("Using multipart upload for large file: %s", key)
 
-	result, err := clientPair.uploader.UploadLargeFile(ctx, bucket, key, r.Body, contentLength)
+	// Get the backend's upload ID (required for multipart uploads)
+	if cacheIdentifier == "" {
+		log.Printf("ERROR: No cache identifier found for multipart upload")
+		http.Error(w, "Cache identifier required for multipart upload", http.StatusBadRequest)
+		return
+	}
+
+	uploadID, ok := derp.GetS3UploadID(cacheIdentifier)
+	if !ok || uploadID == "" {
+		log.Printf("ERROR: No backend upload ID found for cacheIdentifier=%s", cacheIdentifier)
+		http.Error(w, "Backend upload ID not found", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Using backend-provided upload ID: %s for cacheIdentifier=%s", uploadID, cacheIdentifier)
+
+	// Use the backend's upload ID
+	result, err := clientPair.uploader.UploadLargeFile(ctx, bucket, key, r.Body, contentLength, cacheIdentifier, uploadID)
+
 	if err != nil {
 		log.Printf("UploadLargeFile failed: %v", err)
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -620,7 +647,7 @@ func (s *server) handlePutBlob(ctx context.Context, w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusCreated) // Azure Put Blob returns 201
 }
 
-func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, blockIDB64 string) {
+func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, cacheIdentifier, blockIDB64 string) {
 	if blockIDB64 == "" {
 		http.Error(w, "missing blockid", http.StatusBadRequest)
 		return
@@ -643,14 +670,13 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 		return
 	}
 
-	// Ensure multipart context and get state
-	log.Printf("Ensuring multipart upload for %s/%s", bucket, key)
-	us, err := s.ensureMultipart(ctx, bucket, key, clientPair.uploader)
-	if err != nil || us == nil {
-		http.Error(w, "create multipart: "+err.Error(), http.StatusBadGateway)
+	// Use UploadID provided by backend (stored by derp)
+	uploadID, ok := derp.GetS3UploadID(cacheIdentifier)
+	if !ok || uploadID == "" {
+		http.Error(w, "missing upload id for multipart", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Got upload state with ID: %s", us.UploadID)
+	log.Printf("Using provided multipart upload ID: %s", uploadID)
 
 	// Extract block number from Azure block ID
 	blockNum, err := extractBlockNumber(blockIDB64)
@@ -667,7 +693,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 	if contentLength < 0 {
 		// If content length is unknown, we need to buffer
 		// Fall back to the original implementation for this edge case
-		s.handlePutBlockBuffered(ctx, w, r, bucket, key, blockIDB64, us, partNum, clientPair.uploader)
+		s.handlePutBlockBuffered(ctx, w, r, bucket, key, cacheIdentifier, blockIDB64, uploadID, partNum, clientPair.uploader)
 		return
 	}
 
@@ -692,7 +718,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 		defer pr.Close()
 
 		// Upload part using the uploader interface
-		etag, err := clientPair.uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, pr, contentLength)
+		etag, err := clientPair.uploader.UploadPartStream(ctx, bucket, key, uploadID, partNum, pr, contentLength)
 
 		resultChan <- uploadResult{
 			etag: etag,
@@ -723,13 +749,8 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 		return
 	}
 
-	// Store the part information for this block
-	s.mu.Lock()
-	us.Parts[blockIDB64] = uploadedPart{
-		PartNumber: partNum,
-		ETag:       result.etag,
-	}
-	s.mu.Unlock()
+	// Record the part in derp for finalize
+	derp.AddS3UploadedBlock(cacheIdentifier, blockIDB64, partNum, result.etag)
 
 	// Return success to client
 	azureOKHeaders(w)
@@ -739,7 +760,7 @@ func (s *server) handlePutBlock(ctx context.Context, w http.ResponseWriter, r *h
 }
 
 // handlePutBlockBuffered is the fallback for when Content-Length is not known
-func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, blockIDB64 string, us *uploadState, partNum int32, uploader Uploader) {
+func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, cacheIdentifier, blockIDB64, uploadID string, partNum int32, uploader Uploader) {
 	// Read the entire block data into memory
 	hasher := md5.New()
 	teeReader := io.TeeReader(r.Body, hasher)
@@ -757,19 +778,14 @@ func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWrit
 		key, blockIDB64, blockSize/(1024*1024), md5Sum)
 
 	// Upload part using the uploader interface (with buffer reader)
-	etag, err := uploader.UploadPartStream(ctx, bucket, key, us.UploadID, partNum, bytes.NewReader(blockBytes), int64(blockSize))
+	etag, err := uploader.UploadPartStream(ctx, bucket, key, uploadID, partNum, bytes.NewReader(blockBytes), int64(blockSize))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("upload part %d failed: %v", partNum, err), http.StatusBadGateway)
 		return
 	}
 
-	// Store the part information for this block
-	s.mu.Lock()
-	us.Parts[blockIDB64] = uploadedPart{
-		PartNumber: partNum,
-		ETag:       etag,
-	}
-	s.mu.Unlock()
+	// Record the part in derp for finalize
+	derp.AddS3UploadedBlock(cacheIdentifier, blockIDB64, partNum, etag)
 
 	// Return success to client
 	azureOKHeaders(w)
@@ -778,7 +794,7 @@ func (s *server) handlePutBlockBuffered(ctx context.Context, w http.ResponseWrit
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key string) {
+func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, r *http.Request, bucket, key, cacheIdentifier string) {
 	// Build the full Azure-style URL from the request
 	fullURL := fmt.Sprintf("https://%s%s", r.Host, r.URL.Path)
 
@@ -790,61 +806,35 @@ func (s *server) handlePutBlockList(ctx context.Context, w http.ResponseWriter, 
 		return
 	}
 
-	// Get existing upload state
-	us := s.getUploadState(bucket, key)
-	if us == nil {
-		http.Error(w, "no multipart context", http.StatusConflict)
+	_ = clientPair // clientPair retained for parity; not used here
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read request body", http.StatusBadRequest)
 		return
 	}
 
-	body, _ := io.ReadAll(r.Body)
 	var bl blockListXML
 	if err := xml.Unmarshal(body, &bl); err != nil {
 		http.Error(w, "bad blocklist XML", http.StatusBadRequest)
 		return
 	}
 
-	// Azure enforces the order in the XML; build S3 CompletedParts in that order.
+	// Azure enforces the order in the XML; build order in that sequence.
 	order := make([]string, 0, len(bl.Latest)+len(bl.Uncommitted)+len(bl.Committed))
 	order = append(order, bl.Latest...)
 	order = append(order, bl.Uncommitted...)
 	order = append(order, bl.Committed...)
 
-	log.Printf("Committing %d blocks...", len(order))
-	startTime := time.Now()
+	log.Printf("Received block list with %d blocks (deferring completion to finalize)", len(order))
 
-	// Gather all parts that were uploaded for these blocks
-	var parts []CompletedPart
+	// Store order for finalize stage
+	derp.SetS3BlockOrder(cacheIdentifier, order)
 
-	for _, blockID := range order {
-		// Get the part info for this block
-		part, ok := us.Parts[blockID]
-		if !ok {
-			http.Error(w, "missing block "+blockID, http.StatusBadRequest)
-			return
-		}
-
-		parts = append(parts, CompletedPart(part))
-	}
-
-	log.Printf("Completing multipart upload with %d parts", len(parts))
-
-	// Complete the multipart upload
-	result, err := clientPair.uploader.CompleteMultipartUpload(ctx, bucket, key, us.UploadID, parts)
-	if err != nil {
-		http.Error(w, "complete multipart: "+err.Error(), http.StatusBadGateway)
-		return
-	}
-
-	elapsed := time.Since(startTime)
-	log.Printf("Multipart upload completed in %v", elapsed)
-
-	// Cleanup state object
-	s.deleteUploadState(bucket, key)
-
+	// Do NOT complete multipart here. Only acknowledge.
 	azureOKHeaders(w)
-	w.Header().Set("ETag", result.ETag)
-	w.Header().Set("Last-Modified", result.LastModified.Format(http.TimeFormat))
+	w.Header().Set("ETag", "")
+	w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
 	w.WriteHeader(http.StatusCreated) // Azure Put Block List returns 201
 }
 
@@ -980,60 +970,6 @@ func (s *server) handleHead(ctx context.Context, w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusOK)
 }
 
-// handleDebugHealth provides a health check endpoint
-func (s *server) handleDebugHealth(w http.ResponseWriter, r *http.Request) {
-	health := map[string]interface{}{
-		"status":     "ok",
-		"timestamp":  time.Now().UTC().Format(time.RFC3339),
-		"debug_mode": debugMode,
-		"cache_info": map[string]interface{}{
-			"cached_clients":     len(s.s3ClientCache),
-			"active_uploads":     len(s.uploadStates),
-			"ready_for_requests": true,
-		},
-	}
-
-	// Report that we're using dynamic client creation
-	health["client_mode"] = "dynamic"
-	health["message"] = "S3 clients are created dynamically based on credentials from derp"
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(health)
-}
-
-// handleDebugStats provides runtime statistics
-func (s *server) handleDebugStats(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	activeUploads := len(s.uploadStates)
-	uploadKeys := make([]string, 0, activeUploads)
-	for k := range s.uploadStates {
-		uploadKeys = append(uploadKeys, k)
-	}
-	s.mu.Unlock()
-
-	stats := map[string]interface{}{
-		"timestamp":      time.Now().UTC().Format(time.RFC3339),
-		"active_uploads": activeUploads,
-		"upload_keys":    uploadKeys,
-		"debug_mode":     debugMode,
-		"goroutines":     runtime.NumGoroutine(),
-		"performance":    s.stats.getStats(),
-	}
-
-	// Memory statistics
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	stats["memory"] = map[string]interface{}{
-		"alloc_mb":       float64(m.Alloc) / (1024 * 1024),
-		"total_alloc_mb": float64(m.TotalAlloc) / (1024 * 1024),
-		"sys_mb":         float64(m.Sys) / (1024 * 1024),
-		"num_gc":         m.NumGC,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
-}
-
 // Start starts the ASUR Azure→S3 proxy service
 func Start(port int) error {
 	// Check if HTTP/2 should be enabled (default: disabled for stability)
@@ -1101,15 +1037,11 @@ func Start(port int) error {
 		},
 	}
 
-	// Create performance stats
-	stats := newPerformanceStats()
-
 	s := &server{
-		s3:                 nil, // No default S3 client - will be created dynamically
-		s3NoRetry:          nil, // No default S3 client - will be created dynamically
-		uploadStates:       make(map[string]*uploadState),
-		stats:              stats,
-		uploader:           nil, // No default uploader - will be created dynamically
+		s3:           nil, // No default S3 client - will be created dynamically
+		s3NoRetry:    nil, // No default S3 client - will be created dynamically
+		uploadStates: make(map[string]*uploadState),
+
 		s3ClientCache:      make(map[string]*s3ClientPair),
 		httpClient:         httpClient,
 		defaultConcurrency: defaultConcurrency,
@@ -1153,44 +1085,73 @@ func Start(port int) error {
 	return srv.ListenAndServe()
 }
 
-// cleanupIncompleteUploads removes incomplete multipart uploads
-func (s *server) cleanupIncompleteUploads(ctx context.Context) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// getBucketFromCredentials extracts the bucket name from derp credentials
+func getBucketFromCredentials(provider derp.Provider, credentials interface{}) (string, error) {
+	if debugMode {
+		log.Printf("getBucketFromCredentials: provider=%s, credType=%T", provider, credentials)
+	}
 
-	cleaned := 0
-	for key, state := range s.uploadStates {
-		parts := strings.SplitN(key, "/", 2)
-		if len(parts) != 2 {
-			continue
+	switch provider {
+	case derp.ProviderS3, derp.ProviderR2:
+		// For S3/R2, check both GetCacheResponse and ReserveCacheResponse
+		switch creds := credentials.(type) {
+		case *derp.S3GetCacheResponse:
+			if creds.AccessGrant != nil && creds.AccessGrant.BucketName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found S3 bucket from GetCacheResponse: %s", creds.AccessGrant.BucketName)
+				}
+				return creds.AccessGrant.BucketName, nil
+			}
+		case *derp.S3ReserveCacheResponse:
+			if creds.AccessGrant != nil && creds.AccessGrant.BucketName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found S3 bucket from ReserveCacheResponse: %s", creds.AccessGrant.BucketName)
+				}
+				return creds.AccessGrant.BucketName, nil
+			}
 		}
-		bucket, objectKey := parts[0], parts[1]
-
-		// Try to abort the multipart upload
-		err := s.uploader.AbortMultipartUpload(ctx, bucket, objectKey, state.UploadID)
-		if err == nil {
-			delete(s.uploadStates, key)
-			cleaned++
+	case derp.ProviderAzureBlob:
+		switch creds := credentials.(type) {
+		case *derp.AzureBlobGetCacheResponse:
+			if creds.BucketName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found Azure bucket from GetCacheResponse: %s", creds.BucketName)
+				}
+				return creds.BucketName, nil
+			}
+		case *derp.AzureBlobReserveCacheResponse:
+			if creds.ContainerName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found Azure container from ReserveCacheResponse: %s", creds.ContainerName)
+				}
+				return creds.ContainerName, nil
+			}
+		}
+	case derp.ProviderGCS:
+		switch creds := credentials.(type) {
+		case *derp.GCSGetCacheResponse:
+			if creds.BucketName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found GCS bucket from GetCacheResponse: %s", creds.BucketName)
+				}
+				return creds.BucketName, nil
+			}
+		case *derp.GCSReserveCacheResponse:
+			if creds.BucketName != "" {
+				if debugMode {
+					log.Printf("getBucketFromCredentials: Found GCS bucket from ReserveCacheResponse: %s", creds.BucketName)
+				}
+				return creds.BucketName, nil
+			}
 		}
 	}
 
-	if cleaned > 0 {
-		log.Printf("Cleaned up %d incomplete uploads", cleaned)
+	// Fallback to default bucket
+	defaultBucket := "prajtestcacheproxyeuauto"
+	if debugMode {
+		log.Printf("getBucketFromCredentials: Using fallback bucket: %s", defaultBucket)
 	}
-}
-
-func parseAzuriteStyle(p string) (account, container, key string, _ error) {
-	parts := strings.Split(strings.TrimPrefix(p, "/"), "/")
-	if len(parts) < 3 {
-		return "", "", "", fmt.Errorf("bad path")
-	}
-	account, container = parts[0], parts[1]
-	key = strings.Join(parts[2:], "/")
-	return
-}
-
-func bucketFor(_account, _container string) string {
-	return "prajtestcacheproxyeuauto"
+	return defaultBucket, nil
 }
 
 // cleanupOldClients removes cached S3 clients that haven't been used recently

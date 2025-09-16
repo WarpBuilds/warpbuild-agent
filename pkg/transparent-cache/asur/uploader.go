@@ -13,12 +13,14 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache/derp"
 )
 
 // UploadResult represents the result of an upload operation
@@ -32,8 +34,8 @@ type Uploader interface {
 	// UploadSmallFile uploads a file directly (for files < 5MB)
 	UploadSmallFile(ctx context.Context, bucket, key string, data []byte) (*UploadResult, error)
 
-	// UploadLargeFile uploads a large file using multipart/concurrent upload
-	UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64) (*UploadResult, error)
+	// UploadLargeFile uploads a large file using the backend's multipart upload ID and tracks parts
+	UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64, cacheIdentifier, uploadID string) (*UploadResult, error)
 
 	// Block-based upload methods for Azure compatibility
 
@@ -60,16 +62,14 @@ type CompletedPart struct {
 type S3Uploader struct {
 	s3Client       *s3.Client
 	s3NoRetry      *s3.Client
-	stats          *performanceStats
 	maxConcurrency int
 }
 
 // NewS3Uploader creates a new S3Uploader
-func NewS3Uploader(s3Client, s3NoRetry *s3.Client, stats *performanceStats, maxConcurrency int) *S3Uploader {
+func NewS3Uploader(s3Client, s3NoRetry *s3.Client, maxConcurrency int) *S3Uploader {
 	return &S3Uploader{
 		s3Client:       s3Client,
 		s3NoRetry:      s3NoRetry,
-		stats:          stats,
 		maxConcurrency: maxConcurrency,
 	}
 }
@@ -93,24 +93,13 @@ func (u *S3Uploader) UploadSmallFile(ctx context.Context, bucket, key string, da
 	}, nil
 }
 
-// UploadLargeFile implements concurrent multipart upload for large files
-func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64) (*UploadResult, error) {
+// UploadLargeFile implements concurrent multipart upload using backend's upload ID with part tracking
+func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64, cacheIdentifier, uploadID string) (*UploadResult, error) {
 	// Track performance
 	uploadStart := time.Now()
-	u.stats.incrementActive()
-	defer u.stats.decrementActive()
 
-	// Create multipart upload
-	createInput := &s3.CreateMultipartUploadInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}
-	createOut, err := u.s3Client.CreateMultipartUpload(ctx, createInput)
-	if err != nil {
-		return nil, fmt.Errorf("create multipart upload failed: %w", err)
-	}
-	uploadID := aws.ToString(createOut.UploadId)
-	log.Printf("Created multipart upload: %s", uploadID)
+	// Use the provided uploadID
+	log.Printf("Using pre-existing upload ID: %s for tracking", uploadID)
 
 	// Determine optimal chunk size and concurrency
 	const minChunkSize = 5 * 1024 * 1024   // 5MB minimum
@@ -208,8 +197,9 @@ func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, re
 		}(i)
 	}
 
-	// Result collector goroutine
+	// Result collector goroutine with tracking
 	parts := make([]s3types.CompletedPart, 0)
+	trackedParts := make([]string, 0) // Track block IDs for order
 	partsMu := sync.Mutex{}
 	uploadErrors := make([]error, 0)
 
@@ -222,6 +212,17 @@ func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, re
 			} else {
 				partsMu.Lock()
 				parts = append(parts, result.part)
+
+				// Track the part if we have a cache identifier
+				if cacheIdentifier != "" {
+					// Generate a block ID for this part
+					blockID := fmt.Sprintf("BLOB_PART_%06d", result.partNum)
+					trackedParts = append(trackedParts, blockID)
+
+					// Track the part in derp
+					derp.AddS3UploadedBlock(cacheIdentifier, blockID, result.partNum, aws.ToString(result.part.ETag))
+				}
+
 				partsMu.Unlock()
 			}
 		}
@@ -296,6 +297,19 @@ func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, re
 		return *parts[i].PartNumber < *parts[j].PartNumber
 	})
 
+	// If tracking, store the block order
+	if cacheIdentifier != "" && len(trackedParts) > 0 {
+		// Sort tracked parts by their part number
+		sort.Slice(trackedParts, func(i, j int) bool {
+			// Extract part number from BLOB_PART_XXXXXX format
+			numI, _ := fmt.Sscanf(trackedParts[i], "BLOB_PART_%d", new(int))
+			numJ, _ := fmt.Sscanf(trackedParts[j], "BLOB_PART_%d", new(int))
+			return numI < numJ
+		})
+
+		derp.SetS3BlockOrder(cacheIdentifier, trackedParts)
+	}
+
 	// Complete multipart upload
 	log.Printf("Completing multipart upload with %d parts", len(parts))
 	completeOut, err := u.s3Client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
@@ -312,7 +326,6 @@ func (u *S3Uploader) UploadLargeFile(ctx context.Context, bucket, key string, re
 
 	// Record performance statistics
 	uploadDuration := time.Since(uploadStart)
-	u.stats.recordUpload(contentLength, uploadDuration, len(parts), u.maxConcurrency)
 	throughput := float64(contentLength) / (1024 * 1024) / uploadDuration.Seconds()
 	log.Printf("Upload completed: %s, size=%d MB, duration=%v, throughput=%.1f MB/s",
 		key, contentLength/(1024*1024), uploadDuration, throughput)
@@ -418,11 +431,12 @@ func (u *S3Uploader) AbortMultipartUpload(ctx context.Context, bucket, key, uplo
 
 // HTTPUploader implements Uploader using direct HTTP client for R2
 type HTTPUploader struct {
-	endpoint       string
-	httpClient     *http.Client
-	stats          *performanceStats
+	endpoint   string
+	httpClient *http.Client
+
 	accessKey      string
 	secretKey      string
+	sessionToken   string
 	maxConcurrency int
 }
 
@@ -433,22 +447,21 @@ type partInfo struct {
 }
 
 // NewHTTPUploader creates a new HTTPUploader for direct R2 uploads
-func NewHTTPUploader(endpoint string, httpClient *http.Client, accessKey, secretKey string, stats *performanceStats, maxConcurrency int) *HTTPUploader {
+func NewHTTPUploader(endpoint string, httpClient *http.Client, accessKey, secretKey, sessionToken string, maxConcurrency int) *HTTPUploader {
 	return &HTTPUploader{
 		endpoint:       endpoint,
 		httpClient:     httpClient,
-		stats:          stats,
 		accessKey:      accessKey,
 		secretKey:      secretKey,
+		sessionToken:   sessionToken,
 		maxConcurrency: maxConcurrency,
 	}
 }
 
 // UploadSmallFile implements direct upload for small files using HTTP
 func (u *HTTPUploader) UploadSmallFile(ctx context.Context, bucket, key string, data []byte) (*UploadResult, error) {
-	// URL encode the key to handle special characters
-	encodedKey := url.PathEscape(key)
-	uploadURL := fmt.Sprintf("%s/%s/%s", u.endpoint, bucket, encodedKey)
+	// Use the key as-is, don't URL encode it
+	uploadURL := fmt.Sprintf("%s/%s/%s", u.endpoint, bucket, key)
 
 	req, err := http.NewRequestWithContext(ctx, "PUT", uploadURL, bytes.NewReader(data))
 	if err != nil {
@@ -476,20 +489,13 @@ func (u *HTTPUploader) UploadSmallFile(ctx context.Context, bucket, key string, 
 	}, nil
 }
 
-// UploadLargeFile implements multipart upload for large files using HTTP
-func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64) (*UploadResult, error) {
+// UploadLargeFile implements multipart upload using backend's upload ID with part tracking for HTTP
+func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, reader io.Reader, contentLength int64, cacheIdentifier, uploadID string) (*UploadResult, error) {
 	// Track performance
 	uploadStart := time.Now()
-	u.stats.incrementActive()
-	defer u.stats.decrementActive()
 
-	// Step 1: Initiate multipart upload
-	uploadID, err := u.initiateMultipartUpload(ctx, bucket, key)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("HTTP multipart upload initiated: %s", uploadID)
+	// Use the provided uploadID
+	log.Printf("HTTP multipart upload using pre-existing ID: %s", uploadID)
 
 	// Determine optimal chunk size
 	const minChunkSize = 5 * 1024 * 1024   // 5MB minimum
@@ -537,6 +543,7 @@ func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, 
 
 	// Result collector goroutine
 	parts := make([]partInfo, 0)
+	trackedParts := make([]string, 0) // Track block IDs for order
 	partsMu := sync.Mutex{}
 	uploadErrors := make([]error, 0)
 
@@ -549,9 +556,20 @@ func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, 
 			} else {
 				partsMu.Lock()
 				parts = append(parts, partInfo{
-					PartNumber: result.partNum,
+					PartNumber: int(result.partNum),
 					ETag:       result.etag,
 				})
+
+				// Track the part if we have a cache identifier
+				if cacheIdentifier != "" {
+					// Generate a block ID for this part
+					blockID := fmt.Sprintf("BLOB_PART_%06d", result.partNum)
+					trackedParts = append(trackedParts, blockID)
+
+					// Track the part in derp
+					derp.AddS3UploadedBlock(cacheIdentifier, blockID, int32(result.partNum), result.etag)
+				}
+
 				partsMu.Unlock()
 			}
 		}
@@ -608,7 +626,7 @@ func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, 
 
 	// Check for errors
 	if len(uploadErrors) > 0 {
-		u.abortMultipartUpload(ctx, bucket, key, uploadID)
+		// Note: We can't abort the upload since it's backend-owned
 		return nil, fmt.Errorf("upload failed: %w", uploadErrors[0])
 	}
 
@@ -617,21 +635,32 @@ func (u *HTTPUploader) UploadLargeFile(ctx context.Context, bucket, key string, 
 		return parts[i].PartNumber < parts[j].PartNumber
 	})
 
-	// Complete multipart upload
-	etag, err := u.completeMultipartUpload(ctx, bucket, key, uploadID, parts)
-	if err != nil {
-		return nil, err
+	// If tracking, store the block order
+	if cacheIdentifier != "" && len(trackedParts) > 0 {
+		// Sort tracked parts by their part number
+		sort.Slice(trackedParts, func(i, j int) bool {
+			// Extract part number from BLOB_PART_XXXXXX format
+			var numI, numJ int
+			fmt.Sscanf(trackedParts[i], "BLOB_PART_%d", &numI)
+			fmt.Sscanf(trackedParts[j], "BLOB_PART_%d", &numJ)
+			return numI < numJ
+		})
+
+		derp.SetS3BlockOrder(cacheIdentifier, trackedParts)
 	}
 
-	// Record performance statistics
+	// Note: We don't complete the multipart upload here since it's backend-owned
+	// The backend will complete it during finalization
+	log.Printf("Uploaded %d parts to backend-owned multipart upload", len(parts))
+
 	uploadDuration := time.Since(uploadStart)
-	u.stats.recordUpload(contentLength, uploadDuration, len(parts), u.maxConcurrency)
 	throughput := float64(contentLength) / (1024 * 1024) / uploadDuration.Seconds()
 	log.Printf("HTTP upload completed: %s, size=%d MB, duration=%v, throughput=%.1f MB/s",
 		key, contentLength/(1024*1024), uploadDuration, throughput)
 
+	// Return a result without ETag since we didn't complete the upload
 	return &UploadResult{
-		ETag:         etag,
+		ETag:         "", // Will be set by backend during finalization
 		LastModified: time.Now().UTC(),
 	}, nil
 }
@@ -643,11 +672,9 @@ func (u *HTTPUploader) EnsureMultipartUpload(ctx context.Context, bucket, key st
 
 // UploadPartStream uploads a single part with streaming support
 func (u *HTTPUploader) UploadPartStream(ctx context.Context, bucket, key, uploadID string, partNumber int32, reader io.Reader, contentLength int64) (string, error) {
-	// URL encode the key to handle special characters
-	// Use PathEscape for S3-compatible URL encoding
-	encodedKey := url.PathEscape(key)
+	// Use the key as-is, don't URL encode it
 	uploadURL := fmt.Sprintf("%s/%s/%s?partNumber=%d&uploadId=%s",
-		u.endpoint, bucket, encodedKey, partNumber, uploadID)
+		u.endpoint, bucket, key, partNumber, uploadID)
 
 	log.Printf("HTTP Upload: part %d, uploadID=%s, url=%s, size=%d MB",
 		partNumber, uploadID, uploadURL, contentLength/(1024*1024))
@@ -725,6 +752,11 @@ func (u *HTTPUploader) signRequestStreaming(req *http.Request, contentLength int
 	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
 	req.Header.Set("Host", req.Host)
 
+	// Add session token if present
+	if u.sessionToken != "" {
+		req.Header.Set("X-Amz-Security-Token", u.sessionToken)
+	}
+
 	// Create signing key
 	key := []byte("AWS4" + u.secretKey)
 	dateKey := hmacSHA256(key, []byte(dateShort))
@@ -737,10 +769,17 @@ func (u *HTTPUploader) signRequestStreaming(req *http.Request, contentLength int
 		req.Host, payloadHash, dateStr)
 	signedHeaders := "host;x-amz-content-sha256;x-amz-date"
 
+	// Include security token in canonical headers if present
+	if u.sessionToken != "" {
+		canonicalHeaders = fmt.Sprintf("host:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",
+			req.Host, payloadHash, dateStr, u.sessionToken)
+		signedHeaders = "host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
+	}
+
 	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
 		req.Method,
-		req.URL.Path,
-		req.URL.RawQuery,
+		awsEncodePath(req.URL.Path),
+		awsCanonicalQuery(req.URL),
 		canonicalHeaders,
 		signedHeaders,
 		payloadHash)
@@ -761,59 +800,154 @@ func (u *HTTPUploader) signRequestStreaming(req *http.Request, contentLength int
 
 // Helper methods for HTTPUploader
 
+// awsEncodeSegment percent-encodes a single path segment per AWS SigV4 (RFC3986),
+// leaving only unreserved characters unescaped: A-Z a-z 0-9 - _ . ~
+func awsEncodeSegment(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~' {
+			b.WriteByte(c)
+		} else {
+			b.WriteString(fmt.Sprintf("%%%02X", c))
+		}
+	}
+	return b.String()
+}
+
+// awsEncodePath encodes the path for the canonical request, preserving slashes
+// and encoding each segment according to AWS SigV4 rules.
+func awsEncodePath(p string) string {
+	if p == "" {
+		return "/"
+	}
+	leading := strings.HasPrefix(p, "/")
+	trailing := strings.HasSuffix(p, "/")
+	segs := strings.Split(p, "/")
+	for i, s := range segs {
+		// Preserve empty segments as-is (e.g., leading slash)
+		if s == "" {
+			continue
+		}
+		segs[i] = awsEncodeSegment(s)
+	}
+	res := strings.Join(segs, "/")
+	if leading && !strings.HasPrefix(res, "/") {
+		res = "/" + res
+	}
+	if trailing && !strings.HasSuffix(res, "/") {
+		res += "/"
+	}
+	return res
+}
+
+// awsCanonicalQuery builds the canonical query string per AWS SigV4 rules.
+func awsCanonicalQuery(u *url.URL) string {
+	if u.RawQuery == "uploads" || u.RawQuery == "uploads=" {
+		return "uploads="
+	}
+	q := u.Query()
+	keys := make([]string, 0, len(q))
+	for k := range q {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	enc := func(s string) string {
+		// RFC3986: use QueryEscape then fix "+" → "%20", "*" → "%2A"
+		out := url.QueryEscape(s)
+		out = strings.ReplaceAll(out, "+", "%20")
+		out = strings.ReplaceAll(out, "*", "%2A")
+		return out
+	}
+	var parts []string
+	for _, k := range keys {
+		vs := q[k]
+		if len(vs) == 0 {
+			parts = append(parts, enc(k)+"=")
+			continue
+		}
+		sort.Strings(vs)
+		for _, v := range vs {
+			parts = append(parts, enc(k)+"="+enc(v))
+		}
+	}
+	return strings.Join(parts, "&")
+}
+
 // signRequest adds AWS v4 signature to the request
 func (u *HTTPUploader) signRequest(req *http.Request, payload []byte) {
 	now := time.Now().UTC()
-	dateStr := now.Format("20060102T150405Z")
+	dateISO := now.Format("20060102T150405Z")
 	dateShort := now.Format("20060102")
-	region := "auto" // R2 uses "auto" region
+	region := "auto"
 
-	// Headers required by AWS v4
-	payloadHash := sha256sum(payload)
-	req.Header.Set("X-Amz-Date", dateStr)
-	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
-	req.Header.Set("Host", req.Host)
+	// 1) Required headers
+	payloadHash := sha256sum(payload) // ok for empty body; or "UNSIGNED-PAYLOAD"
+	req.Header.Set("x-amz-date", dateISO)
+	req.Header.Set("x-amz-content-sha256", payloadHash)
+	if u.sessionToken != "" {
+		req.Header.Set("x-amz-security-token", u.sessionToken) // REQUIRED for temp creds
+	}
 
-	// Create signing key
-	key := []byte("AWS4" + u.secretKey)
-	dateKey := hmacSHA256(key, []byte(dateShort))
-	regionKey := hmacSHA256(dateKey, []byte(region))
-	serviceKey := hmacSHA256(regionKey, []byte("s3"))
-	signingKey := hmacSHA256(serviceKey, []byte("aws4_request"))
+	// 2) Canonical headers (lowercase, trimmed, sorted)
+	type kv struct{ k, v string }
+	hdrs := []kv{{"host", strings.TrimSuffix(strings.TrimSuffix(req.Host, ":443"), ":80")}}
+	for _, k := range []string{"x-amz-content-sha256", "x-amz-date", "x-amz-security-token"} {
+		if v := strings.TrimSpace(req.Header.Get(k)); v != "" {
+			hdrs = append(hdrs, kv{k: strings.ToLower(k), v: v})
+		}
+	}
+	sort.Slice(hdrs, func(i, j int) bool { return hdrs[i].k < hdrs[j].k })
 
-	// Build canonical request
-	canonicalHeaders := fmt.Sprintf("host:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\n",
-		req.Host, payloadHash, dateStr)
-	signedHeaders := "host;x-amz-content-sha256;x-amz-date"
+	var canonicalHeaders, signedNames string
+	{
+		names := make([]string, len(hdrs))
+		for i, h := range hdrs {
+			canonicalHeaders += h.k + ":" + h.v + "\n"
+			names[i] = h.k
+		}
+		signedNames = strings.Join(names, ";")
+	}
 
-	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+	// 3) Canonical URI (AWS SigV4 encoding)
+	uri := awsEncodePath(req.URL.Path)
+
+	// 4) Canonical query (sorted, RFC3986-encoded; subresources use key=)
+	canonicalQuery := awsCanonicalQuery(req.URL)
+
+	// 5) Canonical request
+	canonicalRequest := strings.Join([]string{
 		req.Method,
-		req.URL.Path,
-		req.URL.RawQuery,
+		uri,
+		canonicalQuery,
 		canonicalHeaders,
-		signedHeaders,
-		payloadHash)
+		signedNames,
+		payloadHash,
+	}, "\n")
 
-	// String to sign
+	// 6) StringToSign + signature
 	scope := fmt.Sprintf("%s/%s/s3/aws4_request", dateShort, region)
-	stringToSign := fmt.Sprintf("AWS4-HMAC-SHA256\n%s\n%s\n%s",
-		dateStr, scope, sha256sum([]byte(canonicalRequest)))
+	k := hmacSHA256([]byte("AWS4"+u.secretKey), []byte(dateShort))
+	k = hmacSHA256(k, []byte(region))
+	k = hmacSHA256(k, []byte("s3"))
+	k = hmacSHA256(k, []byte("aws4_request"))
+	sig := hex.EncodeToString(hmacSHA256(k, []byte(
+		"AWS4-HMAC-SHA256\n"+dateISO+"\n"+scope+"\n"+sha256sum([]byte(canonicalRequest)),
+	)))
 
-	// Calculate signature
-	signature := hex.EncodeToString(hmacSHA256(signingKey, []byte(stringToSign)))
+	req.Header.Set("Authorization",
+		fmt.Sprintf("AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+			u.accessKey, scope, signedNames, sig))
 
-	// Set authorization header
-	req.Header.Set("Authorization", fmt.Sprintf(
-		"AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
-		u.accessKey, scope, signedHeaders, signature))
+	log.Printf("CANONICAL:\n%s", canonicalRequest)
+	log.Printf("STS: AWS4-HMAC-SHA256\n%s\n%s\n%s", dateISO, scope, sha256sum([]byte(canonicalRequest)))
+
 }
 
 // initiateMultipartUpload starts a new multipart upload
 func (u *HTTPUploader) initiateMultipartUpload(ctx context.Context, bucket, key string) (string, error) {
-	// URL encode the key to handle special characters
-	// Use PathEscape for S3-compatible URL encoding
-	encodedKey := url.PathEscape(key)
-	uploadURL := fmt.Sprintf("%s/%s/%s?uploads=", u.endpoint, bucket, encodedKey)
+	// Use the key as-is, don't URL encode it
+	uploadURL := fmt.Sprintf("%s/%s/%s?uploads=", u.endpoint, bucket, key)
 
 	log.Printf("HTTP: Initiating multipart upload for %s/%s at %s", bucket, key, uploadURL)
 
@@ -822,7 +956,7 @@ func (u *HTTPUploader) initiateMultipartUpload(ctx context.Context, bucket, key 
 		return "", fmt.Errorf("create request failed: %w", err)
 	}
 
-	u.signRequest(req, nil)
+	u.signRequest(req, []byte{})
 
 	resp, err := u.httpClient.Do(req)
 	if err != nil {
@@ -849,10 +983,9 @@ func (u *HTTPUploader) initiateMultipartUpload(ctx context.Context, bucket, key 
 
 // uploadPart uploads a single part
 func (u *HTTPUploader) uploadPart(ctx context.Context, bucket, key, uploadID string, partNum int, data []byte, workerID int) (string, error) {
-	// URL encode the key to handle special characters
-	encodedKey := url.PathEscape(key)
+	// Use the key as-is, don't URL encode it
 	uploadURL := fmt.Sprintf("%s/%s/%s?partNumber=%d&uploadId=%s",
-		u.endpoint, bucket, encodedKey, partNum, uploadID)
+		u.endpoint, bucket, key, partNum, uploadID)
 
 	log.Printf("[Worker %d] Uploading part %d (size=%d MB)...",
 		workerID, partNum, len(data)/(1024*1024))
@@ -947,7 +1080,7 @@ func (u *HTTPUploader) abortMultipartUpload(ctx context.Context, bucket, key, up
 		return
 	}
 
-	u.signRequest(req, nil)
+	u.signRequest(req, []byte{})
 
 	resp, err := u.httpClient.Do(req)
 	if err != nil {
