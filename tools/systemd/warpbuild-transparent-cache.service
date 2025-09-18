@@ -3,7 +3,6 @@ Description=WarpBuild Transparent Cache Service
 After=network.target
 
 [Service]
-Type=simple
 ExecStart=/usr/local/bin/warpbuild-agentd --launch-transparent-cache
 WorkingDirectory=/
 Restart=always
