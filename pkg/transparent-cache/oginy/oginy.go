@@ -21,9 +21,11 @@ import (
 )
 
 type proxyEntry struct {
-	cert   *tls.Certificate
-	target *url.URL
-	proxy  *httputil.ReverseProxy
+	cert             *tls.Certificate
+	target           *url.URL
+	proxy            *httputil.ReverseProxy
+	remoteProxy      *httputil.ReverseProxy // For proxying to the actual domain
+	pathBasedRouting bool                   // Whether to use path-based routing
 }
 
 type muxProxy struct{ byHost map[string]*proxyEntry }
@@ -37,7 +39,21 @@ func (m *muxProxy) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 func (m *muxProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 	if pe := m.byHost[host]; pe != nil {
-		pe.proxy.ServeHTTP(w, r)
+		// If path-based routing is enabled, check the path
+		if pe.pathBasedRouting {
+			// Only forward /_api/artifactcache requests to local service
+			if strings.HasPrefix(r.URL.Path, "/_api/artifactcache") {
+				pe.proxy.ServeHTTP(w, r)
+			} else if pe.remoteProxy != nil {
+				// Forward all other requests to the actual domain
+				pe.remoteProxy.ServeHTTP(w, r)
+			} else {
+				http.Error(w, "no remote proxy configured", http.StatusBadGateway)
+			}
+		} else {
+			// Standard routing - forward all requests to local service
+			pe.proxy.ServeHTTP(w, r)
+		}
 		return
 	}
 	http.Error(w, "no backend for host", http.StatusBadGateway)
@@ -282,6 +298,20 @@ func Start(port int) error {
 		DisableCompression:    true, // preserve encodings; avoid cpu
 	}
 
+	// Transport for remote HTTPS connections
+	remoteTr := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          1024,
+		MaxIdleConnsPerHost:   512,
+		MaxConnsPerHost:       0, // unlimited
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 0,
+		DisableCompression:    true, // preserve encodings; avoid cpu
+	}
+
 	mp := &muxProxy{byHost: make(map[string]*proxyEntry)}
 
 	for _, s := range servers {
@@ -305,8 +335,34 @@ func Start(port int) error {
 		}
 		// No ModifyResponse / no custom flusher -> minimal overhead.
 
-		mp.byHost[s.serverName] = &proxyEntry{cert: &c, target: u, proxy: rp}
-		log.Printf("route: %s → %s", s.serverName, s.targetURL)
+		entry := &proxyEntry{cert: &c, target: u, proxy: rp}
+
+		// Special handling for results-receiver - enable path-based routing
+		if s.serverName == resultsReceiverHost {
+			entry.pathBasedRouting = true
+
+			// Create remote proxy for non-artifactcache requests
+			remoteURL, err := url.Parse("https://" + resultsReceiverHost)
+			if err != nil {
+				return fmt.Errorf("parse remote URL for %s: %v", resultsReceiverHost, err)
+			}
+
+			remoteProxy := httputil.NewSingleHostReverseProxy(remoteURL)
+			remoteProxy.Transport = remoteTr
+			remoteProxy.Director = func(r *http.Request) {
+				r.URL.Scheme = remoteURL.Scheme
+				r.URL.Host = remoteURL.Host
+				r.Host = resultsReceiverHost
+				// Don't set X-Forwarded-Proto for remote requests as they're already HTTPS
+			}
+			entry.remoteProxy = remoteProxy
+
+			log.Printf("route: %s → %s (artifactcache only), other paths → %s", s.serverName, s.targetURL, remoteURL.String())
+		} else {
+			log.Printf("route: %s → %s", s.serverName, s.targetURL)
+		}
+
+		mp.byHost[s.serverName] = entry
 	}
 
 	// TLS server config (minimal) - using TLS 1.2 as minimum and enabling HTTP/2
