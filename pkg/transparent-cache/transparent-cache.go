@@ -124,6 +124,13 @@ func setupPfctl(hostMappings map[string]string, oginyPort int) error {
 	var pfRules strings.Builder
 	pfRules.WriteString("# Transparent cache redirect rules\n")
 
+	// First, ensure oginy's own egress to the loopback-mapped IPs is NOT redirected
+	for hostname, ip := range hostMappings {
+		noRdr := fmt.Sprintf("no rdr on lo0 inet proto tcp from 127.0.0.1 to %s port 443\n", ip)
+		pfRules.WriteString(noRdr)
+		log.Printf("Adding pfctl no-rdr rule for oginy egress to %s (%s)", hostname, ip)
+	}
+
 	for hostname, ip := range hostMappings {
 		rule := fmt.Sprintf("rdr pass on lo0 inet proto tcp from any to %s port 443 -> 127.0.0.1 port %d\n", ip, oginyPort)
 		pfRules.WriteString(rule)
@@ -171,6 +178,21 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 		if output, err := cmd.CombinedOutput(); err != nil {
 			// Ignore errors if table/chain already exists
 			log.Printf("nft command output: %s", string(output))
+		}
+	}
+
+	// Add return (skip) rules for oginy egress first, so we don't redirect its own outbound connections
+	for hostname, ip := range hostMappings {
+		log.Printf("Adding nftables return rule for oginy egress to %s (%s)", hostname, ip)
+		cmd := exec.Command("nft", "add", "rule", "ip", "nat", "output",
+			"ip", "saddr", "127.0.0.1", "ip", "daddr", ip, "tcp", "dport", "443", "return")
+		if output, err := cmd.CombinedOutput(); err != nil {
+			outStr := string(output)
+			if strings.Contains(outStr, "exist") {
+				log.Printf("nftables return rule for %s already exists", ip)
+				continue
+			}
+			log.Printf("nft command output: %s", outStr)
 		}
 	}
 
