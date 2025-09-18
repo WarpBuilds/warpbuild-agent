@@ -1024,11 +1024,8 @@ func Start(port int) error {
 					KeepAlive: 30 * time.Second,
 					Control: func(network, address string, c syscall.RawConn) error {
 						return c.Control(func(fd uintptr) {
-							// Enable TCP_NODELAY for low latency
-							syscall.SetsockoptInt(int(fd), syscall.IPPROTO_TCP, syscall.TCP_NODELAY, 1)
-							// Increase socket buffer sizes for better throughput
-							syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_SNDBUF, 4*1024*1024) // 4MB send buffer
-							syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_RCVBUF, 4*1024*1024) // 4MB receive buffer
+							// Set platform-specific socket options
+							setSocketOptions(fd)
 						})
 					},
 				}

@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25" # Replace with your Go version
+          go-version: "1.24" # Replace with your Go version
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -44,7 +44,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.21" # Replace with your Go version
+          go-version: "1.24" # Replace with your Go version
 
       - name: Get short commit hash
         id: get_short_commit
