@@ -26,7 +26,7 @@ jobs:
       - name: Set up Go
         uses: WarpBuilds/setup-go@v5
         with:
-          go-version: "1.21"
+          go-version: "1.25"
           cache: true
 
       - name: Define S3 Path

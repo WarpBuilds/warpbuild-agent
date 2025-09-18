@@ -1,0 +1,29 @@
+[Unit]
+Description=WarpBuild Transparent Cache Service
+After=network.target
+Before=warpbuild-agentd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/warpbuild-agentd --launch-transparent-cache
+WorkingDirectory=/
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+# Run as root to bind to port 443
+User=root
+Group=root
+# Environment variables for certificate management
+Environment="OGINY_CERT_DIR=/var/lib/warpbuild-transparent-cache/certs"
+# Security settings
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/warpbuild-transparent-cache
+# Network capabilities to bind to privileged ports
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
