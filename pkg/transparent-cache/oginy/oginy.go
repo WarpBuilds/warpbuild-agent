@@ -1,13 +1,16 @@
 package oginy
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"net"
@@ -183,6 +186,50 @@ func generateLeafCert(hostname, certPath, keyPath, caCertPath, caKeyPath string)
 	return nil
 }
 
+// resolveRealIP uses DNS over HTTPS to get the real IP, bypassing /etc/hosts
+func resolveRealIP(hostname string) (string, error) {
+	// Use Cloudflare's DNS over HTTPS
+	url := fmt.Sprintf("https://1.1.1.1/dns-query?name=%s&type=A", hostname)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Accept", "application/dns-json")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var result struct {
+		Answer []struct {
+			Data string `json:"data"`
+			Type int    `json:"type"`
+		} `json:"Answer"`
+	}
+
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+
+	// Find the first A record (type 1)
+	for _, answer := range result.Answer {
+		if answer.Type == 1 && answer.Data != "" {
+			return answer.Data, nil
+		}
+	}
+
+	return "", fmt.Errorf("no A record found for %s", hostname)
+}
+
 // Start starts the OGINY TLS reverse proxy service
 // If port is > 0, it uses that port, otherwise defaults to 443
 func Start(port int) error {
@@ -298,20 +345,6 @@ func Start(port int) error {
 		DisableCompression:    true, // preserve encodings; avoid cpu
 	}
 
-	// Transport for remote HTTPS connections
-	remoteTr := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          1024,
-		MaxIdleConnsPerHost:   512,
-		MaxConnsPerHost:       0, // unlimited
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 0,
-		DisableCompression:    true, // preserve encodings; avoid cpu
-	}
-
 	mp := &muxProxy{byHost: make(map[string]*proxyEntry)}
 
 	for _, s := range servers {
@@ -341,23 +374,60 @@ func Start(port int) error {
 		if s.serverName == resultsReceiverHost {
 			entry.pathBasedRouting = true
 
-			// Create remote proxy for non-artifactcache requests
-			remoteURL, err := url.Parse("https://" + resultsReceiverHost)
+			// Resolve the real IP to bypass /etc/hosts
+			realIP, err := resolveRealIP(resultsReceiverHost)
+			if err != nil {
+				return fmt.Errorf("failed to resolve real IP for %s: %v", resultsReceiverHost, err)
+			}
+			log.Printf("Resolved real IP for %s: %s", resultsReceiverHost, realIP)
+
+			// Create remote proxy for non-artifactcache requests using real IP
+			remoteURL, err := url.Parse(fmt.Sprintf("https://%s", realIP))
 			if err != nil {
 				return fmt.Errorf("parse remote URL for %s: %v", resultsReceiverHost, err)
 			}
 
+			// Create custom transport that sets the proper SNI
+			remoteTransport := &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					// Always dial the real IP, not the hostname
+					if strings.HasPrefix(addr, realIP) {
+						return (&net.Dialer{
+							Timeout:   10 * time.Second,
+							KeepAlive: 60 * time.Second,
+						}).DialContext(ctx, network, addr)
+					}
+					// For any other connections, use the default dialer
+					return (&net.Dialer{
+						Timeout:   10 * time.Second,
+						KeepAlive: 60 * time.Second,
+					}).DialContext(ctx, network, addr)
+				},
+				TLSClientConfig: &tls.Config{
+					ServerName: resultsReceiverHost, // Set SNI to the original hostname
+				},
+				ForceAttemptHTTP2:     true,
+				MaxIdleConns:          1024,
+				MaxIdleConnsPerHost:   512,
+				MaxConnsPerHost:       0, // unlimited
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 0,
+				DisableCompression:    true,
+			}
+
 			remoteProxy := httputil.NewSingleHostReverseProxy(remoteURL)
-			remoteProxy.Transport = remoteTr
+			remoteProxy.Transport = remoteTransport
 			remoteProxy.Director = func(r *http.Request) {
 				r.URL.Scheme = remoteURL.Scheme
 				r.URL.Host = remoteURL.Host
-				r.Host = resultsReceiverHost
+				r.Host = resultsReceiverHost // Keep the original Host header
 				// Don't set X-Forwarded-Proto for remote requests as they're already HTTPS
 			}
 			entry.remoteProxy = remoteProxy
 
-			log.Printf("route: %s → %s (artifactcache only), other paths → %s", s.serverName, s.targetURL, remoteURL.String())
+			log.Printf("route: %s → %s (artifactcache only), other paths → %s (IP: %s)", s.serverName, s.targetURL, resultsReceiverHost, realIP)
 		} else {
 			log.Printf("route: %s → %s", s.serverName, s.targetURL)
 		}
