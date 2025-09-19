@@ -1,7 +1,6 @@
 package oginy
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -46,19 +45,24 @@ func (m *muxProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if pe.pathBasedRouting {
 			// Only forward /_api/artifactcache requests to local service
 			if strings.HasPrefix(r.URL.Path, "/_api/artifactcache") {
+				log.Printf("[OGINY ROUTING] %s %s → LOCAL SERVICE (port %s)", r.Method, r.URL.Path, pe.target.Host)
 				pe.proxy.ServeHTTP(w, r)
 			} else if pe.remoteProxy != nil {
 				// Forward all other requests to the actual domain
+				log.Printf("[OGINY ROUTING] %s %s → REMOTE DOMAIN", r.Method, r.URL.Path)
 				pe.remoteProxy.ServeHTTP(w, r)
 			} else {
+				log.Printf("[OGINY ROUTING] %s %s → ERROR: no remote proxy configured", r.Method, r.URL.Path)
 				http.Error(w, "no remote proxy configured", http.StatusBadGateway)
 			}
 		} else {
 			// Standard routing - forward all requests to local service
+			log.Printf("[OGINY ROUTING] %s %s → LOCAL SERVICE (port %s) [no path routing]", r.Method, r.URL.Path, pe.target.Host)
 			pe.proxy.ServeHTTP(w, r)
 		}
 		return
 	}
+	log.Printf("[OGINY ROUTING] %s %s → ERROR: no backend for host %s", r.Method, r.URL.Path, host)
 	http.Error(w, "no backend for host", http.StatusBadGateway)
 }
 
@@ -190,6 +194,7 @@ func generateLeafCert(hostname, certPath, keyPath, caCertPath, caKeyPath string)
 func resolveRealIP(hostname string) (string, error) {
 	// Use Cloudflare's DNS over HTTPS
 	url := fmt.Sprintf("https://1.1.1.1/dns-query?name=%s&type=A", hostname)
+	log.Printf("[DNS RESOLUTION] Resolving real IP for %s using DNS over HTTPS...", hostname)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -223,6 +228,7 @@ func resolveRealIP(hostname string) (string, error) {
 	// Find the first A record (type 1)
 	for _, answer := range result.Answer {
 		if answer.Type == 1 && answer.Data != "" {
+			log.Printf("[DNS RESOLUTION] Found IP %s for %s", answer.Data, hostname)
 			return answer.Data, nil
 		}
 	}
@@ -389,21 +395,8 @@ func Start(port int) error {
 
 			// Create custom transport that sets the proper SNI
 			remoteTransport := &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-					// Always dial the real IP, not the hostname
-					if strings.HasPrefix(addr, realIP) {
-						return (&net.Dialer{
-							Timeout:   10 * time.Second,
-							KeepAlive: 60 * time.Second,
-						}).DialContext(ctx, network, addr)
-					}
-					// For any other connections, use the default dialer
-					return (&net.Dialer{
-						Timeout:   10 * time.Second,
-						KeepAlive: 60 * time.Second,
-					}).DialContext(ctx, network, addr)
-				},
+				Proxy:       http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
 				TLSClientConfig: &tls.Config{
 					ServerName: resultsReceiverHost, // Set SNI to the original hostname
 				},
@@ -420,10 +413,18 @@ func Start(port int) error {
 			remoteProxy := httputil.NewSingleHostReverseProxy(remoteURL)
 			remoteProxy.Transport = remoteTransport
 			remoteProxy.Director = func(r *http.Request) {
+				// Log the request details before modification
+				origURL := r.URL.String()
+				origHost := r.Host
+
 				r.URL.Scheme = remoteURL.Scheme
 				r.URL.Host = remoteURL.Host
 				r.Host = resultsReceiverHost // Keep the original Host header
 				// Don't set X-Forwarded-Proto for remote requests as they're already HTTPS
+
+				// Log where the request is being sent
+				log.Printf("[REMOTE PROXY] Forwarding request: %s %s (orig host: %s) → %s (IP: %s, Host header: %s)",
+					r.Method, origURL, origHost, r.URL.String(), realIP, r.Host)
 			}
 			entry.remoteProxy = remoteProxy
 
