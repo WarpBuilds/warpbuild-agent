@@ -3,7 +3,7 @@ name: Branch Build and Upload to R2
 on:
   push:
     branches:
-      - "fix/metrics-fixes"
+      - "obs"
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
