@@ -25,9 +25,8 @@ receivers:
   # GitHub Actions job logs and diagnostic logs
   filelog/gha_logs:
     include:
-      - 'C:\actions-runner\_diag\*.log'
-      - 'C:\actions-runner\_diag\**\*.log'
-      - 'C:\ProgramData\github-actions\*.log'
+      - 'C:\warpbuilds\runner\_diag\*.log'
+      - 'C:\warpbuilds\runner\_diag\**\*.log'
     start_at: end
     max_log_size: 500KiB
     include_file_name: true
@@ -52,13 +51,11 @@ receivers:
   filelog/gha_logs:
     include:
       {{- if eq .OS "darwin"}}
-      - '/Users/runner/actions-runner/_diag/*.log'
-      - '/Users/runner/actions-runner/_diag/**/*.log'
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/*.log'
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/**/*.log'
       {{- else if eq .OS "linux"}}
-      - '/home/runner/actions-runner/_diag/*.log'
-      - '/home/runner/actions-runner/_diag/**/*.log'
-      - '/opt/actions-runner/_diag/*.log'
-      - '/opt/actions-runner/_diag/**/*.log'
+      - '/runner/_diag/*.log'
+      - '/runner/_diag/**/*.log'
       {{- end}}
     start_at: 'end'
     max_log_size: 500KiB
