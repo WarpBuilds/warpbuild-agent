@@ -286,12 +286,17 @@ func Start(port int) error {
 	// Set environment variables for current process and children
 	os.Setenv("NODE_OPTIONS", "--use-openssl-ca")
 	os.Setenv("NODE_EXTRA_CA_CERTS", caCertPath)
+	os.Setenv("SSL_CERT_FILE", caCertPath)
 
 	// If running in GitHub Actions, write to GITHUB_ENV
 	if githubEnv := os.Getenv("GITHUB_ENV"); githubEnv != "" {
 		log.Printf("Detected GitHub Actions environment, writing to GITHUB_ENV")
 		if err := appendToFile(githubEnv, fmt.Sprintf("NODE_OPTIONS=--use-openssl-ca\nNODE_EXTRA_CA_CERTS=%s\n", caCertPath)); err != nil {
 			log.Printf("Warning: failed to write to GITHUB_ENV: %v", err)
+		}
+		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
+		if err := appendToFile(githubEnv, fmt.Sprintf("SSL_CERT_FILE=%s\n", caCertPath)); err != nil {
+			log.Printf("Warning: failed to write SSL_CERT_FILE to GITHUB_ENV: %v", err)
 		}
 	}
 
@@ -302,8 +307,13 @@ func Start(port int) error {
 		log.Printf("To set system-wide, run as root or manually add to /etc/environment:")
 		log.Printf("  NODE_OPTIONS=\"--use-openssl-ca\"")
 		log.Printf("  NODE_EXTRA_CA_CERTS=\"%s\"", caCertPath)
+		log.Printf("  SSL_CERT_FILE=\"%s\"", caCertPath)
 	} else {
 		log.Printf("Successfully updated /etc/environment")
+		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
+		if err := appendToFile("/etc/environment", fmt.Sprintf("SSL_CERT_FILE=\"%s\"\n", caCertPath)); err != nil {
+			log.Printf("Warning: failed to append SSL_CERT_FILE to /etc/environment: %v", err)
+		}
 	}
 
 	// Generate certificates for each domain
@@ -399,8 +409,10 @@ func Start(port int) error {
 				DialContext: (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
 				TLSClientConfig: &tls.Config{
 					ServerName: resultsReceiverHost, // Set SNI to the original hostname
+					NextProtos: []string{"http/1.1"},
 				},
-				ForceAttemptHTTP2:     true,
+				ForceAttemptHTTP2:     false,
+				TLSNextProto:          map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
 				MaxIdleConns:          1024,
 				MaxIdleConnsPerHost:   512,
 				MaxConnsPerHost:       0, // unlimited
@@ -439,8 +451,8 @@ func Start(port int) error {
 	// TLS server config (minimal) - using TLS 1.2 as minimum and enabling HTTP/2
 	tlsCfg := &tls.Config{
 		MinVersion:     tls.VersionTLS12,
-		GetCertificate: mp.GetCertificate,          // SNI
-		NextProtos:     []string{"h2", "http/1.1"}, // Enable HTTP/2
+		GetCertificate: mp.GetCertificate, // SNI
+		NextProtos:     []string{"http/1.1"},
 	}
 
 	srv := &http.Server{
@@ -469,8 +481,8 @@ func appendToFile(filepath, content string) error {
 
 	// Read existing content to check for duplicates
 	existing, err := os.ReadFile(filepath)
-	if err == nil && strings.Contains(string(existing), "NODE_EXTRA_CA_CERTS") {
-		// Already configured, skip
+	if err == nil && strings.Contains(string(existing), content) {
+		// Already configured with the same content, skip
 		return nil
 	}
 
