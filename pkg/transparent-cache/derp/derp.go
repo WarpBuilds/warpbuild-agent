@@ -529,9 +529,9 @@ func GetCacheInfo(cacheKey string) *CacheEntryInfo {
 
 func Start(port int) error {
 	// Get backend URL and auth token from environment
-	backendURL := os.Getenv("WARPCACHE_BACKEND_URL")
+	backendURL := os.Getenv("WARPBUILD_CACHE_URL")
 	if backendURL == "" {
-		backendURL = "https://api.warpbuild.com"
+		backendURL = "https://cache.warpbuild.com"
 	}
 	authToken := os.Getenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN")
 
