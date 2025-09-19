@@ -331,7 +331,7 @@ service:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
       exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
-    gha_logs:
+    logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
       exporters: [otlphttp/gha_logs]
