@@ -214,7 +214,7 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 	return nil
 }
 
-func Start(derpPort, oginyPort, asurPort int) error {
+func Start(derpPort, oginyPort, asurPort int, cacheBackendHost, warpBuildRunnerVerificationToken string) error {
 	log.Println("========================================")
 	log.Println("Starting Transparent Cache Services")
 	log.Println("========================================")
@@ -241,7 +241,7 @@ func Start(derpPort, oginyPort, asurPort int) error {
 	go func() {
 		defer wg.Done()
 		log.Printf("Starting DERP Cache Service on port %d...", derpPort)
-		if err := derp.Start(derpPort); err != nil {
+		if err := derp.Start(derpPort, cacheBackendHost, warpBuildRunnerVerificationToken); err != nil {
 			errChan <- fmt.Errorf("DERP service error: %v", err)
 		}
 	}()

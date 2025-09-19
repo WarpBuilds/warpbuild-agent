@@ -28,6 +28,12 @@ func main() {
 
 	// Setup environment variables
 	setupEnvironment(*backendURL, *authToken, *debug, *skipNetworking)
+	// If no auth token was provided via flag, fallback to env set by setupEnvironment
+	if *authToken == "" {
+		if v := os.Getenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN"); v != "" {
+			*authToken = v
+		}
+	}
 
 	log.Println("========================================")
 	log.Println("Transparent Cache Test Runner")
@@ -59,7 +65,7 @@ func main() {
 
 	// Start the transparent cache services in a goroutine
 	go func() {
-		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort)
+		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort, *backendURL, *authToken)
 		errChan <- err
 	}()
 

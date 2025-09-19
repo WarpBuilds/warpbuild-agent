@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -527,13 +526,15 @@ func GetCacheInfo(cacheKey string) *CacheEntryInfo {
 	return nil
 }
 
-func Start(port int) error {
-	// Get backend URL and auth token from environment
-	backendURL := os.Getenv("WARPBUILD_CACHE_URL")
+func Start(port int, backendURL, authToken string) error {
+	// Default backend URL if not provided
 	if backendURL == "" {
 		backendURL = "https://cache.warpbuild.com"
 	}
-	authToken := os.Getenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN")
+	// Require verification token similar to proxy
+	if authToken == "" {
+		return fmt.Errorf("WARPBUILD_RUNNER_VERIFICATION_TOKEN is required")
+	}
 
 	service := NewCacheService(backendURL, authToken)
 

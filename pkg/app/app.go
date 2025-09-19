@@ -246,6 +246,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			settings.TransparentCache.DerpPort,
 			settings.TransparentCache.OginyPort,
 			settings.TransparentCache.AsurPort,
+			settings.Proxy.CacheBackendHost,
+			settings.Agent.RunnerVerificationToken,
 		); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)
 			return err
