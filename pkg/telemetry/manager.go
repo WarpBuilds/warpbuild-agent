@@ -270,7 +270,6 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS                    string
 		Arch                  string
 		Port                  int
-		CollectGitHubLogs     bool
 		LogicalCPUs           int
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
@@ -279,7 +278,6 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS:                    runtime.GOOS,
 		Arch:                  runtime.GOARCH,
 		Port:                  tm.port,
-		CollectGitHubLogs:     false, // Opt-in to GitHub logs collection
 		LogicalCPUs:           runtime.NumCPU(),
 	}
 
