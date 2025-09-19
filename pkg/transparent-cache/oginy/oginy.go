@@ -43,8 +43,8 @@ func (m *muxProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pe := m.byHost[host]; pe != nil {
 		// If path-based routing is enabled, check the path
 		if pe.pathBasedRouting {
-			// Only forward /_api/artifactcache requests to local service
-			if strings.HasPrefix(r.URL.Path, "/_api/artifactcache") {
+			// Forward Twirp cache service requests to local service
+			if strings.HasPrefix(r.URL.Path, "/twirp/github.actions.results.api.v1.CacheService/") {
 				log.Printf("[OGINY ROUTING] %s %s → LOCAL SERVICE (port %s)", r.Method, r.URL.Path, pe.target.Host)
 				pe.proxy.ServeHTTP(w, r)
 			} else if pe.remoteProxy != nil {
@@ -440,7 +440,7 @@ func Start(port int) error {
 			}
 			entry.remoteProxy = remoteProxy
 
-			log.Printf("route: %s → %s (artifactcache only), other paths → %s (IP: %s)", s.serverName, s.targetURL, resultsReceiverHost, realIP)
+			log.Printf("route: %s → %s (twirp only), other paths → %s (IP: %s)", s.serverName, s.targetURL, resultsReceiverHost, realIP)
 		} else {
 			log.Printf("route: %s → %s", s.serverName, s.targetURL)
 		}
