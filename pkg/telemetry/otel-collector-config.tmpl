@@ -21,6 +21,22 @@ receivers:
     include_file_name: true
     include_file_path: true
     poll_interval: 20s
+
+  {{- if .CollectGitHubLogs}}
+  # GitHub Actions job logs and diagnostic logs (opt-in)
+  filelog/github_logs:
+    include:
+      - 'C:\actions-runner\_diag\*.log'
+      - 'C:\actions-runner\_diag\**\*.log'
+      - 'C:\ProgramData\github-actions\*.log'
+    start_at: end
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 10s
+    attributes:
+      log.type: github_actions
+  {{- end}}
 {{- else}}
   filelog:
     {{- if eq .OS "darwin"}}
@@ -33,6 +49,28 @@ receivers:
     include_file_name: false
     include_file_path: false
     poll_interval: 1s
+
+  {{- if .CollectGitHubLogs}}
+  # GitHub Actions job logs and diagnostic logs (opt-in)
+  filelog/github_logs:
+    include:
+      {{- if eq .OS "darwin"}}
+      - '/Users/runner/actions-runner/_diag/*.log'
+      - '/Users/runner/actions-runner/_diag/**/*.log'
+      {{- else if eq .OS "linux"}}
+      - '/home/runner/actions-runner/_diag/*.log'
+      - '/home/runner/actions-runner/_diag/**/*.log'
+      - '/opt/actions-runner/_diag/*.log'
+      - '/opt/actions-runner/_diag/**/*.log'
+      {{- end}}
+    start_at: 'end'
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 10s
+    attributes:
+      log.type: github_actions
+  {{- end}}
 {{- end}}
 
   hostmetrics:
@@ -64,6 +102,23 @@ receivers:
           system.network.errors:
             enabled: false
           system.network.dropped:
+            enabled: false
+      disk:
+        metrics:
+          # collect disk throughput and IOPS metrics
+          system.disk.io:
+            enabled: true
+          system.disk.operations:
+            enabled: true
+          system.disk.io_time:
+            enabled: true
+          system.disk.operation_time:
+            enabled: true
+          system.disk.pending_operations:
+            enabled: false
+          system.disk.merged:
+            enabled: false
+          system.disk.weighted_io_time:
             enabled: false
       filesystem:
         # Drop pseudo/virtual/container overlay mounts; keep real disks
@@ -122,7 +177,7 @@ processors:
     timeout: 30s
     send_batch_size: 10_000_000
 
-  # Keep ONLY these 4 metrics in the pipeline
+  # Keep ONLY these metrics in the pipeline
   filter/only_needed:
     metrics:
       include:
@@ -132,6 +187,10 @@ processors:
           - system.memory.utilization
           - system.filesystem.utilization
           - system.network.io
+          - system.disk.io
+          - system.disk.operations
+          - system.disk.io_time
+          - system.disk.operation_time
 
   filter/drop_non_internet_nics:
     error_mode: ignore
@@ -139,17 +198,25 @@ processors:
       datapoint:
         - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
 
-  # Convert cumulative network counters -> delta
+  # Convert cumulative counters -> delta
   cumulativetodelta:
     include:
       match_type: strict
       metrics:
         - system.network.io
+        - system.disk.io
+        - system.disk.operations
+        - system.disk.io_time
+        - system.disk.operation_time
 
   # Convert delta -> per-second rate (required list syntax)
   deltatorate:
     metrics:
       - system.network.io
+      - system.disk.io
+      - system.disk.operations
+      - system.disk.io_time
+      - system.disk.operation_time
 
   transform/normalize:
     metric_statements:
@@ -186,7 +253,7 @@ processors:
             label_set: ["cpu"]
             aggregation_type: sum
 
-  # 4a) TOTAL CPU (sum across CPUs) => 0..(N*100). For 8 vCPU, max 800%
+  # 4a) TOTAL CPU (sum across CPUs) and normalize to 100%
   metricstransform/cpu_total_percent:
     transforms:
       - include: system.cpu.utilization
@@ -200,6 +267,16 @@ processors:
             new_label: aggregation
             value_actions:
               - value: total
+
+  # Normalize CPU utilization to 100% (divide by number of vCPUs)
+  transform/cpu_normalize_to_100:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Normalize total CPU percentage by dividing by number of logical CPUs
+          # This assumes the total was already summed across all CPUs
+          - 'set(value_double, value_double / {{.LogicalCPUs}}) where metric.name == "system.cpu.utilization" and attributes["aggregation"] == "total"'
 
   # Convert memory utilization from ratio to percentage
   transform/mem_to_percentage:
@@ -250,7 +327,7 @@ service:
       level: none
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- else if eq .OS "darwin"}}filelog{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- else if eq .OS "linux"}}filelog{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- end}}]
       processors: [batch/logs]
       exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
     metrics:
@@ -270,6 +347,7 @@ service:
         - transform/cpu_to_percent
         - metricstransform/cpu_sum_states
         - metricstransform/cpu_total_percent
+        - transform/cpu_normalize_to_100
 
         # memory
         - transform/mem_to_percentage
