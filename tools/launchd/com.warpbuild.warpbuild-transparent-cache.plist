@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.warpbuild.warpbuild-transparent-cache</string>
+    <key>Nice</key>
+    <integer>-10</integer>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/warpbuild-agentd</string>
+      <string>--launch-transparent-cache</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>LANG</key>
+      <string>en_US.UTF-8</string>
+      <key>OGINY_CERT_DIR</key>
+      <string>/var/lib/warpbuild-transparent-cache/certs</string>
+    </dict>
+    <key>UserName</key>
+    <string>root</string>
+    <key>GroupName</key>
+    <string>wheel</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>15</integer>
+    <key>KeepAlive</key>
+    <dict>
+      <key>SuccessfulExit</key>
+      <false/>
+    </dict>
+    <key>StandardErrorPath</key>
+    <string>/var/log/warpbuild-transparent-cache.error.log</string>
+    <key>StandardOutPath</key>
+    <string>/var/log/warpbuild-transparent-cache.out.log</string>
+  </dict>
+</plist>

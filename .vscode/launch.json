@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Transparent Cache (Full - With Sudo)",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "port": 2345,
+      "host": "127.0.0.1",
+      "preLaunchTask": "Start Transparent Cache with Sudo",
+      "postDebugTask": "Stop Transparent Cache",
+      "showLog": true,
+      "trace": "verbose"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "derpPort",
+      "type": "promptString",
+      "description": "DERP Port",
+      "default": "8080"
+    },
+    {
+      "id": "asurPort",
+      "type": "promptString",
+      "description": "ASUR Port",
+      "default": "10000"
+    },
+    {
+      "id": "oginyPort",
+      "type": "promptString",
+      "description": "OGINY Port (0 to disable)",
+      "default": "0"
+    },
+    {
+      "id": "backendUrl",
+      "type": "promptString",
+      "description": "WarpCache Backend URL",
+      "default": "https://api.warpbuild.com"
+    },
+    {
+      "id": "authToken",
+      "type": "promptString",
+      "description": "WarpCache Auth Token",
+      "default": "",
+      "password": true
+    }
+  ]
+}
