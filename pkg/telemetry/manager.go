@@ -279,7 +279,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS:                    runtime.GOOS,
 		Arch:                  runtime.GOARCH,
 		Port:                  tm.port,
-		CollectGitHubLogs:     true, // Enable GitHub logs collection
+		CollectGitHubLogs:     false, // Opt-in to GitHub logs collection
 		LogicalCPUs:           runtime.NumCPU(),
 	}
 
