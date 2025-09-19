@@ -270,6 +270,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS                    string
 		Arch                  string
 		Port                  int
+		CollectGitHubLogs     bool
+		LogicalCPUs           int
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -277,6 +279,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS:                    runtime.GOOS,
 		Arch:                  runtime.GOARCH,
 		Port:                  tm.port,
+		CollectGitHubLogs:     true, // Enable GitHub logs collection
+		LogicalCPUs:           runtime.NumCPU(),
 	}
 
 	log.Logger().Infof("Parsing template with vars: %+v", data)

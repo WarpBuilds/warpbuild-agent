@@ -24,7 +24,7 @@ receivers:
 
   {{- if .CollectGitHubLogs}}
   # GitHub Actions job logs and diagnostic logs (opt-in)
-  filelog/github_logs:
+  filelog/gha_logs:
     include:
       - 'C:\actions-runner\_diag\*.log'
       - 'C:\actions-runner\_diag\**\*.log'
@@ -52,7 +52,7 @@ receivers:
 
   {{- if .CollectGitHubLogs}}
   # GitHub Actions job logs and diagnostic logs (opt-in)
-  filelog/github_logs:
+  filelog/gha_logs:
     include:
       {{- if eq .OS "darwin"}}
       - '/Users/runner/actions-runner/_diag/*.log'
@@ -320,6 +320,11 @@ exporters:
     metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
     encoding: "json"
     compression: "none"
+  
+  otlphttp/gha_logs:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/gha-logs"
+    encoding: "json"
+    compression: "none"
 
 service:
   telemetry:
@@ -327,9 +332,15 @@ service:
       level: none
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- else if eq .OS "darwin"}}filelog{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- else if eq .OS "linux"}}filelog{{- if .CollectGitHubLogs}}, filelog/github_logs{{- end}}{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
       exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
+    {{- if .CollectGitHubLogs}}
+    gha_logs:
+      receivers: [filelog/gha_logs]
+      processors: [batch/logs]
+      exporters: [otlphttp/gha_logs]
+    {{- end}}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
