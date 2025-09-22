@@ -1,6 +1,7 @@
 package oginy
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -19,8 +20,154 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
+
+// Global logger and mutex for thread-safe file writing
+var (
+	proxyLogger *log.Logger
+	logMutex    sync.Mutex
+	logFile     *os.File
+)
+
+// initLogger initializes the file logger for proxy traffic
+func initLogger(logDir string) error {
+	// Create log directory if it doesn't exist
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return fmt.Errorf("create log dir: %v", err)
+	}
+
+	// Create log file with timestamp
+	logFileName := fmt.Sprintf("oginy-proxy-%s.log", time.Now().Format("2006-01-02-15-04-05"))
+	logPath := filepath.Join(logDir, logFileName)
+
+	var err error
+	logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("open log file: %v", err)
+	}
+
+	proxyLogger = log.New(logFile, "", log.LstdFlags|log.Lmicroseconds)
+	proxyLogger.Printf("=== OGINY Proxy Log Started ===")
+	log.Printf("Proxy traffic log file: %s", logPath)
+
+	return nil
+}
+
+// logRequest logs detailed request information
+func logRequest(r *http.Request, destination string) {
+	if proxyLogger == nil {
+		return
+	}
+
+	logMutex.Lock()
+	defer logMutex.Unlock()
+
+	// Capture request body if present
+	var bodyBytes []byte
+	if r.Body != nil {
+		bodyBytes, _ = io.ReadAll(r.Body)
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
+	}
+
+	// Use httputil.DumpRequest for comprehensive request capture
+	requestDump, err := httputil.DumpRequest(r, false)
+	if err != nil {
+		proxyLogger.Printf("[ERROR] Failed to dump request: %v", err)
+	}
+
+	proxyLogger.Printf("\n========== REQUEST ==========")
+	proxyLogger.Printf("Time: %s", time.Now().Format(time.RFC3339))
+	proxyLogger.Printf("Destination: %s", destination)
+	proxyLogger.Printf("Client IP: %s", r.RemoteAddr)
+	proxyLogger.Printf("\n%s", string(requestDump))
+
+	if len(bodyBytes) > 0 {
+		proxyLogger.Printf("Body (%d bytes):", len(bodyBytes))
+		// Log body as string if it's printable, otherwise as hex
+		if isPrintable(bodyBytes) {
+			proxyLogger.Printf("%s", string(bodyBytes))
+		} else {
+			proxyLogger.Printf("[Binary data - %d bytes]", len(bodyBytes))
+		}
+	}
+	proxyLogger.Printf("========== END REQUEST ==========\n")
+}
+
+// isPrintable checks if the byte slice contains printable characters
+func isPrintable(data []byte) bool {
+	for _, b := range data {
+		if b < 32 && b != '\n' && b != '\r' && b != '\t' {
+			return false
+		}
+	}
+	return true
+}
+
+// loggingRoundTripper wraps an http.RoundTripper to log responses
+type loggingRoundTripper struct {
+	transport http.RoundTripper
+	name      string
+}
+
+func (l *loggingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	// Log the request
+	logRequest(r, l.name)
+
+	// Execute the request
+	resp, err := l.transport.RoundTrip(r)
+	if err != nil {
+		if proxyLogger != nil {
+			logMutex.Lock()
+			proxyLogger.Printf("[ERROR] %s request failed: %v", l.name, err)
+			logMutex.Unlock()
+		}
+		return nil, err
+	}
+
+	// Log the response
+	if proxyLogger != nil && resp != nil {
+		logMutex.Lock()
+		defer logMutex.Unlock()
+
+		// Capture response for logging
+		responseDump, _ := httputil.DumpResponse(resp, false)
+
+		proxyLogger.Printf("\n========== RESPONSE ==========")
+		proxyLogger.Printf("Time: %s", time.Now().Format(time.RFC3339))
+		proxyLogger.Printf("From: %s", l.name)
+		proxyLogger.Printf("Status: %s", resp.Status)
+		proxyLogger.Printf("\n%s", string(responseDump))
+
+		// Always log response body up to 1MB
+		maxBodySize := int64(1024 * 1024) // 1MB max
+
+		// Log response body if not too large
+		if resp.Body != nil && resp.ContentLength > 0 && resp.ContentLength <= maxBodySize {
+			// Read the response body
+			bodyBytes, err := io.ReadAll(resp.Body)
+			if err == nil {
+				// Restore the body for the actual consumer
+				resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+				proxyLogger.Printf("Response Body (%d bytes):", len(bodyBytes))
+				if isPrintable(bodyBytes) {
+					proxyLogger.Printf("%s", string(bodyBytes))
+				} else {
+					proxyLogger.Printf("[Binary data - %d bytes]", len(bodyBytes))
+				}
+			}
+		} else if resp.ContentLength > maxBodySize {
+			proxyLogger.Printf("Response Body: [Skipped - too large: %d bytes > %d bytes limit]", resp.ContentLength, maxBodySize)
+		} else if resp.ContentLength >= 0 {
+			proxyLogger.Printf("Content-Length: %d bytes", resp.ContentLength)
+		}
+		proxyLogger.Printf("========== END RESPONSE ==========\n")
+	}
+
+	return resp, nil
+}
 
 type proxyEntry struct {
 	cert             *tls.Certificate
@@ -53,6 +200,11 @@ func (m *muxProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				pe.remoteProxy.ServeHTTP(w, r)
 			} else {
 				log.Printf("[OGINY ROUTING] %s %s → ERROR: no remote proxy configured", r.Method, r.URL.Path)
+				if proxyLogger != nil {
+					logMutex.Lock()
+					proxyLogger.Printf("[ERROR] No remote proxy configured for %s %s", r.Method, r.URL.Path)
+					logMutex.Unlock()
+				}
 				http.Error(w, "no remote proxy configured", http.StatusBadGateway)
 			}
 		} else {
@@ -63,6 +215,11 @@ func (m *muxProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("[OGINY ROUTING] %s %s → ERROR: no backend for host %s", r.Method, r.URL.Path, host)
+	if proxyLogger != nil {
+		logMutex.Lock()
+		proxyLogger.Printf("[ERROR] No backend for host %s", host)
+		logMutex.Unlock()
+	}
 	http.Error(w, "no backend for host", http.StatusBadGateway)
 }
 
@@ -245,6 +402,27 @@ func Start(port int) error {
 		listenAddr = fmt.Sprintf(":%d", port)
 	}
 
+	// Initialize logger
+	// Always use ~/oginy-logs as the log directory
+	homeBase := os.Getenv("HOME")
+	if homeBase == "" {
+		homeBase = "/home"
+	}
+	logDir := filepath.Join(homeBase, "oginy-logs")
+
+	if err := initLogger(logDir); err != nil {
+		log.Printf("Warning: Failed to initialize file logger: %v", err)
+		log.Printf("Continuing without file logging...")
+	} else {
+		// Ensure log file is closed on exit
+		defer func() {
+			if logFile != nil {
+				proxyLogger.Printf("=== OGINY Proxy Log Ended ===")
+				logFile.Close()
+			}
+		}()
+	}
+
 	// Get results-receiver hostname from env var or use default
 	resultsReceiverHost := "results-receiver.actions.githubusercontent.com"
 	if actionsURL := os.Getenv("ACTIONS_RESULTS_URL"); actionsURL != "" {
@@ -373,8 +551,13 @@ func Start(port int) error {
 			return fmt.Errorf("cert %s: %v", s.serverName, err)
 		}
 
+		// Create proxy with logging transport
 		rp := httputil.NewSingleHostReverseProxy(u)
-		rp.Transport = tr
+		loggingTransport := &loggingRoundTripper{
+			transport: tr,
+			name:      fmt.Sprintf("LOCAL:%s→%s", s.serverName, s.targetURL),
+		}
+		rp.Transport = loggingTransport
 		origDirector := rp.Director
 		rp.Director = func(r *http.Request) {
 			origHost := r.Host
@@ -422,8 +605,14 @@ func Start(port int) error {
 				DisableCompression:    true,
 			}
 
+			// Wrap remote transport with logging
+			loggingRemoteTransport := &loggingRoundTripper{
+				transport: remoteTransport,
+				name:      fmt.Sprintf("REMOTE:%s→%s", resultsReceiverHost, realIP),
+			}
+
 			remoteProxy := httputil.NewSingleHostReverseProxy(remoteURL)
-			remoteProxy.Transport = remoteTransport
+			remoteProxy.Transport = loggingRemoteTransport
 			remoteProxy.Director = func(r *http.Request) {
 				// Log the request details before modification
 				origURL := r.URL.String()
