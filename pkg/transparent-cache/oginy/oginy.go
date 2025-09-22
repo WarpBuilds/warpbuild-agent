@@ -395,32 +395,38 @@ func resolveRealIP(hostname string) (string, error) {
 
 // Start starts the OGINY TLS reverse proxy service
 // If port is > 0, it uses that port, otherwise defaults to 443
-func Start(port int) error {
+// If loggingEnabled is true, all proxy traffic will be logged to files
+func Start(port int, loggingEnabled bool) error {
 	// Ignore cfgPath since we're inlining the config
 	listenAddr := ":443"
 	if port > 0 {
 		listenAddr = fmt.Sprintf(":%d", port)
 	}
 
-	// Initialize logger
-	// Always use ~/oginy-logs as the log directory
-	homeBase := os.Getenv("HOME")
-	if homeBase == "" {
-		homeBase = "/home"
-	}
-	logDir := filepath.Join(homeBase, "oginy-logs")
+	// Initialize logger only if logging is enabled
+	if loggingEnabled {
+		// Always use ~/oginy-logs as the log directory
+		homeBase := os.Getenv("HOME")
+		if homeBase == "" {
+			homeBase = "/home"
+		}
+		logDir := filepath.Join(homeBase, "oginy-logs")
 
-	if err := initLogger(logDir); err != nil {
-		log.Printf("Warning: Failed to initialize file logger: %v", err)
-		log.Printf("Continuing without file logging...")
+		if err := initLogger(logDir); err != nil {
+			log.Printf("Warning: Failed to initialize file logger: %v", err)
+			log.Printf("Continuing without file logging...")
+		} else {
+			// Ensure log file is closed on exit
+			defer func() {
+				if logFile != nil {
+					proxyLogger.Printf("=== OGINY Proxy Log Ended ===")
+					logFile.Close()
+				}
+			}()
+			log.Printf("Proxy traffic logging enabled")
+		}
 	} else {
-		// Ensure log file is closed on exit
-		defer func() {
-			if logFile != nil {
-				proxyLogger.Printf("=== OGINY Proxy Log Ended ===")
-				logFile.Close()
-			}
-		}()
+		log.Printf("Proxy traffic logging disabled")
 	}
 
 	// Get results-receiver hostname from env var or use default

@@ -65,7 +65,7 @@ func main() {
 
 	// Start the transparent cache services in a goroutine
 	go func() {
-		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort, *backendURL, *authToken)
+		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort, *backendURL, *authToken, *debug)
 		errChan <- err
 	}()
 
@@ -88,7 +88,7 @@ func main() {
 }
 
 func setupEnvironment(backendURL, authToken string, debug, skipNetworking bool) {
-	os.Setenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN", "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhYyI6Ilt7XCJTY29wZVwiOlwicmVmcy9oZWFkcy9tYWluXCIsXCJQZXJtaXNzaW9uXCI6M31dIiwiY29ubmVjdGlvbklkIjoiaW50ZXJuYWwiLCJleHAiOjE3NTgxNzU4MDgsIm5iZiI6MTc1NzkxNjYwOCwicnVubmVySWQiOiJ3YXJwZGV2LTh4LXg2NC13NW5tMDNnNGNpM3Btbm5vIiwic3RhY2tJZCI6Ind3MG9oOWpvcDR4cjkweGEiLCJ4LXdhcnBidWlsZC1vcmdhbml6YXRpb24taWQiOiJ3Zm1uMDgwZWlmOHJuaXdxIn0.w0H0DfxEfN0ZscZbWfWFK3h11Ovar5DKJvBulleloCxRrrALESUcd9C4D9_qXEGXFv5Gtl7_D3J-Yyf9iq7Eyg")
+	os.Setenv("WARPBUILD_RUNNER_VERIFICATION_TOKEN", "<Add warpbuild token here>")
 	// Set up environment variables for DERP
 	if backendURL != "" {
 		os.Setenv("WARPCACHE_BACKEND_URL", backendURL)

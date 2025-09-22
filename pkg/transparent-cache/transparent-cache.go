@@ -214,7 +214,7 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 	return nil
 }
 
-func Start(derpPort, oginyPort, asurPort int, cacheBackendHost, warpBuildRunnerVerificationToken string) error {
+func Start(derpPort, oginyPort, asurPort int, cacheBackendHost, warpBuildRunnerVerificationToken string, loggingEnabled bool) error {
 	log.Println("========================================")
 	log.Println("Starting Transparent Cache Services")
 	log.Println("========================================")
@@ -262,7 +262,7 @@ func Start(derpPort, oginyPort, asurPort int, cacheBackendHost, warpBuildRunnerV
 		go func() {
 			defer wg.Done()
 			log.Printf("Starting OGINY TLS Reverse Proxy on port %d...", oginyPort)
-			if err := oginy.Start(oginyPort); err != nil {
+			if err := oginy.Start(oginyPort, loggingEnabled); err != nil {
 				errChan <- fmt.Errorf("OGINY service error: %v", err)
 			}
 		}()

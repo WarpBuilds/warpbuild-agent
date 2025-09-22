@@ -86,9 +86,11 @@ type ProxySettings struct {
 }
 
 type TransparentCacheSettings struct {
-	DerpPort  int `json:"derp_port"`
-	OginyPort int `json:"oginy_port"`
-	AsurPort  int `json:"asur_port"`
+	Enabled        bool `json:"enabled"`
+	LoggingEnabled bool `json:"logging_enabled"`
+	DerpPort       int  `json:"derp_port"`
+	OginyPort      int  `json:"oginy_port"`
+	AsurPort       int  `json:"asur_port"`
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
@@ -242,12 +244,19 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			return errors.New("transparent cache settings not configured")
 		}
 
+		// Check if transparent cache is enabled
+		if !settings.TransparentCache.Enabled {
+			log.Logger().Infof("transparent cache is disabled in settings")
+			return nil
+		}
+
 		if err := transparentcache.Start(
 			settings.TransparentCache.DerpPort,
 			settings.TransparentCache.OginyPort,
 			settings.TransparentCache.AsurPort,
 			settings.Proxy.CacheBackendHost,
 			settings.Agent.RunnerVerificationToken,
+			settings.TransparentCache.LoggingEnabled,
 		); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)
 			return err
