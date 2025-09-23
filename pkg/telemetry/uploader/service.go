@@ -14,6 +14,7 @@ type TelemetryProcessor interface {
 	ProcessLogs(ctx context.Context, data []byte) error
 	ProcessMetrics(ctx context.Context, data []byte) error
 	ProcessTraces(ctx context.Context, data []byte) error
+	ProcessGHALogs(ctx context.Context, data []byte) error
 }
 
 // TelemetryService implements the TelemetryProcessor interface
@@ -128,5 +129,26 @@ func (s *TelemetryService) ProcessTraces(ctx context.Context, data []byte) error
 	s.buffer["traces"].AddLineWithType(data)
 
 	// log.Logger().Debugf("Processed %d bytes of trace data", len(data))
+	return nil
+}
+
+// ProcessGHALogs processes GitHub Actions log data and adds it to the buffer
+func (s *TelemetryService) ProcessGHALogs(ctx context.Context, data []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if err := s.createBufferIfNil("gha-logs"); err != nil {
+		return fmt.Errorf("failed to create gha-logs buffer: %w", err)
+	}
+
+	// Validate input
+	if len(data) == 0 {
+		return fmt.Errorf("empty GHA log data")
+	}
+
+	// Process the GHA logs and add to buffer with gha-logs event type
+	s.buffer["gha-logs"].AddLineWithType(data)
+
+	log.Logger().Debugf("Processed %d bytes of GHA log data", len(data))
 	return nil
 }
