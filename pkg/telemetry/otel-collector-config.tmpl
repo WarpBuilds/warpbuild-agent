@@ -87,15 +87,16 @@ receivers:
             enabled: false
       network:
         metrics:
-          # only keep IO; disable packets/errors/dropped
+          # Network IO, packets, errors, and dropped metrics
           system.network.io:
             enabled: true
           system.network.packets:
-            enabled: false
+            enabled: true
           system.network.errors:
-            enabled: false
+            enabled: true  # TX/RX errors per interface
           system.network.dropped:
-            enabled: false
+            enabled: true  # TX/RX packet drops (packet loss) per interface
+
       disk:
         metrics:
           # collect disk throughput and IOPS metrics
@@ -159,6 +160,25 @@ receivers:
             metric: system.cpu.time
             attributes:
               state: idle
+
+  windowsperfcounters/network:
+    collection_interval: 30s
+    metrics:
+      system.network.tcp.segments_retransmitted:
+        description: TCP segments retransmitted per second
+        unit: "{segments}/s"
+        gauge:
+    perfcounters:
+      - object: "TCPv4"
+        instances: ["_Total"]
+        counters:
+          - name: "Segments Retransmitted/sec"
+            metric: system.network.tcp.segments_retransmitted
+      - object: "TCPv6"
+        instances: ["_Total"]
+        counters:
+          - name: "Segments Retransmitted/sec"
+            metric: system.network.tcp.segments_retransmitted
 {{- end}}
 
 processors:
@@ -180,6 +200,10 @@ processors:
           - system.memory.utilization
           - system.filesystem.utilization
           - system.network.io
+          - system.network.packets
+          - system.network.errors
+          - system.network.dropped
+          - system.network.tcp.segments_retransmitted
           - system.disk.io
           - system.disk.operations
           - system.disk.io_time
@@ -189,7 +213,7 @@ processors:
     error_mode: ignore
     metrics:
       datapoint:
-        - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
+        - 'IsMatch(metric.name, "^system\.network\.(io|packets|errors|dropped)$") and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
 
   # Convert cumulative counters -> delta
   cumulativetodelta:
@@ -197,6 +221,9 @@ processors:
       match_type: strict
       metrics:
         - system.network.io
+        - system.network.packets
+        - system.network.errors
+        - system.network.dropped
         - system.disk.io
         - system.disk.operations
         - system.disk.io_time
@@ -206,6 +233,9 @@ processors:
   deltatorate:
     metrics:
       - system.network.io
+      - system.network.packets
+      - system.network.errors
+      - system.network.dropped
       - system.disk.io
       - system.disk.operations
       - system.disk.io_time
@@ -215,8 +245,8 @@ processors:
     metric_statements:
       - context: datapoint
         statements:
-          # Rename NIC attribute to "internet"
-          - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
+          # Rename NIC attribute to "internet" for all network metrics
+          - 'set(attributes["device"], "internet") where IsMatch(metric.name, "^system\.network\.(io|packets|errors|dropped)$")'
 
   # Drop idle before aggregating
   filter/drop_cpu_idle:
@@ -333,7 +363,7 @@ service:
       processors: [batch/logs]
       exporters: [otlphttp/gha_logs]
     metrics:
-      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
+      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor, windowsperfcounters/network{{- end}}]
       processors:
         - filter/only_needed
         - filter/drop_non_internet_nics
