@@ -141,7 +141,7 @@ receivers:
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
-    collection_interval: 30s
+    collection_interval: 1s
     metrics:
       system.cpu.time:
         description: percentage of cpu time
@@ -261,16 +261,6 @@ processors:
             value_actions:
               - value: total
 
-  # Normalize CPU utilization to 100% (divide by number of vCPUs)
-  transform/cpu_normalize_to_100:
-    error_mode: ignore
-    metric_statements:
-      - context: datapoint
-        statements:
-          # Normalize total CPU percentage by dividing by number of logical CPUs
-          # This assumes the total was already summed across all CPUs
-          - 'set(value_double, value_double / {{.LogicalCPUs}}) where metric.name == "system.cpu.utilization" and attributes["aggregation"] == "total"'
-
   # Convert memory utilization from ratio to percentage
   transform/mem_to_percentage:
     error_mode: ignore
@@ -349,7 +339,6 @@ service:
         - transform/cpu_to_percent
         - metricstransform/cpu_sum_states
         - metricstransform/cpu_total_percent
-        - transform/cpu_normalize_to_100
 
         # memory
         - transform/mem_to_percentage
