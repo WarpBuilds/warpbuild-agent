@@ -25,10 +25,8 @@ func SetupNetworking(oginyPort int) error {
 		return nil
 	}
 
-	// Ensure we have root privileges for system networking changes
-	if os.Geteuid() != 0 {
-		return fmt.Errorf("networking setup requires root privileges; please run as root or with sudo")
-	}
+	// Note: This function will use sudo for commands that require root privileges
+	log.Println("Note: This function will use sudo for privileged operations")
 
 	// Get results-receiver hostname from environment variable or use default
 	resultsReceiverHost := "results-receiver.actions.githubusercontent.com"
@@ -57,10 +55,10 @@ func SetupNetworking(oginyPort int) error {
 		switch runtime.GOOS {
 		case "darwin":
 			// On macOS, use ifconfig to add loopback alias
-			cmd = exec.Command("ifconfig", "lo0", "alias", ip, "netmask", "255.255.255.255")
+			cmd = exec.Command("sudo", "ifconfig", "lo0", "alias", ip, "netmask", "255.255.255.255")
 		case "linux":
 			// On Linux, use ip command
-			cmd = exec.Command("ip", "addr", "add", fmt.Sprintf("%s/32", ip), "dev", "lo")
+			cmd = exec.Command("sudo", "ip", "addr", "add", fmt.Sprintf("%s/32", ip), "dev", "lo")
 		default:
 			return fmt.Errorf("unsupported OS for loopback setup: %s", runtime.GOOS)
 		}
@@ -77,20 +75,17 @@ func SetupNetworking(oginyPort int) error {
 
 	// Update /etc/hosts
 	log.Println("Updating /etc/hosts...")
-	hostsFile, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open /etc/hosts: %v", err)
-	}
-	defer hostsFile.Close()
 
 	for hostname, ip := range hostMappings {
 		// Check if entry already exists
 		cmd := exec.Command("grep", "-q", fmt.Sprintf("%s %s", ip, hostname), "/etc/hosts")
 		if err := cmd.Run(); err != nil {
-			// Entry doesn't exist, add it
-			entry := fmt.Sprintf("%s %s\n", ip, hostname)
-			if _, err := hostsFile.WriteString(entry); err != nil {
-				return fmt.Errorf("failed to write to /etc/hosts: %v", err)
+			// Entry doesn't exist, add it using sudo tee
+			entry := fmt.Sprintf("%s %s", ip, hostname)
+			cmd := exec.Command("sudo", "tee", "-a", "/etc/hosts")
+			cmd.Stdin = strings.NewReader(entry + "\n")
+			if output, err := cmd.CombinedOutput(); err != nil {
+				return fmt.Errorf("failed to write to /etc/hosts: %v - %s", err, string(output))
 			}
 			log.Printf("Added /etc/hosts entry: %s", entry)
 		} else {
@@ -145,13 +140,13 @@ func setupPfctl(hostMappings map[string]string, oginyPort int) error {
 	defer os.Remove(tmpFile)
 
 	// Load the rules
-	cmd := exec.Command("pfctl", "-f", tmpFile)
+	cmd := exec.Command("sudo", "pfctl", "-f", tmpFile)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to load pf rules: %v - %s", err, string(output))
 	}
 
 	// Enable pfctl
-	cmd = exec.Command("pfctl", "-e")
+	cmd = exec.Command("sudo", "pfctl", "-e")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		// pfctl might already be enabled, check the error message
 		if !strings.Contains(string(output), "already enabled") {
@@ -169,8 +164,8 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 
 	// Create table and chain if they don't exist
 	nftCommands := [][]string{
-		{"nft", "add", "table", "ip", "nat"},
-		{"nft", "add", "chain", "ip", "nat", "output", "{", "type", "nat", "hook", "output", "priority", "0;", "}"},
+		{"sudo", "nft", "add", "table", "ip", "nat"},
+		{"sudo", "nft", "add", "chain", "ip", "nat", "output", "{", "type", "nat", "hook", "output", "priority", "0;", "}"},
 	}
 
 	for _, cmdArgs := range nftCommands {
@@ -184,7 +179,7 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 	// Add return (skip) rules for oginy egress first, so we don't redirect its own outbound connections
 	for hostname, ip := range hostMappings {
 		log.Printf("Adding nftables return rule for oginy egress to %s (%s)", hostname, ip)
-		cmd := exec.Command("nft", "add", "rule", "ip", "nat", "output",
+		cmd := exec.Command("sudo", "nft", "add", "rule", "ip", "nat", "output",
 			"ip", "saddr", "127.0.0.1", "ip", "daddr", ip, "tcp", "dport", "443", "return")
 		if output, err := cmd.CombinedOutput(); err != nil {
 			outStr := string(output)
@@ -199,7 +194,7 @@ func setupNftables(hostMappings map[string]string, oginyPort int) error {
 	// Add redirect rules for each IP
 	for hostname, ip := range hostMappings {
 		log.Printf("Adding nftables redirect rule for %s (%s) -> port %d", hostname, ip, oginyPort)
-		cmd := exec.Command("nft", "add", "rule", "ip", "nat", "output",
+		cmd := exec.Command("sudo", "nft", "add", "rule", "ip", "nat", "output",
 			"ip", "daddr", ip, "tcp", "dport", "443", "redirect", "to", fmt.Sprintf(":%d", oginyPort))
 		if output, err := cmd.CombinedOutput(); err != nil {
 			outStr := string(output)
