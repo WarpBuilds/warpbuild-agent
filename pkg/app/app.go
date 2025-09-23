@@ -86,11 +86,10 @@ type ProxySettings struct {
 }
 
 type TransparentCacheSettings struct {
-	Enabled        bool `json:"enabled"`
-	LoggingEnabled bool `json:"logging_enabled"`
 	DerpPort       int  `json:"derp_port"`
 	OginyPort      int  `json:"oginy_port"`
 	AsurPort       int  `json:"asur_port"`
+	LoggingEnabled bool `json:"logging_enabled"`
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
@@ -244,12 +243,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			return errors.New("transparent cache settings not configured")
 		}
 
-		// Check if transparent cache is enabled
-		if !settings.TransparentCache.Enabled {
-			log.Logger().Infof("transparent cache is disabled in settings")
-			return nil
-		}
-
 		if err := transparentcache.Start(
 			settings.TransparentCache.DerpPort,
 			settings.TransparentCache.OginyPort,
@@ -262,11 +255,17 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			return err
 		}
 	} else {
+		transparentCacheOginyPort := 0
+		if settings.TransparentCache != nil {
+			transparentCacheOginyPort = settings.TransparentCache.OginyPort
+		}
+
 		agent, err := manager.NewAgent(&manager.AgentOptions{
-			ID:               settings.Agent.ID,
-			PollingSecret:    settings.Agent.PollingSecret,
-			HostURL:          settings.Agent.HostURL,
-			ExitFileLocation: settings.Agent.ExitFileLocation,
+			ID:                        settings.Agent.ID,
+			PollingSecret:             settings.Agent.PollingSecret,
+			HostURL:                   settings.Agent.HostURL,
+			ExitFileLocation:          settings.Agent.ExitFileLocation,
+			TransparentCacheOginyPort: transparentCacheOginyPort,
 		})
 		if err != nil {
 			log.Logger().Errorf("failed to create agent: %v", err)

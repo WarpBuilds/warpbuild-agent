@@ -16,7 +16,7 @@ import (
 )
 
 // setupNetworking configures loopback IPs and nftables rules for transparent caching
-func setupNetworking(oginyPort int) error {
+func SetupNetworking(oginyPort int) error {
 	log.Println("Setting up networking for transparent cache...")
 
 	// Skip networking setup if OGINY is not enabled
@@ -218,15 +218,6 @@ func Start(derpPort, oginyPort, asurPort int, cacheBackendHost, warpBuildRunnerV
 	log.Println("========================================")
 	log.Println("Starting Transparent Cache Services")
 	log.Println("========================================")
-
-	// Setup networking before starting services
-	if oginyPort > 0 {
-		if err := setupNetworking(oginyPort); err != nil {
-			return fmt.Errorf("failed to setup networking: %v", err)
-		}
-	} else {
-		log.Println("OGINY port not set; skipping networking setup")
-	}
 
 	// Create a WaitGroup to manage all services
 	var wg sync.WaitGroup
