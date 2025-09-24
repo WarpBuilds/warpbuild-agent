@@ -15,9 +15,9 @@ import (
 func main() {
 	// Define command line flags
 	var (
-		derpPort       = flag.Int("derp-port", 50052, "Port for DERP (Cache Twirp) service")
-		asurPort       = flag.Int("asur-port", 50053, "Port for ASUR (Azure→S3 Proxy) service")
-		oginyPort      = flag.Int("oginy-port", 50051, "Port for OGINY (TLS Reverse Proxy) service. Set to 0 to disable")
+		derpPort       = flag.Int("derp-port", 59992, "Port for DERP (Cache Twirp) service")
+		asurPort       = flag.Int("asur-port", 59993, "Port for ASUR (Azure→S3 Proxy) service")
+		oginyPort      = flag.Int("oginy-port", 59991, "Port for OGINY (TLS Reverse Proxy) service. Set to 0 to disable")
 		backendURL     = flag.String("backend-url", "http://localhost:8000", "WarpCache backend URL")
 		authToken      = flag.String("auth-token", "", "WarpCache authentication token")
 		debug          = flag.Bool("debug", true, "Enable debug mode")

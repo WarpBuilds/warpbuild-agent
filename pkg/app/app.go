@@ -93,14 +93,14 @@ type TransparentCacheSettings struct {
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
-	if t.DerpPort == 0 {
-		t.DerpPort = 50052
-	}
 	if t.OginyPort == 0 {
-		t.OginyPort = 50051
+		t.OginyPort = 59991
+	}
+	if t.DerpPort == 0 {
+		t.DerpPort = 59992
 	}
 	if t.AsurPort == 0 {
-		t.AsurPort = 50053
+		t.AsurPort = 59993
 	}
 }
 

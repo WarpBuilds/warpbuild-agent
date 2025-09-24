@@ -16,9 +16,9 @@
         "--accept-multiclient",
         "--",
         "--debug=true",
-        "--derp-port=50052",
-        "--asur-port=50053",
-        "--oginy-port=50051"
+        "--derp-port=59992",
+        "--asur-port=59993",
+        "--oginy-port=59991"
       ],
       "isBackground": true,
       "problemMatcher": {
@@ -65,7 +65,7 @@
     {
       "label": "Build and Run with Sudo",
       "type": "shell",
-      "command": "go build -o transparent-cache-test test.go && sudo ./transparent-cache-test --debug=true --derp-port=50052 --asur-port=50053 --oginy-port=50051",
+      "command": "go build -o transparent-cache-test test.go && sudo ./transparent-cache-test --debug=true --derp-port=59992 --asur-port=59993 --oginy-port=59991",
       "group": {
         "kind": "build",
         "isDefault": true

@@ -109,7 +109,7 @@ func (c *TwirpClient) FinalizeCacheEntryUpload(ctx context.Context, req *cachepb
 
 func main() {
 	// Create Twirp client
-	client := NewTwirpClient("http://localhost:50051")
+	client := NewTwirpClient("http://localhost:59991")
 
 	// Create context
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// Create Twirp client using the generated client
-	client := cachepb.NewCacheServiceJSONClient("http://localhost:50051", httpClient)
+	client := cachepb.NewCacheServiceJSONClient("http://localhost:59991", httpClient)
 
 	// Create context
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

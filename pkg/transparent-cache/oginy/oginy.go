@@ -456,6 +456,10 @@ func Start(port int, loggingEnabled bool) error {
 	}
 	log.Printf("Using certificate directory: %s", certDir)
 
+	// Cleanup any existing certificates
+	os.RemoveAll(filepath.Join(certDir, "*.crt"))
+	os.RemoveAll(filepath.Join(certDir, "*.key"))
+
 	// Generate CA if it doesn't exist
 	caCertPath := filepath.Join(certDir, "localCA.crt")
 	caKeyPath := filepath.Join(certDir, "localCA.key")
