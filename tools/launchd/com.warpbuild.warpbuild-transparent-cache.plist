@@ -8,8 +8,7 @@
     <integer>-10</integer>
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/local/bin/warpbuild-agentd</string>
-      <string>--launch-transparent-cache</string>
+      <string>/usr/local/bin/warpbuild-agentd-launcher.sh --launch-transparent-cache</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
