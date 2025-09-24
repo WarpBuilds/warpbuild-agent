@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>com.warpbuild.warpbuild-transparent-cache</string>
+    <string>warpbuild-transparent-cache-launcher</string>
     <key>Nice</key>
     <integer>-10</integer>
     <key>ProgramArguments</key>
@@ -15,13 +15,9 @@
     <dict>
       <key>LANG</key>
       <string>en_US.UTF-8</string>
-      <key>OGINY_CERT_DIR</key>
-      <string>/var/lib/warpbuild-transparent-cache/certs</string>
     </dict>
     <key>UserName</key>
-    <string>root</string>
-    <key>GroupName</key>
-    <string>wheel</string>
+    <string>$USERNAME</string>
     <key>RunAtLoad</key>
     <true/>
     <key>ThrottleInterval</key>
@@ -32,8 +28,8 @@
       <false/>
     </dict>
     <key>StandardErrorPath</key>
-    <string>/var/log/warpbuild-transparent-cache.error.log</string>
+    <string>$BASE_DIR/log/warpbuild-transparent-cache-launcher.error.log</string>
     <key>StandardOutPath</key>
-    <string>/var/log/warpbuild-transparent-cache.out.log</string>
+    <string>$BASE_DIR/log/warpbuild-transparent-cache-launcher.out.log</string>
   </dict>
 </plist>
