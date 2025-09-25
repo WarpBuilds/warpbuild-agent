@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Transparent Cache with Sudo",
+      "type": "shell",
+      "command": "sudo",
+      "args": [
+        "-E",
+        "dlv",
+        "debug",
+        "${workspaceFolder}/test.go",
+        "--headless",
+        "--listen=:2345",
+        "--api-version=2",
+        "--accept-multiclient",
+        "--",
+        "--debug=true",
+        "--derp-port=59992",
+        "--asur-port=59993",
+        "--oginy-port=59991"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*API server listening at.*$",
+          "endsPattern": "^.*API server listening at.*$"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "env": {
+        "WARPCACHE_BACKEND_URL": "${env:WARPCACHE_BACKEND_URL}",
+        "WARPCACHE_AUTH_TOKEN": "${env:WARPCACHE_AUTH_TOKEN}",
+        "R2_ACCESS_KEY_ID": "${env:R2_ACCESS_KEY_ID}",
+        "R2_SECRET_ACCESS_KEY": "${env:R2_SECRET_ACCESS_KEY}",
+        "R2_ENDPOINT": "${env:R2_ENDPOINT}",
+        "AZPROXY_DEBUG": "true",
+        "AZPROXY_UPLOAD_METHOD": "http",
+        "AZPROXY_UPLOAD_CONCURRENCY": "10"
+      }
+    },
+    {
+      "label": "Stop Transparent Cache",
+      "type": "shell",
+      "command": "sudo pkill -f 'dlv.*test.go' || true",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Build and Run with Sudo",
+      "type": "shell",
+      "command": "go build -o transparent-cache-test test.go && sudo ./transparent-cache-test --debug=true --derp-port=59992 --asur-port=59993 --oginy-port=59991",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    }
+  ]
+}

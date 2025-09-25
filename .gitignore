@@ -27,3 +27,7 @@ dist/
 pkg/telemetry/otel-collector-config.yaml
 pkg/telemetry/binaries/*/*/otelcol-contrib
 pkg/telemetry/binaries/*/*/otelcol-contrib.exe
+
+.env
+**/*.key
+**/*.crt
