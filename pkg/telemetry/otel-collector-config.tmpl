@@ -224,6 +224,19 @@ processors:
           # Set unit to MB/s
           - 'set(unit, "MB/s") where metric.name == "system.disk.io"'
 
+  # Convert network throughput from bytes/sec to MB/sec
+  transform/network_to_mbps:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert bytes/sec to MB/sec (divide by 1048576)
+          - 'set(value_double, value_double / 1048576.0) where metric.name == "system.network.io"'
+      - context: metric
+        statements:
+          # Set unit to MB/s
+          - 'set(unit, "MB/s") where metric.name == "system.network.io"'
+
   transform/normalize:
     metric_statements:
       - context: datapoint
@@ -345,6 +358,9 @@ service:
 
         # disk
         - transform/disk_to_mbps
+
+        # network
+        - transform/network_to_mbps
 
         # fs
         - transform/fs_to_percent
