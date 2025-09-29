@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "obs"
+      - "update-deps"
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
