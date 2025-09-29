@@ -211,6 +211,19 @@ processors:
       - system.disk.io_time
       - system.disk.operation_time
 
+  # Convert disk throughput from bytes/sec to MB/sec
+  transform/disk_to_mbps:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert bytes/sec to MB/sec (divide by 1048576)
+          - 'set(value_double, value_double / 1048576.0) where metric.name == "system.disk.io"'
+      - context: metric
+        statements:
+          # Set unit to MB/s
+          - 'set(unit, "MB/s") where metric.name == "system.disk.io"'
+
   transform/normalize:
     metric_statements:
       - context: datapoint
@@ -246,7 +259,7 @@ processors:
             label_set: ["cpu"]
             aggregation_type: sum
 
-  # 4a) TOTAL CPU (sum across CPUs) and normalize to 100%
+  # 4a) TOTAL CPU (sum across CPUs) => 0..(N*100). For 8 vCPU, max 800%
   metricstransform/cpu_total_percent:
     transforms:
       - include: system.cpu.utilization
@@ -329,6 +342,9 @@ service:
         - filter/drop_non_internet_nics
         - cumulativetodelta
         - deltatorate
+
+        # disk
+        - transform/disk_to_mbps
 
         # fs
         - transform/fs_to_percent
