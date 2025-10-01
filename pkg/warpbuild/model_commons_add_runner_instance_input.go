@@ -20,6 +20,7 @@ var _ MappedNullable = &CommonsAddRunnerInstanceInput{}
 
 // CommonsAddRunnerInstanceInput struct for CommonsAddRunnerInstanceInput
 type CommonsAddRunnerInstanceInput struct {
+	DynamicOverrides *CommonsDynamicOverrides `json:"dynamic_overrides,omitempty"`
 	ProviderId *string `json:"provider_id,omitempty"`
 	RunnerSetId *string `json:"runner_set_id,omitempty"`
 	UniqueExternalId *string `json:"unique_external_id,omitempty"`
@@ -43,6 +44,38 @@ func NewCommonsAddRunnerInstanceInput() *CommonsAddRunnerInstanceInput {
 func NewCommonsAddRunnerInstanceInputWithDefaults() *CommonsAddRunnerInstanceInput {
 	this := CommonsAddRunnerInstanceInput{}
 	return &this
+}
+
+// GetDynamicOverrides returns the DynamicOverrides field value if set, zero value otherwise.
+func (o *CommonsAddRunnerInstanceInput) GetDynamicOverrides() CommonsDynamicOverrides {
+	if o == nil || IsNil(o.DynamicOverrides) {
+		var ret CommonsDynamicOverrides
+		return ret
+	}
+	return *o.DynamicOverrides
+}
+
+// GetDynamicOverridesOk returns a tuple with the DynamicOverrides field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsAddRunnerInstanceInput) GetDynamicOverridesOk() (*CommonsDynamicOverrides, bool) {
+	if o == nil || IsNil(o.DynamicOverrides) {
+		return nil, false
+	}
+	return o.DynamicOverrides, true
+}
+
+// HasDynamicOverrides returns a boolean if a field has been set.
+func (o *CommonsAddRunnerInstanceInput) HasDynamicOverrides() bool {
+	if o != nil && !IsNil(o.DynamicOverrides) {
+		return true
+	}
+
+	return false
+}
+
+// SetDynamicOverrides gets a reference to the given CommonsDynamicOverrides and assigns it to the DynamicOverrides field.
+func (o *CommonsAddRunnerInstanceInput) SetDynamicOverrides(v CommonsDynamicOverrides) {
+	o.DynamicOverrides = &v
 }
 
 // GetProviderId returns the ProviderId field value if set, zero value otherwise.
@@ -151,6 +184,9 @@ func (o CommonsAddRunnerInstanceInput) MarshalJSON() ([]byte, error) {
 
 func (o CommonsAddRunnerInstanceInput) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.DynamicOverrides) {
+		toSerialize["dynamic_overrides"] = o.DynamicOverrides
+	}
 	if !IsNil(o.ProviderId) {
 		toSerialize["provider_id"] = o.ProviderId
 	}
@@ -182,6 +218,7 @@ func (o *CommonsAddRunnerInstanceInput) UnmarshalJSON(bytes []byte) (err error) 
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
+		delete(additionalProperties, "dynamic_overrides")
 		delete(additionalProperties, "provider_id")
 		delete(additionalProperties, "runner_set_id")
 		delete(additionalProperties, "unique_external_id")

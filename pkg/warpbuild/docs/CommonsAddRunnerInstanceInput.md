@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**DynamicOverrides** | Pointer to [**CommonsDynamicOverrides**](CommonsDynamicOverrides.md) |  | [optional] 
 **ProviderId** | Pointer to **string** |  | [optional] 
 **RunnerSetId** | Pointer to **string** |  | [optional] 
 **UniqueExternalId** | Pointer to **string** |  | [optional] 
@@ -26,6 +27,31 @@ will change when the set of required properties is changed
 NewCommonsAddRunnerInstanceInputWithDefaults instantiates a new CommonsAddRunnerInstanceInput object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetDynamicOverrides
+
+`func (o *CommonsAddRunnerInstanceInput) GetDynamicOverrides() CommonsDynamicOverrides`
+
+GetDynamicOverrides returns the DynamicOverrides field if non-nil, zero value otherwise.
+
+### GetDynamicOverridesOk
+
+`func (o *CommonsAddRunnerInstanceInput) GetDynamicOverridesOk() (*CommonsDynamicOverrides, bool)`
+
+GetDynamicOverridesOk returns a tuple with the DynamicOverrides field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDynamicOverrides
+
+`func (o *CommonsAddRunnerInstanceInput) SetDynamicOverrides(v CommonsDynamicOverrides)`
+
+SetDynamicOverrides sets DynamicOverrides field to given value.
+
+### HasDynamicOverrides
+
+`func (o *CommonsAddRunnerInstanceInput) HasDynamicOverrides() bool`
+
+HasDynamicOverrides returns a boolean if a field has been set.
 
 ### GetProviderId
 

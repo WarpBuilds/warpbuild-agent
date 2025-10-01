@@ -5,11 +5,17 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **VcsBaseRef** | Pointer to **string** |  | [optional] 
+**VcsCommitMessage** | Pointer to **string** |  | [optional] 
+**VcsDefaultBranch** | Pointer to **string** |  | [optional] 
+**VcsEndTime** | Pointer to **string** |  | [optional] 
 **VcsHeadRef** | Pointer to **string** |  | [optional] 
+**VcsJobName** | Pointer to **string** |  | [optional] 
 **VcsOrg** | Pointer to **string** |  | [optional] 
 **VcsRef** | Pointer to **string** |  | [optional] 
 **VcsRefType** | Pointer to **string** |  | [optional] 
 **VcsRepo** | Pointer to **string** |  | [optional] 
+**VcsStartTime** | Pointer to **string** |  | [optional] 
+**VcsWorkflowGroupId** | Pointer to **string** |  | [optional] 
 
 ## Methods
 
@@ -55,6 +61,81 @@ SetVcsBaseRef sets VcsBaseRef field to given value.
 
 HasVcsBaseRef returns a boolean if a field has been set.
 
+### GetVcsCommitMessage
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsCommitMessage() string`
+
+GetVcsCommitMessage returns the VcsCommitMessage field if non-nil, zero value otherwise.
+
+### GetVcsCommitMessageOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsCommitMessageOk() (*string, bool)`
+
+GetVcsCommitMessageOk returns a tuple with the VcsCommitMessage field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsCommitMessage
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsCommitMessage(v string)`
+
+SetVcsCommitMessage sets VcsCommitMessage field to given value.
+
+### HasVcsCommitMessage
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsCommitMessage() bool`
+
+HasVcsCommitMessage returns a boolean if a field has been set.
+
+### GetVcsDefaultBranch
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsDefaultBranch() string`
+
+GetVcsDefaultBranch returns the VcsDefaultBranch field if non-nil, zero value otherwise.
+
+### GetVcsDefaultBranchOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsDefaultBranchOk() (*string, bool)`
+
+GetVcsDefaultBranchOk returns a tuple with the VcsDefaultBranch field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsDefaultBranch
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsDefaultBranch(v string)`
+
+SetVcsDefaultBranch sets VcsDefaultBranch field to given value.
+
+### HasVcsDefaultBranch
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsDefaultBranch() bool`
+
+HasVcsDefaultBranch returns a boolean if a field has been set.
+
+### GetVcsEndTime
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsEndTime() string`
+
+GetVcsEndTime returns the VcsEndTime field if non-nil, zero value otherwise.
+
+### GetVcsEndTimeOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsEndTimeOk() (*string, bool)`
+
+GetVcsEndTimeOk returns a tuple with the VcsEndTime field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsEndTime
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsEndTime(v string)`
+
+SetVcsEndTime sets VcsEndTime field to given value.
+
+### HasVcsEndTime
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsEndTime() bool`
+
+HasVcsEndTime returns a boolean if a field has been set.
+
 ### GetVcsHeadRef
 
 `func (o *CommonsLastJobProcessedMeta) GetVcsHeadRef() string`
@@ -79,6 +160,31 @@ SetVcsHeadRef sets VcsHeadRef field to given value.
 `func (o *CommonsLastJobProcessedMeta) HasVcsHeadRef() bool`
 
 HasVcsHeadRef returns a boolean if a field has been set.
+
+### GetVcsJobName
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsJobName() string`
+
+GetVcsJobName returns the VcsJobName field if non-nil, zero value otherwise.
+
+### GetVcsJobNameOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsJobNameOk() (*string, bool)`
+
+GetVcsJobNameOk returns a tuple with the VcsJobName field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsJobName
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsJobName(v string)`
+
+SetVcsJobName sets VcsJobName field to given value.
+
+### HasVcsJobName
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsJobName() bool`
+
+HasVcsJobName returns a boolean if a field has been set.
 
 ### GetVcsOrg
 
@@ -179,6 +285,56 @@ SetVcsRepo sets VcsRepo field to given value.
 `func (o *CommonsLastJobProcessedMeta) HasVcsRepo() bool`
 
 HasVcsRepo returns a boolean if a field has been set.
+
+### GetVcsStartTime
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsStartTime() string`
+
+GetVcsStartTime returns the VcsStartTime field if non-nil, zero value otherwise.
+
+### GetVcsStartTimeOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsStartTimeOk() (*string, bool)`
+
+GetVcsStartTimeOk returns a tuple with the VcsStartTime field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsStartTime
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsStartTime(v string)`
+
+SetVcsStartTime sets VcsStartTime field to given value.
+
+### HasVcsStartTime
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsStartTime() bool`
+
+HasVcsStartTime returns a boolean if a field has been set.
+
+### GetVcsWorkflowGroupId
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsWorkflowGroupId() string`
+
+GetVcsWorkflowGroupId returns the VcsWorkflowGroupId field if non-nil, zero value otherwise.
+
+### GetVcsWorkflowGroupIdOk
+
+`func (o *CommonsLastJobProcessedMeta) GetVcsWorkflowGroupIdOk() (*string, bool)`
+
+GetVcsWorkflowGroupIdOk returns a tuple with the VcsWorkflowGroupId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVcsWorkflowGroupId
+
+`func (o *CommonsLastJobProcessedMeta) SetVcsWorkflowGroupId(v string)`
+
+SetVcsWorkflowGroupId sets VcsWorkflowGroupId field to given value.
+
+### HasVcsWorkflowGroupId
+
+`func (o *CommonsLastJobProcessedMeta) HasVcsWorkflowGroupId() bool`
+
+HasVcsWorkflowGroupId returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

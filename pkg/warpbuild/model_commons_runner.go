@@ -25,9 +25,11 @@ type CommonsRunner struct {
 	CreatedAt *string `json:"created_at,omitempty"`
 	Id *string `json:"id,omitempty"`
 	Labels []string `json:"labels,omitempty"`
+	Meta *CommonsSetMeta `json:"meta,omitempty"`
 	Name *string `json:"name,omitempty"`
 	OrganizationId *string `json:"organization_id,omitempty"`
 	ProviderId *string `json:"provider_id,omitempty"`
+	// LabelOverrides   *LabelAttributes        `json:\"label_overrides\"`
 	StockRunnerId *string `json:"stock_runner_id,omitempty"`
 	UpdatedAt *string `json:"updated_at,omitempty"`
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
@@ -211,6 +213,38 @@ func (o *CommonsRunner) HasLabels() bool {
 // SetLabels gets a reference to the given []string and assigns it to the Labels field.
 func (o *CommonsRunner) SetLabels(v []string) {
 	o.Labels = v
+}
+
+// GetMeta returns the Meta field value if set, zero value otherwise.
+func (o *CommonsRunner) GetMeta() CommonsSetMeta {
+	if o == nil || IsNil(o.Meta) {
+		var ret CommonsSetMeta
+		return ret
+	}
+	return *o.Meta
+}
+
+// GetMetaOk returns a tuple with the Meta field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunner) GetMetaOk() (*CommonsSetMeta, bool) {
+	if o == nil || IsNil(o.Meta) {
+		return nil, false
+	}
+	return o.Meta, true
+}
+
+// HasMeta returns a boolean if a field has been set.
+func (o *CommonsRunner) HasMeta() bool {
+	if o != nil && !IsNil(o.Meta) {
+		return true
+	}
+
+	return false
+}
+
+// SetMeta gets a reference to the given CommonsSetMeta and assigns it to the Meta field.
+func (o *CommonsRunner) SetMeta(v CommonsSetMeta) {
+	o.Meta = &v
 }
 
 // GetName returns the Name field value if set, zero value otherwise.
@@ -430,6 +464,9 @@ func (o CommonsRunner) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Labels) {
 		toSerialize["labels"] = o.Labels
 	}
+	if !IsNil(o.Meta) {
+		toSerialize["meta"] = o.Meta
+	}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
 	}
@@ -475,6 +512,7 @@ func (o *CommonsRunner) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "created_at")
 		delete(additionalProperties, "id")
 		delete(additionalProperties, "labels")
+		delete(additionalProperties, "meta")
 		delete(additionalProperties, "name")
 		delete(additionalProperties, "organization_id")
 		delete(additionalProperties, "provider_id")

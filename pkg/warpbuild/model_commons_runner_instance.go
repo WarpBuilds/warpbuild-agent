@@ -22,29 +22,35 @@ var _ MappedNullable = &CommonsRunnerInstance{}
 type CommonsRunnerInstance struct {
 	AllocatedAt *string `json:"allocated_at,omitempty"`
 	AllocationFor *string `json:"allocation_for,omitempty"`
+	AllocationMutexTimeout *string `json:"allocation_mutex_timeout,omitempty"`
 	AllocationRequestedAt *string `json:"allocation_requested_at,omitempty"`
 	AllocationRequestedEventAt *string `json:"allocation_requested_event_at,omitempty"`
 	Cluster *string `json:"cluster,omitempty"`
 	Configuration *CommonsRunnerInstanceConfiguration `json:"configuration,omitempty"`
 	CreatedAt *string `json:"created_at,omitempty"`
 	CreatedBy *string `json:"created_by,omitempty"`
+	DynamicOverrides *CommonsDynamicOverrides `json:"dynamic_overrides,omitempty"`
 	ExternalId *string `json:"external_id,omitempty"`
 	FirstPolledAt *string `json:"first_polled_at,omitempty"`
 	Host *string `json:"host,omitempty"`
 	Id *string `json:"id,omitempty"`
+	LabelAttributes *CommonsLabelAttributes `json:"label_attributes,omitempty"`
 	Labels []string `json:"labels,omitempty"`
 	LastJobProcessedId *string `json:"last_job_processed_id,omitempty"`
 	LastJobProcessedMeta *CommonsLastJobProcessedMeta `json:"last_job_processed_meta,omitempty"`
 	LastPolledAt *string `json:"last_polled_at,omitempty"`
 	OrganizationId *string `json:"organization_id,omitempty"`
-	ProviderKind *string `json:"provider_kind,omitempty"`
+	PostResumeFirstPolledAt *string `json:"post_resume_first_polled_at,omitempty"`
 	ProviderKindId *string `json:"provider_kind_id,omitempty"`
 	PurgedAt *string `json:"purged_at,omitempty"`
 	PurgedReason *string `json:"purged_reason,omitempty"`
 	RunnerFor *string `json:"runner_for,omitempty"`
 	RunnerSetId *string `json:"runner_set_id,omitempty"`
 	RunningStartedAt *string `json:"running_started_at,omitempty"`
+	StackKind *string `json:"stack_kind,omitempty"`
 	Status *string `json:"status,omitempty"`
+	SuspendedAt *string `json:"suspended_at,omitempty"`
+	SuspendingStartedAt *string `json:"suspending_started_at,omitempty"`
 	UpdatedAt *string `json:"updated_at,omitempty"`
 	VcsIntegrationId *string `json:"vcs_integration_id,omitempty"`
 	AdditionalProperties map[string]interface{}
@@ -131,6 +137,38 @@ func (o *CommonsRunnerInstance) HasAllocationFor() bool {
 // SetAllocationFor gets a reference to the given string and assigns it to the AllocationFor field.
 func (o *CommonsRunnerInstance) SetAllocationFor(v string) {
 	o.AllocationFor = &v
+}
+
+// GetAllocationMutexTimeout returns the AllocationMutexTimeout field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetAllocationMutexTimeout() string {
+	if o == nil || IsNil(o.AllocationMutexTimeout) {
+		var ret string
+		return ret
+	}
+	return *o.AllocationMutexTimeout
+}
+
+// GetAllocationMutexTimeoutOk returns a tuple with the AllocationMutexTimeout field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetAllocationMutexTimeoutOk() (*string, bool) {
+	if o == nil || IsNil(o.AllocationMutexTimeout) {
+		return nil, false
+	}
+	return o.AllocationMutexTimeout, true
+}
+
+// HasAllocationMutexTimeout returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasAllocationMutexTimeout() bool {
+	if o != nil && !IsNil(o.AllocationMutexTimeout) {
+		return true
+	}
+
+	return false
+}
+
+// SetAllocationMutexTimeout gets a reference to the given string and assigns it to the AllocationMutexTimeout field.
+func (o *CommonsRunnerInstance) SetAllocationMutexTimeout(v string) {
+	o.AllocationMutexTimeout = &v
 }
 
 // GetAllocationRequestedAt returns the AllocationRequestedAt field value if set, zero value otherwise.
@@ -325,6 +363,38 @@ func (o *CommonsRunnerInstance) SetCreatedBy(v string) {
 	o.CreatedBy = &v
 }
 
+// GetDynamicOverrides returns the DynamicOverrides field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetDynamicOverrides() CommonsDynamicOverrides {
+	if o == nil || IsNil(o.DynamicOverrides) {
+		var ret CommonsDynamicOverrides
+		return ret
+	}
+	return *o.DynamicOverrides
+}
+
+// GetDynamicOverridesOk returns a tuple with the DynamicOverrides field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetDynamicOverridesOk() (*CommonsDynamicOverrides, bool) {
+	if o == nil || IsNil(o.DynamicOverrides) {
+		return nil, false
+	}
+	return o.DynamicOverrides, true
+}
+
+// HasDynamicOverrides returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasDynamicOverrides() bool {
+	if o != nil && !IsNil(o.DynamicOverrides) {
+		return true
+	}
+
+	return false
+}
+
+// SetDynamicOverrides gets a reference to the given CommonsDynamicOverrides and assigns it to the DynamicOverrides field.
+func (o *CommonsRunnerInstance) SetDynamicOverrides(v CommonsDynamicOverrides) {
+	o.DynamicOverrides = &v
+}
+
 // GetExternalId returns the ExternalId field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetExternalId() string {
 	if o == nil || IsNil(o.ExternalId) {
@@ -451,6 +521,38 @@ func (o *CommonsRunnerInstance) HasId() bool {
 // SetId gets a reference to the given string and assigns it to the Id field.
 func (o *CommonsRunnerInstance) SetId(v string) {
 	o.Id = &v
+}
+
+// GetLabelAttributes returns the LabelAttributes field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetLabelAttributes() CommonsLabelAttributes {
+	if o == nil || IsNil(o.LabelAttributes) {
+		var ret CommonsLabelAttributes
+		return ret
+	}
+	return *o.LabelAttributes
+}
+
+// GetLabelAttributesOk returns a tuple with the LabelAttributes field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetLabelAttributesOk() (*CommonsLabelAttributes, bool) {
+	if o == nil || IsNil(o.LabelAttributes) {
+		return nil, false
+	}
+	return o.LabelAttributes, true
+}
+
+// HasLabelAttributes returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasLabelAttributes() bool {
+	if o != nil && !IsNil(o.LabelAttributes) {
+		return true
+	}
+
+	return false
+}
+
+// SetLabelAttributes gets a reference to the given CommonsLabelAttributes and assigns it to the LabelAttributes field.
+func (o *CommonsRunnerInstance) SetLabelAttributes(v CommonsLabelAttributes) {
+	o.LabelAttributes = &v
 }
 
 // GetLabels returns the Labels field value if set, zero value otherwise.
@@ -613,36 +715,36 @@ func (o *CommonsRunnerInstance) SetOrganizationId(v string) {
 	o.OrganizationId = &v
 }
 
-// GetProviderKind returns the ProviderKind field value if set, zero value otherwise.
-func (o *CommonsRunnerInstance) GetProviderKind() string {
-	if o == nil || IsNil(o.ProviderKind) {
+// GetPostResumeFirstPolledAt returns the PostResumeFirstPolledAt field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetPostResumeFirstPolledAt() string {
+	if o == nil || IsNil(o.PostResumeFirstPolledAt) {
 		var ret string
 		return ret
 	}
-	return *o.ProviderKind
+	return *o.PostResumeFirstPolledAt
 }
 
-// GetProviderKindOk returns a tuple with the ProviderKind field value if set, nil otherwise
+// GetPostResumeFirstPolledAtOk returns a tuple with the PostResumeFirstPolledAt field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsRunnerInstance) GetProviderKindOk() (*string, bool) {
-	if o == nil || IsNil(o.ProviderKind) {
+func (o *CommonsRunnerInstance) GetPostResumeFirstPolledAtOk() (*string, bool) {
+	if o == nil || IsNil(o.PostResumeFirstPolledAt) {
 		return nil, false
 	}
-	return o.ProviderKind, true
+	return o.PostResumeFirstPolledAt, true
 }
 
-// HasProviderKind returns a boolean if a field has been set.
-func (o *CommonsRunnerInstance) HasProviderKind() bool {
-	if o != nil && !IsNil(o.ProviderKind) {
+// HasPostResumeFirstPolledAt returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasPostResumeFirstPolledAt() bool {
+	if o != nil && !IsNil(o.PostResumeFirstPolledAt) {
 		return true
 	}
 
 	return false
 }
 
-// SetProviderKind gets a reference to the given string and assigns it to the ProviderKind field.
-func (o *CommonsRunnerInstance) SetProviderKind(v string) {
-	o.ProviderKind = &v
+// SetPostResumeFirstPolledAt gets a reference to the given string and assigns it to the PostResumeFirstPolledAt field.
+func (o *CommonsRunnerInstance) SetPostResumeFirstPolledAt(v string) {
+	o.PostResumeFirstPolledAt = &v
 }
 
 // GetProviderKindId returns the ProviderKindId field value if set, zero value otherwise.
@@ -837,6 +939,38 @@ func (o *CommonsRunnerInstance) SetRunningStartedAt(v string) {
 	o.RunningStartedAt = &v
 }
 
+// GetStackKind returns the StackKind field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetStackKind() string {
+	if o == nil || IsNil(o.StackKind) {
+		var ret string
+		return ret
+	}
+	return *o.StackKind
+}
+
+// GetStackKindOk returns a tuple with the StackKind field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetStackKindOk() (*string, bool) {
+	if o == nil || IsNil(o.StackKind) {
+		return nil, false
+	}
+	return o.StackKind, true
+}
+
+// HasStackKind returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasStackKind() bool {
+	if o != nil && !IsNil(o.StackKind) {
+		return true
+	}
+
+	return false
+}
+
+// SetStackKind gets a reference to the given string and assigns it to the StackKind field.
+func (o *CommonsRunnerInstance) SetStackKind(v string) {
+	o.StackKind = &v
+}
+
 // GetStatus returns the Status field value if set, zero value otherwise.
 func (o *CommonsRunnerInstance) GetStatus() string {
 	if o == nil || IsNil(o.Status) {
@@ -867,6 +1001,70 @@ func (o *CommonsRunnerInstance) HasStatus() bool {
 // SetStatus gets a reference to the given string and assigns it to the Status field.
 func (o *CommonsRunnerInstance) SetStatus(v string) {
 	o.Status = &v
+}
+
+// GetSuspendedAt returns the SuspendedAt field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetSuspendedAt() string {
+	if o == nil || IsNil(o.SuspendedAt) {
+		var ret string
+		return ret
+	}
+	return *o.SuspendedAt
+}
+
+// GetSuspendedAtOk returns a tuple with the SuspendedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetSuspendedAtOk() (*string, bool) {
+	if o == nil || IsNil(o.SuspendedAt) {
+		return nil, false
+	}
+	return o.SuspendedAt, true
+}
+
+// HasSuspendedAt returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasSuspendedAt() bool {
+	if o != nil && !IsNil(o.SuspendedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuspendedAt gets a reference to the given string and assigns it to the SuspendedAt field.
+func (o *CommonsRunnerInstance) SetSuspendedAt(v string) {
+	o.SuspendedAt = &v
+}
+
+// GetSuspendingStartedAt returns the SuspendingStartedAt field value if set, zero value otherwise.
+func (o *CommonsRunnerInstance) GetSuspendingStartedAt() string {
+	if o == nil || IsNil(o.SuspendingStartedAt) {
+		var ret string
+		return ret
+	}
+	return *o.SuspendingStartedAt
+}
+
+// GetSuspendingStartedAtOk returns a tuple with the SuspendingStartedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstance) GetSuspendingStartedAtOk() (*string, bool) {
+	if o == nil || IsNil(o.SuspendingStartedAt) {
+		return nil, false
+	}
+	return o.SuspendingStartedAt, true
+}
+
+// HasSuspendingStartedAt returns a boolean if a field has been set.
+func (o *CommonsRunnerInstance) HasSuspendingStartedAt() bool {
+	if o != nil && !IsNil(o.SuspendingStartedAt) {
+		return true
+	}
+
+	return false
+}
+
+// SetSuspendingStartedAt gets a reference to the given string and assigns it to the SuspendingStartedAt field.
+func (o *CommonsRunnerInstance) SetSuspendingStartedAt(v string) {
+	o.SuspendingStartedAt = &v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise.
@@ -949,6 +1147,9 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.AllocationFor) {
 		toSerialize["allocation_for"] = o.AllocationFor
 	}
+	if !IsNil(o.AllocationMutexTimeout) {
+		toSerialize["allocation_mutex_timeout"] = o.AllocationMutexTimeout
+	}
 	if !IsNil(o.AllocationRequestedAt) {
 		toSerialize["allocation_requested_at"] = o.AllocationRequestedAt
 	}
@@ -967,6 +1168,9 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.CreatedBy) {
 		toSerialize["created_by"] = o.CreatedBy
 	}
+	if !IsNil(o.DynamicOverrides) {
+		toSerialize["dynamic_overrides"] = o.DynamicOverrides
+	}
 	if !IsNil(o.ExternalId) {
 		toSerialize["external_id"] = o.ExternalId
 	}
@@ -978,6 +1182,9 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Id) {
 		toSerialize["id"] = o.Id
+	}
+	if !IsNil(o.LabelAttributes) {
+		toSerialize["label_attributes"] = o.LabelAttributes
 	}
 	if !IsNil(o.Labels) {
 		toSerialize["labels"] = o.Labels
@@ -994,8 +1201,8 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.OrganizationId) {
 		toSerialize["organization_id"] = o.OrganizationId
 	}
-	if !IsNil(o.ProviderKind) {
-		toSerialize["provider_kind"] = o.ProviderKind
+	if !IsNil(o.PostResumeFirstPolledAt) {
+		toSerialize["post_resume_first_polled_at"] = o.PostResumeFirstPolledAt
 	}
 	if !IsNil(o.ProviderKindId) {
 		toSerialize["provider_kind_id"] = o.ProviderKindId
@@ -1015,8 +1222,17 @@ func (o CommonsRunnerInstance) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.RunningStartedAt) {
 		toSerialize["running_started_at"] = o.RunningStartedAt
 	}
+	if !IsNil(o.StackKind) {
+		toSerialize["stack_kind"] = o.StackKind
+	}
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
+	}
+	if !IsNil(o.SuspendedAt) {
+		toSerialize["suspended_at"] = o.SuspendedAt
+	}
+	if !IsNil(o.SuspendingStartedAt) {
+		toSerialize["suspending_started_at"] = o.SuspendingStartedAt
 	}
 	if !IsNil(o.UpdatedAt) {
 		toSerialize["updated_at"] = o.UpdatedAt
@@ -1048,29 +1264,35 @@ func (o *CommonsRunnerInstance) UnmarshalJSON(bytes []byte) (err error) {
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
 		delete(additionalProperties, "allocated_at")
 		delete(additionalProperties, "allocation_for")
+		delete(additionalProperties, "allocation_mutex_timeout")
 		delete(additionalProperties, "allocation_requested_at")
 		delete(additionalProperties, "allocation_requested_event_at")
 		delete(additionalProperties, "cluster")
 		delete(additionalProperties, "configuration")
 		delete(additionalProperties, "created_at")
 		delete(additionalProperties, "created_by")
+		delete(additionalProperties, "dynamic_overrides")
 		delete(additionalProperties, "external_id")
 		delete(additionalProperties, "first_polled_at")
 		delete(additionalProperties, "host")
 		delete(additionalProperties, "id")
+		delete(additionalProperties, "label_attributes")
 		delete(additionalProperties, "labels")
 		delete(additionalProperties, "last_job_processed_id")
 		delete(additionalProperties, "last_job_processed_meta")
 		delete(additionalProperties, "last_polled_at")
 		delete(additionalProperties, "organization_id")
-		delete(additionalProperties, "provider_kind")
+		delete(additionalProperties, "post_resume_first_polled_at")
 		delete(additionalProperties, "provider_kind_id")
 		delete(additionalProperties, "purged_at")
 		delete(additionalProperties, "purged_reason")
 		delete(additionalProperties, "runner_for")
 		delete(additionalProperties, "runner_set_id")
 		delete(additionalProperties, "running_started_at")
+		delete(additionalProperties, "stack_kind")
 		delete(additionalProperties, "status")
+		delete(additionalProperties, "suspended_at")
+		delete(additionalProperties, "suspending_started_at")
 		delete(additionalProperties, "updated_at")
 		delete(additionalProperties, "vcs_integration_id")
 		o.AdditionalProperties = additionalProperties
