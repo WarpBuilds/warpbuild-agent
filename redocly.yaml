@@ -1,0 +1,15 @@
+apis:
+  filter:
+    root: ../backend-core/docs/swagger.yaml
+    decorators:
+      filter-in:
+        property: tags
+        value:
+          - 'v1 runner_instance'
+          # - 'v1 runner_image_versions'
+  # filterout:
+  #   root: ./docs/swagger.yaml
+  #   decorators:
+  #     filter-out:
+  #       property: tags
+  #       value: v1 runner_images
