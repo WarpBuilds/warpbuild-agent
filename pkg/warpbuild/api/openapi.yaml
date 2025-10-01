@@ -452,6 +452,7 @@ components:
             network_tier: STANDARD
             is_public: true
             arch: arch
+          telemetry_enabled: true
           storage:
             performance_tier: P15
             size: 9
@@ -769,6 +770,7 @@ components:
             network_tier: STANDARD
             is_public: true
             arch: arch
+          telemetry_enabled: true
           storage:
             performance_tier: P15
             size: 9
@@ -819,6 +821,7 @@ components:
               network_tier: STANDARD
               is_public: true
               arch: arch
+            telemetry_enabled: true
             storage:
               performance_tier: P15
               size: 9
@@ -980,6 +983,7 @@ components:
               network_tier: STANDARD
               is_public: true
               arch: arch
+            telemetry_enabled: true
             storage:
               performance_tier: P15
               size: 9
@@ -1030,6 +1034,7 @@ components:
                 network_tier: STANDARD
                 is_public: true
                 arch: arch
+              telemetry_enabled: true
               storage:
                 performance_tier: P15
                 size: 9
@@ -1113,6 +1118,7 @@ components:
           network_tier: STANDARD
           is_public: true
           arch: arch
+        telemetry_enabled: true
         storage:
           performance_tier: P15
           size: 9
@@ -1153,6 +1159,8 @@ components:
           type: string
         storage:
           $ref: '#/components/schemas/commons.Storage'
+        telemetry_enabled:
+          type: boolean
       type: object
     commons.RunnerSetConfiguration:
       example:
