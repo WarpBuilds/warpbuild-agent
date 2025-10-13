@@ -10,7 +10,6 @@ Name | Type | Description | Notes
 **Sku** | Pointer to [**CommonsInstanceSku**](CommonsInstanceSku.md) |  | [optional] 
 **StockRunnerSetId** | Pointer to **string** |  | [optional] 
 **Storage** | Pointer to [**CommonsStorage**](CommonsStorage.md) |  | [optional] 
-**TelemetryEnabled** | Pointer to **bool** |  | [optional] 
 
 ## Methods
 
@@ -180,31 +179,6 @@ SetStorage sets Storage field to given value.
 `func (o *CommonsRunnerInstanceConfiguration) HasStorage() bool`
 
 HasStorage returns a boolean if a field has been set.
-
-### GetTelemetryEnabled
-
-`func (o *CommonsRunnerInstanceConfiguration) GetTelemetryEnabled() bool`
-
-GetTelemetryEnabled returns the TelemetryEnabled field if non-nil, zero value otherwise.
-
-### GetTelemetryEnabledOk
-
-`func (o *CommonsRunnerInstanceConfiguration) GetTelemetryEnabledOk() (*bool, bool)`
-
-GetTelemetryEnabledOk returns a tuple with the TelemetryEnabled field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetTelemetryEnabled
-
-`func (o *CommonsRunnerInstanceConfiguration) SetTelemetryEnabled(v bool)`
-
-SetTelemetryEnabled sets TelemetryEnabled field to given value.
-
-### HasTelemetryEnabled
-
-`func (o *CommonsRunnerInstanceConfiguration) HasTelemetryEnabled() bool`
-
-HasTelemetryEnabled returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

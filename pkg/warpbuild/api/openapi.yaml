@@ -452,7 +452,6 @@ components:
             network_tier: STANDARD
             is_public: true
             arch: arch
-          telemetry_enabled: true
           storage:
             performance_tier: P15
             size: 9
@@ -770,7 +769,6 @@ components:
             network_tier: STANDARD
             is_public: true
             arch: arch
-          telemetry_enabled: true
           storage:
             performance_tier: P15
             size: 9
@@ -821,7 +819,6 @@ components:
               network_tier: STANDARD
               is_public: true
               arch: arch
-            telemetry_enabled: true
             storage:
               performance_tier: P15
               size: 9
@@ -956,6 +953,7 @@ components:
           - labels
           - labels
         runner_application: github
+        telemetry_enabled: true
         runner_instance:
           cluster: cluster
           label_attributes:
@@ -983,7 +981,6 @@ components:
               network_tier: STANDARD
               is_public: true
               arch: arch
-            telemetry_enabled: true
             storage:
               performance_tier: P15
               size: 9
@@ -1034,7 +1031,6 @@ components:
                 network_tier: STANDARD
                 is_public: true
                 arch: arch
-              telemetry_enabled: true
               storage:
                 performance_tier: P15
                 size: 9
@@ -1104,6 +1100,8 @@ components:
           - assigned
           - invalidated
           type: string
+        telemetry_enabled:
+          type: boolean
       type: object
     commons.RunnerInstanceConfiguration:
       example:
@@ -1118,7 +1116,6 @@ components:
           network_tier: STANDARD
           is_public: true
           arch: arch
-        telemetry_enabled: true
         storage:
           performance_tier: P15
           size: 9
@@ -1159,8 +1156,6 @@ components:
           type: string
         storage:
           $ref: '#/components/schemas/commons.Storage'
-        telemetry_enabled:
-          type: boolean
       type: object
     commons.RunnerSetConfiguration:
       example:

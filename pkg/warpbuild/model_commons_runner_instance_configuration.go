@@ -26,7 +26,6 @@ type CommonsRunnerInstanceConfiguration struct {
 	Sku *CommonsInstanceSku `json:"sku,omitempty"`
 	StockRunnerSetId *string `json:"stock_runner_set_id,omitempty"`
 	Storage *CommonsStorage `json:"storage,omitempty"`
-	TelemetryEnabled *bool `json:"telemetry_enabled,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -241,38 +240,6 @@ func (o *CommonsRunnerInstanceConfiguration) SetStorage(v CommonsStorage) {
 	o.Storage = &v
 }
 
-// GetTelemetryEnabled returns the TelemetryEnabled field value if set, zero value otherwise.
-func (o *CommonsRunnerInstanceConfiguration) GetTelemetryEnabled() bool {
-	if o == nil || IsNil(o.TelemetryEnabled) {
-		var ret bool
-		return ret
-	}
-	return *o.TelemetryEnabled
-}
-
-// GetTelemetryEnabledOk returns a tuple with the TelemetryEnabled field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRunnerInstanceConfiguration) GetTelemetryEnabledOk() (*bool, bool) {
-	if o == nil || IsNil(o.TelemetryEnabled) {
-		return nil, false
-	}
-	return o.TelemetryEnabled, true
-}
-
-// HasTelemetryEnabled returns a boolean if a field has been set.
-func (o *CommonsRunnerInstanceConfiguration) HasTelemetryEnabled() bool {
-	if o != nil && !IsNil(o.TelemetryEnabled) {
-		return true
-	}
-
-	return false
-}
-
-// SetTelemetryEnabled gets a reference to the given bool and assigns it to the TelemetryEnabled field.
-func (o *CommonsRunnerInstanceConfiguration) SetTelemetryEnabled(v bool) {
-	o.TelemetryEnabled = &v
-}
-
 func (o CommonsRunnerInstanceConfiguration) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -300,9 +267,6 @@ func (o CommonsRunnerInstanceConfiguration) ToMap() (map[string]interface{}, err
 	}
 	if !IsNil(o.Storage) {
 		toSerialize["storage"] = o.Storage
-	}
-	if !IsNil(o.TelemetryEnabled) {
-		toSerialize["telemetry_enabled"] = o.TelemetryEnabled
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -332,7 +296,6 @@ func (o *CommonsRunnerInstanceConfiguration) UnmarshalJSON(bytes []byte) (err er
 		delete(additionalProperties, "sku")
 		delete(additionalProperties, "stock_runner_set_id")
 		delete(additionalProperties, "storage")
-		delete(additionalProperties, "telemetry_enabled")
 		o.AdditionalProperties = additionalProperties
 	}
 

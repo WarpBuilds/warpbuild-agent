@@ -24,6 +24,7 @@ type CommonsRunnerInstanceAllocationDetails struct {
 	RunnerApplication *string `json:"runner_application,omitempty"`
 	RunnerInstance *CommonsRunnerInstance `json:"runner_instance,omitempty"`
 	Status *string `json:"status,omitempty"`
+	TelemetryEnabled *bool `json:"telemetry_enabled,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -174,6 +175,38 @@ func (o *CommonsRunnerInstanceAllocationDetails) SetStatus(v string) {
 	o.Status = &v
 }
 
+// GetTelemetryEnabled returns the TelemetryEnabled field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryEnabled() bool {
+	if o == nil || IsNil(o.TelemetryEnabled) {
+		var ret bool
+		return ret
+	}
+	return *o.TelemetryEnabled
+}
+
+// GetTelemetryEnabledOk returns a tuple with the TelemetryEnabled field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryEnabledOk() (*bool, bool) {
+	if o == nil || IsNil(o.TelemetryEnabled) {
+		return nil, false
+	}
+	return o.TelemetryEnabled, true
+}
+
+// HasTelemetryEnabled returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasTelemetryEnabled() bool {
+	if o != nil && !IsNil(o.TelemetryEnabled) {
+		return true
+	}
+
+	return false
+}
+
+// SetTelemetryEnabled gets a reference to the given bool and assigns it to the TelemetryEnabled field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetTelemetryEnabled(v bool) {
+	o.TelemetryEnabled = &v
+}
+
 func (o CommonsRunnerInstanceAllocationDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -195,6 +228,9 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 	}
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
+	}
+	if !IsNil(o.TelemetryEnabled) {
+		toSerialize["telemetry_enabled"] = o.TelemetryEnabled
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -222,6 +258,7 @@ func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (er
 		delete(additionalProperties, "runner_application")
 		delete(additionalProperties, "runner_instance")
 		delete(additionalProperties, "status")
+		delete(additionalProperties, "telemetry_enabled")
 		o.AdditionalProperties = additionalProperties
 	}
 
