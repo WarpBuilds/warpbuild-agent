@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
+	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
@@ -34,6 +35,8 @@ type AgentOptions struct {
 	ExitFileLocation string `json:"exit_file_location"`
 	// WindowsOptions are options for the windows agent.
 	WindowsOptions *WindowsOptions `json:"windows_options"`
+	// TransparentCacheOginyPort is the port for the transparent cache oginy server.
+	TransparentCacheOginyPort int `json:"transparent_cache_oginy_port"`
 }
 
 type WindowsOptions struct {
@@ -144,6 +147,15 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 							Key:   key,
 							Value: val,
 						})
+					}
+				}
+
+				// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
+				if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
+					log.Logger().Infof("Starting transparent cache server")
+					if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
+						log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
+						return err
 					}
 				}
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=WarpBuild Transparent Cache Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/warpbuild-agentd --launch-transparent-cache
+WorkingDirectory=/
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
