@@ -120,6 +120,8 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				continue
 			}
 
+			log.Logger().Infof("allocationDetails: %+v", allocationDetails)
+
 			// Check telemetry status and terminate process if disabled
 			if allocationDetails.HasTelemetryEnabled() {
 				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
