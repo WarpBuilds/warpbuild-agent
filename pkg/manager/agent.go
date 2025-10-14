@@ -16,11 +16,6 @@ import (
 
 const (
 	Interval = 1 * time.Second
-
-	// Syslog priority levels (for cross-platform compatibility)
-	logInfo    = 6
-	logWarning = 4
-	logErr     = 3
 )
 
 type StartAgentOptions struct {
@@ -270,7 +265,6 @@ func (a *agentImpl) verifyExitFile() error {
 // 3. Stopping the service is cleaner and respects the service lifecycle
 func (a *agentImpl) killTelemetryProcess() error {
 	log.Logger().Infof("Attempting to stop telemetry service...")
-	a.logToSyslog(logInfo, "Attempting to stop telemetry service")
 
 	var err error
 	switch runtime.GOOS {
@@ -285,9 +279,9 @@ func (a *agentImpl) killTelemetryProcess() error {
 	}
 
 	if err != nil {
-		a.logToSyslog(logErr, fmt.Sprintf("Failed to stop telemetry service: %v", err))
+		log.Logger().Errorf("Failed to stop telemetry service: %v", err)
 	} else {
-		a.logToSyslog(logInfo, "Successfully stopped telemetry service")
+		log.Logger().Infof("Successfully stopped telemetry service")
 	}
 
 	return err
@@ -303,7 +297,6 @@ func (a *agentImpl) stopTelemetryServiceLinux() error {
 	status := strings.TrimSpace(string(output))
 
 	log.Logger().Infof("Service status: %s", status)
-	a.logToSyslog(logInfo, fmt.Sprintf("Service status check: status='%s'", status))
 
 	if status != "active" {
 		log.Logger().Infof("Telemetry service is not active, nothing to stop")
@@ -321,17 +314,15 @@ func (a *agentImpl) stopTelemetryServiceLinux() error {
 		log.Logger().Infof("Stopping service as root")
 	}
 
-	a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", stopCmd.Args))
+	log.Logger().Infof("Executing: %v", stopCmd.Args)
 	output, err = stopCmd.CombinedOutput()
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to stop service: %v, output: %s", err, string(output))
 		log.Logger().Errorf(errMsg)
-		a.logToSyslog(logErr, errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
 	log.Logger().Infof("Successfully stopped telemetry service")
-	a.logToSyslog(logInfo, "Service stopped successfully")
 
 	// Verify the service stopped
 	time.Sleep(1 * time.Second)
@@ -339,7 +330,6 @@ func (a *agentImpl) stopTelemetryServiceLinux() error {
 	output, _ = verifyCmd.CombinedOutput()
 	newStatus := strings.TrimSpace(string(output))
 	log.Logger().Infof("Post-stop status: %s", newStatus)
-	a.logToSyslog(logInfo, fmt.Sprintf("Post-stop status: %s", newStatus))
 
 	return nil
 }
@@ -354,12 +344,10 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 
 	if err != nil {
 		log.Logger().Infof("Telemetry service is not loaded")
-		a.logToSyslog(logInfo, "Service not loaded")
 		return nil
 	}
 
 	log.Logger().Infof("Service is running: %s", strings.TrimSpace(string(output)))
-	a.logToSyslog(logInfo, fmt.Sprintf("Service running: %s", serviceName))
 
 	// Stop the service with unload
 	euid := os.Geteuid()
@@ -374,17 +362,15 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 		log.Logger().Infof("Unloading service as root")
 	}
 
-	a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", unloadCmd.Args))
+	log.Logger().Infof("Executing: %v", unloadCmd.Args)
 	output, err = unloadCmd.CombinedOutput()
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to unload service: %v, output: %s", err, string(output))
 		log.Logger().Errorf(errMsg)
-		a.logToSyslog(logErr, errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
 	log.Logger().Infof("Successfully stopped telemetry service")
-	a.logToSyslog(logInfo, "Service stopped successfully")
 
 	// Verify the service stopped
 	time.Sleep(1 * time.Second)
@@ -393,10 +379,8 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 
 	if err != nil {
 		log.Logger().Infof("Post-stop: service not found (success)")
-		a.logToSyslog(logInfo, "Post-stop: service unloaded")
 	} else {
 		log.Logger().Warnf("Post-stop: service still listed")
-		a.logToSyslog(logWarning, "Post-stop: service still listed")
 	}
 
 	return nil
