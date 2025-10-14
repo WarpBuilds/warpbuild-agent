@@ -296,244 +296,109 @@ func (a *agentImpl) killTelemetryProcess() error {
 // stopTelemetryServiceLinux stops the telemetry service on Linux using systemctl
 func (a *agentImpl) stopTelemetryServiceLinux() error {
 	serviceName := "warpbuild-telemetryd"
-	a.logToSyslog(logInfo, fmt.Sprintf("Linux: Checking telemetry service status: %s", serviceName))
 
-	// Check if running as root
-	euid := os.Geteuid()
-	log.Logger().Infof("Running as user with euid: %d", euid)
-	a.logToSyslog(logInfo, fmt.Sprintf("Running with euid: %d (0=root)", euid))
-
-	if euid != 0 {
-		a.logToSyslog(logWarning, "Not running as root, will attempt with sudo")
-		log.Logger().Warnf("Not running as root (euid: %d), will attempt with sudo", euid)
-	}
-
-	// Check if service exists and is running
+	// Check if service is running
 	checkCmd := exec.Command("systemctl", "is-active", serviceName)
 	output, err := checkCmd.CombinedOutput()
 	status := strings.TrimSpace(string(output))
 
-	logMsg := fmt.Sprintf("Service status check: status='%s', err=%v, output='%s'", status, err, string(output))
-	log.Logger().Infof(logMsg)
-	a.logToSyslog(logInfo, logMsg)
+	log.Logger().Infof("Service status: %s", status)
+	a.logToSyslog(logInfo, fmt.Sprintf("Service status check: status='%s'", status))
 
-	if err != nil || status != "active" {
-		msg := fmt.Sprintf("Telemetry service is not running (status: %s), nothing to stop", status)
-		log.Logger().Infof(msg)
-		a.logToSyslog(logInfo, msg)
+	if status != "active" {
+		log.Logger().Infof("Telemetry service is not active, nothing to stop")
 		return nil
 	}
 
-	// Try multiple approaches to stop the service
-	attempts := []struct {
-		name string
-		fn   func() (string, error)
-	}{
-		{
-			name: "systemctl stop with sudo",
-			fn: func() (string, error) {
-				var cmd *exec.Cmd
-				if euid != 0 {
-					cmd = exec.Command("sudo", "-n", "systemctl", "stop", serviceName)
-				} else {
-					cmd = exec.Command("systemctl", "stop", serviceName)
-				}
-				log.Logger().Infof("Executing: %v", cmd.Args)
-				a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", cmd.Args))
-				output, err := cmd.CombinedOutput()
-				return string(output), err
-			},
-		},
-		{
-			name: "systemctl kill SIGTERM",
-			fn: func() (string, error) {
-				var cmd *exec.Cmd
-				if euid != 0 {
-					cmd = exec.Command("sudo", "-n", "systemctl", "kill", "-s", "SIGTERM", serviceName)
-				} else {
-					cmd = exec.Command("systemctl", "kill", "-s", "SIGTERM", serviceName)
-				}
-				log.Logger().Infof("Executing: %v", cmd.Args)
-				a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", cmd.Args))
-				output, err := cmd.CombinedOutput()
-				return string(output), err
-			},
-		},
-		{
-			name: "systemctl kill SIGKILL",
-			fn: func() (string, error) {
-				var cmd *exec.Cmd
-				if euid != 0 {
-					cmd = exec.Command("sudo", "-n", "systemctl", "kill", "-s", "SIGKILL", serviceName)
-				} else {
-					cmd = exec.Command("systemctl", "kill", "-s", "SIGKILL", serviceName)
-				}
-				log.Logger().Infof("Executing: %v", cmd.Args)
-				a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", cmd.Args))
-				output, err := cmd.CombinedOutput()
-				return string(output), err
-			},
-		},
+	// Stop the service
+	euid := os.Geteuid()
+	var stopCmd *exec.Cmd
+	if euid != 0 {
+		stopCmd = exec.Command("sudo", "-n", "systemctl", "stop", serviceName)
+		log.Logger().Infof("Stopping service with sudo (euid: %d)", euid)
+	} else {
+		stopCmd = exec.Command("systemctl", "stop", serviceName)
+		log.Logger().Infof("Stopping service as root")
 	}
 
-	var lastErr error
-	var successMethod string
-	for _, attempt := range attempts {
-		log.Logger().Infof("Attempting: %s", attempt.name)
-		a.logToSyslog(logInfo, fmt.Sprintf("Attempting: %s", attempt.name))
-
-		output, err := attempt.fn()
-		if err != nil {
-			errMsg := fmt.Sprintf("Failed to %s: %v, output: '%s'", attempt.name, err, output)
-			log.Logger().Warnf(errMsg)
-			a.logToSyslog(logWarning, errMsg)
-			lastErr = err
-		} else {
-			successMsg := fmt.Sprintf("Successfully executed: %s, output: '%s'", attempt.name, output)
-			log.Logger().Infof(successMsg)
-			a.logToSyslog(logInfo, successMsg)
-			successMethod = attempt.name
-			lastErr = nil
-			break
-		}
-
-		// Small delay between attempts
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	if lastErr != nil {
-		errMsg := fmt.Sprintf("All attempts to stop telemetry service failed. Last error: %v", lastErr)
+	a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", stopCmd.Args))
+	output, err = stopCmd.CombinedOutput()
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to stop service: %v, output: %s", err, string(output))
 		log.Logger().Errorf(errMsg)
 		a.logToSyslog(logErr, errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
-	log.Logger().Infof("Service stopped using method: %s", successMethod)
+	log.Logger().Infof("Successfully stopped telemetry service")
+	a.logToSyslog(logInfo, "Service stopped successfully")
 
 	// Verify the service stopped
 	time.Sleep(1 * time.Second)
 	verifyCmd := exec.Command("systemctl", "is-active", serviceName)
 	output, _ = verifyCmd.CombinedOutput()
 	newStatus := strings.TrimSpace(string(output))
-	verifyMsg := fmt.Sprintf("Post-stop verification: status='%s'", newStatus)
-	log.Logger().Infof(verifyMsg)
-	a.logToSyslog(logInfo, verifyMsg)
+	log.Logger().Infof("Post-stop status: %s", newStatus)
+	a.logToSyslog(logInfo, fmt.Sprintf("Post-stop status: %s", newStatus))
 
-	// Try to disable the service to prevent it from starting on next boot
-	var disableCmd *exec.Cmd
-	if euid != 0 {
-		disableCmd = exec.Command("sudo", "-n", "systemctl", "disable", serviceName)
-	} else {
-		disableCmd = exec.Command("systemctl", "disable", serviceName)
-	}
-
-	output, err = disableCmd.CombinedOutput()
-	if err != nil {
-		warnMsg := fmt.Sprintf("Failed to disable telemetry service (non-critical): %v, output: '%s'", err, string(output))
-		log.Logger().Warnf(warnMsg)
-		a.logToSyslog(logWarning, warnMsg)
-	} else {
-		log.Logger().Infof("Successfully disabled telemetry service")
-		a.logToSyslog(logInfo, "Service disabled successfully")
-	}
-
-	log.Logger().Infof("Successfully stopped telemetry service: %s", serviceName)
 	return nil
 }
 
 // stopTelemetryServiceDarwin stops the telemetry service on macOS using launchctl
 func (a *agentImpl) stopTelemetryServiceDarwin() error {
 	serviceName := "com.warpbuild.warpbuild-telemetryd"
-	a.logToSyslog(logInfo, fmt.Sprintf("macOS: Checking telemetry service: %s", serviceName))
 
-	// Check if running as root
-	if os.Geteuid() != 0 {
-		a.logToSyslog(logWarning, "Not running as root, will attempt with sudo")
-		log.Logger().Warnf("Not running as root (euid: %d), will attempt with sudo", os.Geteuid())
-	}
-
-	log.Logger().Infof("Stopping telemetry service: %s", serviceName)
-
-	// First, try to find the service using launchctl list
+	// Check if service is loaded
 	listCmd := exec.Command("launchctl", "list", serviceName)
 	output, err := listCmd.CombinedOutput()
 
-	a.logToSyslog(logInfo, fmt.Sprintf("Service list check output: %s, error: %v", string(output), err))
-
 	if err != nil {
-		msg := fmt.Sprintf("Telemetry service is not loaded: %s", serviceName)
-		log.Logger().Infof(msg)
-		a.logToSyslog(logInfo, msg)
+		log.Logger().Infof("Telemetry service is not loaded")
+		a.logToSyslog(logInfo, "Service not loaded")
 		return nil
 	}
 
-	// Service is running
-	a.logToSyslog(logInfo, fmt.Sprintf("Service info: %s", string(output)))
-	log.Logger().Infof("Service is running, details: %s", string(output))
+	log.Logger().Infof("Service is running: %s", strings.TrimSpace(string(output)))
+	a.logToSyslog(logInfo, fmt.Sprintf("Service running: %s", serviceName))
 
-	// Try multiple approaches to stop the service
-	attempts := []struct {
-		name string
-		cmd  *exec.Cmd
-	}{
-		{
-			name: "kill with SIGTERM",
-			cmd:  exec.Command("sudo", "launchctl", "kill", "SIGTERM", fmt.Sprintf("system/%s", serviceName)),
-		},
-		{
-			name: "stop service",
-			cmd:  exec.Command("sudo", "launchctl", "stop", serviceName),
-		},
-		{
-			name: "bootout system",
-			cmd:  exec.Command("sudo", "launchctl", "bootout", fmt.Sprintf("system/%s", serviceName)),
-		},
-		{
-			name: "unload plist",
-			cmd:  exec.Command("sudo", "launchctl", "unload", "-w", fmt.Sprintf("/Library/LaunchDaemons/%s.plist", serviceName)),
-		},
+	// Stop the service with unload
+	euid := os.Geteuid()
+	plistPath := fmt.Sprintf("/Library/LaunchDaemons/%s.plist", serviceName)
+
+	var unloadCmd *exec.Cmd
+	if euid != 0 {
+		unloadCmd = exec.Command("sudo", "launchctl", "unload", "-w", plistPath)
+		log.Logger().Infof("Unloading service with sudo")
+	} else {
+		unloadCmd = exec.Command("launchctl", "unload", "-w", plistPath)
+		log.Logger().Infof("Unloading service as root")
 	}
 
-	var lastErr error
-	for _, attempt := range attempts {
-		a.logToSyslog(logInfo, fmt.Sprintf("Attempting: %s with command: %v", attempt.name, attempt.cmd.Args))
-		log.Logger().Infof("Attempting to %s", attempt.name)
-
-		output, err = attempt.cmd.CombinedOutput()
-		if err != nil {
-			warnMsg := fmt.Sprintf("Failed to %s: %v, output: %s", attempt.name, err, string(output))
-			log.Logger().Warnf(warnMsg)
-			a.logToSyslog(logWarning, warnMsg)
-			lastErr = err
-		} else {
-			a.logToSyslog(logInfo, fmt.Sprintf("Successfully executed: %s", attempt.name))
-			log.Logger().Infof("Successfully executed: %s", attempt.name)
-			lastErr = nil
-			break
-		}
-	}
-
-	if lastErr != nil {
-		errMsg := fmt.Sprintf("All attempts to stop telemetry service failed: %v", lastErr)
+	a.logToSyslog(logInfo, fmt.Sprintf("Executing: %v", unloadCmd.Args))
+	output, err = unloadCmd.CombinedOutput()
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to unload service: %v, output: %s", err, string(output))
+		log.Logger().Errorf(errMsg)
 		a.logToSyslog(logErr, errMsg)
 		return fmt.Errorf("%s", errMsg)
 	}
 
+	log.Logger().Infof("Successfully stopped telemetry service")
+	a.logToSyslog(logInfo, "Service stopped successfully")
+
 	// Verify the service stopped
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	verifyCmd := exec.Command("launchctl", "list", serviceName)
-	output, err = verifyCmd.CombinedOutput()
+	_, err = verifyCmd.CombinedOutput()
 
 	if err != nil {
-		// Service not found means it's stopped
-		a.logToSyslog(logInfo, "Post-stop verification: service not found (successfully stopped)")
-		log.Logger().Infof("Service successfully stopped and unloaded")
+		log.Logger().Infof("Post-stop: service not found (success)")
+		a.logToSyslog(logInfo, "Post-stop: service unloaded")
 	} else {
-		a.logToSyslog(logWarning, fmt.Sprintf("Post-stop verification: service still listed: %s", string(output)))
-		log.Logger().Warnf("Service still appears in launchctl list: %s", string(output))
+		log.Logger().Warnf("Post-stop: service still listed")
+		a.logToSyslog(logWarning, "Post-stop: service still listed")
 	}
 
-	log.Logger().Infof("Successfully stopped telemetry service: %s", serviceName)
 	return nil
 }
 
@@ -541,104 +406,43 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 func (a *agentImpl) stopTelemetryServiceWindows() error {
 	serviceName := "warpbuild-telemetryd"
 
-	// Note: Windows doesn't have syslog, but we log to regular logger
-	log.Logger().Infof("Windows: Checking telemetry service: %s", serviceName)
-
-	// Check if service exists
+	// Check if service exists and is running
 	checkCmd := exec.Command("sc", "query", serviceName)
 	output, err := checkCmd.CombinedOutput()
 
-	log.Logger().Infof("Service query output: %s, error: %v", string(output), err)
-
 	if err != nil {
-		log.Logger().Infof("Telemetry service does not exist or is not accessible: %s", serviceName)
+		log.Logger().Infof("Telemetry service does not exist: %s", serviceName)
 		return nil
 	}
 
-	// Check if service is running
 	if !strings.Contains(string(output), "RUNNING") {
-		log.Logger().Infof("Telemetry service is not running. Status: %s", string(output))
+		log.Logger().Infof("Telemetry service is not running")
 		return nil
 	}
 
-	log.Logger().Infof("Service is running. Attempting to stop: %s", serviceName)
+	log.Logger().Infof("Stopping service: %s", serviceName)
 
-	// Try multiple approaches to stop the service
-	attempts := []struct {
-		name string
-		fn   func() error
-	}{
-		{
-			name: "sc.exe stop",
-			fn: func() error {
-				stopCmd := exec.Command("sc", "stop", serviceName)
-				output, err := stopCmd.CombinedOutput()
-				if err != nil {
-					return fmt.Errorf("sc stop failed: %v, output: %s", err, string(output))
-				}
-				log.Logger().Infof("sc stop output: %s", string(output))
-				return nil
-			},
-		},
-		{
-			name: "PowerShell Stop-Service",
-			fn: func() error {
-				psCmd := exec.Command("powershell", "-Command", fmt.Sprintf("Stop-Service -Name '%s' -Force", serviceName))
-				output, err := psCmd.CombinedOutput()
-				if err != nil {
-					return fmt.Errorf("PowerShell Stop-Service failed: %v, output: %s", err, string(output))
-				}
-				log.Logger().Infof("PowerShell Stop-Service output: %s", string(output))
-				return nil
-			},
-		},
-		{
-			name: "net stop",
-			fn: func() error {
-				netCmd := exec.Command("net", "stop", serviceName)
-				output, err := netCmd.CombinedOutput()
-				if err != nil {
-					return fmt.Errorf("net stop failed: %v, output: %s", err, string(output))
-				}
-				log.Logger().Infof("net stop output: %s", string(output))
-				return nil
-			},
-		},
+	// Stop the service
+	stopCmd := exec.Command("sc", "stop", serviceName)
+	output, err = stopCmd.CombinedOutput()
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to stop service: %v, output: %s", err, string(output))
+		log.Logger().Errorf(errMsg)
+		return fmt.Errorf("%s", errMsg)
 	}
 
-	var lastErr error
-	for _, attempt := range attempts {
-		log.Logger().Infof("Attempting: %s", attempt.name)
-		err := attempt.fn()
-		if err != nil {
-			log.Logger().Warnf("Failed to %s: %v", attempt.name, err)
-			lastErr = err
-		} else {
-			log.Logger().Infof("Successfully stopped service using: %s", attempt.name)
-			lastErr = nil
-			break
-		}
-	}
-
-	if lastErr != nil {
-		return fmt.Errorf("all attempts to stop telemetry service failed: %v", lastErr)
-	}
+	log.Logger().Infof("Successfully stopped telemetry service")
 
 	// Verify the service stopped
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	verifyCmd := exec.Command("sc", "query", serviceName)
 	output, _ = verifyCmd.CombinedOutput()
-	log.Logger().Infof("Post-stop service status: %s", string(output))
 
-	// Optionally disable the service
-	disableCmd := exec.Command("sc", "config", serviceName, "start=", "disabled")
-	output, err = disableCmd.CombinedOutput()
-	if err != nil {
-		log.Logger().Warnf("Failed to disable telemetry service (non-critical): %v, output: %s", err, string(output))
+	if strings.Contains(string(output), "STOPPED") {
+		log.Logger().Infof("Post-stop: service stopped")
 	} else {
-		log.Logger().Infof("Successfully disabled telemetry service")
+		log.Logger().Warnf("Post-stop: service status unclear: %s", string(output))
 	}
 
-	log.Logger().Infof("Successfully stopped telemetry service: %s", serviceName)
 	return nil
 }
