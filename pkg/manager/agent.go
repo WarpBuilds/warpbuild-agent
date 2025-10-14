@@ -61,14 +61,12 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 }
 
 type agentImpl struct {
-	client               *warpbuild.APIClient
-	id                   string
-	pollingSecret        string
-	hostURL              string
-	exitFileLocation     string
-	opts                 *AgentOptions
-	telemetryKilled      bool
-	lastTelemetryEnabled *bool
+	client           *warpbuild.APIClient
+	id               string
+	pollingSecret    string
+	hostURL          string
+	exitFileLocation string
+	opts             *AgentOptions
 }
 
 type ExitFile struct {
@@ -119,25 +117,15 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				continue
 			}
 
-			// Check telemetry status and kill telemetry agent if disabled
+			// Check telemetry status and terminate process if disabled
 			if allocationDetails.HasTelemetryEnabled() {
 				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
+				log.Logger().Infof("Telemetry enabled status: %v", telemetryEnabled)
 
-				// Check if telemetry status has changed or if we haven't checked before
-				if a.lastTelemetryEnabled == nil || *a.lastTelemetryEnabled != telemetryEnabled {
-					log.Logger().Infof("Telemetry enabled status: %v", telemetryEnabled)
-					a.lastTelemetryEnabled = &telemetryEnabled
-
-					if !telemetryEnabled && !a.telemetryKilled {
-						log.Logger().Infof("Telemetry is disabled. Killing telemetry agent asynchronously...")
-						a.telemetryKilled = true // Set flag immediately to prevent duplicate attempts
-						go func() {
-							if err := a.killTelemetryProcess(); err != nil {
-								log.Logger().Errorf("Failed to kill telemetry process: %v", err)
-							} else {
-								log.Logger().Infof("Telemetry agent successfully killed")
-							}
-						}()
+				if !telemetryEnabled {
+					log.Logger().Infof("Telemetry is disabled. Terminating telemetry process...")
+					if err := a.killTelemetryProcess(); err != nil {
+						log.Logger().Errorf("Failed to terminate telemetry process: %v", err)
 					}
 				}
 			}
