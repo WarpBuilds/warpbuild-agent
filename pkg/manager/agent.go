@@ -341,32 +341,21 @@ func (a *agentImpl) stopTelemetryServiceLinux() error {
 func (a *agentImpl) stopTelemetryServiceDarwin() error {
 	serviceName := "com.warpbuild.warpbuild-telemetryd"
 
-	// Check if service is loaded
-	listCmd := exec.Command("launchctl", "list", serviceName)
-	output, err := listCmd.CombinedOutput()
-
-	if err != nil {
-		log.Logger().Infof("Telemetry service is not loaded")
-		return nil
-	}
-
-	log.Logger().Infof("Service is running: %s", strings.TrimSpace(string(output)))
-
 	// Stop the service with unload
 	euid := os.Geteuid()
-	plistPath := fmt.Sprintf("/Library/LaunchDaemons/%s.plist", serviceName)
+	plistPath := fmt.Sprintf("~/Library/LaunchAgents/%s.plist", serviceName)
 
 	var unloadCmd *exec.Cmd
 	if euid != 0 {
-		unloadCmd = exec.Command("sudo", "launchctl", "unload", "-w", plistPath)
 		log.Logger().Infof("Unloading service with sudo")
+		unloadCmd = exec.Command("sudo", "launchctl", "unload", "-w", plistPath)
 	} else {
-		unloadCmd = exec.Command("launchctl", "unload", "-w", plistPath)
 		log.Logger().Infof("Unloading service as root")
+		unloadCmd = exec.Command("launchctl", "unload", "-w", plistPath)
 	}
 
 	log.Logger().Infof("Executing: %v", unloadCmd.Args)
-	output, err = unloadCmd.CombinedOutput()
+	output, err := unloadCmd.CombinedOutput()
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to unload service: %v, output: %s", err, string(output))
 		log.Logger().Errorf(errMsg)
@@ -374,17 +363,6 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 	}
 
 	log.Logger().Infof("Successfully stopped telemetry service")
-
-	// Verify the service stopped
-	time.Sleep(1 * time.Second)
-	verifyCmd := exec.Command("launchctl", "list", serviceName)
-	_, err = verifyCmd.CombinedOutput()
-
-	if err != nil {
-		log.Logger().Infof("Post-stop: service not found (success)")
-	} else {
-		log.Logger().Warnf("Post-stop: service still listed")
-	}
 
 	return nil
 }
