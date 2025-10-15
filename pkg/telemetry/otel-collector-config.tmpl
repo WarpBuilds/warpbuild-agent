@@ -34,7 +34,8 @@ receivers:
     max_log_size: 500KiB
     include_file_name: true
     include_file_path: true
-    poll_interval: 10s
+    include_file_path_resolved: true
+    poll_interval: 5s
     attributes:
       log.type: github_actions
 {{- else}}
