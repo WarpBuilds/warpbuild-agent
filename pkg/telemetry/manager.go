@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
-	"syscall"
 	"text/template"
 	"time"
 
@@ -185,7 +184,9 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan boo
 	go func() {
 		<-done
 		log.Logger().Infof("Signaling OpenTelemetry Collector to terminate...")
-		if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+
+		// Kill the process - this works across all platforms (Linux, macOS, Windows)
+		if err := cmd.Process.Kill(); err != nil {
 			log.Logger().Errorf("Failed to terminate OpenTelemetry Collector: %v", err)
 		}
 	}()
