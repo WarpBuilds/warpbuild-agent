@@ -25,8 +25,10 @@ type TelemetryManager struct {
 	mu     sync.RWMutex
 
 	// Components
-	receiver   *uploader.Receiver
-	s3Uploader *uploader.S3Uploader
+	receiver          *uploader.Receiver
+	s3Uploader        *uploader.S3Uploader
+	otelCollectorCmd  *exec.Cmd
+	otelCollectorDone chan bool
 
 	// Configuration
 	port          int
@@ -74,9 +76,16 @@ func (tm *TelemetryManager) Start() error {
 
 	log.Logger().Debugf("Started receiver")
 
+	// Initialize the done channel for OTEL collector
+	tm.otelCollectorDone = make(chan bool, 1)
+
 	// Start OTEL collector
 	tm.wg.Add(1)
 	go tm.startOtelCollector()
+
+	// Start telemetry status monitoring
+	tm.wg.Add(1)
+	go tm.monitorTelemetryStatus()
 
 	log.Logger().Infof("Telemetry manager started successfully")
 	return nil
@@ -165,6 +174,11 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan boo
 		log.Logger().Errorf("Failed to start OpenTelemetry Collector: %v", err)
 		return
 	}
+
+	// Store the command reference so we can stop it later
+	tm.mu.Lock()
+	tm.otelCollectorCmd = cmd
+	tm.mu.Unlock()
 
 	log.Logger().Infof("OpenTelemetry Collector started with PID: %d", cmd.Process.Pid)
 
@@ -310,4 +324,78 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 		return filepath.Join(tm.baseDirectory, "otel-metrics-out.log")
 	}
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
+}
+
+// monitorTelemetryStatus monitors the telemetry enabled status via API polling
+func (tm *TelemetryManager) monitorTelemetryStatus() {
+	defer tm.wg.Done()
+
+	log.Logger().Infof("Starting telemetry status monitoring...")
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Poll the API to check telemetry status
+			allocationDetails, resp, err := tm.warpbuildAPI.V1RunnerInstanceAPI.
+				GetRunnerInstanceAllocationDetails(tm.ctx, tm.runnerID).
+				XPOLLINGSECRET(tm.pollingSecret).
+				Execute()
+
+			if err != nil {
+				log.Logger().Debugf("Failed to get runner instance allocation details: %v", err)
+				if resp != nil {
+					log.Logger().Debugf("Response: %+v", resp)
+				}
+				continue
+			}
+
+			if allocationDetails == nil {
+				log.Logger().Debugf("No runner instance allocation details found")
+				continue
+			}
+
+			// Check if telemetry is disabled
+			if allocationDetails.HasTelemetryEnabled() {
+				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
+
+				if !telemetryEnabled {
+					log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
+					tm.stopOtelCollector()
+
+					// Cancel the context to stop the entire telemetry manager
+					tm.cancel()
+					return
+				}
+			}
+
+		case <-tm.ctx.Done():
+			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
+			return
+		}
+	}
+}
+
+// stopOtelCollector stops the OTEL collector process
+func (tm *TelemetryManager) stopOtelCollector() {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	if tm.otelCollectorCmd == nil || tm.otelCollectorCmd.Process == nil {
+		log.Logger().Infof("OTEL collector process not running")
+		return
+	}
+
+	log.Logger().Infof("Stopping OTEL collector process (PID: %d)...", tm.otelCollectorCmd.Process.Pid)
+
+	// Send signal to the done channel to trigger graceful shutdown
+	select {
+	case tm.otelCollectorDone <- true:
+		log.Logger().Infof("Sent termination signal to OTEL collector")
+	default:
+		// Channel already has a signal or is closed
+		log.Logger().Debugf("OTEL collector already signaled for termination")
+	}
 }

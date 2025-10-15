@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -125,19 +122,6 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
 				log.Logger().Infof("Runner instance allocation details status: %s", *allocationDetails.Status)
-
-				// Check telemetry status and terminate process if disabled
-				if allocationDetails.HasTelemetryEnabled() {
-					telemetryEnabled := allocationDetails.GetTelemetryEnabled()
-					log.Logger().Infof("Telemetry enabled status: %v", telemetryEnabled)
-
-					if !telemetryEnabled {
-						log.Logger().Infof("Telemetry is disabled. Terminating telemetry process...")
-						if err := a.killTelemetryProcess(); err != nil {
-							log.Logger().Errorf("Failed to terminate telemetry process: %v", err)
-						}
-					}
-				}
 
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
@@ -259,155 +243,4 @@ func (a *agentImpl) verifyExitFile() error {
 
 	return nil
 
-}
-
-// killTelemetryProcess stops the telemetry service using system service managers
-// This is better than killing the process directly because:
-// 1. The telemetry agent runs as a system service with auto-restart enabled
-// 2. Killing the process would cause the service manager to restart it
-// 3. Stopping the service is cleaner and respects the service lifecycle
-func (a *agentImpl) killTelemetryProcess() error {
-	log.Logger().Infof("Attempting to stop telemetry service...")
-
-	var err error
-	switch runtime.GOOS {
-	case "linux":
-		err = a.stopTelemetryServiceLinux()
-	case "darwin":
-		err = a.stopTelemetryServiceDarwin()
-	case "windows":
-		err = a.stopTelemetryServiceWindows()
-	default:
-		err = fmt.Errorf("unsupported OS: %s", runtime.GOOS)
-	}
-
-	if err != nil {
-		log.Logger().Errorf("Failed to stop telemetry service: %v", err)
-	} else {
-		log.Logger().Infof("Successfully stopped telemetry service")
-	}
-
-	return err
-}
-
-// stopTelemetryServiceLinux stops the telemetry service on Linux using systemctl
-func (a *agentImpl) stopTelemetryServiceLinux() error {
-	serviceName := "warpbuild-telemetryd"
-
-	// Check if service is running
-	checkCmd := exec.Command("systemctl", "is-active", serviceName)
-	output, err := checkCmd.CombinedOutput()
-	status := strings.TrimSpace(string(output))
-
-	log.Logger().Infof("Service status: %s", status)
-
-	if status != "active" {
-		log.Logger().Infof("Telemetry service is not active, nothing to stop")
-		return nil
-	}
-
-	// Stop the service
-	euid := os.Geteuid()
-	var stopCmd *exec.Cmd
-	if euid != 0 {
-		stopCmd = exec.Command("sudo", "-n", "systemctl", "stop", serviceName)
-		log.Logger().Infof("Stopping service with sudo (euid: %d)", euid)
-	} else {
-		stopCmd = exec.Command("systemctl", "stop", serviceName)
-		log.Logger().Infof("Stopping service as root")
-	}
-
-	log.Logger().Infof("Executing: %v", stopCmd.Args)
-	output, err = stopCmd.CombinedOutput()
-	if err != nil {
-		errMsg := fmt.Sprintf("Failed to stop service: %v, output: %s", err, string(output))
-		log.Logger().Errorf(errMsg)
-		return fmt.Errorf("%s", errMsg)
-	}
-
-	log.Logger().Infof("Successfully stopped telemetry service")
-
-	// Verify the service stopped
-	time.Sleep(1 * time.Second)
-	verifyCmd := exec.Command("systemctl", "is-active", serviceName)
-	output, _ = verifyCmd.CombinedOutput()
-	newStatus := strings.TrimSpace(string(output))
-	log.Logger().Infof("Post-stop status: %s", newStatus)
-
-	return nil
-}
-
-// stopTelemetryServiceDarwin stops the telemetry service on macOS using launchctl
-func (a *agentImpl) stopTelemetryServiceDarwin() error {
-	serviceName := "com.warpbuild.warpbuild-telemetryd"
-
-	// Stop the service with unload
-	euid := os.Geteuid()
-	plistPath := fmt.Sprintf("~/Library/LaunchAgents/%s.plist", serviceName)
-
-	var unloadCmd *exec.Cmd
-	if euid != 0 {
-		log.Logger().Infof("Unloading service with sudo")
-		unloadCmd = exec.Command("sudo", "launchctl", "unload", "-w", plistPath)
-	} else {
-		log.Logger().Infof("Unloading service as root")
-		unloadCmd = exec.Command("launchctl", "unload", "-w", plistPath)
-	}
-
-	log.Logger().Infof("Executing: %v", unloadCmd.Args)
-	output, err := unloadCmd.CombinedOutput()
-	if err != nil {
-		errMsg := fmt.Sprintf("Failed to unload service: %v, output: %s", err, string(output))
-		log.Logger().Errorf(errMsg)
-		return fmt.Errorf("%s", errMsg)
-	}
-
-	log.Logger().Infof("Successfully stopped telemetry service")
-
-	return nil
-}
-
-// stopTelemetryServiceWindows stops the telemetry service on Windows
-func (a *agentImpl) stopTelemetryServiceWindows() error {
-	serviceName := "warpbuild-telemetryd"
-
-	// Check if service exists and is running
-	checkCmd := exec.Command("sc", "query", serviceName)
-	output, err := checkCmd.CombinedOutput()
-
-	if err != nil {
-		log.Logger().Infof("Telemetry service does not exist: %s", serviceName)
-		return nil
-	}
-
-	if !strings.Contains(string(output), "RUNNING") {
-		log.Logger().Infof("Telemetry service is not running")
-		return nil
-	}
-
-	log.Logger().Infof("Stopping service: %s", serviceName)
-
-	// Stop the service
-	stopCmd := exec.Command("sc", "stop", serviceName)
-	output, err = stopCmd.CombinedOutput()
-	if err != nil {
-		errMsg := fmt.Sprintf("Failed to stop service: %v, output: %s", err, string(output))
-		log.Logger().Errorf(errMsg)
-		return fmt.Errorf("%s", errMsg)
-	}
-
-	log.Logger().Infof("Successfully stopped telemetry service")
-
-	// Verify the service stopped
-	time.Sleep(1 * time.Second)
-	verifyCmd := exec.Command("sc", "query", serviceName)
-	output, _ = verifyCmd.CombinedOutput()
-
-	if strings.Contains(string(output), "STOPPED") {
-		log.Logger().Infof("Post-stop: service stopped")
-	} else {
-		log.Logger().Warnf("Post-stop: service status unclear: %s", string(output))
-	}
-
-	return nil
 }
