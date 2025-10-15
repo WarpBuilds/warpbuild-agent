@@ -353,7 +353,7 @@ func (a *agentImpl) stopTelemetryServiceDarwin() error {
 
 	// Stop the service with unload
 	euid := os.Geteuid()
-	plistPath := fmt.Sprintf("/Library/LaunchDaemons/%s.plist", serviceName)
+	plistPath := fmt.Sprintf("/Library/LaunchDaemons/com.%s.plist", serviceName)
 
 	var unloadCmd *exec.Cmd
 	if euid != 0 {
