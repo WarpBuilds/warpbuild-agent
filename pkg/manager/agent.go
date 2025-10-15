@@ -122,21 +122,22 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 			log.Logger().Infof("allocationDetails: %+v", allocationDetails)
 
-			// Check telemetry status and terminate process if disabled
-			if allocationDetails.HasTelemetryEnabled() {
-				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
-				log.Logger().Infof("Telemetry enabled status: %v", telemetryEnabled)
-
-				if !telemetryEnabled {
-					log.Logger().Infof("Telemetry is disabled. Terminating telemetry process...")
-					if err := a.killTelemetryProcess(); err != nil {
-						log.Logger().Errorf("Failed to terminate telemetry process: %v", err)
-					}
-				}
-			}
-
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
+				log.Logger().Infof("Runner instance allocation details status: %s", *allocationDetails.Status)
+
+				// Check telemetry status and terminate process if disabled
+				if allocationDetails.HasTelemetryEnabled() {
+					telemetryEnabled := allocationDetails.GetTelemetryEnabled()
+					log.Logger().Infof("Telemetry enabled status: %v", telemetryEnabled)
+
+					if !telemetryEnabled {
+						log.Logger().Infof("Telemetry is disabled. Terminating telemetry process...")
+						if err := a.killTelemetryProcess(); err != nil {
+							log.Logger().Errorf("Failed to terminate telemetry process: %v", err)
+						}
+					}
+				}
 
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
