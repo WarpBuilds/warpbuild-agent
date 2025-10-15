@@ -14,8 +14,11 @@ receivers:
       - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
       - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
       - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuild-agentd-debug.log'
       - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
       - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stderr.log'
     start_at: end
     max_log_size: 200KiB
     include_file_name: true
