@@ -117,11 +117,8 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				continue
 			}
 
-			log.Logger().Infof("allocationDetails: %+v", allocationDetails)
-
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
-				log.Logger().Infof("Runner instance allocation details status: %s", *allocationDetails.Status)
 
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
