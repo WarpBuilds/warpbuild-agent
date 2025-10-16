@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
-	"syscall"
 	"text/template"
 	"time"
 
@@ -25,8 +24,9 @@ type TelemetryManager struct {
 	mu     sync.RWMutex
 
 	// Components
-	receiver   *uploader.Receiver
-	s3Uploader *uploader.S3Uploader
+	receiver         *uploader.Receiver
+	s3Uploader       *uploader.S3Uploader
+	otelCollectorCmd *exec.Cmd
 
 	// Configuration
 	port          int
@@ -77,6 +77,10 @@ func (tm *TelemetryManager) Start() error {
 	// Start OTEL collector
 	tm.wg.Add(1)
 	go tm.startOtelCollector()
+
+	// Start telemetry status monitoring
+	tm.wg.Add(1)
+	go tm.monitorTelemetryStatus()
 
 	log.Logger().Infof("Telemetry manager started successfully")
 	return nil
@@ -129,26 +133,16 @@ func (tm *TelemetryManager) startOtelCollector() {
 
 	log.Logger().Infof("OpenTelemetry Collector configuration written successfully")
 
-	// Channel to signal when the application should terminate
-	done := make(chan bool, 1)
+	log.Logger().Infof("Launching OpenTelemetry Collector in background...")
 
-	// Start OpenTelemetry Collector Contrib
-	go func() {
-		defer tm.handlePanic()
-		log.Logger().Infof("Launching OpenTelemetry Collector in background...")
-		tm.runOtelCollector(collectorPath, done)
-	}()
+	// Start the OTEL collector and wait for context cancellation
+	tm.runOtelCollector(collectorPath)
 
-	// Wait for context cancellation
-	<-tm.ctx.Done()
-	log.Logger().Infof("Context cancelled, stopping OTEL collector...")
-
-	// Signal the OpenTelemetry Collector process to terminate
-	done <- true
+	log.Logger().Infof("OTEL collector goroutine exited")
 }
 
 // runOtelCollector runs the OTEL collector process
-func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan bool) {
+func (tm *TelemetryManager) runOtelCollector(collectorPath string) {
 	configPath := tm.getConfigFilePath()
 	log.Logger().Infof("Starting OpenTelemetry Collector with config: %s", configPath)
 
@@ -160,29 +154,57 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string, done chan boo
 
 	log.Logger().Infof("OpenTelemetry Collector command: %s --config %s", collectorPath, configPath)
 
-	err := cmd.Start()
-	if err != nil {
+	if err := cmd.Start(); err != nil {
 		log.Logger().Errorf("Failed to start OpenTelemetry Collector: %v", err)
 		return
 	}
 
+	// Store the command reference so we can stop it later
+	tm.mu.Lock()
+	tm.otelCollectorCmd = cmd
+	tm.mu.Unlock()
+
 	log.Logger().Infof("OpenTelemetry Collector started with PID: %d", cmd.Process.Pid)
 
+	// Channel to track when cmd.Wait() completes
+	waitDone := make(chan error, 1)
+
+	// Wait for the process to exit in a separate goroutine
 	go func() {
-		<-done
-		log.Logger().Infof("Signaling OpenTelemetry Collector to terminate...")
-		if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
-			log.Logger().Errorf("Failed to terminate OpenTelemetry Collector: %v", err)
-		}
+		waitDone <- cmd.Wait()
 	}()
 
-	go func() {
-		if err := cmd.Wait(); err != nil {
+	// Wait for either context cancellation or process exit
+	select {
+	case <-tm.ctx.Done():
+		log.Logger().Infof("Context cancelled, stopping OTEL collector (PID: %d)...", cmd.Process.Pid)
+
+		// Kill the process - Go handles OS-specific details
+		if err := cmd.Process.Kill(); err != nil {
+			log.Logger().Errorf("Failed to kill OpenTelemetry Collector process: %v", err)
+		}
+
+		// Wait for the process to actually exit (with timeout)
+		select {
+		case err := <-waitDone:
+			if err != nil {
+				log.Logger().Infof("OpenTelemetry Collector terminated with error: %v", err)
+			} else {
+				log.Logger().Infof("OpenTelemetry Collector terminated successfully")
+			}
+		case <-time.After(5 * time.Second):
+			log.Logger().Warnf("Timeout waiting for OpenTelemetry Collector to exit after 5 seconds")
+		}
+
+	case err := <-waitDone:
+		if err != nil {
 			log.Logger().Errorf("OpenTelemetry Collector exited with error: %v", err)
 		} else {
 			log.Logger().Infof("OpenTelemetry Collector exited successfully")
 		}
-	}()
+	}
+
+	log.Logger().Infof("OpenTelemetry Collector process handler completed")
 }
 
 // handlePanic handles panics in goroutines
@@ -310,4 +332,70 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 		return filepath.Join(tm.baseDirectory, "otel-metrics-out.log")
 	}
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
+}
+
+// monitorTelemetryStatus monitors the telemetry enabled status via API polling
+func (tm *TelemetryManager) monitorTelemetryStatus() {
+	defer tm.wg.Done()
+
+	log.Logger().Infof("Starting telemetry status monitoring...")
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Poll the API to check telemetry status
+			allocationDetails, resp, err := tm.warpbuildAPI.V1RunnerInstanceAPI.
+				GetRunnerInstanceAllocationDetails(tm.ctx, tm.runnerID).
+				XPOLLINGSECRET(tm.pollingSecret).
+				Execute()
+
+			if err != nil {
+				log.Logger().Debugf("Failed to get runner instance allocation details: %v", err)
+				if resp != nil {
+					log.Logger().Debugf("Response: %+v", resp)
+				}
+				continue
+			}
+
+			if allocationDetails == nil {
+				log.Logger().Debugf("No runner instance allocation details found")
+				continue
+			}
+
+			// Check if telemetry is disabled
+			if allocationDetails.HasTelemetryEnabled() {
+				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
+
+				if !telemetryEnabled {
+					log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
+					tm.stopOtelCollector()
+
+					// Cancel the context to stop the entire telemetry manager
+					tm.cancel()
+					return
+				}
+			}
+
+		case <-tm.ctx.Done():
+			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
+			return
+		}
+	}
+}
+
+// stopOtelCollector stops the OTEL collector process by canceling the context
+func (tm *TelemetryManager) stopOtelCollector() {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+
+	if tm.otelCollectorCmd == nil || tm.otelCollectorCmd.Process == nil {
+		log.Logger().Infof("OTEL collector process not running")
+		return
+	}
+
+	log.Logger().Infof("Stopping OTEL collector process (PID: %d)...", tm.otelCollectorCmd.Process.Pid)
+	// The actual termination will be handled by the context cancellation in runOtelCollector
 }

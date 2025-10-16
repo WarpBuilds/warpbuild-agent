@@ -6,29 +6,35 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AllocatedAt** | Pointer to **string** |  | [optional] 
 **AllocationFor** | Pointer to **string** |  | [optional] 
+**AllocationMutexTimeout** | Pointer to **string** |  | [optional] 
 **AllocationRequestedAt** | Pointer to **string** |  | [optional] 
 **AllocationRequestedEventAt** | Pointer to **string** |  | [optional] 
 **Cluster** | Pointer to **string** |  | [optional] 
 **Configuration** | Pointer to [**CommonsRunnerInstanceConfiguration**](CommonsRunnerInstanceConfiguration.md) |  | [optional] 
 **CreatedAt** | Pointer to **string** |  | [optional] 
 **CreatedBy** | Pointer to **string** |  | [optional] 
+**DynamicOverrides** | Pointer to [**CommonsDynamicOverrides**](CommonsDynamicOverrides.md) |  | [optional] 
 **ExternalId** | Pointer to **string** |  | [optional] 
 **FirstPolledAt** | Pointer to **string** |  | [optional] 
 **Host** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **string** |  | [optional] 
+**LabelAttributes** | Pointer to [**CommonsLabelAttributes**](CommonsLabelAttributes.md) |  | [optional] 
 **Labels** | Pointer to **[]string** |  | [optional] 
 **LastJobProcessedId** | Pointer to **string** |  | [optional] 
 **LastJobProcessedMeta** | Pointer to [**CommonsLastJobProcessedMeta**](CommonsLastJobProcessedMeta.md) |  | [optional] 
 **LastPolledAt** | Pointer to **string** |  | [optional] 
 **OrganizationId** | Pointer to **string** |  | [optional] 
-**ProviderKind** | Pointer to **string** |  | [optional] 
+**PostResumeFirstPolledAt** | Pointer to **string** |  | [optional] 
 **ProviderKindId** | Pointer to **string** |  | [optional] 
 **PurgedAt** | Pointer to **string** |  | [optional] 
 **PurgedReason** | Pointer to **string** |  | [optional] 
 **RunnerFor** | Pointer to **string** |  | [optional] 
 **RunnerSetId** | Pointer to **string** |  | [optional] 
 **RunningStartedAt** | Pointer to **string** |  | [optional] 
+**StackKind** | Pointer to **string** |  | [optional] 
 **Status** | Pointer to **string** |  | [optional] 
+**SuspendedAt** | Pointer to **string** |  | [optional] 
+**SuspendingStartedAt** | Pointer to **string** |  | [optional] 
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
 
@@ -100,6 +106,31 @@ SetAllocationFor sets AllocationFor field to given value.
 `func (o *CommonsRunnerInstance) HasAllocationFor() bool`
 
 HasAllocationFor returns a boolean if a field has been set.
+
+### GetAllocationMutexTimeout
+
+`func (o *CommonsRunnerInstance) GetAllocationMutexTimeout() string`
+
+GetAllocationMutexTimeout returns the AllocationMutexTimeout field if non-nil, zero value otherwise.
+
+### GetAllocationMutexTimeoutOk
+
+`func (o *CommonsRunnerInstance) GetAllocationMutexTimeoutOk() (*string, bool)`
+
+GetAllocationMutexTimeoutOk returns a tuple with the AllocationMutexTimeout field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllocationMutexTimeout
+
+`func (o *CommonsRunnerInstance) SetAllocationMutexTimeout(v string)`
+
+SetAllocationMutexTimeout sets AllocationMutexTimeout field to given value.
+
+### HasAllocationMutexTimeout
+
+`func (o *CommonsRunnerInstance) HasAllocationMutexTimeout() bool`
+
+HasAllocationMutexTimeout returns a boolean if a field has been set.
 
 ### GetAllocationRequestedAt
 
@@ -251,6 +282,31 @@ SetCreatedBy sets CreatedBy field to given value.
 
 HasCreatedBy returns a boolean if a field has been set.
 
+### GetDynamicOverrides
+
+`func (o *CommonsRunnerInstance) GetDynamicOverrides() CommonsDynamicOverrides`
+
+GetDynamicOverrides returns the DynamicOverrides field if non-nil, zero value otherwise.
+
+### GetDynamicOverridesOk
+
+`func (o *CommonsRunnerInstance) GetDynamicOverridesOk() (*CommonsDynamicOverrides, bool)`
+
+GetDynamicOverridesOk returns a tuple with the DynamicOverrides field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDynamicOverrides
+
+`func (o *CommonsRunnerInstance) SetDynamicOverrides(v CommonsDynamicOverrides)`
+
+SetDynamicOverrides sets DynamicOverrides field to given value.
+
+### HasDynamicOverrides
+
+`func (o *CommonsRunnerInstance) HasDynamicOverrides() bool`
+
+HasDynamicOverrides returns a boolean if a field has been set.
+
 ### GetExternalId
 
 `func (o *CommonsRunnerInstance) GetExternalId() string`
@@ -350,6 +406,31 @@ SetId sets Id field to given value.
 `func (o *CommonsRunnerInstance) HasId() bool`
 
 HasId returns a boolean if a field has been set.
+
+### GetLabelAttributes
+
+`func (o *CommonsRunnerInstance) GetLabelAttributes() CommonsLabelAttributes`
+
+GetLabelAttributes returns the LabelAttributes field if non-nil, zero value otherwise.
+
+### GetLabelAttributesOk
+
+`func (o *CommonsRunnerInstance) GetLabelAttributesOk() (*CommonsLabelAttributes, bool)`
+
+GetLabelAttributesOk returns a tuple with the LabelAttributes field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLabelAttributes
+
+`func (o *CommonsRunnerInstance) SetLabelAttributes(v CommonsLabelAttributes)`
+
+SetLabelAttributes sets LabelAttributes field to given value.
+
+### HasLabelAttributes
+
+`func (o *CommonsRunnerInstance) HasLabelAttributes() bool`
+
+HasLabelAttributes returns a boolean if a field has been set.
 
 ### GetLabels
 
@@ -476,30 +557,30 @@ SetOrganizationId sets OrganizationId field to given value.
 
 HasOrganizationId returns a boolean if a field has been set.
 
-### GetProviderKind
+### GetPostResumeFirstPolledAt
 
-`func (o *CommonsRunnerInstance) GetProviderKind() string`
+`func (o *CommonsRunnerInstance) GetPostResumeFirstPolledAt() string`
 
-GetProviderKind returns the ProviderKind field if non-nil, zero value otherwise.
+GetPostResumeFirstPolledAt returns the PostResumeFirstPolledAt field if non-nil, zero value otherwise.
 
-### GetProviderKindOk
+### GetPostResumeFirstPolledAtOk
 
-`func (o *CommonsRunnerInstance) GetProviderKindOk() (*string, bool)`
+`func (o *CommonsRunnerInstance) GetPostResumeFirstPolledAtOk() (*string, bool)`
 
-GetProviderKindOk returns a tuple with the ProviderKind field if it's non-nil, zero value otherwise
+GetPostResumeFirstPolledAtOk returns a tuple with the PostResumeFirstPolledAt field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetProviderKind
+### SetPostResumeFirstPolledAt
 
-`func (o *CommonsRunnerInstance) SetProviderKind(v string)`
+`func (o *CommonsRunnerInstance) SetPostResumeFirstPolledAt(v string)`
 
-SetProviderKind sets ProviderKind field to given value.
+SetPostResumeFirstPolledAt sets PostResumeFirstPolledAt field to given value.
 
-### HasProviderKind
+### HasPostResumeFirstPolledAt
 
-`func (o *CommonsRunnerInstance) HasProviderKind() bool`
+`func (o *CommonsRunnerInstance) HasPostResumeFirstPolledAt() bool`
 
-HasProviderKind returns a boolean if a field has been set.
+HasPostResumeFirstPolledAt returns a boolean if a field has been set.
 
 ### GetProviderKindId
 
@@ -651,6 +732,31 @@ SetRunningStartedAt sets RunningStartedAt field to given value.
 
 HasRunningStartedAt returns a boolean if a field has been set.
 
+### GetStackKind
+
+`func (o *CommonsRunnerInstance) GetStackKind() string`
+
+GetStackKind returns the StackKind field if non-nil, zero value otherwise.
+
+### GetStackKindOk
+
+`func (o *CommonsRunnerInstance) GetStackKindOk() (*string, bool)`
+
+GetStackKindOk returns a tuple with the StackKind field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetStackKind
+
+`func (o *CommonsRunnerInstance) SetStackKind(v string)`
+
+SetStackKind sets StackKind field to given value.
+
+### HasStackKind
+
+`func (o *CommonsRunnerInstance) HasStackKind() bool`
+
+HasStackKind returns a boolean if a field has been set.
+
 ### GetStatus
 
 `func (o *CommonsRunnerInstance) GetStatus() string`
@@ -675,6 +781,56 @@ SetStatus sets Status field to given value.
 `func (o *CommonsRunnerInstance) HasStatus() bool`
 
 HasStatus returns a boolean if a field has been set.
+
+### GetSuspendedAt
+
+`func (o *CommonsRunnerInstance) GetSuspendedAt() string`
+
+GetSuspendedAt returns the SuspendedAt field if non-nil, zero value otherwise.
+
+### GetSuspendedAtOk
+
+`func (o *CommonsRunnerInstance) GetSuspendedAtOk() (*string, bool)`
+
+GetSuspendedAtOk returns a tuple with the SuspendedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSuspendedAt
+
+`func (o *CommonsRunnerInstance) SetSuspendedAt(v string)`
+
+SetSuspendedAt sets SuspendedAt field to given value.
+
+### HasSuspendedAt
+
+`func (o *CommonsRunnerInstance) HasSuspendedAt() bool`
+
+HasSuspendedAt returns a boolean if a field has been set.
+
+### GetSuspendingStartedAt
+
+`func (o *CommonsRunnerInstance) GetSuspendingStartedAt() string`
+
+GetSuspendingStartedAt returns the SuspendingStartedAt field if non-nil, zero value otherwise.
+
+### GetSuspendingStartedAtOk
+
+`func (o *CommonsRunnerInstance) GetSuspendingStartedAtOk() (*string, bool)`
+
+GetSuspendingStartedAtOk returns a tuple with the SuspendingStartedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSuspendingStartedAt
+
+`func (o *CommonsRunnerInstance) SetSuspendingStartedAt(v string)`
+
+SetSuspendingStartedAt sets SuspendingStartedAt field to given value.
+
+### HasSuspendingStartedAt
+
+`func (o *CommonsRunnerInstance) HasSuspendingStartedAt() bool`
+
+HasSuspendingStartedAt returns a boolean if a field has been set.
 
 ### GetUpdatedAt
 

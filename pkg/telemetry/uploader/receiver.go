@@ -47,6 +47,8 @@ func (r *Receiver) Start() error {
 
 	mux.HandleFunc("/v1/traces", r.handleTraces)
 
+	mux.HandleFunc("/v1/gha-logs", r.handleGHALogs)
+
 	// Health check endpoint (no middleware needed)
 	mux.HandleFunc("/health", r.handleHealth)
 
@@ -171,6 +173,26 @@ func (r *Receiver) handleTraces(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// handleGHALogs handles incoming GitHub Actions log data
+func (r *Receiver) handleGHALogs(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read the request body
+	body, err := r.readRequestBody(req)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Process the GHA logs and add to buffer
+	r.processGHALogs(body)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // handleHealth handles health check requests
 func (r *Receiver) handleHealth(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -209,5 +231,12 @@ func (r *Receiver) processMetrics(data []byte) {
 func (r *Receiver) processTraces(data []byte) {
 	if err := r.service.ProcessTraces(r.ctx, data); err != nil {
 		log.Logger().Errorf("Failed to process traces: %v", err)
+	}
+}
+
+// processGHALogs processes GitHub Actions log data using the service layer
+func (r *Receiver) processGHALogs(data []byte) {
+	if err := r.service.ProcessGHALogs(r.ctx, data); err != nil {
+		log.Logger().Errorf("Failed to process GHA logs: %v", err)
 	}
 }

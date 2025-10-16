@@ -3,6 +3,7 @@ name: Branch Build and Upload to R2
 on:
   push:
     branches:
+      - "obs"
       - feat-transparent-cache
 
 env:

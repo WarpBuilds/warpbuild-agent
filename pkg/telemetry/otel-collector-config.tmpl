@@ -14,13 +14,30 @@ receivers:
       - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
       - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
       - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuild-agentd-debug.log'
       - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
       - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stderr.log'
     start_at: end
     max_log_size: 200KiB
     include_file_name: true
     include_file_path: true
     poll_interval: 20s
+
+  # GitHub Actions job logs and diagnostic logs
+  filelog/gha_logs:
+    include:
+      - 'C:\warpbuilds\runner\_diag\*.log'
+      - 'C:\warpbuilds\runner\_diag\**\*.log'
+    start_at: end
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    include_file_path_resolved: true
+    poll_interval: 5s
+    attributes:
+      log.type: github_actions
 {{- else}}
   filelog:
     {{- if eq .OS "darwin"}}
@@ -33,6 +50,24 @@ receivers:
     include_file_name: false
     include_file_path: false
     poll_interval: 1s
+
+  # GitHub Actions job logs and diagnostic logs
+  filelog/gha_logs:
+    include:
+      {{- if eq .OS "darwin"}}
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/*.log'
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/**/*.log'
+      {{- else if eq .OS "linux"}}
+      - '/runner/_diag/*.log'
+      - '/runner/_diag/**/*.log'
+      {{- end}}
+    start_at: 'end'
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 10s
+    attributes:
+      log.type: github_actions
 {{- end}}
 
   hostmetrics:
@@ -65,6 +100,23 @@ receivers:
             enabled: false
           system.network.dropped:
             enabled: false
+      disk:
+        metrics:
+          # collect disk throughput and IOPS metrics
+          system.disk.io:
+            enabled: true
+          system.disk.operations:
+            enabled: true
+          system.disk.io_time:
+            enabled: true
+          system.disk.operation_time:
+            enabled: true
+          system.disk.pending_operations:
+            enabled: false
+          system.disk.merged:
+            enabled: false
+          system.disk.weighted_io_time:
+            enabled: false
       filesystem:
         # Drop pseudo/virtual/container overlay mounts; keep real disks
         exclude_fs_types:
@@ -93,7 +145,7 @@ receivers:
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
-    collection_interval: 30s
+    collection_interval: 1s
     metrics:
       system.cpu.time:
         description: percentage of cpu time
@@ -122,7 +174,7 @@ processors:
     timeout: 30s
     send_batch_size: 10_000_000
 
-  # Keep ONLY these 4 metrics in the pipeline
+  # Keep ONLY these metrics in the pipeline
   filter/only_needed:
     metrics:
       include:
@@ -132,6 +184,10 @@ processors:
           - system.memory.utilization
           - system.filesystem.utilization
           - system.network.io
+          - system.disk.io
+          - system.disk.operations
+          - system.disk.io_time
+          - system.disk.operation_time
 
   filter/drop_non_internet_nics:
     error_mode: ignore
@@ -139,17 +195,25 @@ processors:
       datapoint:
         - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
 
-  # Convert cumulative network counters -> delta
+  # Convert cumulative counters -> delta
   cumulativetodelta:
     include:
       match_type: strict
       metrics:
         - system.network.io
+        - system.disk.io
+        - system.disk.operations
+        - system.disk.io_time
+        - system.disk.operation_time
 
   # Convert delta -> per-second rate (required list syntax)
   deltatorate:
     metrics:
       - system.network.io
+      - system.disk.io
+      - system.disk.operations
+      - system.disk.io_time
+      - system.disk.operation_time
 
   transform/normalize:
     metric_statements:
@@ -243,6 +307,11 @@ exporters:
     metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
     encoding: "json"
     compression: "none"
+  
+  otlphttp/gha_logs:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/gha-logs"
+    encoding: "json"
+    compression: "none"
 
 service:
   telemetry:
@@ -250,9 +319,13 @@ service:
       level: none
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else if eq .OS "darwin"}}filelog{{- else if eq .OS "linux"}}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
       exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
+    logs/gha_logs:
+      receivers: [filelog/gha_logs]
+      processors: [batch/logs]
+      exporters: [otlphttp/gha_logs]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:

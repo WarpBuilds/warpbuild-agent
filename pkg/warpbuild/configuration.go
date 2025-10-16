@@ -29,9 +29,6 @@ func (c contextKey) String() string {
 }
 
 var (
-	// ContextAPIKeys takes a string apikey as authentication for the request
-	ContextAPIKeys = contextKey("apiKeys")
-
 	// ContextServerIndex uses a server configuration from the index.
 	ContextServerIndex = contextKey("serverIndex")
 
@@ -90,7 +87,7 @@ type Configuration struct {
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
-		UserAgent:        "OpenAPI-Generator//Users/prashant/warpbuilds/warpbuild-agent/pkg/warpbuild/go",
+		UserAgent:        "OpenAPI-Generator/1.0.0/go",
 		Debug:            false,
 		Servers:          ServerConfigurations{
 			{

@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **RunnerApplication** | Pointer to **string** |  | [optional] 
 **RunnerInstance** | Pointer to [**CommonsRunnerInstance**](CommonsRunnerInstance.md) |  | [optional] 
 **Status** | Pointer to **string** |  | [optional] 
+**TelemetryEnabled** | Pointer to **bool** |  | [optional] 
 
 ## Methods
 
@@ -127,6 +128,31 @@ SetStatus sets Status field to given value.
 `func (o *CommonsRunnerInstanceAllocationDetails) HasStatus() bool`
 
 HasStatus returns a boolean if a field has been set.
+
+### GetTelemetryEnabled
+
+`func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryEnabled() bool`
+
+GetTelemetryEnabled returns the TelemetryEnabled field if non-nil, zero value otherwise.
+
+### GetTelemetryEnabledOk
+
+`func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryEnabledOk() (*bool, bool)`
+
+GetTelemetryEnabledOk returns a tuple with the TelemetryEnabled field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTelemetryEnabled
+
+`func (o *CommonsRunnerInstanceAllocationDetails) SetTelemetryEnabled(v bool)`
+
+SetTelemetryEnabled sets TelemetryEnabled field to given value.
+
+### HasTelemetryEnabled
+
+`func (o *CommonsRunnerInstanceAllocationDetails) HasTelemetryEnabled() bool`
+
+HasTelemetryEnabled returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
