@@ -73,33 +73,41 @@ receivers:
   hostmetrics:
     collection_interval: 1s
     scrapers:
-      {{- if eq .OS "linux" }}
       cpu:
         metrics:
-          # keep % utilization, drop raw times
           system.cpu.utilization:
             enabled: true
           system.cpu.time:
-            enabled: false
-      {{- end }}
+            enabled: true
       memory:
         metrics:
-          # keep % utilization, drop byte counters
           system.memory.utilization:
             enabled: true
           system.memory.usage:
-            enabled: false
+            enabled: true
+      disk:
+        metrics:
+          system.disk.io:
+            enabled: true
+          system.disk.operations:
+            enabled: true
+          system.disk.io_time:
+            enabled: true
+          system.disk.operation_time:
+            enabled: true
+      load: {}
       network:
         metrics:
-          # only keep IO; disable packets/errors/dropped
           system.network.io:
             enabled: true
           system.network.packets:
-            enabled: false
+            enabled: true
           system.network.errors:
             enabled: false
           system.network.dropped:
             enabled: false
+          system.network.connections:
+            enabled: true
       disk:
         metrics:
           # collect disk throughput and IOPS metrics
@@ -118,7 +126,6 @@ receivers:
           system.disk.weighted_io_time:
             enabled: false
       filesystem:
-        # Drop pseudo/virtual/container overlay mounts; keep real disks
         exclude_fs_types:
           match_type: strict
           fs_types:
@@ -129,6 +136,8 @@ receivers:
             - proc
             - sysfs
             - cgroup2
+            - devfs
+            - autofs
         exclude_mount_points:
           match_type: regexp
           mount_points:
@@ -136,12 +145,21 @@ receivers:
             - ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.overlayfs/.*
             - ^/run/containerd/io\.containerd\.runtime\.v2\.task/.*/rootfs.*
             - ^/snap/.*
+            - ^/System/Volumes/.*
         metrics:
-          # keep % utilization, drop byte usage
           system.filesystem.utilization:
             enabled: true
           system.filesystem.usage:
-            enabled: false
+            enabled: true
+          system.filesystem.inodes.usage:
+            enabled: true
+      paging:
+        metrics:
+          system.paging.usage:
+            enabled: true
+          system.paging.operations:
+            enabled: true
+      processes: {}
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
@@ -174,7 +192,27 @@ processors:
     timeout: 30s
     send_batch_size: 10_000_000
 
-  # Keep ONLY these metrics in the pipeline
+  # Add resource attributes to identify the host/runner
+  resource:
+    attributes:
+      - key: host.name
+        value: "{{.RunnerID}}"
+        action: upsert
+      - key: service.name
+        value: "warpbuild-agent"
+        action: upsert
+      # Use this telemetry version attribute to push breaking transformations
+      # to metrics. Then add/update switcher in the UI to handle dashboards
+      # for new data and old data.
+      # The switcher from the UI can be removed after a few weeks.
+      - key: telemetry.version
+        value: "20251028"
+        action: upsert
+      - key: telemetry.vm_os
+        value: "{{.OS}}"
+        action: upsert
+
+  # Keep ONLY these metrics in the pipeline (not used for macOS collectd)
   filter/only_needed:
     metrics:
       include:
@@ -188,6 +226,9 @@ processors:
           - system.disk.operations
           - system.disk.io_time
           - system.disk.operation_time
+          - system.cpu.load_average.1m
+          - system.cpu.load_average.5m
+          - system.cpu.load_average.15m
 
   filter/drop_non_internet_nics:
     error_mode: ignore
@@ -313,6 +354,24 @@ exporters:
     encoding: "json"
     compression: "none"
 
+{{if .EnableSigNoz}}
+  # 
+  # SigNoz Cloud exporter
+  # Only to be used for debugging on non-prod environments
+  otlp/signoz:
+    endpoint: "{{.SigNozEndpoint}}"
+    tls:
+      insecure: false
+    headers:
+      signoz-ingestion-key: "{{.SigNozAPIKey}}"
+
+  # Debug exporter to see what's being sent to SigNoz
+  debug:
+    verbosity: normal
+    sampling_initial: 10
+    sampling_thereafter: 100
+{{end}}
+
 service:
   telemetry:
     metrics:
@@ -329,24 +388,6 @@ service:
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
-        - filter/only_needed
-        - filter/drop_non_internet_nics
-        - cumulativetodelta
-        - deltatorate
-
-        # fs
-        - transform/fs_to_percent
-        - metricstransform/fs_max_percent
-
-        # cpu
-        - filter/drop_cpu_idle
-        - transform/cpu_to_percent
-        - metricstransform/cpu_sum_states
-        - metricstransform/cpu_total_percent
-
-        # memory
-        - transform/mem_to_percentage
-
-        - transform/normalize
+        - resource
         - batch/metrics
-      exporters: [otlphttp]
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]

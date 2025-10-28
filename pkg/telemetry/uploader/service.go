@@ -102,7 +102,7 @@ func (s *TelemetryService) ProcessMetrics(ctx context.Context, data []byte) erro
 		return fmt.Errorf("empty metrics data")
 	}
 
-	log.Logger().Debugf("Processing %d bytes of metrics data", len(data))
+	log.Logger().Debugf("Processing %d bytes of metrics data for runner: %s", len(data), s.runnerID)
 
 	// Process the metrics and add to buffer with metrics event type
 	s.buffer["metrics"].AddLineWithType(data)

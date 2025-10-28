@@ -18,13 +18,16 @@ import (
 )
 
 type ApplicationOptions struct {
-	SettingsFile           string `json:"settings_file"`
-	StdoutFile             string `json:"stdout_file"`
-	StderrFile             string `json:"stderr_file"`
-	LaunchTelemetry        bool   `json:"launch_telemetry"`
-	LaunchProxyServer      bool   `json:"launch_cache_proxy_server"`
-	LaunchTransparentCache bool   `json:"launch_transparent_cache"`
-	LogLevel               string `json:"log_level"`
+	SettingsFile            string `json:"settings_file"`
+	StdoutFile              string `json:"stdout_file"`
+	StderrFile              string `json:"stderr_file"`
+	LaunchTelemetry         bool   `json:"launch_telemetry"`
+	LaunchProxyServer       bool   `json:"launch_cache_proxy_server"`
+	LaunchTransparentCache  bool   `json:"launch_transparent_cache"`
+	LogLevel                string `json:"log_level"`
+	TelemetrySigNozEnable   bool   `json:"telemetry_signoz_enable"`
+	TelemetrySigNozEndpoint string `json:"telemetry_signoz_endpoint"`
+	TelemetrySigNozAPIKey   string `json:"telemetry_signoz_api_key"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -219,13 +222,16 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
-			BaseDirectory: settings.Telemetry.BaseDirectory,
-			RunnerID:      settings.Agent.ID,
-			PollingSecret: settings.Agent.PollingSecret,
-			HostURL:       settings.Agent.HostURL,
-			Enabled:       settings.Telemetry.Enabled,
-			PushFrequency: pushFrequency,
-			Port:          settings.Telemetry.Port,
+			BaseDirectory:  settings.Telemetry.BaseDirectory,
+			RunnerID:       settings.Agent.ID,
+			PollingSecret:  settings.Agent.PollingSecret,
+			HostURL:        settings.Agent.HostURL,
+			Enabled:        settings.Telemetry.Enabled,
+			PushFrequency:  pushFrequency,
+			Port:           settings.Telemetry.Port,
+			SigNozEnable:   opts.TelemetrySigNozEnable,
+			SigNozEndpoint: opts.TelemetrySigNozEndpoint,
+			SigNozAPIKey:   opts.TelemetrySigNozAPIKey,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}

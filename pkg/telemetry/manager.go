@@ -29,26 +29,32 @@ type TelemetryManager struct {
 	otelCollectorCmd *exec.Cmd
 
 	// Configuration
-	port          int
-	baseDirectory string
-	warpbuildAPI  *warpbuild.APIClient
-	runnerID      string
-	pollingSecret string
-	hostURL       string
+	port           int
+	baseDirectory  string
+	warpbuildAPI   *warpbuild.APIClient
+	runnerID       string
+	pollingSecret  string
+	hostURL        string
+	sigNozEnable   bool
+	sigNozEndpoint string
+	sigNozAPIKey   string
 }
 
 // NewTelemetryManager creates a new telemetry manager
-func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *TelemetryManager {
+func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string, sigNozEnable bool, sigNozEndpoint, sigNozAPIKey string) *TelemetryManager {
 	managerCtx, cancel := context.WithCancel(ctx)
 	return &TelemetryManager{
-		ctx:           managerCtx,
-		cancel:        cancel,
-		port:          port,
-		baseDirectory: baseDirectory,
-		warpbuildAPI:  warpbuildAPI,
-		runnerID:      runnerID,
-		pollingSecret: pollingSecret,
-		hostURL:       hostURL,
+		ctx:            managerCtx,
+		cancel:         cancel,
+		port:           port,
+		baseDirectory:  baseDirectory,
+		warpbuildAPI:   warpbuildAPI,
+		runnerID:       runnerID,
+		pollingSecret:  pollingSecret,
+		hostURL:        hostURL,
+		sigNozEnable:   sigNozEnable,
+		sigNozEndpoint: sigNozEndpoint,
+		sigNozAPIKey:   sigNozAPIKey,
 	}
 }
 
@@ -292,6 +298,10 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS                    string
 		Arch                  string
 		Port                  int
+		RunnerID              string
+		SigNozEndpoint        string
+		SigNozAPIKey          string
+		EnableSigNoz          bool
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -299,6 +309,10 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		OS:                    runtime.GOOS,
 		Arch:                  runtime.GOARCH,
 		Port:                  tm.port,
+		RunnerID:              tm.runnerID,
+		SigNozEndpoint:        tm.sigNozEndpoint,
+		SigNozAPIKey:          tm.sigNozAPIKey,
+		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
 	}
 
 	log.Logger().Infof("Parsing template with vars: %+v", data)
