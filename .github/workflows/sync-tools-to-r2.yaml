@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_R2_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.WB_PACKAGES_R2_SECRET_ACCESS_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_PROD_R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.WB_PACKAGES_PROD_R2_SECRET_ACCESS_KEY }}
   AWS_S3_BUCKET: warpbuild-packages
   AWS_S3_REGION: us-east-1
-  AWS_S3_BUCKET_HOST: ${{ secrets.WB_PACKAGES_R2_ENDPOINT }}
+  AWS_S3_BUCKET_HOST: https://bcfda61174f1fa286a9ecf6b2dde0c49.r2.cloudflarestorage.com
 
 jobs:
   sync-tools:
