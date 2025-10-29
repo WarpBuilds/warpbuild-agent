@@ -3,7 +3,7 @@ name: Sync Tools to R2
 on:
   push:
     branches:
-      - feat/custom-win-setup-images
+      - main
     paths:
       - "tools/**"
   workflow_dispatch:
