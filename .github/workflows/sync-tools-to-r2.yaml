@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/custom-win-setup-images
     paths:
       - "tools/**"
   workflow_dispatch:
