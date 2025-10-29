@@ -1,0 +1,58 @@
+name: Sync Tools to R2
+
+on:
+  push:
+    branches:
+      - main
+      - feat/custom-win-setup-images
+    paths:
+      - "tools/**"
+  workflow_dispatch:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_PROD_R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.WB_PACKAGES_PROD_R2_SECRET_ACCESS_KEY }}
+  AWS_S3_BUCKET: warpbuild-packages
+  AWS_S3_REGION: us-east-1
+  AWS_S3_BUCKET_HOST: https://bcfda61174f1fa286a9ecf6b2dde0c49.r2.cloudflarestorage.com
+
+jobs:
+  sync-tools:
+    runs-on: warp-ubuntu-latest-x64-4x
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Define S3 Path
+        id: vars
+        run: echo "s3_path=WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/tools/" >> $GITHUB_ENV
+
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for Cloudflare R2
+        run: |
+          mkdir -p ~/.config/rclone
+          cat <<EOF > ~/.config/rclone/rclone.conf
+          [r2]
+          type            = s3
+          provider        = Cloudflare
+          env_auth        = false
+          access_key_id   = ${AWS_ACCESS_KEY_ID}
+          secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+          endpoint        = ${AWS_S3_BUCKET_HOST}
+          region          = ${AWS_S3_REGION}
+          acl             = private
+          EOF
+
+      - name: Sync tools directory to R2 with rclone
+        run: |
+          rclone sync tools/ r2:${AWS_S3_BUCKET}/${{ env.s3_path }} --progress --verbose
+
+      - name: List synced files
+        run: |
+          rclone ls r2:${AWS_S3_BUCKET}/${{ env.s3_path }}
