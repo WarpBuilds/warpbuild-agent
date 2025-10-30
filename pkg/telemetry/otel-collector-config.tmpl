@@ -109,7 +109,7 @@ receivers:
             - ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.overlayfs/.*
             - ^/run/containerd/io\.containerd\.runtime\.v2\.task/.*/rootfs.*
             - ^/snap/.*
-            - ^/System/Volumes/.*
+            - ^/System/Volumes/(Preboot|VM|Update|Hardware|xarts).*
         metrics:
           system.filesystem.utilization:
             enabled: true
