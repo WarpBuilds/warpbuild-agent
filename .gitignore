@@ -31,3 +31,6 @@ pkg/telemetry/binaries/*/*/otelcol-contrib.exe
 .env
 **/*.key
 **/*.crt
+
+# ignore telemetry local debug files
+otel-metrics-out.log*.debug

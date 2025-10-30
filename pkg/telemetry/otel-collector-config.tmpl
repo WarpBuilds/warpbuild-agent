@@ -77,54 +77,18 @@ receivers:
         metrics:
           system.cpu.utilization:
             enabled: true
-          system.cpu.time:
-            enabled: true
       memory:
         metrics:
           system.memory.utilization:
             enabled: true
-          system.memory.usage:
-            enabled: true
       disk:
         metrics:
           system.disk.io:
             enabled: true
-          system.disk.operations:
-            enabled: true
-          system.disk.io_time:
-            enabled: true
-          system.disk.operation_time:
-            enabled: true
-      load: {}
       network:
         metrics:
           system.network.io:
             enabled: true
-          system.network.packets:
-            enabled: true
-          system.network.errors:
-            enabled: false
-          system.network.dropped:
-            enabled: false
-          system.network.connections:
-            enabled: true
-      disk:
-        metrics:
-          # collect disk throughput and IOPS metrics
-          system.disk.io:
-            enabled: true
-          system.disk.operations:
-            enabled: true
-          system.disk.io_time:
-            enabled: true
-          system.disk.operation_time:
-            enabled: true
-          system.disk.pending_operations:
-            enabled: false
-          system.disk.merged:
-            enabled: false
-          system.disk.weighted_io_time:
-            enabled: false
       filesystem:
         exclude_fs_types:
           match_type: strict
@@ -149,17 +113,6 @@ receivers:
         metrics:
           system.filesystem.utilization:
             enabled: true
-          system.filesystem.usage:
-            enabled: true
-          system.filesystem.inodes.usage:
-            enabled: true
-      paging:
-        metrics:
-          system.paging.usage:
-            enabled: true
-          system.paging.operations:
-            enabled: true
-      processes: {}
 
 {{- if eq .OS "windows"}}
   windowsperfcounters/processor:
@@ -212,7 +165,7 @@ processors:
         value: "{{.OS}}"
         action: upsert
 
-  # Keep ONLY these metrics in the pipeline (not used for macOS collectd)
+  # Keep ONLY these metrics in the pipeline
   filter/only_needed:
     metrics:
       include:
@@ -223,12 +176,6 @@ processors:
           - system.filesystem.utilization
           - system.network.io
           - system.disk.io
-          - system.disk.operations
-          - system.disk.io_time
-          - system.disk.operation_time
-          - system.cpu.load_average.1m
-          - system.cpu.load_average.5m
-          - system.cpu.load_average.15m
 
   filter/drop_non_internet_nics:
     error_mode: ignore
@@ -243,31 +190,42 @@ processors:
       metrics:
         - system.network.io
         - system.disk.io
-        - system.disk.operations
-        - system.disk.io_time
-        - system.disk.operation_time
 
-  # Convert delta -> per-second rate (required list syntax)
+  # Convert delta -> per-second rate
   deltatorate:
     metrics:
       - system.network.io
       - system.disk.io
-      - system.disk.operations
-      - system.disk.io_time
-      - system.disk.operation_time
 
   transform/normalize:
     metric_statements:
       - context: datapoint
         statements:
-          # Rename NIC attribute to "internet"
+{{- if eq .OS "darwin"}}
+          # Rename main NIC (en0 on macOS) attribute to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io" and attributes["device"] == "en0"'
+{{- else if eq .OS "windows"}}
+          # On Windows, rename non-loopback interfaces to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io" and not IsMatch(attributes["device"], "^(Loopback|Local)")'
+{{- else}}
+          # On Linux, rename all network devices to "internet"
           - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
+{{- end}}
 
   # Drop idle before aggregating
   filter/drop_cpu_idle:
     metrics:
       datapoint:
         - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
+  
+{{- if eq .OS "darwin"}}
+  # Drop free and inactive memory states before aggregating (macOS only)
+  filter/drop_free_memory:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "inactive")'
+{{- end}}
   
   # 2) Convert ratio -> percent ONCE
   transform/cpu_to_percent:
@@ -291,7 +249,7 @@ processors:
             label_set: ["cpu"]
             aggregation_type: sum
 
-  # 4a) TOTAL CPU (sum across CPUs) => 0..(N*100). For 8 vCPU, max 800%
+  # 4a) TOTAL CPU (average across CPUs) => 0..100%. Average utilization across all cores
   metricstransform/cpu_total_percent:
     transforms:
       - include: system.cpu.utilization
@@ -299,12 +257,10 @@ processors:
         operations:
           - action: aggregate_labels
             label_set: []         # drop "cpu" -> single series per host
-            aggregation_type: sum
-          - action: update_label
-            label: aggregation
+            aggregation_type: mean
+          - action: add_label
             new_label: aggregation
-            value_actions:
-              - value: total
+            new_value: total
 
   # Convert memory utilization from ratio to percentage
   transform/mem_to_percentage:
@@ -314,10 +270,32 @@ processors:
         statements:
           # Convert ratio to percentage: multiply by 100
           - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
-      - context: metric
-        statements:
-          # Set unit to percentage
-          - 'set(unit, "%") where metric.name == "system.memory.utilization"'
+  
+  # Aggregate memory to show total used (macOS only - sums after filtering free/inactive)
+  # For Linux, we keep individual states and the dashboard should filter for state=used
+  metricstransform/mem_aggregate_darwin:
+    transforms:
+      - include: system.memory.utilization
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: sum
+          - action: add_label
+            new_label: aggregation
+            new_value: total
+  
+  # For Linux, just add the aggregation label to the used state without summing
+  metricstransform/mem_aggregate_linux:
+    transforms:
+      - include: system.memory.utilization
+        match_type: regexp
+        action: update
+        operations:
+          - action: add_label
+            new_label: aggregation
+            new_value: total
 
   transform/fs_to_percent:
     error_mode: ignore
@@ -370,6 +348,13 @@ exporters:
     verbosity: normal
     sampling_initial: 10
     sampling_thereafter: 100
+  
+  # File exporter for debugging metrics
+  file/debug:
+    path: {{.MetricsExportFilePath}}.debug
+    rotation:
+      max_megabytes: 10
+      max_backups: 3
 {{end}}
 
 service:
@@ -389,5 +374,32 @@ service:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
         - resource
+        - filter/only_needed
+        - filter/drop_non_internet_nics
+        - cumulativetodelta
+        - deltatorate
+
+        # fs
+        - transform/fs_to_percent
+        - metricstransform/fs_max_percent
+
+        # cpu
+        - filter/drop_cpu_idle
+        - transform/cpu_to_percent
+        - metricstransform/cpu_sum_states
+        - metricstransform/cpu_total_percent
+
+        # memory
+{{- if eq .OS "darwin"}}
+        - filter/drop_free_memory
+{{- end}}
+        - transform/mem_to_percentage
+{{- if eq .OS "darwin"}}
+        - metricstransform/mem_aggregate_darwin
+{{- else}}
+        - metricstransform/mem_aggregate_linux
+{{- end}}
+
+        - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug, file/debug{{end}}]
