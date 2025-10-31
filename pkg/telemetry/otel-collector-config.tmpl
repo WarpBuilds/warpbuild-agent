@@ -225,6 +225,14 @@ processors:
     metrics:
       datapoint:
         - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "inactive")'
+{{- else if eq .OS "linux"}}
+  # Drop free, cached, and buffered memory states for Linux (only keep 'used')
+  # Cached and buffered memory is reclaimable and should not be counted as "used"
+  filter/drop_reclaimable_memory:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "cached" or attributes["state"] == "buffered")'
 {{- end}}
   
   # 2) Convert ratio -> percent ONCE
@@ -392,6 +400,8 @@ service:
         # memory
 {{- if eq .OS "darwin"}}
         - filter/drop_free_memory
+{{- else if eq .OS "linux"}}
+        - filter/drop_reclaimable_memory
 {{- end}}
         - transform/mem_to_percentage
 {{- if eq .OS "darwin"}}
