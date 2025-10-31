@@ -24,13 +24,16 @@ const (
 )
 
 type TelemetryOptions struct {
-	Enabled       bool          `json:"enabled"`
-	BaseDirectory string        `json:"base_directory"`
-	PushFrequency time.Duration `json:"push_frequency"`
-	RunnerID      string        `json:"id"`
-	PollingSecret string        `json:"polling_secret"`
-	HostURL       string        `json:"host_url"`
-	Port          int           `json:"port"`
+	Enabled        bool          `json:"enabled"`
+	BaseDirectory  string        `json:"base_directory"`
+	PushFrequency  time.Duration `json:"push_frequency"`
+	RunnerID       string        `json:"id"`
+	PollingSecret  string        `json:"polling_secret"`
+	HostURL        string        `json:"host_url"`
+	Port           int           `json:"port"`
+	SigNozEnable   bool          `json:"signoz_enable"`
+	SigNozEndpoint string        `json:"signoz_endpoint"`
+	SigNozAPIKey   string        `json:"signoz_api_key"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
@@ -65,7 +68,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	// Use the port from settings, default to 33931 if not specified
 	port := opts.Port
 
-	manager := NewTelemetryManager(ctx, port, opts.BaseDirectory, wb, opts.RunnerID, opts.PollingSecret, opts.HostURL)
+	manager := NewTelemetryManager(ctx, port, opts.BaseDirectory, wb, opts.RunnerID, opts.PollingSecret, opts.HostURL, opts.SigNozEnable, opts.SigNozEndpoint, opts.SigNozAPIKey)
 
 	// Start the telemetry manager
 	if err := manager.Start(); err != nil {
