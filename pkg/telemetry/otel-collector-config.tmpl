@@ -357,25 +357,6 @@ exporters:
     sampling_initial: 10
     sampling_thereafter: 100
 {{end}}
-  
-  # File exporters for debugging (always enabled)
-  file/debug_metrics:
-    path: {{.MetricsExportFilePath}}.debug
-    rotation:
-      max_megabytes: 10
-      max_backups: 3
-  
-  file/debug_logs:
-    path: {{.MetricsExportFilePath}}.logs.debug
-    rotation:
-      max_megabytes: 10
-      max_backups: 3
-  
-  file/debug_gha_logs:
-    path: {{.MetricsExportFilePath}}.gha-logs.debug
-    rotation:
-      max_megabytes: 10
-      max_backups: 3
 
 service:
   telemetry:
@@ -385,11 +366,11 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp, file/debug_logs]
+      exporters: [otlphttp]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs, file/debug_gha_logs]
+      exporters: [otlphttp/gha_logs]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -424,4 +405,4 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp, file/debug_metrics{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
