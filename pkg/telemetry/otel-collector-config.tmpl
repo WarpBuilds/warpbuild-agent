@@ -226,13 +226,13 @@ processors:
       datapoint:
         - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "inactive")'
 {{- else if eq .OS "linux"}}
-  # Drop free, cached, and buffered memory states for Linux (only keep 'used')
-  # Cached and buffered memory is reclaimable and should not be counted as "used"
-  filter/drop_reclaimable_memory:
+  # Keep ONLY the "used" state for Linux memory metrics
+  # Drop all other states (free, cached, buffered, slab_reclaimable, slab_unreclaimable, inactive, etc.)
+  filter/keep_only_used_memory:
     error_mode: ignore
     metrics:
       datapoint:
-        - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "cached" or attributes["state"] == "buffered")'
+        - 'metric.name == "system.memory.utilization" and attributes["state"] != "used"'
 {{- end}}
   
   # 2) Convert ratio -> percent ONCE
@@ -356,14 +356,26 @@ exporters:
     verbosity: normal
     sampling_initial: 10
     sampling_thereafter: 100
+{{end}}
   
-  # File exporter for debugging metrics
-  file/debug:
+  # File exporters for debugging (always enabled)
+  file/debug_metrics:
     path: {{.MetricsExportFilePath}}.debug
     rotation:
       max_megabytes: 10
       max_backups: 3
-{{end}}
+  
+  file/debug_logs:
+    path: {{.MetricsExportFilePath}}.logs.debug
+    rotation:
+      max_megabytes: 10
+      max_backups: 3
+  
+  file/debug_gha_logs:
+    path: {{.MetricsExportFilePath}}.gha-logs.debug
+    rotation:
+      max_megabytes: 10
+      max_backups: 3
 
 service:
   telemetry:
@@ -373,11 +385,11 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp]   # tee: still send to your HTTP service, and also print locally
+      exporters: [otlphttp, file/debug_logs]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs]
+      exporters: [otlphttp/gha_logs, file/debug_gha_logs]
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -401,7 +413,7 @@ service:
 {{- if eq .OS "darwin"}}
         - filter/drop_free_memory
 {{- else if eq .OS "linux"}}
-        - filter/drop_reclaimable_memory
+        - filter/keep_only_used_memory
 {{- end}}
         - transform/mem_to_percentage
 {{- if eq .OS "darwin"}}
@@ -412,4 +424,4 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug, file/debug{{end}}]
+      exporters: [otlphttp, file/debug_metrics{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
