@@ -28,11 +28,7 @@ func GetCacheEntryHandler(c *fiber.Ctx) error {
 	queryKeys := c.Query("keys")
 	version := c.Query("version")
 
-	fmt.Printf("Received GetCache request\n")
-	fmt.Printf("  Query Keys: %s\n", queryKeys)
-	fmt.Printf("  Version: %s\n", version)
-	fmt.Printf("  All Headers: %v\n", c.GetReqHeaders())
-
+	fmt.Printf("Received GetCache request for keys: %s and version: %s\n", queryKeys, version)
 	if queryKeys == "" || version == "" {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Keys and version are required.", "InvalidRequest", "InvalidRequest", 1001)
 	}
@@ -63,11 +59,7 @@ func ReserveCacheHandler(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Failed to parse request body.", "InvalidRequest", "InvalidRequest", 2001)
 	}
 
-	fmt.Printf("Received ReserveCache request\n")
-	fmt.Printf("  Key: %s\n", req.Key)
-	fmt.Printf("  Version: %s\n", req.Version)
-	fmt.Printf("  All Headers: %v\n", c.GetReqHeaders())
-
+	fmt.Printf("Received ReserveCache request for key: %s and version: %s\n", req.Key, req.Version)
 	resp, err := ReserveCache(c.Context(), DockerGHAReserveCacheRequest{Key: req.Key, Version: req.Version})
 	if err != nil {
 		fmt.Printf("Error reserving cache: %v\n", err)
@@ -87,11 +79,7 @@ func UploadCacheHandler(c *fiber.Ctx) error {
 	}
 
 	contentRange := c.Get("Content-Range")
-	fmt.Printf("Received UploadCache request for Cache ID: %d\n", id)
-	fmt.Printf("  Content-Range: %s\n", contentRange)
-	fmt.Printf("  Content-Length: %s\n", c.Get("Content-Length"))
-	fmt.Printf("  Content-Type: %s\n", c.Get("Content-Type"))
-	fmt.Printf("  All Headers: %v\n", c.GetReqHeaders())
+	fmt.Printf("Received UploadCache request for Cache ID: %d\n with Content-Range: %s", id, contentRange)
 	if contentRange == "" {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Content-Range header is missing.", "MissingHeader", "MissingHeader", 3002)
 	}
@@ -113,8 +101,6 @@ func CommitCacheHandler(c *fiber.Ctx) error {
 	}
 
 	fmt.Printf("Received CommitCache request for Cache ID: %d\n", id)
-	fmt.Printf("  All Headers: %v\n", c.GetReqHeaders())
-
 	resp, err := CommitCache(c.Context(), DockerGHACommitCacheRequest{CacheID: id})
 	if err != nil {
 		fmt.Printf("Error committing cache: %v\n", err)

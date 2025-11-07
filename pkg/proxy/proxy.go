@@ -1,12 +1,11 @@
 package proxy
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -178,21 +177,6 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 	cacheEntry.Mutex.Lock()
 	defer cacheEntry.Mutex.Unlock()
 
-	// Reassemble chunks in the correct order
-	var finalBuffer bytes.Buffer
-	offsets := make([]int64, 0, len(cacheEntry.Chunks))
-	for offset := range cacheEntry.Chunks {
-		offsets = append(offsets, offset)
-	}
-
-	sort.Slice(offsets, func(i, j int) bool {
-		return offsets[i] < offsets[j]
-	})
-
-	for _, offset := range offsets {
-		finalBuffer.Write(cacheEntry.Chunks[offset].Content)
-	}
-
 	switch cacheEntry.BackendReserveResponse.Provider {
 	case ProviderS3:
 	case ProviderR2:
@@ -202,13 +186,15 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 
 		s3PresignedURL := cacheEntry.BackendReserveResponse.S3.PreSignedURLs[0]
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			contentReader := bytes.NewReader(finalBuffer.Bytes())
+		for attempt := range maxRetries {
+			contentReader, totalSize := NewUnorderedChunkReader(cacheEntry.Chunks)
+
 			req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3PresignedURL, contentReader)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create S3 request: %w", err)
 			}
 			req.Header.Set("Content-Type", "application/octet-stream")
+			req.ContentLength = totalSize
 
 			resp, err := http.DefaultClient.Do(req)
 			if err == nil && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent) {
@@ -218,10 +204,10 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 					return nil, fmt.Errorf("no ETag found in response")
 				}
 
-				partNumberPtr := int32(1)
+				partNum := int32(1)
 				cacheEntry.S3Parts = []S3CompletedPart{{
 					ETag:       &etag,
-					PartNumber: &partNumberPtr,
+					PartNumber: &partNum,
 				}}
 
 				// Success, break out of retry loop
@@ -262,8 +248,9 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 
 		wc := object.NewWriter(uploadCtx)
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			_, err = wc.Write(finalBuffer.Bytes())
+		for attempt := range maxRetries {
+			contentReader, _ := NewUnorderedChunkReader(cacheEntry.Chunks)
+			_, err = io.Copy(wc, contentReader)
 			if err == nil {
 				err = wc.Close()
 				if err != nil {
@@ -284,14 +271,15 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 			return nil, fmt.Errorf("no presigned URL found")
 		}
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			contentReader := bytes.NewReader(finalBuffer.Bytes())
+		for attempt := range maxRetries {
+			contentReader, totalSize := NewUnorderedChunkReader(cacheEntry.Chunks)
 			req, err := http.NewRequestWithContext(ctx, http.MethodPut, cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, contentReader)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Azure Blob request: %w", err)
 			}
 			req.Header.Set("Content-Type", "application/octet-stream")
 			req.Header.Set("x-ms-blob-type", "BlockBlob")
+			req.ContentLength = totalSize
 
 			resp, err := http.DefaultClient.Do(req)
 			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {

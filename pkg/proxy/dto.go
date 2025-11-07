@@ -225,6 +225,8 @@ type AzureBlobDeleteCacheResponse struct {
 	CacheVersion string `json:"cache_version" validate:"required"`
 }
 
+type S3PartNumber *int32
+
 // Taken from s3 v2 sdk
 type S3CompletedPart struct {
 
@@ -243,5 +245,5 @@ type S3CompletedPart struct {
 	//
 	//   - Directory buckets - In CompleteMultipartUpload , the PartNumber must start
 	//   at 1 and the part numbers must be consecutive.
-	PartNumber *int32
+	PartNumber S3PartNumber
 }
