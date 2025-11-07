@@ -1,0 +1,16 @@
+FROM ubuntu:22.04
+
+ARG UNIQUE_ID=1
+
+# Create a large unique layer per build to prevent BuildKit deduplication
+# Using /dev/urandom ensures each build creates different content
+# This forces separate cache entries for each build
+RUN dd if=/dev/urandom of=/large-file-${UNIQUE_ID} bs=1M count=1536 && \
+    echo "Build ID: ${UNIQUE_ID}" > /unique-${UNIQUE_ID}.txt && \
+    date >> /unique-${UNIQUE_ID}.txt && \
+    sync
+
+# Add a second layer with unique content to increase cache size
+RUN dd if=/dev/urandom of=/large-file-2-${UNIQUE_ID} bs=1M count=512 && \
+    echo "Layer 2 complete for build ${UNIQUE_ID}" && \
+    sync
