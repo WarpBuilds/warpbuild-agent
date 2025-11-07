@@ -63,15 +63,13 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 	// Docker backend weirdly sends impartial key as primary key sometimes.
 	restoreKeys := input.Keys
 
-	payload := GetCacheRequest{
-		CacheKey:     primaryKey,
-		CacheVersion: input.Version,
-		RestoreKeys:  restoreKeys,
-	}
-
 	cacheResponse, err := callCacheBackend[GetCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/get",
-		Body: payload,
+		Path: "/get",
+		Body: GetCacheRequest{
+			CacheKey:     primaryKey,
+			CacheVersion: input.Version,
+			RestoreKeys:  restoreKeys,
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cache: %w", err)
@@ -224,7 +222,7 @@ func ensureBackendReserved(ctx context.Context, entry *CacheEntryData, firstChun
 	}
 
 	reserveResp, err := callCacheBackend[ReserveCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/reserve",
+		Path: "/reserve",
 		Body: payload,
 	})
 	if err != nil {
@@ -245,7 +243,7 @@ func ensureURLForPart(ctx context.Context, entry *CacheEntryData, partNum S3Part
 
 	// Need more URLs - request another batch
 	extendResp, err := callCacheBackend[ExtendReserveCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/reserve/extend",
+		Path: "/reserve/extend",
 		Body: ExtendReserveCacheRequest{
 			CacheKey:     entry.CacheKey,
 			CacheVersion: entry.CacheVersion,
@@ -521,11 +519,10 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
 
-	_, err := callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/commit",
+	if _, err := callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
+		Path: "/commit",
 		Body: payload,
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("backend commit failed: %w", err)
 	}
 
