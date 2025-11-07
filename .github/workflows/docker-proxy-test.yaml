@@ -67,3 +67,4 @@ jobs:
         if: always()
         run: |
           sudo journalctl -u warpbuild-proxy-test --no-pager -b
+
