@@ -18,19 +18,37 @@ jobs:
         with:
           go-version: '1.23'
       
-      - name: Stop systemd proxy service
+      - name: Stop original proxy service
         run: |
           sudo systemctl stop warpbuild-proxyd
           sudo systemctl disable warpbuild-proxyd
       
-      - name: Build and run proxy directly
+      - name: Build test proxy binary
         run: |
           go build -o warpbuild-proxy-test ./cmd/agentd
-          echo "Starting proxy in background..."
-          sudo ./warpbuild-proxy-test --launch-proxy-server &
-          sleep 3
-          ps aux | grep warpbuild-proxy-test
-          curl -v http://127.0.0.1:49160/_apis/artifactcache/cache?keys=test&version=1 || echo "Proxy responding"
+          sudo mv warpbuild-proxy-test /usr/local/bin/warpbuild-proxy-test
+      
+      - name: Create and start test proxy service
+        run: |
+          cat << 'EOF' | sudo tee /etc/systemd/system/warpbuild-proxy-test.service
+          [Unit]
+          Description=WarpBuild Proxy Test Service
+          After=network.target
+          
+          [Service]
+          ExecStart=/usr/local/bin/warpbuild-proxy-test --launch-proxy-server
+          WorkingDirectory=/
+          Restart=no
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          
+          sudo systemctl daemon-reload
+          sudo systemctl start warpbuild-proxy-test
+          sleep 2
+          systemctl is-active warpbuild-proxy-test
+          sudo journalctl -u warpbuild-proxy-test --no-pager -n 10
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -49,4 +67,4 @@ jobs:
       - name: print proxy logs
         if: always()
         run: |
-          sudo journalctl -u warpbuild-proxyd --no-pager -b
+          sudo journalctl -u warpbuild-proxy-test --no-pager -b
