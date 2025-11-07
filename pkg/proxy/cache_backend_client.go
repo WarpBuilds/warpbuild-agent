@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,24 +21,25 @@ func getCacheBackendInfo(ctx context.Context) CacheBackendInfo {
 
 func callCacheBackend[T any](ctx context.Context, req CacheBackendRequest) (*T, error) {
 	info := getCacheBackendInfo(ctx)
-	requestURL := fmt.Sprintf("%s%s", info.HostURL, req.Path)
+	requestURL, err := url.JoinPath(info.HostURL, "/v1/cache", req.Path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct URL: %w", err)
+	}
 
-	var bodyBytes []byte
-	var err error
+	f := fiber.Post(requestURL).
+		Add("Content-Type", "application/json").
+		Add("Accept", "application/json").
+		Add("Authorization", fmt.Sprintf("Bearer %s", info.AuthToken))
+
 	if req.Body != nil {
-		bodyBytes, err = json.Marshal(req.Body)
+		bodyBytes, err := json.Marshal(req.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
+		f.Body(bodyBytes)
 	}
 
-	statusCode, body, errs := fiber.Post(requestURL).
-		Body(bodyBytes).
-		Add("Content-Type", "application/json").
-		Add("Accept", "application/json").
-		Add("Authorization", fmt.Sprintf("Bearer %s", info.AuthToken)).
-		Bytes()
-
+	statusCode, body, errs := f.Bytes()
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("request failed: %v", errs)
 	}

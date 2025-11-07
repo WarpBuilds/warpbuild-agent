@@ -39,15 +39,13 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 	// Docker backend weirdly sends impartial key as primary key sometimes.
 	restoreKeys := input.Keys
 
-	payload := GetCacheRequest{
-		CacheKey:     primaryKey,
-		CacheVersion: input.Version,
-		RestoreKeys:  restoreKeys,
-	}
-
 	cacheResponse, err := callCacheBackend[GetCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/get",
-		Body: payload,
+		Path: "/get",
+		Body: GetCacheRequest{
+			CacheKey:     primaryKey,
+			CacheVersion: input.Version,
+			RestoreKeys:  restoreKeys,
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cache: %w", err)
@@ -76,16 +74,15 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 }
 
 func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*DockerGHAReserveCacheResponse, error) {
-	payload := ReserveCacheRequest{
-		CacheKey:       input.Key,
-		CacheVersion:   input.Version,
-		NumberOfChunks: 1,
-		ContentType:    "application/octet-stream",
-	}
 
 	reserveCacheResponse, err := callCacheBackend[ReserveCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/reserve",
-		Body: payload,
+		Path: "/reserve",
+		Body: ReserveCacheRequest{
+			CacheKey:       input.Key,
+			CacheVersion:   input.Version,
+			NumberOfChunks: 1,
+			ContentType:    "application/octet-stream",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to reserve cache: %w", err)
@@ -351,7 +348,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 	}
 
 	_, err = callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
-		Path: "/v1/cache/commit",
+		Path: "/commit",
 		Body: payload,
 	})
 	if err != nil {
