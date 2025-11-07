@@ -3,7 +3,7 @@ group "default" {
 }
 
 target "build1" {
-  context = "."
+  context = "./pkg/proxy"
   dockerfile = "Dockerfile.large"
   tags = ["test:1"]
   args = {
@@ -14,7 +14,7 @@ target "build1" {
 }
 
 target "build2" {
-  context = "."
+  context = "./pkg/proxy"
   dockerfile = "Dockerfile.large"
   tags = ["test:2"]
   args = {
@@ -25,7 +25,7 @@ target "build2" {
 }
 
 target "build3" {
-  context = "."
+  context = "./pkg/proxy"
   dockerfile = "Dockerfile.large"
   tags = ["test:3"]
   args = {
@@ -36,7 +36,7 @@ target "build3" {
 }
 
 target "build4" {
-  context = "."
+  context = "./pkg/proxy"
   dockerfile = "Dockerfile.large"
   tags = ["test:4"]
   args = {
@@ -47,7 +47,7 @@ target "build4" {
 }
 
 target "build5" {
-  context = "."
+  context = "./pkg/proxy"
   dockerfile = "Dockerfile.large"
   tags = ["test:5"]
   args = {
