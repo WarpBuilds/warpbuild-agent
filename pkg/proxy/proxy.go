@@ -3,18 +3,15 @@ package proxy
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"golang.org/x/oauth2"
 
 	"cloud.google.com/go/storage"
@@ -39,8 +36,6 @@ type CacheEntryData struct {
 }
 
 func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGetCacheResponse, error) {
-	requestURL := fmt.Sprintf("%s/v1/cache/get", input.HostURL)
-
 	primaryKey := input.Keys[0]
 	// Docker backend weirdly sends impartial key as primary key sometimes.
 	restoreKeys := input.Keys
@@ -51,36 +46,12 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 		RestoreKeys:  restoreKeys,
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	cacheResponse, err := callCacheBackend[GetCacheResponse](ctx, CacheBackendRequest{
+		Path: "/v1/cache/get",
+		Body: payload,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-	}
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to get cache: %s", string(body))
-	}
-
-	var cacheResponse GetCacheResponse
-	if err := json.Unmarshal(body, &cacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+		return nil, fmt.Errorf("failed to get cache: %w", err)
 	}
 
 	dockerGetResponse := DockerGHAGetCacheResponse{
@@ -106,8 +77,6 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 }
 
 func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*DockerGHAReserveCacheResponse, error) {
-	requestURL := fmt.Sprintf("%s/v1/cache/reserve", input.HostURL)
-
 	payload := ReserveCacheRequest{
 		CacheKey:       input.Key,
 		CacheVersion:   input.Version,
@@ -115,40 +84,16 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 		ContentType:    "application/octet-stream",
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	reserveCacheResponse, err := callCacheBackend[ReserveCacheResponse](ctx, CacheBackendRequest{
+		Path: "/v1/cache/reserve",
+		Body: payload,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
+		return nil, fmt.Errorf("failed to reserve cache: %w", err)
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randomCacheID := r.Intn(1000000)
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to reserve cache: %s", string(body))
-	}
-
-	var reserveCacheResponse ReserveCacheResponse
-	if err := json.Unmarshal(body, &reserveCacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
-	}
 
 	dockerReserveResponse := DockerGHAReserveCacheResponse{
 		CacheID: randomCacheID,
@@ -156,7 +101,7 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 
 	// Save this cache ID for later use
 	cacheStore.Store(randomCacheID, &CacheEntryData{
-		BackendReserveResponse: reserveCacheResponse,
+		BackendReserveResponse: *reserveCacheResponse,
 		CacheKey:               input.Key,
 		CacheVersion:           input.Version,
 		Chunks:                 make(map[int64]ChunkData),
@@ -383,8 +328,6 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
-
 	var payload CommitCacheRequest
 
 	switch cacheEntry.BackendReserveResponse.Provider {
@@ -419,36 +362,12 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	_, err = callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
+		Path: "/v1/cache/commit",
+		Body: payload,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-	}
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to commit cache: %s", string(body))
-	}
-
-	var commitCacheResponse CommitCacheResponse
-	if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+		return nil, fmt.Errorf("failed to commit cache: %w", err)
 	}
 
 	cacheStore.Delete(input.CacheID)
