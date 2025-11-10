@@ -37,7 +37,6 @@ func callCacheBackend[T any](ctx context.Context, req CacheBackendRequest) (*T, 
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
 		f = f.Body(bodyBytes)
-		fmt.Printf("\tPayload: %s\n", string(bodyBytes))
 	}
 
 	statusCode, body, errs := f.Bytes()

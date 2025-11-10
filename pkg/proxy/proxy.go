@@ -104,11 +104,6 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 
 	cacheStore.Store(randomCacheID, cacheEntry)
 
-	fmt.Println("ReserveCache")
-	fmt.Printf("\tcacheEntry saved with ID %d and input: %+v\n", randomCacheID, input)
-	fmt.Printf("\tS3 Response: %+v\n", reserveCacheResponse.S3)
-	fmt.Printf("\tGCS Response: %+v\n", reserveCacheResponse.GCS)
-
 	return &dockerReserveResponse, nil
 }
 
@@ -315,9 +310,6 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	fmt.Println("CommitCache")
-	fmt.Printf("\tcacheEntry found for ID %d & input: %+v\n", input.CacheID, input)
-
 	payload := CommitCacheRequest{
 		CacheKey:     cacheEntry.CacheKey,
 		CacheVersion: cacheEntry.CacheVersion,
@@ -335,7 +327,6 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
-	fmt.Printf("\tPayload: %+v\n", payload)
 
 	if _, err := callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
 		Path: "/commit",
