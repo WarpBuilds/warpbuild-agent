@@ -105,7 +105,10 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 
 	cacheStore.Store(randomCacheID, cacheEntry)
 
-	fmt.Printf("cacheEntry saved with ID %d. Input: %+v. BackendReserveResponse: %+v\n", randomCacheID, input, reserveCacheResponse)
+	fmt.Println("ReserveCache")
+	fmt.Printf("\tcacheEntry saved with ID %d and input: %+v\n", randomCacheID, input)
+	fmt.Printf("\tS3 Response: %+v\n", reserveCacheResponse.S3)
+	fmt.Printf("\tGCS Response: %+v\n", reserveCacheResponse.GCS)
 
 	return &dockerReserveResponse, nil
 }
@@ -317,7 +320,11 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	fmt.Printf("cacheEntry found for ID %d. Input: %+v. BackendReserveResponse: %+v. Parts: %+v\n", input.CacheID, input, cacheEntry.BackendReserveResponse, cacheEntry.S3Parts)
+	fmt.Println("CommitCache")
+	fmt.Printf("\tcacheEntry found for ID %d. Input: %+v\n", input.CacheID, input)
+	fmt.Printf("\tS3 Response: %+v\n", cacheEntry.BackendReserveResponse.S3)
+	fmt.Printf("\tGCS Response: %+v\n", cacheEntry.BackendReserveResponse.GCS)
+	fmt.Printf("\tAzure Blob Response: %+v\n", cacheEntry.BackendReserveResponse.AzureBlob)
 
 	payload := CommitCacheRequest{
 		CacheKey:     cacheEntry.CacheKey,
