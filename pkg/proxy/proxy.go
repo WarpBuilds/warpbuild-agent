@@ -105,7 +105,7 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 
 	cacheStore.Store(randomCacheID, cacheEntry)
 
-	fmt.Printf("cacheEntry saved with ID: %d: %+v\n", randomCacheID, cacheEntry)
+	fmt.Printf("cacheEntry saved with ID %d. Input: %+v. BackendReserveResponse: %+v\n", randomCacheID, input, reserveCacheResponse)
 
 	return &dockerReserveResponse, nil
 }
@@ -317,7 +317,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	fmt.Printf("cacheEntry found for ID: %d: %+v\n", input.CacheID, cacheEntry)
+	fmt.Printf("cacheEntry found for ID %d. Input: %+v. BackendReserveResponse: %+v. Parts: %+v\n", input.CacheID, input, cacheEntry.BackendReserveResponse, cacheEntry.S3Parts)
 
 	payload := CommitCacheRequest{
 		CacheKey:     cacheEntry.CacheKey,
