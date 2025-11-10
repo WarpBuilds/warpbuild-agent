@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -79,7 +80,10 @@ func UploadCacheHandler(c *fiber.Ctx) error {
 	}
 
 	contentRange := c.Get("Content-Range")
-	fmt.Printf("Received UploadCache request for Cache ID: %d\n with Content-Range: %s", id, contentRange)
+
+	rtm := &runtime.MemStats{}
+	runtime.ReadMemStats(rtm)
+	fmt.Printf("Received UploadCache request for Cache ID: %d\n with Content-Range: %s. Memory usage: %d GB\n", id, contentRange, rtm.Alloc/1024/1024/1024)
 	if contentRange == "" {
 		return sendErrorResponse(c, fiber.StatusBadRequest, "Content-Range header is missing.", "MissingHeader", "MissingHeader", 3002)
 	}

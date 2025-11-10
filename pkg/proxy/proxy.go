@@ -96,12 +96,16 @@ func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*Doc
 	}
 
 	// Save this cache ID for later use
-	cacheStore.Store(randomCacheID, &CacheEntryData{
+	cacheEntry := &CacheEntryData{
 		BackendReserveResponse: *reserveCacheResponse,
 		CacheKey:               input.Key,
 		CacheVersion:           input.Version,
 		Chunks:                 make(map[int64]ChunkData),
-	})
+	}
+
+	cacheStore.Store(randomCacheID, cacheEntry)
+
+	fmt.Printf("cacheEntry saved with ID: %d: %+v\n", randomCacheID, cacheEntry)
 
 	return &dockerReserveResponse, nil
 }
@@ -313,36 +317,22 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	var payload CommitCacheRequest
+	fmt.Printf("cacheEntry found for ID: %d: %+v\n", input.CacheID, cacheEntry)
+
+	payload := CommitCacheRequest{
+		CacheKey:     cacheEntry.CacheKey,
+		CacheVersion: cacheEntry.CacheVersion,
+		VCSType:      "github",
+	}
 
 	switch cacheEntry.BackendReserveResponse.Provider {
 	case ProviderS3:
 	case ProviderR2:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			UploadKey:    cacheEntry.BackendReserveResponse.S3.UploadKey,
-			UploadID:     cacheEntry.BackendReserveResponse.S3.UploadID,
-			Parts:        cacheEntry.S3Parts,
-			VCSType:      "github",
-		}
-
+		payload.UploadKey = cacheEntry.BackendReserveResponse.S3.UploadKey
+		payload.UploadID = cacheEntry.BackendReserveResponse.S3.UploadID
+		payload.Parts = cacheEntry.S3Parts
 	case ProviderGCS:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			Parts:        []S3CompletedPart{},
-			VCSType:      "github",
-		}
-
 	case ProviderAzureBlob:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			Parts:        []S3CompletedPart{},
-			VCSType:      "github",
-		}
-
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
