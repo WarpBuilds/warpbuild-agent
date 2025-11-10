@@ -27,7 +27,7 @@ func callCacheBackend[T any](ctx context.Context, req CacheBackendRequest) (*T, 
 	}
 
 	f := fiber.Post(requestURL).
-		Add("Content-Type", "application/json").
+		ContentType("application/json").
 		Add("Accept", "application/json").
 		Add("Authorization", fmt.Sprintf("Bearer %s", info.AuthToken))
 
@@ -36,7 +36,7 @@ func callCacheBackend[T any](ctx context.Context, req CacheBackendRequest) (*T, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
-		f.Body(bodyBytes)
+		f = f.Body(bodyBytes)
 	}
 
 	statusCode, body, errs := f.Bytes()

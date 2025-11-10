@@ -81,8 +81,7 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 
 	presignedURL := ""
 	switch cacheResponse.Provider {
-	case ProviderS3:
-	case ProviderR2:
+	case ProviderS3, ProviderR2:
 		presignedURL = cacheResponse.S3.PreSignedURL
 	case ProviderGCS:
 		presignedURL = cacheResponse.GCS.PreSignedURL
