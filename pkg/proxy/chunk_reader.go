@@ -13,7 +13,8 @@ type UnorderedChunkReader struct {
 	currentPos   int
 }
 
-// NewUnorderedChunkReader creates a new ChunkReader from a map of chunks
+var _ io.Reader = (*UnorderedChunkReader)(nil)
+
 func NewUnorderedChunkReader(chunksMap map[int64]ChunkData) (*UnorderedChunkReader, int64) {
 	// Only sort the offsets, not the chunk data
 	offsets := make([]int64, 0, len(chunksMap))
@@ -38,7 +39,6 @@ func NewUnorderedChunkReader(chunksMap map[int64]ChunkData) (*UnorderedChunkRead
 	}, totalSize
 }
 
-// Read implements the io.Reader interface
 func (cr *UnorderedChunkReader) Read(p []byte) (n int, err error) {
 	if cr.currentChunk >= len(cr.offsets) {
 		return 0, io.EOF
