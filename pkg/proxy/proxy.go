@@ -321,10 +321,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
 	fmt.Println("CommitCache")
-	fmt.Printf("\tcacheEntry found for ID %d. Input: %+v\n", input.CacheID, input)
-	fmt.Printf("\tS3 Response: %+v\n", cacheEntry.BackendReserveResponse.S3)
-	fmt.Printf("\tGCS Response: %+v\n", cacheEntry.BackendReserveResponse.GCS)
-	fmt.Printf("\tAzure Blob Response: %+v\n", cacheEntry.BackendReserveResponse.AzureBlob)
+	fmt.Printf("\tcacheEntry found for ID %d & input: %+v\n", input.CacheID, input)
 
 	payload := CommitCacheRequest{
 		CacheKey:     cacheEntry.CacheKey,
@@ -343,6 +340,7 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
+	fmt.Printf("\tPayload: %+v\n", payload)
 
 	_, err = callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
 		Path: "/commit",
