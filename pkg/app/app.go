@@ -238,9 +238,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 	} else if opts.LaunchProxyServer {
 		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{
-			CacheBackendHost:                 settings.Proxy.CacheBackendHost,
-			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
-			WarpBuildRunnerVerificationToken: settings.Agent.RunnerVerificationToken,
+			Port: settings.Proxy.CacheProxyPort,
+			CacheBackendInfo: proxy.CacheBackendInfo{
+				HostURL:   settings.Proxy.CacheBackendHost,
+				AuthToken: settings.Agent.RunnerVerificationToken,
+			},
 		})
 	} else if opts.LaunchTransparentCache {
 		// Start the transparent cache server with configured ports

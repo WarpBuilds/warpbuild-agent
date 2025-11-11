@@ -1,20 +1,16 @@
 package proxy
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
-	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"golang.org/x/oauth2"
 
 	"cloud.google.com/go/storage"
@@ -39,48 +35,20 @@ type CacheEntryData struct {
 }
 
 func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGetCacheResponse, error) {
-	requestURL := fmt.Sprintf("%s/v1/cache/get", input.HostURL)
-
 	primaryKey := input.Keys[0]
 	// Docker backend weirdly sends impartial key as primary key sometimes.
 	restoreKeys := input.Keys
 
-	payload := GetCacheRequest{
-		CacheKey:     primaryKey,
-		CacheVersion: input.Version,
-		RestoreKeys:  restoreKeys,
-	}
-
-	payloadBytes, err := json.Marshal(payload)
+	cacheResponse, err := callCacheBackend[GetCacheResponse](ctx, CacheBackendRequest{
+		Path: "/get",
+		Body: GetCacheRequest{
+			CacheKey:     primaryKey,
+			CacheVersion: input.Version,
+			RestoreKeys:  restoreKeys,
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-	}
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to get cache: %s", string(body))
-	}
-
-	var cacheResponse GetCacheResponse
-	if err := json.Unmarshal(body, &cacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+		return nil, fmt.Errorf("failed to get cache: %w", err)
 	}
 
 	dockerGetResponse := DockerGHAGetCacheResponse{
@@ -89,8 +57,7 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 
 	presignedURL := ""
 	switch cacheResponse.Provider {
-	case ProviderS3:
-	case ProviderR2:
+	case ProviderS3, ProviderR2:
 		presignedURL = cacheResponse.S3.PreSignedURL
 	case ProviderGCS:
 		presignedURL = cacheResponse.GCS.PreSignedURL
@@ -106,61 +73,36 @@ func GetCache(ctx context.Context, input DockerGHAGetCacheRequest) (*DockerGHAGe
 }
 
 func ReserveCache(ctx context.Context, input DockerGHAReserveCacheRequest) (*DockerGHAReserveCacheResponse, error) {
-	requestURL := fmt.Sprintf("%s/v1/cache/reserve", input.HostURL)
 
-	payload := ReserveCacheRequest{
-		CacheKey:       input.Key,
-		CacheVersion:   input.Version,
-		NumberOfChunks: 1,
-		ContentType:    "application/octet-stream",
-	}
-
-	payloadBytes, err := json.Marshal(payload)
+	reserveCacheResponse, err := callCacheBackend[ReserveCacheResponse](ctx, CacheBackendRequest{
+		Path: "/reserve",
+		Body: ReserveCacheRequest{
+			CacheKey:       input.Key,
+			CacheVersion:   input.Version,
+			NumberOfChunks: 1,
+			ContentType:    "application/octet-stream",
+		},
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
+		return nil, fmt.Errorf("failed to reserve cache: %w", err)
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randomCacheID := r.Intn(1000000)
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to reserve cache: %s", string(body))
-	}
-
-	var reserveCacheResponse ReserveCacheResponse
-	if err := json.Unmarshal(body, &reserveCacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
-	}
 
 	dockerReserveResponse := DockerGHAReserveCacheResponse{
 		CacheID: randomCacheID,
 	}
 
 	// Save this cache ID for later use
-	cacheStore.Store(randomCacheID, &CacheEntryData{
-		BackendReserveResponse: reserveCacheResponse,
+	cacheEntry := &CacheEntryData{
+		BackendReserveResponse: *reserveCacheResponse,
 		CacheKey:               input.Key,
 		CacheVersion:           input.Version,
 		Chunks:                 make(map[int64]ChunkData),
-	})
+	}
+
+	cacheStore.Store(randomCacheID, cacheEntry)
 
 	return &dockerReserveResponse, nil
 }
@@ -216,16 +158,10 @@ func parseContentRange(contentRange string) (int64, int64, error) {
 	return start, end, nil
 }
 
-const (
-	maxRetries     = 5
-	initialBackoff = 1 * time.Second
-	maxBackoff     = 16 * time.Second
-)
-
-func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCacheResponse, error) {
+func uploadToBlobStorage(ctx context.Context, cacheID int) error {
 	cacheData, ok := cacheStore.Load(cacheID)
 	if !ok {
-		return nil, fmt.Errorf("cache ID not found")
+		return fmt.Errorf("cache ID not found")
 	}
 
 	cacheEntry := cacheData.(*CacheEntryData)
@@ -233,69 +169,53 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 	cacheEntry.Mutex.Lock()
 	defer cacheEntry.Mutex.Unlock()
 
-	// Reassemble chunks in the correct order
-	var finalBuffer bytes.Buffer
-	offsets := make([]int64, 0, len(cacheEntry.Chunks))
-	for offset := range cacheEntry.Chunks {
-		offsets = append(offsets, offset)
-	}
-
-	sort.Slice(offsets, func(i, j int) bool {
-		return offsets[i] < offsets[j]
-	})
-
-	for _, offset := range offsets {
-		finalBuffer.Write(cacheEntry.Chunks[offset].Content)
-	}
-
 	switch cacheEntry.BackendReserveResponse.Provider {
-	case ProviderS3:
-	case ProviderR2:
+	case ProviderS3, ProviderR2:
 		if len(cacheEntry.BackendReserveResponse.S3.PreSignedURLs) != 1 {
-			return nil, fmt.Errorf("no presigned URLs found")
+			return fmt.Errorf("no presigned URLs found")
 		}
 
 		s3PresignedURL := cacheEntry.BackendReserveResponse.S3.PreSignedURLs[0]
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			contentReader := bytes.NewReader(finalBuffer.Bytes())
-			req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3PresignedURL, contentReader)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create S3 request: %w", err)
-			}
-			req.Header.Set("Content-Type", "application/octet-stream")
+		contentReader, totalSize := NewUnorderedChunkReader(cacheEntry.Chunks)
 
-			resp, err := http.DefaultClient.Do(req)
-			if err == nil && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent) {
-				defer resp.Body.Close()
-				etag := resp.Header.Get("ETag")
-				if etag == "" {
-					return nil, fmt.Errorf("no ETag found in response")
-				}
-
-				partNumberPtr := int32(1)
-				cacheEntry.S3Parts = []S3CompletedPart{{
-					ETag:       &etag,
-					PartNumber: &partNumberPtr,
-				}}
-
-				// Success, break out of retry loop
-				break
-			}
-
-			// If response is not OK, log and prepare for retry
-			if resp != nil {
-				defer resp.Body.Close()
-				if attempt < maxRetries-1 {
-					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-					time.Sleep((1 << attempt) * time.Second) // Exponential backoff
-				}
-			}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3PresignedURL, contentReader)
+		if err != nil {
+			return fmt.Errorf("failed to create S3 request: %w", err)
 		}
+		req.Header.Set("Content-Type", "application/octet-stream")
+		req.ContentLength = totalSize
+
+		resp, err := http.DefaultClient.Do(req)
+		if resp != nil {
+			defer resp.Body.Close()
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("upload failed with status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		}
+
+		etag := resp.Header.Get("ETag")
+		if etag == "" {
+			return fmt.Errorf("no ETag found in response")
+		}
+
+		partNum := int32(1)
+		cacheEntry.S3Parts = []S3CompletedPart{{
+			ETag:       &etag,
+			PartNumber: &partNum,
+		}}
+
+		return nil
 
 	case ProviderGCS:
 		if cacheEntry.BackendReserveResponse.GCS.ShortLivedToken == nil {
-			return nil, fmt.Errorf("no short lived token found")
+			return fmt.Errorf("no short lived token found")
 		}
 
 		creds := option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{
@@ -303,76 +223,83 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) (*DockerGHAUploadCach
 		}))
 		client, err := storage.NewClient(ctx, creds)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create GCS client: %w", err)
+			return fmt.Errorf("failed to create GCS client: %w", err)
 		}
-
 		defer client.Close()
 
 		bucket := client.Bucket(cacheEntry.BackendReserveResponse.GCS.BucketName)
 		object := bucket.Object(cacheEntry.BackendReserveResponse.GCS.CacheKey)
 
-		// Upload context
-		uploadCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
+		wc := object.NewWriter(ctx)
+		contentReader, _ := NewUnorderedChunkReader(cacheEntry.Chunks)
 
-		wc := object.NewWriter(uploadCtx)
-
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			_, err = wc.Write(finalBuffer.Bytes())
-			if err == nil {
-				err = wc.Close()
-				if err != nil {
-					return nil, fmt.Errorf("failed to close GCS writer: %w", err)
-				}
-
-				break
-			}
-
-			if attempt < maxRetries-1 {
-				fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-				time.Sleep((1 << attempt) * time.Second)
-			}
+		if _, err := io.Copy(wc, contentReader); err != nil {
+			return err
 		}
+
+		if err := wc.Close(); err != nil {
+			return err
+		}
+
+		return nil
 
 	case ProviderAzureBlob:
 		if cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL == "" {
-			return nil, fmt.Errorf("no presigned URL found")
+			return fmt.Errorf("no presigned URL found")
 		}
 
-		for attempt := 0; attempt < maxRetries; attempt++ {
-			contentReader := bytes.NewReader(finalBuffer.Bytes())
-			req, err := http.NewRequestWithContext(ctx, http.MethodPut, cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, contentReader)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Azure Blob request: %w", err)
-			}
-			req.Header.Set("Content-Type", "application/octet-stream")
-			req.Header.Set("x-ms-blob-type", "BlockBlob")
-
-			resp, err := http.DefaultClient.Do(req)
-			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				resp.Body.Close()
-				break
-			} else {
-				defer resp.Body.Close()
-				if attempt < maxRetries-1 {
-					fmt.Printf("Retrying upload... attempt %d/%d, error: %v\n", attempt+1, maxRetries, err)
-					time.Sleep((1 << attempt) * time.Second) // Exponential backoff
-				}
-			}
+		contentReader, totalSize := NewUnorderedChunkReader(cacheEntry.Chunks)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, contentReader)
+		if err != nil {
+			return fmt.Errorf("failed to create Azure Blob request: %w", err)
 		}
+		req.Header.Set("Content-Type", "application/octet-stream")
+		req.Header.Set("x-ms-blob-type", "BlockBlob")
+		req.ContentLength = totalSize
+
+		resp, err := http.DefaultClient.Do(req)
+		if resp != nil {
+			defer resp.Body.Close()
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("upload failed with status code: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		}
+
+		return nil
 
 	default:
-		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
-
+		return fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
+}
 
-	return &DockerGHAUploadCacheResponse{}, nil
+const maxRetries = 5
+
+func retryUploadWithBackoff(ctx context.Context, cacheID int) error {
+	var err error
+	for retry := range maxRetries {
+		err = uploadToBlobStorage(ctx, cacheID)
+		if err == nil {
+			return nil
+		}
+
+		if retry < maxRetries-1 {
+			backoff := time.Duration(1<<retry) * time.Second
+			fmt.Printf("Retrying upload to blob storage... attempt %d/%d, error: %v\n", retry+1, maxRetries, err)
+			time.Sleep(backoff)
+		}
+	}
+	return fmt.Errorf("upload to blob storage failed after %d attempts: %w", maxRetries, err)
 }
 
 func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*DockerGHACommitCacheResponse, error) {
-	// Trigger upload to S3 now that we are sure all chunks have been received
-	_, err := uploadToBlobStorage(ctx, input.CacheID)
-	if err != nil {
+	// Trigger upload to blob storage with retry now that we are sure all chunks have been received
+	if err := retryUploadWithBackoff(ctx, input.CacheID); err != nil {
 		return nil, err
 	}
 
@@ -383,72 +310,29 @@ func CommitCache(ctx context.Context, input DockerGHACommitCacheRequest) (*Docke
 
 	cacheEntry := cacheEntryData.(*CacheEntryData)
 
-	requestURL := fmt.Sprintf("%s/v1/cache/commit", input.HostURL)
-
-	var payload CommitCacheRequest
+	payload := CommitCacheRequest{
+		CacheKey:     cacheEntry.CacheKey,
+		CacheVersion: cacheEntry.CacheVersion,
+		VCSType:      "github",
+		Parts:        []S3CompletedPart{},
+	}
 
 	switch cacheEntry.BackendReserveResponse.Provider {
-	case ProviderS3:
-	case ProviderR2:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			UploadKey:    cacheEntry.BackendReserveResponse.S3.UploadKey,
-			UploadID:     cacheEntry.BackendReserveResponse.S3.UploadID,
-			Parts:        cacheEntry.S3Parts,
-			VCSType:      "github",
-		}
-
+	case ProviderS3, ProviderR2:
+		payload.UploadKey = cacheEntry.BackendReserveResponse.S3.UploadKey
+		payload.UploadID = cacheEntry.BackendReserveResponse.S3.UploadID
+		payload.Parts = cacheEntry.S3Parts
 	case ProviderGCS:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			Parts:        []S3CompletedPart{},
-			VCSType:      "github",
-		}
-
 	case ProviderAzureBlob:
-		payload = CommitCacheRequest{
-			CacheKey:     cacheEntry.CacheKey,
-			CacheVersion: cacheEntry.CacheVersion,
-			Parts:        []S3CompletedPart{},
-			VCSType:      "github",
-		}
-
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cacheEntry.BackendReserveResponse.Provider)
 	}
 
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	serviceURL, err := url.Parse(requestURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service URL: %w", err)
-	}
-
-	agent := fiber.Post(serviceURL.String())
-
-	agent.Body(payloadBytes)
-
-	agent.Add("Content-Type", "application/json")
-	agent.Add("Accept", "application/json")
-	agent.Add("Authorization", fmt.Sprintf("Bearer %s", input.AuthToken))
-
-	statusCode, body, errs := agent.Bytes()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("failed to send request to cache backend: %v", errs)
-	}
-
-	if statusCode < 200 || statusCode >= 300 {
-		return nil, fmt.Errorf("failed to commit cache: %s", string(body))
-	}
-
-	var commitCacheResponse CommitCacheResponse
-	if err := json.Unmarshal(body, &commitCacheResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse backend response: %w", err)
+	if _, err := callCacheBackend[CommitCacheResponse](ctx, CacheBackendRequest{
+		Path: "/commit",
+		Body: payload,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to commit cache: %w", err)
 	}
 
 	cacheStore.Delete(input.CacheID)
