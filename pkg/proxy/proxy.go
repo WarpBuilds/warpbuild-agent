@@ -1,11 +1,11 @@
 package proxy
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"bytes"
 	"math/rand"
 	"net/http"
 	"net/url"
