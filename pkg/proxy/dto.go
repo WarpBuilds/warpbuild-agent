@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"encoding/xml"
 	"time"
 )
 
@@ -225,7 +226,7 @@ type AzureBlobDeleteCacheResponse struct {
 	CacheVersion string `json:"cache_version" validate:"required"`
 }
 
-type S3PartNumber *int32
+type S3PartNumber uint16
 
 // Taken from s3 v2 sdk
 type S3CompletedPart struct {
@@ -246,4 +247,24 @@ type S3CompletedPart struct {
 	//   - Directory buckets - In CompleteMultipartUpload , the PartNumber must start
 	//   at 1 and the part numbers must be consecutive.
 	PartNumber S3PartNumber
+}
+
+// ExtendReserveCacheRequest is used to request additional presigned URLs for an existing upload
+type ExtendReserveCacheRequest struct {
+	CacheKey     string `json:"cache_key"`
+	CacheVersion string `json:"cache_version"`
+	UploadID     string `json:"upload_id"`
+	FromPart     int32  `json:"from_part"`
+	Count        int32  `json:"count"`
+}
+
+// ExtendReserveCacheResponse contains additional presigned URLs
+type ExtendReserveCacheResponse struct {
+	PreSignedURLs []string `json:"pre_signed_urls"`
+}
+
+// blockListXML represents Azure Block Blob block list for commit
+type blockListXML struct {
+	XMLName xml.Name `xml:"BlockList"`
+	Latest  []string `xml:"Latest"`
 }
