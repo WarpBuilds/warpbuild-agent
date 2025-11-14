@@ -147,7 +147,6 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 				})
 				if err != nil {
 					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
-					return nil, err
 				}
 			}
 
