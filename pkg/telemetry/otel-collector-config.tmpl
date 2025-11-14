@@ -1,51 +1,408 @@
 receivers:
+{{- if eq .OS "windows"}}
+  windowseventlog/application:
+    channel: application
+  windowseventlog/security:
+    channel: security
+
+  # Tail your service log files
+  filelog/services:
+    include:
+      - 'C:\warpbuilds\runner.github.stdout.log'
+      - 'C:\warpbuilds\runner.github.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd-restarter.stderr.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-agentd.stderr.log'
+      - 'C:\warpbuild-agentd-debug.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-telemetryd.stderr.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stdout.log'
+      - 'C:\warpbuilds\warpbuild-proxyd.stderr.log'
+    start_at: end
+    max_log_size: 200KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 20s
+
+  # GitHub Actions job logs and diagnostic logs
+  filelog/gha_logs:
+    include:
+      - 'C:\warpbuilds\runner\_diag\*.log'
+      - 'C:\warpbuilds\runner\_diag\**\*.log'
+    start_at: end
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    include_file_path_resolved: true
+    poll_interval: 5s
+    attributes:
+      log.type: github_actions
+{{- else}}
   filelog:
-    include: ["{{.SyslogFilePath}}"]
-    start_at: "end"
+    {{- if eq .OS "darwin"}}
+    include: ['/var/log/system.log']
+    {{- else if eq .OS "linux"}}
+    include: ['/var/log/syslog']
+    {{- end}}
+    start_at: 'end'
     max_log_size: 200KiB
     include_file_name: false
     include_file_path: false
-    poll_interval: 20s
+    poll_interval: 1s
+
+  # GitHub Actions job logs and diagnostic logs
+  filelog/gha_logs:
+    include:
+      {{- if eq .OS "darwin"}}
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/*.log'
+      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/**/*.log'
+      {{- else if eq .OS "linux"}}
+      - '/runner/_diag/*.log'
+      - '/runner/_diag/**/*.log'
+      {{- end}}
+    start_at: 'end'
+    max_log_size: 500KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 10s
+    attributes:
+      log.type: github_actions
+{{- end}}
 
   hostmetrics:
-    collection_interval: 20s
+    collection_interval: 1s
     scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
       memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+        metrics:
+          system.disk.io:
+            enabled: true
+      network:
+        metrics:
+          system.network.io:
+            enabled: true
       filesystem:
+        exclude_fs_types:
+          match_type: strict
+          fs_types:
+            - overlay
+            - squashfs
+            - tmpfs
+            - devtmpfs
+            - proc
+            - sysfs
+            - cgroup2
+            - devfs
+            - autofs
+        exclude_mount_points:
+          match_type: regexp
+          mount_points:
+            - ^/var/lib/docker/overlay2/.*
+            - ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.overlayfs/.*
+            - ^/run/containerd/io\.containerd\.runtime\.v2\.task/.*/rootfs.*
+            - ^/snap/.*
+            - ^/System/Volumes/(Preboot|VM|Update|Hardware|xarts).*
         metrics:
-          system.filesystem.inodes.usage:
-            enabled: false
-      load:
-        metrics:
-          system.cpu.load_average.1m:
-            enabled: false
-          system.cpu.load_average.5m:
-            enabled: false
+          system.filesystem.utilization:
+            enabled: true
+
+{{- if eq .OS "windows"}}
+  windowsperfcounters/processor:
+    collection_interval: 1s
+    metrics:
+      system.cpu.time:
+        description: percentage of cpu time
+        unit: "%"
+        gauge:
+    perfcounters:
+      - object: "Processor"
+        instances: "_Total"
+        counters:
+          - name: "% Processor Time"
+            metric: system.cpu.time
+            attributes:
+              state: active
+          - name: "% Idle Time"
+            metric: system.cpu.time
+            attributes:
+              state: idle
+{{- end}}
 
 processors:
-  batch:
-    timeout: {{.PushFrequency}}
-    send_batch_size: 1000
+  batch/logs:
+    timeout: 30s
+    send_batch_size: 10_000
+
+  batch/metrics:
+    timeout: 30s
+    send_batch_size: 10_000_000
+
+  # Add resource attributes to identify the host/runner
+  resource:
+    attributes:
+      - key: host.name
+        value: "{{.RunnerID}}"
+        action: upsert
+      - key: service.name
+        value: "warpbuild-agent"
+        action: upsert
+      # Use this telemetry version attribute to push breaking transformations
+      # to metrics. Then add/update switcher in the UI to handle dashboards
+      # for new data and old data.
+      # The switcher from the UI can be removed after a few weeks.
+      - key: telemetry.version
+        value: "20251028"
+        action: upsert
+      - key: telemetry.vm_os
+        value: "{{.OS}}"
+        action: upsert
+
+  # Keep ONLY these metrics in the pipeline
+  filter/only_needed:
+    metrics:
+      include:
+        match_type: strict
+        metric_names:
+          - system.cpu.utilization
+          - system.memory.utilization
+          - system.filesystem.utilization
+          - system.network.io
+          - system.disk.io
+
+  filter/drop_non_internet_nics:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.network.io" and IsMatch(attributes["device"], "^(lo|lo0|docker.*|cni.*|veth.*|br-.*|virbr.*|wg.*|tun.*|tap.*)$")'
+
+  # Convert cumulative counters -> delta
+  cumulativetodelta:
+    include:
+      match_type: strict
+      metrics:
+        - system.network.io
+        - system.disk.io
+
+  # Convert delta -> per-second rate
+  deltatorate:
+    metrics:
+      - system.network.io
+      - system.disk.io
+
+  transform/normalize:
+    metric_statements:
+      - context: datapoint
+        statements:
+{{- if eq .OS "darwin"}}
+          # Rename main NIC (en0 on macOS) attribute to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io" and attributes["device"] == "en0"'
+{{- else if eq .OS "windows"}}
+          # On Windows, rename non-loopback interfaces to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io" and not IsMatch(attributes["device"], "^(Loopback|Local)")'
+{{- else}}
+          # On Linux, rename all network devices to "internet"
+          - 'set(attributes["device"], "internet") where metric.name == "system.network.io"'
+{{- end}}
+
+  # Drop idle before aggregating
+  filter/drop_cpu_idle:
+    metrics:
+      datapoint:
+        - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
+  
+{{- if eq .OS "darwin"}}
+  # Drop free and inactive memory states before aggregating (macOS only)
+  filter/drop_free_memory:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.memory.utilization" and (attributes["state"] == "free" or attributes["state"] == "inactive")'
+{{- else if eq .OS "linux"}}
+  # Keep ONLY the "used" state for Linux memory metrics
+  # Drop all other states (free, cached, buffered, slab_reclaimable, slab_unreclaimable, inactive, etc.)
+  filter/keep_only_used_memory:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "system.memory.utilization" and attributes["state"] != "used"'
+{{- end}}
+  
+  # 2) Convert ratio -> percent ONCE
+  transform/cpu_to_percent:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.cpu.utilization"'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.cpu.utilization"'
+
+  # 3) Sum across states (user + system + nice + iowait + …), keep per-CPU series
+  metricstransform/cpu_sum_states:
+    transforms:
+      - include: system.cpu.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            # Remove only "state", keep per-CPU time series
+            label_set: ["cpu"]
+            aggregation_type: sum
+
+  # 4a) TOTAL CPU (average across CPUs) => 0..100%. Average utilization across all cores
+  metricstransform/cpu_total_percent:
+    transforms:
+      - include: system.cpu.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []         # drop "cpu" -> single series per host
+            aggregation_type: mean
+          - action: add_label
+            new_label: aggregation
+            new_value: total
+
+  # Convert memory utilization from ratio to percentage
+  transform/mem_to_percentage:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert ratio to percentage: multiply by 100
+          - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
+  
+  # Aggregate memory to show total used (macOS only - sums after filtering free/inactive)
+  # For Linux, we keep individual states and the dashboard should filter for state=used
+  metricstransform/mem_aggregate_darwin:
+    transforms:
+      - include: system.memory.utilization
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: sum
+          - action: add_label
+            new_label: aggregation
+            new_value: total
+  
+  # For Linux, just add the aggregation label to the used state without summing
+  metricstransform/mem_aggregate_linux:
+    transforms:
+      - include: system.memory.utilization
+        match_type: regexp
+        action: update
+        operations:
+          - action: add_label
+            new_label: aggregation
+            new_value: total
+
+  transform/fs_to_percent:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'set(value_double, value_double * 100.0)
+              where metric.name == "system.filesystem.utilization" and value_double <= 1.0'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.filesystem.utilization"'
+
+  metricstransform/fs_max_percent:
+    transforms:
+      - include: system.filesystem.utilization
+        action: update
+        operations:
+          - action: aggregate_labels
+            label_set: []            # drop device/mount/type → one series per host
+            aggregation_type: max
+          - action: add_label
+            new_label: scope
+            new_value: fs_max_percent
 
 exporters:
-  file:
-    path: "{{.ExportFilePath}}"
-    format: json
-    append: false
-    rotation:
-      max_megabytes: 1
-      max_backups: 1
+  otlphttp:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
+    metrics_endpoint: "http://localhost:{{.Port}}/v1/metrics"
+    encoding: "json"
+    compression: "none"
+  
+  otlphttp/gha_logs:
+    logs_endpoint: "http://localhost:{{.Port}}/v1/gha-logs"
+    encoding: "json"
+    compression: "none"
+
+{{if .EnableSigNoz}}
+  # 
+  # SigNoz Cloud exporter
+  # Only to be used for debugging on non-prod environments
+  otlp/signoz:
+    endpoint: "{{.SigNozEndpoint}}"
+    tls:
+      insecure: false
+    headers:
+      signoz-ingestion-key: "{{.SigNozAPIKey}}"
+
+  # Debug exporter to see what's being sent to SigNoz
+  debug:
+    verbosity: normal
+    sampling_initial: 10
+    sampling_thereafter: 100
+{{end}}
 
 service:
-  pipelines:
-    logs:
-      receivers: [filelog]
-      processors: [batch]
-      exporters: [file]
-    metrics:
-      receivers: [hostmetrics]
-      processors: [batch]
-      exporters: [file]
   telemetry:
     metrics:
       level: none
+  pipelines:
+    logs:
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
+      processors: [batch/logs]
+      exporters: [otlphttp]
+    logs/gha_logs:
+      receivers: [filelog/gha_logs]
+      processors: [batch/logs]
+      exporters: [otlphttp/gha_logs]
+    metrics:
+      receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
+      processors:
+        - resource
+        - filter/only_needed
+        - filter/drop_non_internet_nics
+        - cumulativetodelta
+        - deltatorate
+
+        # fs
+        - transform/fs_to_percent
+        - metricstransform/fs_max_percent
+
+        # cpu
+        - filter/drop_cpu_idle
+        - transform/cpu_to_percent
+        - metricstransform/cpu_sum_states
+        - metricstransform/cpu_total_percent
+
+        # memory
+{{- if eq .OS "darwin"}}
+        - filter/drop_free_memory
+{{- else if eq .OS "linux"}}
+        - filter/keep_only_used_memory
+{{- end}}
+        - transform/mem_to_percentage
+{{- if eq .OS "darwin"}}
+        - metricstransform/mem_aggregate_darwin
+{{- else}}
+        - metricstransform/mem_aggregate_linux
+{{- end}}
+
+        - transform/normalize
+        - batch/metrics
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]

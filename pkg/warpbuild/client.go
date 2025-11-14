@@ -50,37 +50,7 @@ type APIClient struct {
 
 	// API Services
 
-	V1AuthAPI V1AuthAPI
-
-	V1BillingAPI V1BillingAPI
-
-	V1DebuggerAPI V1DebuggerAPI
-
-	V1InsightsIntegrationsAPI V1InsightsIntegrationsAPI
-
-	V1JobsAPI V1JobsAPI
-
-	V1OrganizationAPI V1OrganizationAPI
-
-	V1RunnerImagePullSecretsAPI V1RunnerImagePullSecretsAPI
-
-	V1RunnerImageVersionsAPI V1RunnerImageVersionsAPI
-
-	V1RunnerImagesAPI V1RunnerImagesAPI
-
 	V1RunnerInstanceAPI V1RunnerInstanceAPI
-
-	V1RunnersAPI V1RunnersAPI
-
-	V1SkuAPI V1SkuAPI
-
-	V1SubscriptionsAPI V1SubscriptionsAPI
-
-	V1UiAPI V1UiAPI
-
-	V1VcsAPI V1VcsAPI
-
-	V1WorkflowsAPI V1WorkflowsAPI
 }
 
 type service struct {
@@ -99,22 +69,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.V1AuthAPI = (*V1AuthAPIService)(&c.common)
-	c.V1BillingAPI = (*V1BillingAPIService)(&c.common)
-	c.V1DebuggerAPI = (*V1DebuggerAPIService)(&c.common)
-	c.V1InsightsIntegrationsAPI = (*V1InsightsIntegrationsAPIService)(&c.common)
-	c.V1JobsAPI = (*V1JobsAPIService)(&c.common)
-	c.V1OrganizationAPI = (*V1OrganizationAPIService)(&c.common)
-	c.V1RunnerImagePullSecretsAPI = (*V1RunnerImagePullSecretsAPIService)(&c.common)
-	c.V1RunnerImageVersionsAPI = (*V1RunnerImageVersionsAPIService)(&c.common)
-	c.V1RunnerImagesAPI = (*V1RunnerImagesAPIService)(&c.common)
 	c.V1RunnerInstanceAPI = (*V1RunnerInstanceAPIService)(&c.common)
-	c.V1RunnersAPI = (*V1RunnersAPIService)(&c.common)
-	c.V1SkuAPI = (*V1SkuAPIService)(&c.common)
-	c.V1SubscriptionsAPI = (*V1SubscriptionsAPIService)(&c.common)
-	c.V1UiAPI = (*V1UiAPIService)(&c.common)
-	c.V1VcsAPI = (*V1VcsAPIService)(&c.common)
-	c.V1WorkflowsAPI = (*V1WorkflowsAPIService)(&c.common)
 
 	return c
 }

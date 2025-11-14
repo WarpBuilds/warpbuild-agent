@@ -20,9 +20,16 @@ var _ MappedNullable = &CommonsStorage{}
 
 // CommonsStorage struct for CommonsStorage
 type CommonsStorage struct {
+	// DiskType is the disk type associated with the instance.  This is only applicable for GCP based runners for now. Passing this for other providers will have no effect.  Possible values:  - pd-standard: Standard persistent disk.  - pd-ssd: SSD persistent disk.  - pd-balanced: Balanced persistent disk.  - pd-extreme: Extreme persistent disk. (to be added later)  - hyperdisk-balanced: Hyperdisk balanced persistent disk.  - hyperdisk-extreme: Hyperdisk extreme persistent disk.  Refer: https://cloud.google.com/compute/docs/disks#disk-types  Default value is automatically picked if nothing is passed in case of GCP.  +Default: pd-ssd
+	DiskType *string `json:"disk_type,omitempty"`
+	// IOPS is the IOPS of the storage.  For GCP, This is not applicable. Any passed value will be ignored.
 	Iops *int32 `json:"iops,omitempty"`
+	// PerformanceTier is the provider specific performance tier of the storage. This is applicable for Azure as of now, can be extended to other providers in the future. Passing this for other providers will have no effect.  Refer: https://learn.microsoft.com/en-us/azure/virtual-machines/disks-change-performance  Possible values:  - P15 - P20 - P30 - P40 - P50  Default value is automatically picked if nothing is passed in case of Azure.  +Default: P15
+	PerformanceTier *string `json:"performance_tier,omitempty"`
 	Size *int32 `json:"size,omitempty"`
+	// Throughput is the throughput of the storage.  For GCP, This is not applicable. Any passed value will be ignored.
 	Throughput *int32 `json:"throughput,omitempty"`
+	// Tier is the tier of the storage.  If GCP based, you must set this to custom.
 	Tier *string `json:"tier,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -44,6 +51,38 @@ func NewCommonsStorage() *CommonsStorage {
 func NewCommonsStorageWithDefaults() *CommonsStorage {
 	this := CommonsStorage{}
 	return &this
+}
+
+// GetDiskType returns the DiskType field value if set, zero value otherwise.
+func (o *CommonsStorage) GetDiskType() string {
+	if o == nil || IsNil(o.DiskType) {
+		var ret string
+		return ret
+	}
+	return *o.DiskType
+}
+
+// GetDiskTypeOk returns a tuple with the DiskType field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsStorage) GetDiskTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.DiskType) {
+		return nil, false
+	}
+	return o.DiskType, true
+}
+
+// HasDiskType returns a boolean if a field has been set.
+func (o *CommonsStorage) HasDiskType() bool {
+	if o != nil && !IsNil(o.DiskType) {
+		return true
+	}
+
+	return false
+}
+
+// SetDiskType gets a reference to the given string and assigns it to the DiskType field.
+func (o *CommonsStorage) SetDiskType(v string) {
+	o.DiskType = &v
 }
 
 // GetIops returns the Iops field value if set, zero value otherwise.
@@ -76,6 +115,38 @@ func (o *CommonsStorage) HasIops() bool {
 // SetIops gets a reference to the given int32 and assigns it to the Iops field.
 func (o *CommonsStorage) SetIops(v int32) {
 	o.Iops = &v
+}
+
+// GetPerformanceTier returns the PerformanceTier field value if set, zero value otherwise.
+func (o *CommonsStorage) GetPerformanceTier() string {
+	if o == nil || IsNil(o.PerformanceTier) {
+		var ret string
+		return ret
+	}
+	return *o.PerformanceTier
+}
+
+// GetPerformanceTierOk returns a tuple with the PerformanceTier field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsStorage) GetPerformanceTierOk() (*string, bool) {
+	if o == nil || IsNil(o.PerformanceTier) {
+		return nil, false
+	}
+	return o.PerformanceTier, true
+}
+
+// HasPerformanceTier returns a boolean if a field has been set.
+func (o *CommonsStorage) HasPerformanceTier() bool {
+	if o != nil && !IsNil(o.PerformanceTier) {
+		return true
+	}
+
+	return false
+}
+
+// SetPerformanceTier gets a reference to the given string and assigns it to the PerformanceTier field.
+func (o *CommonsStorage) SetPerformanceTier(v string) {
+	o.PerformanceTier = &v
 }
 
 // GetSize returns the Size field value if set, zero value otherwise.
@@ -184,8 +255,14 @@ func (o CommonsStorage) MarshalJSON() ([]byte, error) {
 
 func (o CommonsStorage) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.DiskType) {
+		toSerialize["disk_type"] = o.DiskType
+	}
 	if !IsNil(o.Iops) {
 		toSerialize["iops"] = o.Iops
+	}
+	if !IsNil(o.PerformanceTier) {
+		toSerialize["performance_tier"] = o.PerformanceTier
 	}
 	if !IsNil(o.Size) {
 		toSerialize["size"] = o.Size
@@ -218,7 +295,9 @@ func (o *CommonsStorage) UnmarshalJSON(bytes []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
+		delete(additionalProperties, "disk_type")
 		delete(additionalProperties, "iops")
+		delete(additionalProperties, "performance_tier")
 		delete(additionalProperties, "size")
 		delete(additionalProperties, "throughput")
 		delete(additionalProperties, "tier")

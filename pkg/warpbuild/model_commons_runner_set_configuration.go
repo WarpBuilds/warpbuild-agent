@@ -20,6 +20,7 @@ var _ MappedNullable = &CommonsRunnerSetConfiguration{}
 
 // CommonsRunnerSetConfiguration struct for CommonsRunnerSetConfiguration
 type CommonsRunnerSetConfiguration struct {
+	ByocSku *CommonsByocSku `json:"byoc_sku,omitempty"`
 	CapacityType *string `json:"capacity_type,omitempty"`
 	Image *string `json:"image,omitempty"`
 	Sku *string `json:"sku,omitempty"`
@@ -44,6 +45,38 @@ func NewCommonsRunnerSetConfiguration() *CommonsRunnerSetConfiguration {
 func NewCommonsRunnerSetConfigurationWithDefaults() *CommonsRunnerSetConfiguration {
 	this := CommonsRunnerSetConfiguration{}
 	return &this
+}
+
+// GetByocSku returns the ByocSku field value if set, zero value otherwise.
+func (o *CommonsRunnerSetConfiguration) GetByocSku() CommonsByocSku {
+	if o == nil || IsNil(o.ByocSku) {
+		var ret CommonsByocSku
+		return ret
+	}
+	return *o.ByocSku
+}
+
+// GetByocSkuOk returns a tuple with the ByocSku field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerSetConfiguration) GetByocSkuOk() (*CommonsByocSku, bool) {
+	if o == nil || IsNil(o.ByocSku) {
+		return nil, false
+	}
+	return o.ByocSku, true
+}
+
+// HasByocSku returns a boolean if a field has been set.
+func (o *CommonsRunnerSetConfiguration) HasByocSku() bool {
+	if o != nil && !IsNil(o.ByocSku) {
+		return true
+	}
+
+	return false
+}
+
+// SetByocSku gets a reference to the given CommonsByocSku and assigns it to the ByocSku field.
+func (o *CommonsRunnerSetConfiguration) SetByocSku(v CommonsByocSku) {
+	o.ByocSku = &v
 }
 
 // GetCapacityType returns the CapacityType field value if set, zero value otherwise.
@@ -184,6 +217,9 @@ func (o CommonsRunnerSetConfiguration) MarshalJSON() ([]byte, error) {
 
 func (o CommonsRunnerSetConfiguration) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.ByocSku) {
+		toSerialize["byoc_sku"] = o.ByocSku
+	}
 	if !IsNil(o.CapacityType) {
 		toSerialize["capacity_type"] = o.CapacityType
 	}
@@ -218,6 +254,7 @@ func (o *CommonsRunnerSetConfiguration) UnmarshalJSON(bytes []byte) (err error) 
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
+		delete(additionalProperties, "byoc_sku")
 		delete(additionalProperties, "capacity_type")
 		delete(additionalProperties, "image")
 		delete(additionalProperties, "sku")

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -14,27 +15,46 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
+	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 )
 
 type ApplicationOptions struct {
-	SettingsFile      string `json:"settings_file"`
-	StdoutFile        string `json:"stdout_file"`
-	StderrFile        string `json:"stderr_file"`
-	LaunchTelemetry   bool   `json:"launch_telemetry"`
-	LaunchProxyServer bool   `json:"launch_cache_proxy_server"`
+	SettingsFile            string `json:"settings_file"`
+	StdoutFile              string `json:"stdout_file"`
+	StderrFile              string `json:"stderr_file"`
+	LaunchTelemetry         bool   `json:"launch_telemetry"`
+	LaunchProxyServer       bool   `json:"launch_cache_proxy_server"`
+	LaunchTransparentCache  bool   `json:"launch_transparent_cache"`
+	LogLevel                string `json:"log_level"`
+	TelemetrySigNozEnable   bool   `json:"telemetry_signoz_enable"`
+	TelemetrySigNozEndpoint string `json:"telemetry_signoz_endpoint"`
+	TelemetrySigNozAPIKey   string `json:"telemetry_signoz_api_key"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
 	if opts.SettingsFile == "" {
 		opts.SettingsFile = "/var/lib/warpbuild-agentd/settings.json"
 	}
+	if opts.LogLevel == "" {
+		opts.LogLevel = "info"
+	}
 }
 
 type Settings struct {
-	Agent     *AgentSettings     `json:"agent"`
-	Runner    *RunnerSettings    `json:"runner"`
-	Telemetry *TelemetrySettings `json:"telemetry"`
-	Proxy     *ProxySettings     `json:"proxy"`
+	Agent            *AgentSettings            `json:"agent"`
+	Runner           *RunnerSettings           `json:"runner"`
+	Telemetry        *TelemetrySettings        `json:"telemetry"`
+	Proxy            *ProxySettings            `json:"proxy"`
+	TransparentCache *TransparentCacheSettings `json:"transparent_cache"`
+}
+
+func (s *Settings) ApplyDefaults() {
+	if s.Telemetry != nil {
+		s.Telemetry.ApplyDefaults()
+	}
+	if s.TransparentCache != nil {
+		s.TransparentCache.ApplyDefaults()
+	}
 }
 
 type AgentSettings struct {
@@ -48,15 +68,44 @@ type AgentSettings struct {
 type TelemetrySettings struct {
 	BaseDirectory string `json:"base_directory"`
 	Enabled       bool   `json:"enabled"`
-	// The telemetry agent reads the defined number of lines from syslog file of the system and pushes to the server
-	SysLogNumberOfLinesToRead int `json:"syslog_number_of_lines_to_read"`
 	// At what frequency to push the telemetry data to the server. This is in seconds.
 	PushFrequency string `json:"push_frequency"`
+	// Port is the port on which the otel receiver is exposed.
+	//
+	// Default: 33931
+	Port int `json:"port"`
+}
+
+func (t *TelemetrySettings) ApplyDefaults() {
+
+	if t.Port == 0 {
+		t.Port = 33931
+	}
+
 }
 
 type ProxySettings struct {
 	CacheProxyPort   string `json:"cache_proxy_port"`
 	CacheBackendHost string `json:"cache_backend_host"`
+}
+
+type TransparentCacheSettings struct {
+	DerpPort       int  `json:"derp_port"`
+	OginyPort      int  `json:"oginy_port"`
+	AsurPort       int  `json:"asur_port"`
+	LoggingEnabled bool `json:"logging_enabled"`
+}
+
+func (t *TransparentCacheSettings) ApplyDefaults() {
+	if t.OginyPort == 0 {
+		t.OginyPort = 59991
+	}
+	if t.DerpPort == 0 {
+		t.DerpPort = 59992
+	}
+	if t.AsurPort == 0 {
+		t.AsurPort = 59993
+	}
 }
 
 type RunnerSettings struct {
@@ -92,9 +141,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 	opts.ApplyDefaults()
 
+	// Initialize logger with default level first
 	lm, err := log.Init(&log.InitOptions{
 		StdoutFile: opts.StdoutFile,
 		StderrFile: opts.StderrFile,
+		LogLevel:   opts.LogLevel, // Use application-level log level
 	})
 	if err != nil {
 		return err
@@ -132,6 +183,10 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 			// found the settings file, parse it
 			if err := json.Unmarshal(settingsData, &settings); err != nil {
+				if strings.Contains(err.Error(), "unexpected end of JSON input") {
+					log.Logger().Infof("unexpected end of JSON input. We'll retry.")
+					continue
+				}
 				log.Logger().Errorf("failed to parse settings file: %v", err)
 				return err
 			}
@@ -150,6 +205,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 	}
 
+	settings.ApplyDefaults()
+
 	if opts.LaunchTelemetry {
 		telemetryCtx, telemetryCtxCancel := context.WithCancel(context.Background())
 		defer telemetryCtxCancel()
@@ -166,29 +223,58 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 		pushFrequency, _ := time.ParseDuration(settings.Telemetry.PushFrequency)
 		if err := telemetry.StartTelemetryCollection(telemetryCtx, &telemetry.TelemetryOptions{
-			BaseDirectory:             settings.Telemetry.BaseDirectory,
-			RunnerID:                  settings.Agent.ID,
-			PollingSecret:             settings.Agent.PollingSecret,
-			HostURL:                   settings.Agent.HostURL,
-			Enabled:                   settings.Telemetry.Enabled,
-			PushFrequency:             pushFrequency,
-			SysLogNumberOfLinesToRead: settings.Telemetry.SysLogNumberOfLinesToRead,
+			BaseDirectory:  settings.Telemetry.BaseDirectory,
+			RunnerID:       settings.Agent.ID,
+			PollingSecret:  settings.Agent.PollingSecret,
+			HostURL:        settings.Agent.HostURL,
+			Enabled:        settings.Telemetry.Enabled,
+			PushFrequency:  pushFrequency,
+			Port:           settings.Telemetry.Port,
+			SigNozEnable:   opts.TelemetrySigNozEnable,
+			SigNozEndpoint: opts.TelemetrySigNozEndpoint,
+			SigNozAPIKey:   opts.TelemetrySigNozAPIKey,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}
 
 	} else if opts.LaunchProxyServer {
 		proxy.StartProxyServer(ctx, &proxy.ProxyServerOptions{
-			CacheBackendHost:                 settings.Proxy.CacheBackendHost,
-			CacheProxyPort:                   settings.Proxy.CacheProxyPort,
-			WarpBuildRunnerVerificationToken: settings.Agent.RunnerVerificationToken,
+			Port: settings.Proxy.CacheProxyPort,
+			CacheBackendInfo: proxy.CacheBackendInfo{
+				HostURL:   settings.Proxy.CacheBackendHost,
+				AuthToken: settings.Agent.RunnerVerificationToken,
+			},
 		})
+	} else if opts.LaunchTransparentCache {
+		// Start the transparent cache server with configured ports
+		if settings.TransparentCache == nil {
+			log.Logger().Errorf("transparent cache settings not configured")
+			return errors.New("transparent cache settings not configured")
+		}
+
+		if err := transparentcache.Start(
+			settings.TransparentCache.DerpPort,
+			settings.TransparentCache.OginyPort,
+			settings.TransparentCache.AsurPort,
+			settings.Proxy.CacheBackendHost,
+			settings.Agent.RunnerVerificationToken,
+			settings.TransparentCache.LoggingEnabled,
+		); err != nil {
+			log.Logger().Errorf("failed to start transparent cache: %v", err)
+			return err
+		}
 	} else {
+		transparentCacheOginyPort := 0
+		if settings.TransparentCache != nil {
+			transparentCacheOginyPort = settings.TransparentCache.OginyPort
+		}
+
 		agent, err := manager.NewAgent(&manager.AgentOptions{
-			ID:               settings.Agent.ID,
-			PollingSecret:    settings.Agent.PollingSecret,
-			HostURL:          settings.Agent.HostURL,
-			ExitFileLocation: settings.Agent.ExitFileLocation,
+			ID:                        settings.Agent.ID,
+			PollingSecret:             settings.Agent.PollingSecret,
+			HostURL:                   settings.Agent.HostURL,
+			ExitFileLocation:          settings.Agent.ExitFileLocation,
+			TransparentCacheOginyPort: transparentCacheOginyPort,
 		})
 		if err != nil {
 			log.Logger().Errorf("failed to create agent: %v", err)

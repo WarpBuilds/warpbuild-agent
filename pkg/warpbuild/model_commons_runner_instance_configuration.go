@@ -20,10 +20,9 @@ var _ MappedNullable = &CommonsRunnerInstanceConfiguration{}
 
 // CommonsRunnerInstanceConfiguration struct for CommonsRunnerInstanceConfiguration
 type CommonsRunnerInstanceConfiguration struct {
+	ByocSku *CommonsByocSku `json:"byoc_sku,omitempty"`
 	CapacityType *string `json:"capacity_type,omitempty"`
-	// Refer
 	Image *string `json:"image,omitempty"`
-	ProviderSkuMapping []CommonsProviderInstanceSkuMapping `json:"provider_sku_mapping,omitempty"`
 	Sku *CommonsInstanceSku `json:"sku,omitempty"`
 	StockRunnerSetId *string `json:"stock_runner_set_id,omitempty"`
 	Storage *CommonsStorage `json:"storage,omitempty"`
@@ -47,6 +46,38 @@ func NewCommonsRunnerInstanceConfiguration() *CommonsRunnerInstanceConfiguration
 func NewCommonsRunnerInstanceConfigurationWithDefaults() *CommonsRunnerInstanceConfiguration {
 	this := CommonsRunnerInstanceConfiguration{}
 	return &this
+}
+
+// GetByocSku returns the ByocSku field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceConfiguration) GetByocSku() CommonsByocSku {
+	if o == nil || IsNil(o.ByocSku) {
+		var ret CommonsByocSku
+		return ret
+	}
+	return *o.ByocSku
+}
+
+// GetByocSkuOk returns a tuple with the ByocSku field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceConfiguration) GetByocSkuOk() (*CommonsByocSku, bool) {
+	if o == nil || IsNil(o.ByocSku) {
+		return nil, false
+	}
+	return o.ByocSku, true
+}
+
+// HasByocSku returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceConfiguration) HasByocSku() bool {
+	if o != nil && !IsNil(o.ByocSku) {
+		return true
+	}
+
+	return false
+}
+
+// SetByocSku gets a reference to the given CommonsByocSku and assigns it to the ByocSku field.
+func (o *CommonsRunnerInstanceConfiguration) SetByocSku(v CommonsByocSku) {
+	o.ByocSku = &v
 }
 
 // GetCapacityType returns the CapacityType field value if set, zero value otherwise.
@@ -111,38 +142,6 @@ func (o *CommonsRunnerInstanceConfiguration) HasImage() bool {
 // SetImage gets a reference to the given string and assigns it to the Image field.
 func (o *CommonsRunnerInstanceConfiguration) SetImage(v string) {
 	o.Image = &v
-}
-
-// GetProviderSkuMapping returns the ProviderSkuMapping field value if set, zero value otherwise.
-func (o *CommonsRunnerInstanceConfiguration) GetProviderSkuMapping() []CommonsProviderInstanceSkuMapping {
-	if o == nil || IsNil(o.ProviderSkuMapping) {
-		var ret []CommonsProviderInstanceSkuMapping
-		return ret
-	}
-	return o.ProviderSkuMapping
-}
-
-// GetProviderSkuMappingOk returns a tuple with the ProviderSkuMapping field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsRunnerInstanceConfiguration) GetProviderSkuMappingOk() ([]CommonsProviderInstanceSkuMapping, bool) {
-	if o == nil || IsNil(o.ProviderSkuMapping) {
-		return nil, false
-	}
-	return o.ProviderSkuMapping, true
-}
-
-// HasProviderSkuMapping returns a boolean if a field has been set.
-func (o *CommonsRunnerInstanceConfiguration) HasProviderSkuMapping() bool {
-	if o != nil && !IsNil(o.ProviderSkuMapping) {
-		return true
-	}
-
-	return false
-}
-
-// SetProviderSkuMapping gets a reference to the given []CommonsProviderInstanceSkuMapping and assigns it to the ProviderSkuMapping field.
-func (o *CommonsRunnerInstanceConfiguration) SetProviderSkuMapping(v []CommonsProviderInstanceSkuMapping) {
-	o.ProviderSkuMapping = v
 }
 
 // GetSku returns the Sku field value if set, zero value otherwise.
@@ -251,14 +250,14 @@ func (o CommonsRunnerInstanceConfiguration) MarshalJSON() ([]byte, error) {
 
 func (o CommonsRunnerInstanceConfiguration) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	if !IsNil(o.ByocSku) {
+		toSerialize["byoc_sku"] = o.ByocSku
+	}
 	if !IsNil(o.CapacityType) {
 		toSerialize["capacity_type"] = o.CapacityType
 	}
 	if !IsNil(o.Image) {
 		toSerialize["image"] = o.Image
-	}
-	if !IsNil(o.ProviderSkuMapping) {
-		toSerialize["provider_sku_mapping"] = o.ProviderSkuMapping
 	}
 	if !IsNil(o.Sku) {
 		toSerialize["sku"] = o.Sku
@@ -291,9 +290,9 @@ func (o *CommonsRunnerInstanceConfiguration) UnmarshalJSON(bytes []byte) (err er
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
+		delete(additionalProperties, "byoc_sku")
 		delete(additionalProperties, "capacity_type")
 		delete(additionalProperties, "image")
-		delete(additionalProperties, "provider_sku_mapping")
 		delete(additionalProperties, "sku")
 		delete(additionalProperties, "stock_runner_set_id")
 		delete(additionalProperties, "storage")

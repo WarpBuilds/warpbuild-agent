@@ -9,10 +9,11 @@ Name | Type | Description | Notes
 **CreatedAt** | Pointer to **string** |  | [optional] 
 **Id** | Pointer to **string** |  | [optional] 
 **Labels** | Pointer to **[]string** |  | [optional] 
+**Meta** | Pointer to [**CommonsSetMeta**](CommonsSetMeta.md) |  | [optional] 
 **Name** | Pointer to **string** |  | [optional] 
 **OrganizationId** | Pointer to **string** |  | [optional] 
 **ProviderId** | Pointer to **string** |  | [optional] 
-**StockRunnerId** | Pointer to **string** |  | [optional] 
+**StockRunnerId** | Pointer to **string** | LabelOverrides   *LabelAttributes        &#x60;json:\&quot;label_overrides\&quot;&#x60; | [optional] 
 **UpdatedAt** | Pointer to **string** |  | [optional] 
 **VcsIntegrationId** | Pointer to **string** |  | [optional] 
 
@@ -159,6 +160,31 @@ SetLabels sets Labels field to given value.
 `func (o *CommonsRunner) HasLabels() bool`
 
 HasLabels returns a boolean if a field has been set.
+
+### GetMeta
+
+`func (o *CommonsRunner) GetMeta() CommonsSetMeta`
+
+GetMeta returns the Meta field if non-nil, zero value otherwise.
+
+### GetMetaOk
+
+`func (o *CommonsRunner) GetMetaOk() (*CommonsSetMeta, bool)`
+
+GetMetaOk returns a tuple with the Meta field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMeta
+
+`func (o *CommonsRunner) SetMeta(v CommonsSetMeta)`
+
+SetMeta sets Meta field to given value.
+
+### HasMeta
+
+`func (o *CommonsRunner) HasMeta() bool`
+
+HasMeta returns a boolean if a field has been set.
 
 ### GetName
 

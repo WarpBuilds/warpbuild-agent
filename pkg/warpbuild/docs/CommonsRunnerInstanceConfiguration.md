@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**ByocSku** | Pointer to [**CommonsByocSku**](CommonsByocSku.md) |  | [optional] 
 **CapacityType** | Pointer to **string** |  | [optional] 
-**Image** | Pointer to **string** | Refer | [optional] 
-**ProviderSkuMapping** | Pointer to [**[]CommonsProviderInstanceSkuMapping**](CommonsProviderInstanceSkuMapping.md) |  | [optional] 
+**Image** | Pointer to **string** |  | [optional] 
 **Sku** | Pointer to [**CommonsInstanceSku**](CommonsInstanceSku.md) |  | [optional] 
 **StockRunnerSetId** | Pointer to **string** |  | [optional] 
 **Storage** | Pointer to [**CommonsStorage**](CommonsStorage.md) |  | [optional] 
@@ -29,6 +29,31 @@ will change when the set of required properties is changed
 NewCommonsRunnerInstanceConfigurationWithDefaults instantiates a new CommonsRunnerInstanceConfiguration object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetByocSku
+
+`func (o *CommonsRunnerInstanceConfiguration) GetByocSku() CommonsByocSku`
+
+GetByocSku returns the ByocSku field if non-nil, zero value otherwise.
+
+### GetByocSkuOk
+
+`func (o *CommonsRunnerInstanceConfiguration) GetByocSkuOk() (*CommonsByocSku, bool)`
+
+GetByocSkuOk returns a tuple with the ByocSku field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetByocSku
+
+`func (o *CommonsRunnerInstanceConfiguration) SetByocSku(v CommonsByocSku)`
+
+SetByocSku sets ByocSku field to given value.
+
+### HasByocSku
+
+`func (o *CommonsRunnerInstanceConfiguration) HasByocSku() bool`
+
+HasByocSku returns a boolean if a field has been set.
 
 ### GetCapacityType
 
@@ -79,31 +104,6 @@ SetImage sets Image field to given value.
 `func (o *CommonsRunnerInstanceConfiguration) HasImage() bool`
 
 HasImage returns a boolean if a field has been set.
-
-### GetProviderSkuMapping
-
-`func (o *CommonsRunnerInstanceConfiguration) GetProviderSkuMapping() []CommonsProviderInstanceSkuMapping`
-
-GetProviderSkuMapping returns the ProviderSkuMapping field if non-nil, zero value otherwise.
-
-### GetProviderSkuMappingOk
-
-`func (o *CommonsRunnerInstanceConfiguration) GetProviderSkuMappingOk() (*[]CommonsProviderInstanceSkuMapping, bool)`
-
-GetProviderSkuMappingOk returns a tuple with the ProviderSkuMapping field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetProviderSkuMapping
-
-`func (o *CommonsRunnerInstanceConfiguration) SetProviderSkuMapping(v []CommonsProviderInstanceSkuMapping)`
-
-SetProviderSkuMapping sets ProviderSkuMapping field to given value.
-
-### HasProviderSkuMapping
-
-`func (o *CommonsRunnerInstanceConfiguration) HasProviderSkuMapping() bool`
-
-HasProviderSkuMapping returns a boolean if a field has been set.
 
 ### GetSku
 

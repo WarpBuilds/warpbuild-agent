@@ -45,9 +45,14 @@ var rootCmd = &cobra.Command{
 		}
 		defer lm.Sync()
 
+		log.Logger().Infof("version: %s", Version)
+
+		var isRunning = false
+
 		for {
-			log.Logger().Infof("version: %s", Version)
-			log.Logger().Infof("sleeping for %v", flags.restartInterval)
+			if isRunning {
+				log.Logger().Infof("sleeping for %v", flags.restartInterval)
+			}
 
 			time.Sleep(flags.restartInterval)
 
@@ -98,8 +103,11 @@ var rootCmd = &cobra.Command{
 			}
 
 			if status.State == svc.Running {
-				log.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
+				if !isRunning {
+					log.Logger().Infof("service %s is running. Sleeping for another %v", serviceName, flags.restartInterval)
+				}
 				time.Sleep(flags.restartInterval)
+				isRunning = true
 				continue
 			}
 		}

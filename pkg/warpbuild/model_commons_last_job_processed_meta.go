@@ -21,11 +21,17 @@ var _ MappedNullable = &CommonsLastJobProcessedMeta{}
 // CommonsLastJobProcessedMeta struct for CommonsLastJobProcessedMeta
 type CommonsLastJobProcessedMeta struct {
 	VcsBaseRef *string `json:"vcs_base_ref,omitempty"`
+	VcsCommitMessage *string `json:"vcs_commit_message,omitempty"`
+	VcsDefaultBranch *string `json:"vcs_default_branch,omitempty"`
+	VcsEndTime *string `json:"vcs_end_time,omitempty"`
 	VcsHeadRef *string `json:"vcs_head_ref,omitempty"`
+	VcsJobName *string `json:"vcs_job_name,omitempty"`
 	VcsOrg *string `json:"vcs_org,omitempty"`
 	VcsRef *string `json:"vcs_ref,omitempty"`
 	VcsRefType *string `json:"vcs_ref_type,omitempty"`
 	VcsRepo *string `json:"vcs_repo,omitempty"`
+	VcsStartTime *string `json:"vcs_start_time,omitempty"`
+	VcsWorkflowGroupId *string `json:"vcs_workflow_group_id,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -80,6 +86,102 @@ func (o *CommonsLastJobProcessedMeta) SetVcsBaseRef(v string) {
 	o.VcsBaseRef = &v
 }
 
+// GetVcsCommitMessage returns the VcsCommitMessage field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsCommitMessage() string {
+	if o == nil || IsNil(o.VcsCommitMessage) {
+		var ret string
+		return ret
+	}
+	return *o.VcsCommitMessage
+}
+
+// GetVcsCommitMessageOk returns a tuple with the VcsCommitMessage field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsCommitMessageOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsCommitMessage) {
+		return nil, false
+	}
+	return o.VcsCommitMessage, true
+}
+
+// HasVcsCommitMessage returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsCommitMessage() bool {
+	if o != nil && !IsNil(o.VcsCommitMessage) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsCommitMessage gets a reference to the given string and assigns it to the VcsCommitMessage field.
+func (o *CommonsLastJobProcessedMeta) SetVcsCommitMessage(v string) {
+	o.VcsCommitMessage = &v
+}
+
+// GetVcsDefaultBranch returns the VcsDefaultBranch field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsDefaultBranch() string {
+	if o == nil || IsNil(o.VcsDefaultBranch) {
+		var ret string
+		return ret
+	}
+	return *o.VcsDefaultBranch
+}
+
+// GetVcsDefaultBranchOk returns a tuple with the VcsDefaultBranch field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsDefaultBranchOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsDefaultBranch) {
+		return nil, false
+	}
+	return o.VcsDefaultBranch, true
+}
+
+// HasVcsDefaultBranch returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsDefaultBranch() bool {
+	if o != nil && !IsNil(o.VcsDefaultBranch) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsDefaultBranch gets a reference to the given string and assigns it to the VcsDefaultBranch field.
+func (o *CommonsLastJobProcessedMeta) SetVcsDefaultBranch(v string) {
+	o.VcsDefaultBranch = &v
+}
+
+// GetVcsEndTime returns the VcsEndTime field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsEndTime() string {
+	if o == nil || IsNil(o.VcsEndTime) {
+		var ret string
+		return ret
+	}
+	return *o.VcsEndTime
+}
+
+// GetVcsEndTimeOk returns a tuple with the VcsEndTime field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsEndTimeOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsEndTime) {
+		return nil, false
+	}
+	return o.VcsEndTime, true
+}
+
+// HasVcsEndTime returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsEndTime() bool {
+	if o != nil && !IsNil(o.VcsEndTime) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsEndTime gets a reference to the given string and assigns it to the VcsEndTime field.
+func (o *CommonsLastJobProcessedMeta) SetVcsEndTime(v string) {
+	o.VcsEndTime = &v
+}
+
 // GetVcsHeadRef returns the VcsHeadRef field value if set, zero value otherwise.
 func (o *CommonsLastJobProcessedMeta) GetVcsHeadRef() string {
 	if o == nil || IsNil(o.VcsHeadRef) {
@@ -110,6 +212,38 @@ func (o *CommonsLastJobProcessedMeta) HasVcsHeadRef() bool {
 // SetVcsHeadRef gets a reference to the given string and assigns it to the VcsHeadRef field.
 func (o *CommonsLastJobProcessedMeta) SetVcsHeadRef(v string) {
 	o.VcsHeadRef = &v
+}
+
+// GetVcsJobName returns the VcsJobName field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsJobName() string {
+	if o == nil || IsNil(o.VcsJobName) {
+		var ret string
+		return ret
+	}
+	return *o.VcsJobName
+}
+
+// GetVcsJobNameOk returns a tuple with the VcsJobName field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsJobNameOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsJobName) {
+		return nil, false
+	}
+	return o.VcsJobName, true
+}
+
+// HasVcsJobName returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsJobName() bool {
+	if o != nil && !IsNil(o.VcsJobName) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsJobName gets a reference to the given string and assigns it to the VcsJobName field.
+func (o *CommonsLastJobProcessedMeta) SetVcsJobName(v string) {
+	o.VcsJobName = &v
 }
 
 // GetVcsOrg returns the VcsOrg field value if set, zero value otherwise.
@@ -240,6 +374,70 @@ func (o *CommonsLastJobProcessedMeta) SetVcsRepo(v string) {
 	o.VcsRepo = &v
 }
 
+// GetVcsStartTime returns the VcsStartTime field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsStartTime() string {
+	if o == nil || IsNil(o.VcsStartTime) {
+		var ret string
+		return ret
+	}
+	return *o.VcsStartTime
+}
+
+// GetVcsStartTimeOk returns a tuple with the VcsStartTime field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsStartTimeOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsStartTime) {
+		return nil, false
+	}
+	return o.VcsStartTime, true
+}
+
+// HasVcsStartTime returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsStartTime() bool {
+	if o != nil && !IsNil(o.VcsStartTime) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsStartTime gets a reference to the given string and assigns it to the VcsStartTime field.
+func (o *CommonsLastJobProcessedMeta) SetVcsStartTime(v string) {
+	o.VcsStartTime = &v
+}
+
+// GetVcsWorkflowGroupId returns the VcsWorkflowGroupId field value if set, zero value otherwise.
+func (o *CommonsLastJobProcessedMeta) GetVcsWorkflowGroupId() string {
+	if o == nil || IsNil(o.VcsWorkflowGroupId) {
+		var ret string
+		return ret
+	}
+	return *o.VcsWorkflowGroupId
+}
+
+// GetVcsWorkflowGroupIdOk returns a tuple with the VcsWorkflowGroupId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsLastJobProcessedMeta) GetVcsWorkflowGroupIdOk() (*string, bool) {
+	if o == nil || IsNil(o.VcsWorkflowGroupId) {
+		return nil, false
+	}
+	return o.VcsWorkflowGroupId, true
+}
+
+// HasVcsWorkflowGroupId returns a boolean if a field has been set.
+func (o *CommonsLastJobProcessedMeta) HasVcsWorkflowGroupId() bool {
+	if o != nil && !IsNil(o.VcsWorkflowGroupId) {
+		return true
+	}
+
+	return false
+}
+
+// SetVcsWorkflowGroupId gets a reference to the given string and assigns it to the VcsWorkflowGroupId field.
+func (o *CommonsLastJobProcessedMeta) SetVcsWorkflowGroupId(v string) {
+	o.VcsWorkflowGroupId = &v
+}
+
 func (o CommonsLastJobProcessedMeta) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -253,8 +451,20 @@ func (o CommonsLastJobProcessedMeta) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.VcsBaseRef) {
 		toSerialize["vcs_base_ref"] = o.VcsBaseRef
 	}
+	if !IsNil(o.VcsCommitMessage) {
+		toSerialize["vcs_commit_message"] = o.VcsCommitMessage
+	}
+	if !IsNil(o.VcsDefaultBranch) {
+		toSerialize["vcs_default_branch"] = o.VcsDefaultBranch
+	}
+	if !IsNil(o.VcsEndTime) {
+		toSerialize["vcs_end_time"] = o.VcsEndTime
+	}
 	if !IsNil(o.VcsHeadRef) {
 		toSerialize["vcs_head_ref"] = o.VcsHeadRef
+	}
+	if !IsNil(o.VcsJobName) {
+		toSerialize["vcs_job_name"] = o.VcsJobName
 	}
 	if !IsNil(o.VcsOrg) {
 		toSerialize["vcs_org"] = o.VcsOrg
@@ -267,6 +477,12 @@ func (o CommonsLastJobProcessedMeta) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.VcsRepo) {
 		toSerialize["vcs_repo"] = o.VcsRepo
+	}
+	if !IsNil(o.VcsStartTime) {
+		toSerialize["vcs_start_time"] = o.VcsStartTime
+	}
+	if !IsNil(o.VcsWorkflowGroupId) {
+		toSerialize["vcs_workflow_group_id"] = o.VcsWorkflowGroupId
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -291,11 +507,17 @@ func (o *CommonsLastJobProcessedMeta) UnmarshalJSON(bytes []byte) (err error) {
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
 		delete(additionalProperties, "vcs_base_ref")
+		delete(additionalProperties, "vcs_commit_message")
+		delete(additionalProperties, "vcs_default_branch")
+		delete(additionalProperties, "vcs_end_time")
 		delete(additionalProperties, "vcs_head_ref")
+		delete(additionalProperties, "vcs_job_name")
 		delete(additionalProperties, "vcs_org")
 		delete(additionalProperties, "vcs_ref")
 		delete(additionalProperties, "vcs_ref_type")
 		delete(additionalProperties, "vcs_repo")
+		delete(additionalProperties, "vcs_start_time")
+		delete(additionalProperties, "vcs_workflow_group_id")
 		o.AdditionalProperties = additionalProperties
 	}
 

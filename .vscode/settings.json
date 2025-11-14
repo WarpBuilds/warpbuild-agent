@@ -1,0 +1,15 @@
+{
+    // Use GoReleaser’s official schema for any file named *.goreleaser.yml
+    "yaml.schemas": {
+      "https://goreleaser.com/static/schema.json": [
+        ".goreleaser.yml",
+        "goreleaser.yml"
+      ]
+    },
+    // (Optional) treat .yml files as YAML so you always get the language server
+    "files.associations": {
+      "*.yml": "yaml",
+      "*.yaml": "yaml"
+    }
+  }
+  

@@ -9,11 +9,16 @@ import (
 )
 
 type flagsStruct struct {
-	stdoutFile        string
-	stderrFile        string
-	settingsFile      string
-	launchTelemetry   bool
-	launchProxyServer bool
+	stdoutFile              string
+	stderrFile              string
+	settingsFile            string
+	launchTelemetry         bool
+	launchProxyServer       bool
+	launchTransparentCache  bool
+	logLevel                string
+	telemetrySigNozEnable   bool
+	telemetrySigNozEndpoint string
+	telemetrySigNozAPIKey   string
 }
 
 var flags flagsStruct
@@ -26,11 +31,16 @@ var rootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
-			SettingsFile:      flags.settingsFile,
-			StdoutFile:        flags.stdoutFile,
-			StderrFile:        flags.stderrFile,
-			LaunchTelemetry:   flags.launchTelemetry,
-			LaunchProxyServer: flags.launchProxyServer,
+			SettingsFile:            flags.settingsFile,
+			StdoutFile:              flags.stdoutFile,
+			StderrFile:              flags.stderrFile,
+			LaunchTelemetry:         flags.launchTelemetry,
+			LaunchProxyServer:       flags.launchProxyServer,
+			LaunchTransparentCache:  flags.launchTransparentCache,
+			LogLevel:                flags.logLevel,
+			TelemetrySigNozEnable:   flags.telemetrySigNozEnable,
+			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
+			TelemetrySigNozAPIKey:   flags.telemetrySigNozAPIKey,
 		})
 		if err != nil {
 			return err
@@ -74,4 +84,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.settingsFile, "settings", "", "settings file")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchTelemetry, "launch-telemetry", false, "launch telemetry")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchProxyServer, "launch-proxy-server", false, "launch proxy server")
+	rootCmd.PersistentFlags().BoolVar(&flags.launchTransparentCache, "launch-transparent-cache", false, "launch transparent cache")
+	rootCmd.PersistentFlags().StringVar(&flags.logLevel, "log-level", "info", "log level (debug, info, warn, error)")
+	rootCmd.PersistentFlags().BoolVar(&flags.telemetrySigNozEnable, "telemetry-signoz-enable", false, "enable SigNoz telemetry export")
+	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozEndpoint, "telemetry-signoz-endpoint", "", "SigNoz OTLP endpoint (e.g., ingest.us.signoz.cloud:443)")
+	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozAPIKey, "telemetry-signoz-api-key", "", "SigNoz ingestion API key")
 }
