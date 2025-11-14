@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/warpbuilds/warpbuild-agent/pkg/hooks"
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
