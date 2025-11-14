@@ -393,6 +393,11 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 				}
 			}
 
+			// Allocation details were found and telemetry key was
+			// 1. not set; which defaults to enabled.
+			// 2. set and telemetry value was enabled.
+			return
+
 		case <-tm.ctx.Done():
 			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
 			return
