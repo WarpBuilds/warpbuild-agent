@@ -65,7 +65,8 @@ func main() {
 
 	// Start the transparent cache services in a goroutine
 	go func() {
-		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort, *backendURL, *authToken, *debug)
+		// Use empty string for certDir to use default behavior
+		err := transparentcache.Start(*derpPort, *oginyPort, *asurPort, *backendURL, *authToken, "/home/runner/certs", *debug)
 		errChan <- err
 	}()
 
