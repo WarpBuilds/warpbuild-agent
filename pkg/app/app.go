@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -89,10 +90,11 @@ type ProxySettings struct {
 }
 
 type TransparentCacheSettings struct {
-	DerpPort       int  `json:"derp_port"`
-	OginyPort      int  `json:"oginy_port"`
-	AsurPort       int  `json:"asur_port"`
-	LoggingEnabled bool `json:"logging_enabled"`
+	DerpPort       int    `json:"derp_port"`
+	OginyPort      int    `json:"oginy_port"`
+	AsurPort       int    `json:"asur_port"`
+	LoggingEnabled bool   `json:"logging_enabled"`
+	CertDir        string `json:"cert_dir"`
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
@@ -104,6 +106,14 @@ func (t *TransparentCacheSettings) ApplyDefaults() {
 	}
 	if t.AsurPort == 0 {
 		t.AsurPort = 59993
+	}
+	if t.CertDir == "" {
+		// Default to ~/runner/certs, with fallback to /home/runner/certs
+		homeBase := os.Getenv("HOME")
+		if homeBase == "" {
+			homeBase = "/home/runner"
+		}
+		t.CertDir = filepath.Join(homeBase, "certs")
 	}
 }
 
@@ -257,6 +267,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			settings.TransparentCache.AsurPort,
 			settings.Proxy.CacheBackendHost,
 			settings.Agent.RunnerVerificationToken,
+			settings.TransparentCache.CertDir,
 			settings.TransparentCache.LoggingEnabled,
 		); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)

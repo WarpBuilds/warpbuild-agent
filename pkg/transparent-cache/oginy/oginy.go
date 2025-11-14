@@ -396,7 +396,9 @@ func resolveRealIP(hostname string) (string, error) {
 // Start starts the OGINY TLS reverse proxy service
 // If port is > 0, it uses that port, otherwise defaults to 443
 // If loggingEnabled is true, all proxy traffic will be logged to files
-func Start(port int, loggingEnabled bool) error {
+// derpPort and asurPort are used to route requests to the correct backend services
+// certDir specifies the directory where certificates should be stored
+func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled bool) error {
 	// Ignore cfgPath since we're inlining the config
 	listenAddr := ":443"
 	if port > 0 {
@@ -437,17 +439,12 @@ func Start(port int, loggingEnabled bool) error {
 		}
 	}
 
-	// Set up certificate directory
-	var certDir string
+	// Determine certDir with priority: OGINY_CERT_DIR env var -> settings file value (defaults already applied)
 	if dir := os.Getenv("OGINY_CERT_DIR"); dir != "" {
 		certDir = dir
+		log.Printf("Using certificate directory from OGINY_CERT_DIR: %s", certDir)
 	} else {
-		// Use $HOME env var with fallback to /home
-		homeBase := os.Getenv("HOME")
-		if homeBase == "" {
-			homeBase = "/home"
-		}
-		certDir = filepath.Join(homeBase, "runner", "certs")
+		log.Printf("Using certificate directory from settings: %s", certDir)
 	}
 
 	// Create certificate directory if it doesn't exist
@@ -515,13 +512,13 @@ func Start(port int, loggingEnabled bool) error {
 			serverName: "warpbuild.blob.core.windows.net",
 			certFile:   filepath.Join(certDir, "warpbuild.crt"),
 			keyFile:    filepath.Join(certDir, "warpbuild.key"),
-			targetURL:  "http://127.0.0.1:50053",
+			targetURL:  fmt.Sprintf("http://127.0.0.1:%d", asurPort),
 		},
 		{
 			serverName: resultsReceiverHost,
 			certFile:   filepath.Join(certDir, "results-receiver.crt"),
 			keyFile:    filepath.Join(certDir, "results-receiver.key"),
-			targetURL:  "http://127.0.0.1:50052",
+			targetURL:  fmt.Sprintf("http://127.0.0.1:%d", derpPort),
 		},
 	}
 
