@@ -471,7 +471,7 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 	// Set environment variables for current process and children
 	os.Setenv("NODE_OPTIONS", "--use-openssl-ca")
 	os.Setenv("NODE_EXTRA_CA_CERTS", caCertPath)
-	os.Setenv("SSL_CERT_FILE", caCertPath)
+	os.Setenv("SSL_CERT_DIR", certDir)
 
 	// If running in GitHub Actions, write to GITHUB_ENV
 	if githubEnv := os.Getenv("GITHUB_ENV"); githubEnv != "" {
@@ -480,8 +480,8 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 			log.Printf("Warning: failed to write to GITHUB_ENV: %v", err)
 		}
 		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
-		if err := appendToFile(githubEnv, fmt.Sprintf("SSL_CERT_FILE=%s\n", caCertPath)); err != nil {
-			log.Printf("Warning: failed to write SSL_CERT_FILE to GITHUB_ENV: %v", err)
+		if err := appendToFile(githubEnv, fmt.Sprintf("SSL_CERT_DIR=%s\n", certDir)); err != nil {
+			log.Printf("Warning: failed to write SSL_CERT_DIR to GITHUB_ENV: %v", err)
 		}
 	}
 
@@ -492,12 +492,12 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 		log.Printf("To set system-wide, run as root or manually add to /etc/environment:")
 		log.Printf("  NODE_OPTIONS=\"--use-openssl-ca\"")
 		log.Printf("  NODE_EXTRA_CA_CERTS=\"%s\"", caCertPath)
-		log.Printf("  SSL_CERT_FILE=\"%s\"", caCertPath)
+		log.Printf("  SSL_CERT_DIR=\"%s\"", certDir)
 	} else {
 		log.Printf("Successfully updated /etc/environment")
 		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
-		if err := appendToFile("/etc/environment", fmt.Sprintf("SSL_CERT_FILE=\"%s\"\n", caCertPath)); err != nil {
-			log.Printf("Warning: failed to append SSL_CERT_FILE to /etc/environment: %v", err)
+		if err := appendToFile("/etc/environment", fmt.Sprintf("SSL_CERT_DIR=\"%s\"\n", certDir)); err != nil {
+			log.Printf("Warning: failed to append SSL_CERT_DIR to /etc/environment: %v", err)
 		}
 	}
 
