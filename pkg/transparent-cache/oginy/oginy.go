@@ -18,7 +18,9 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -393,10 +395,90 @@ func resolveRealIP(hostname string) (string, error) {
 	return "", fmt.Errorf("no A record found for %s", hostname)
 }
 
+// detectOS detects the OS using runtime.GOOS
+// Returns: "ubuntu" (assumes Canonical Ubuntu for Linux), "darwin" (macOS), "windows" (Windows)
+func detectOS() string {
+	switch runtime.GOOS {
+	case "linux":
+		return "ubuntu"
+	case "darwin":
+		return "darwin"
+	case "windows":
+		return "windows"
+	default:
+		panic(fmt.Sprintf("unsupported OS: %s", runtime.GOOS))
+	}
+}
+
+// UpdateSystemCATrust adds the local CA to the system's trusted certificate store
+// This integrates the CA with the OS-level trust store, making it trusted system-wide
+// Fully implemented for Ubuntu (Canonical), shell methods only for macOS and Windows
+func UpdateSystemCATrust(caCertPath string) error {
+	switch detectOS() {
+	case "ubuntu":
+		// Fully implemented for Ubuntu (Canonical) - uses update-ca-certificates
+		return updateUbuntuCATrust(caCertPath)
+	case "darwin":
+		// macOS - shell method only (not fully implemented)
+		return updateDarwinCATrust(caCertPath)
+	case "windows":
+		// Windows - shell method only (not fully implemented)
+		return updateWindowsCATrust(caCertPath)
+	default:
+		log.Printf("System CA trust update not implemented for OS: %s", detectOS())
+		log.Printf("Supported OS: ubuntu (Canonical Ubuntu), darwin (macOS), windows")
+		return fmt.Errorf("unsupported OS: %s", detectOS())
+	}
+}
+
+func updateUbuntuCATrust(caCertPath string) error {
+	// Copy CA to system location
+	systemCALocation := "/usr/local/share/ca-certificates/warpbuild-local-ca.crt"
+
+	// Read the CA certificate
+	caData, err := os.ReadFile(caCertPath)
+	if err != nil {
+		return fmt.Errorf("read CA certificate: %v", err)
+	}
+
+	// Write to system location (requires root)
+	if err := os.WriteFile(systemCALocation, caData, 0644); err != nil {
+		log.Printf("Warning: Could not write CA to system location %s (need root): %v", systemCALocation, err)
+		log.Printf("To add CA to system trust store, run as root or manually:")
+		log.Printf("  sudo cp %s %s", caCertPath, systemCALocation)
+		log.Printf("  sudo update-ca-certificates")
+		return fmt.Errorf("write CA to system location: %v", err)
+	}
+
+	// Run update-ca-certificates
+	cmd := exec.Command("update-ca-certificates")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("Warning: update-ca-certificates failed: %v", err)
+		log.Printf("Output: %s", string(output))
+		return fmt.Errorf("update-ca-certificates failed: %v", err)
+	}
+
+	log.Printf("Successfully added CA to Ubuntu system trust store")
+	log.Printf("CA is now trusted system-wide at: %s", systemCALocation)
+	return nil
+}
+
+func updateDarwinCATrust(caCertPath string) error {
+	return nil
+}
+
+func updateWindowsCATrust(caCertPath string) error {
+	return nil
+}
+
 // Start starts the OGINY TLS reverse proxy service
 // If port is > 0, it uses that port, otherwise defaults to 443
 // If loggingEnabled is true, all proxy traffic will be logged to files
-func Start(port int, loggingEnabled bool) error {
+// derpPort and asurPort are used to route requests to the correct backend services
+// certDir specifies the directory where certificates should be stored
+// OS is automatically detected from the system
+func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled bool) error {
 	// Ignore cfgPath since we're inlining the config
 	listenAddr := ":443"
 	if port > 0 {
@@ -437,17 +519,12 @@ func Start(port int, loggingEnabled bool) error {
 		}
 	}
 
-	// Set up certificate directory
-	var certDir string
+	// Determine certDir with priority: OGINY_CERT_DIR env var -> settings file value (defaults already applied)
 	if dir := os.Getenv("OGINY_CERT_DIR"); dir != "" {
 		certDir = dir
+		log.Printf("Using certificate directory from OGINY_CERT_DIR: %s", certDir)
 	} else {
-		// Use $HOME env var with fallback to /home
-		homeBase := os.Getenv("HOME")
-		if homeBase == "" {
-			homeBase = "/home"
-		}
-		certDir = filepath.Join(homeBase, "runner", "certs")
+		log.Printf("Using certificate directory from settings: %s", certDir)
 	}
 
 	// Create certificate directory if it doesn't exist
@@ -471,37 +548,10 @@ func Start(port int, loggingEnabled bool) error {
 		log.Printf("CA certificate generated at %s", caCertPath)
 	}
 
-	// Set environment variables for current process and children
-	os.Setenv("NODE_OPTIONS", "--use-openssl-ca")
-	os.Setenv("NODE_EXTRA_CA_CERTS", caCertPath)
-	os.Setenv("SSL_CERT_FILE", caCertPath)
-
-	// If running in GitHub Actions, write to GITHUB_ENV
-	if githubEnv := os.Getenv("GITHUB_ENV"); githubEnv != "" {
-		log.Printf("Detected GitHub Actions environment, writing to GITHUB_ENV")
-		if err := appendToFile(githubEnv, fmt.Sprintf("NODE_OPTIONS=--use-openssl-ca\nNODE_EXTRA_CA_CERTS=%s\n", caCertPath)); err != nil {
-			log.Printf("Warning: failed to write to GITHUB_ENV: %v", err)
-		}
-		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
-		if err := appendToFile(githubEnv, fmt.Sprintf("SSL_CERT_FILE=%s\n", caCertPath)); err != nil {
-			log.Printf("Warning: failed to write SSL_CERT_FILE to GITHUB_ENV: %v", err)
-		}
-	}
-
-	// Also write to /etc/environment if we have permissions (for system-wide)
-	if err := appendToFile("/etc/environment", fmt.Sprintf("NODE_OPTIONS=\"--use-openssl-ca\"\nNODE_EXTRA_CA_CERTS=\"%s\"\n", caCertPath)); err != nil {
-		// This is expected to fail if not running as root
-		log.Printf("Note: Could not write to /etc/environment (need root): %v", err)
-		log.Printf("To set system-wide, run as root or manually add to /etc/environment:")
-		log.Printf("  NODE_OPTIONS=\"--use-openssl-ca\"")
-		log.Printf("  NODE_EXTRA_CA_CERTS=\"%s\"", caCertPath)
-		log.Printf("  SSL_CERT_FILE=\"%s\"", caCertPath)
-	} else {
-		log.Printf("Successfully updated /etc/environment")
-		// Write SSL_CERT_FILE in a separate call to avoid duplicate-check skipping
-		if err := appendToFile("/etc/environment", fmt.Sprintf("SSL_CERT_FILE=\"%s\"\n", caCertPath)); err != nil {
-			log.Printf("Warning: failed to append SSL_CERT_FILE to /etc/environment: %v", err)
-		}
+	// Update system CA trust store (OS-specific)
+	// This integrates the CA with the OS-level trust store, making it trusted system-wide
+	if err := UpdateSystemCATrust(caCertPath); err != nil {
+		log.Printf("Warning: Failed to update system CA trust store: %v", err)
 	}
 
 	// Generate certificates for each domain
@@ -515,13 +565,13 @@ func Start(port int, loggingEnabled bool) error {
 			serverName: "warpbuild.blob.core.windows.net",
 			certFile:   filepath.Join(certDir, "warpbuild.crt"),
 			keyFile:    filepath.Join(certDir, "warpbuild.key"),
-			targetURL:  "http://127.0.0.1:50053",
+			targetURL:  fmt.Sprintf("http://127.0.0.1:%d", asurPort),
 		},
 		{
 			serverName: resultsReceiverHost,
 			certFile:   filepath.Join(certDir, "results-receiver.crt"),
 			keyFile:    filepath.Join(certDir, "results-receiver.key"),
-			targetURL:  "http://127.0.0.1:50052",
+			targetURL:  fmt.Sprintf("http://127.0.0.1:%d", derpPort),
 		},
 	}
 
