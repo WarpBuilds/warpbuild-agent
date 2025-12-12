@@ -80,6 +80,11 @@ while [[ max_parent_retries -gt 0 ]]; do
 
 done
 
+if [[ max_parent_retries -eq 0 ]]; then
+    echo "All retries exhausted. StartJob API call failed. Exiting..."
+    exit 1
+fi
+
 rm warpbuild_body.json
 
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
