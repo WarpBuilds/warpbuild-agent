@@ -21,23 +21,20 @@ if [ -n "$WARPBUILD_SNAPSHOT_KEY" ]; then
     echo "WARPBUILD_SNAPSHOT_KEY=$WARPBUILD_SNAPSHOT_KEY"
 fi
 
-if [ -z "$WARPBUILD_SCOPE_TOKEN" ]; then
-    echo "WARPBUILD_SCOPE_TOKEN is not set."
+if [ -z "$WARPBUILD_RUNNER_VERIFICATION_TOKEN" ]; then
+    echo "WARPBUILD_RUNNER_VERIFICATION_TOKEN is not set."
     exit 1
 fi
 
-if [ -z "$WARPBUILD_RUNNER_SET_ID" ]; then
-    echo "WARPBUILD_RUNNER_SET_ID is not set."
+if [ -z "$RUNNER_NAME" ]; then
+    echo "RUNNER_NAME is not set."
     exit 1
 fi
 
 cat <<EOF > warpbuild_body.json
 {
-  "runner_id": "$WARPBUILD_RUNNER_SET_ID",
-  "runner_name": "$RUNNER_NAME",
-  "orchestrator_job_id": "$GITHUB_JOB_ID",
-  "orchestrator_job_group_id": "$GITHUB_RUN_ID",
-  "orchestrator_job_group_attempt": "$GITHUB_RUN_ATTEMPT",
+  "vcs_workflow_run_id": "$GITHUB_RUN_ID",
+  "vcs_workflow_run_attempt": "$GITHUB_RUN_ATTEMPT",
   "repo_entity": "$GITHUB_REPOSITORY",
   "repo_base_ref": "$GITHUB_BASE_REF",
   "repo_head_ref": "$GITHUB_HEAD_REF",
@@ -60,9 +57,9 @@ while [[ max_parent_retries -gt 0 ]]; do
     --content-on-error \
     --no-check-certificate --continue \
     --header="Content-Type: application/json" \
-    --header="X-Warpbuild-Scope-Token: $WARPBUILD_SCOPE_TOKEN" \
+    --header="Authorization: Bearer $WARPBUILD_RUNNER_VERIFICATION_TOKEN" \
     -O warpbuild_response --post-file=warpbuild_body.json \
-    "$WARPBUILD_HOST_URL/api/v1/job" || exit_code=$? || true
+    "$WARPBUILD_HOST_URL/api/v1/runners_instance/$RUNNER_NAME/pre_hook" || exit_code=$? || true
 
   if [ -n "$exit_code" ]; then
       echo "Failed to send request to warpbuild. Logging response..."

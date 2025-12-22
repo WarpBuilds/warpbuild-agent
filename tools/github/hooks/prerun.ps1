@@ -18,23 +18,20 @@ if ($env:WARPBUILD_SNAPSHOT_KEY) {
     Write-Host "WARPBUILD_SNAPSHOT_KEY=$env:WARPBUILD_SNAPSHOT_KEY"
 }
 
-if (-not $env:WARPBUILD_SCOPE_TOKEN) {
-    Write-Host "WARPBUILD_SCOPE_TOKEN is not set."
+if (-not $env:WARPBUILD_RUNNER_VERIFICATION_TOKEN) {
+    Write-Host "WARPBUILD_RUNNER_VERIFICATION_TOKEN is not set."
     exit 1
 }
 
-if (-not $env:WARPBUILD_RUNNER_SET_ID) {
-    Write-Host "WARPBUILD_RUNNER_SET_ID is not set."
+if (-not $env:RUNNER_NAME) {
+    Write-Host "RUNNER_NAME is not set."
     exit 1
 }
 
 # Create request body
 $requestBody = @{
-    runner_id = $env:WARPBUILD_RUNNER_SET_ID
-    runner_name = $env:RUNNER_NAME
-    orchestrator_job_id = $env:GITHUB_JOB_ID
-    orchestrator_job_group_id = $env:GITHUB_RUN_ID
-    orchestrator_job_group_attempt = $env:GITHUB_RUN_ATTEMPT
+    vcs_workflow_run_id = $env:GITHUB_RUN_ID
+    vcs_workflow_run_attempt = $env:GITHUB_RUN_ATTEMPT
     repo_entity = $env:GITHUB_REPOSITORY
     repo_base_ref = $env:GITHUB_BASE_REF
     repo_head_ref = $env:GITHUB_HEAD_REF
@@ -50,7 +47,7 @@ Write-Host "`nMaking a request to WarpBuild..."
 try {
     $headers = @{
         'Content-Type' = 'application/json'
-        'X-Warpbuild-Scope-Token' = $env:WARPBUILD_SCOPE_TOKEN
+        'Authorization' = "Bearer $env:WARPBUILD_RUNNER_VERIFICATION_TOKEN"
     }
 
     # PowerShell equivalent of wget with retries
@@ -60,7 +57,7 @@ try {
 
     while (-not $success -and $retryCount -lt $maxRetries) {
         try {
-            $response = Invoke-WebRequest -Uri "$env:WARPBUILD_HOST_URL/api/v1/job" `
+            $response = Invoke-WebRequest -Uri "$env:WARPBUILD_HOST_URL/api/v1/runners_instance/$env:RUNNER_NAME/pre_hook" `
                 -Method Post `
                 -Headers $headers `
                 -Body $requestBody `
