@@ -44,7 +44,7 @@ cat <<EOF > warpbuild_body.json
 EOF
 
 
-echo -e "\nMaking a request to WarpBuild..."
+echo -e "\n Invoking WarpBuild pre_hook..."
 
 max_parent_retries=10
 retry_delay_seconds=2 # Define delay between parent retries (in seconds)
