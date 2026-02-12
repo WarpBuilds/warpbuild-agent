@@ -3,7 +3,7 @@ name: Branch Build and Upload to R2
 on:
   push:
     branches:
-      - feat/pre-hook-v2
+      - PrashantRaj18198/upgrade-gofiber-v2.52.11
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
