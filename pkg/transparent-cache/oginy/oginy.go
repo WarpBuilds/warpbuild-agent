@@ -2,6 +2,7 @@ package oginy
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -24,6 +25,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache/asur"
 )
 
 // Global logger and mutex for thread-safe file writing
@@ -169,6 +172,25 @@ func (l *loggingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error)
 	}
 
 	return resp, nil
+}
+
+const (
+	asurHost                = "warpbuild.blob.core.windows.net"
+	asurUDSPayloadThreshold = 32 * 1024
+)
+
+type payloadAwareRoundTripper struct {
+	threshold int64
+	tcp       http.RoundTripper
+	uds       http.RoundTripper
+}
+
+func (p *payloadAwareRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	if p.uds != nil && r.ContentLength > 0 && r.ContentLength < p.threshold {
+		return p.uds.RoundTrip(r)
+	}
+
+	return p.tcp.RoundTrip(r)
 }
 
 type proxyEntry struct {
@@ -562,7 +584,7 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 		targetURL  string
 	}{
 		{
-			serverName: "warpbuild.blob.core.windows.net",
+			serverName: asurHost,
 			certFile:   filepath.Join(certDir, "warpbuild.crt"),
 			keyFile:    filepath.Join(certDir, "warpbuild.key"),
 			targetURL:  fmt.Sprintf("http://127.0.0.1:%d", asurPort),
@@ -599,6 +621,34 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 		DisableCompression:    true, // preserve encodings; avoid cpu
 	}
 
+	asurTransport := http.RoundTripper(tr)
+	if runtime.GOOS != "windows" {
+		udsSocketPath := asur.UDSSocketPath()
+		asurUDSTransport := &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return (&net.Dialer{Timeout: 10 * time.Second}).DialContext(ctx, "unix", udsSocketPath)
+			},
+			ForceAttemptHTTP2:     false,
+			MaxIdleConns:          1024,
+			MaxIdleConnsPerHost:   512,
+			MaxConnsPerHost:       0,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 0,
+			DisableCompression:    true,
+		}
+
+		asurTransport = &payloadAwareRoundTripper{
+			threshold: int64(asurUDSPayloadThreshold),
+			tcp:       tr,
+			uds:       asurUDSTransport,
+		}
+
+		log.Printf("ASUR adaptive routing enabled: UDS for payloads < %d bytes via %s; TCP otherwise", asurUDSPayloadThreshold, udsSocketPath)
+	} else {
+		log.Printf("ASUR adaptive routing disabled on Windows; using TCP only")
+	}
+
 	mp := &muxProxy{byHost: make(map[string]*proxyEntry)}
 
 	for _, s := range servers {
@@ -613,8 +663,12 @@ func Start(port int, derpPort int, asurPort int, certDir string, loggingEnabled 
 
 		// Create proxy with logging transport
 		rp := httputil.NewSingleHostReverseProxy(u)
+		backendTransport := http.RoundTripper(tr)
+		if s.serverName == asurHost {
+			backendTransport = asurTransport
+		}
 		loggingTransport := &loggingRoundTripper{
-			transport: tr,
+			transport: backendTransport,
 			name:      fmt.Sprintf("LOCAL:%s→%s", s.serverName, s.targetURL),
 		}
 		rp.Transport = loggingTransport

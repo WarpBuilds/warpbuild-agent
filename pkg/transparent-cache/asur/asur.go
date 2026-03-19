@@ -1079,6 +1079,9 @@ func Start(port int) error {
 		}
 	}()
 
+	// Start UDS listener for small-payload requests (see benchmark: <32KB benefits from UDS)
+	startUDSListener(loggingMiddleware(s))
+
 	return srv.ListenAndServe()
 }
 
