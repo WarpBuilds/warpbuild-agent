@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/warpbuilds/warpbuild-agent/pkg/app"
+	"github.com/warpbuilds/warpbuild-agent/pkg/sysinit"
 )
 
 type flagsStruct struct {
@@ -19,6 +20,7 @@ type flagsStruct struct {
 	telemetrySigNozEnable   bool
 	telemetrySigNozEndpoint string
 	telemetrySigNozAPIKey   string
+	withSysInit             bool
 }
 
 var flags flagsStruct
@@ -29,6 +31,14 @@ var rootCmd = &cobra.Command{
 	Long: `Manages runner lifecycle and synchronizes runner state with the WarpBuild.
 	This is run as a daemon on the runner host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
+		// Run sys-init diagnostics if --with-sysinit flag is present
+		// The sysinit package will automatically detect the OS and run appropriate diagnostics
+		if flags.withSysInit {
+			if err := sysinit.SysInit(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: sys-init failed: %v\n", err)
+			}
+		}
 
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
 			SettingsFile:            flags.settingsFile,
@@ -89,4 +99,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flags.telemetrySigNozEnable, "telemetry-signoz-enable", false, "enable SigNoz telemetry export")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozEndpoint, "telemetry-signoz-endpoint", "", "SigNoz OTLP endpoint (e.g., ingest.us.signoz.cloud:443)")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozAPIKey, "telemetry-signoz-api-key", "", "SigNoz ingestion API key")
+	rootCmd.PersistentFlags().BoolVar(&flags.withSysInit, "with-sysinit", false, "run system initialization diagnostics on startup")
 }
