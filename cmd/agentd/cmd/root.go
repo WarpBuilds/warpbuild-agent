@@ -19,6 +19,7 @@ type flagsStruct struct {
 	telemetrySigNozEnable   bool
 	telemetrySigNozEndpoint string
 	telemetrySigNozAPIKey   string
+	withSysInit             bool
 }
 
 var flags flagsStruct
@@ -41,6 +42,7 @@ var rootCmd = &cobra.Command{
 			TelemetrySigNozEnable:   flags.telemetrySigNozEnable,
 			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
 			TelemetrySigNozAPIKey:   flags.telemetrySigNozAPIKey,
+			WithSysInit:             flags.withSysInit,
 		})
 		if err != nil {
 			return err
@@ -89,4 +91,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flags.telemetrySigNozEnable, "telemetry-signoz-enable", false, "enable SigNoz telemetry export")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozEndpoint, "telemetry-signoz-endpoint", "", "SigNoz OTLP endpoint (e.g., ingest.us.signoz.cloud:443)")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozAPIKey, "telemetry-signoz-api-key", "", "SigNoz ingestion API key")
+	rootCmd.PersistentFlags().BoolVar(&flags.withSysInit, "with-sysinit", false, "run system initialization diagnostics on startup")
 }
