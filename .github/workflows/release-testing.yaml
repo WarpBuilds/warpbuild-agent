@@ -3,7 +3,7 @@ name: Branch Build and Upload to R2
 on:
   push:
     branches:
-      - PrashantRaj18198/upgrade-gofiber-v2.52.11
+      - feat/macos-init-commands
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
