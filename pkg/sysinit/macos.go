@@ -38,6 +38,7 @@ func runMacOSDiagnostics() error {
 	}
 
 	// osascript startup disk
+	// This is what triggers the popup for 'Automations' on warpbuild-agent
 	osascriptCmd := exec.Command("osascript", "-e", "tell application \"Finder\" to get name of startup disk")
 	if output, err := osascriptCmd.CombinedOutput(); err == nil {
 		log.Logger().Infof("startup disk: %s", strings.TrimSpace(string(output)))
