@@ -15,6 +15,7 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
+	"github.com/warpbuilds/warpbuild-agent/pkg/sysinit"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 )
@@ -30,6 +31,7 @@ type ApplicationOptions struct {
 	TelemetrySigNozEnable   bool   `json:"telemetry_signoz_enable"`
 	TelemetrySigNozEndpoint string `json:"telemetry_signoz_endpoint"`
 	TelemetrySigNozAPIKey   string `json:"telemetry_signoz_api_key"`
+	WithSysInit             bool   `json:"with_sysinit"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -165,6 +167,14 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 
 	log.Logger().Infof("starting warpbuild agent")
 	log.Logger().Infof("settings file: %s", opts.SettingsFile)
+
+	// Run sys-init diagnostics if --with-sysinit flag is present
+	// The sysinit package will automatically detect the OS and run appropriate diagnostics
+	if opts.WithSysInit {
+		if err := sysinit.SysInit(); err != nil {
+			log.Logger().Errorf("sys-init failed: %v", err)
+		}
+	}
 
 	var elapsedTime time.Duration
 	var settings Settings

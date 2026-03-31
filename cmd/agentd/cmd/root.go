@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/warpbuilds/warpbuild-agent/pkg/app"
-	"github.com/warpbuilds/warpbuild-agent/pkg/sysinit"
 )
 
 type flagsStruct struct {
@@ -32,14 +31,6 @@ var rootCmd = &cobra.Command{
 	This is run as a daemon on the runner host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		// Run sys-init diagnostics if --with-sysinit flag is present
-		// The sysinit package will automatically detect the OS and run appropriate diagnostics
-		if flags.withSysInit {
-			if err := sysinit.SysInit(); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: sys-init failed: %v\n", err)
-			}
-		}
-
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
 			SettingsFile:            flags.settingsFile,
 			StdoutFile:              flags.stdoutFile,
@@ -51,6 +42,7 @@ var rootCmd = &cobra.Command{
 			TelemetrySigNozEnable:   flags.telemetrySigNozEnable,
 			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
 			TelemetrySigNozAPIKey:   flags.telemetrySigNozAPIKey,
+			WithSysInit:             flags.withSysInit,
 		})
 		if err != nil {
 			return err

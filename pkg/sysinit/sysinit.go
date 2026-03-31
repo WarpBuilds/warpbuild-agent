@@ -3,6 +3,8 @@ package sysinit
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
 // SysInit runs system initialization diagnostics based on the current OS and architecture.
@@ -11,11 +13,11 @@ import (
 func SysInit() error {
 	// Only run on macOS (darwin)
 	if runtime.GOOS == "darwin" {
-		fmt.Println("=== Running macOS System Initialization Diagnostics ===")
+		log.Logger().Infof("=== Running macOS System Initialization Diagnostics ===")
 		if err := runMacOSDiagnostics(); err != nil {
 			return fmt.Errorf("macOS diagnostics failed: %w", err)
 		}
-		fmt.Println("=== System Initialization Diagnostics Complete ===")
+		log.Logger().Infof("=== System Initialization Diagnostics Complete ===")
 	}
 
 	return nil
