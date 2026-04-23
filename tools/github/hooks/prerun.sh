@@ -84,4 +84,31 @@ fi
 
 rm warpbuild_body.json
 
+# Execute addon setup scripts returned by the backend
+if [ -f warpbuild_response ]; then
+  script_count=$(cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); scripts=d.get('setup_scripts') or []; print(len(scripts))" 2>/dev/null || echo "0")
+
+  if [ "$script_count" -gt 0 ]; then
+    echo -e "\nExecuting $script_count addon setup script(s)..."
+    for i in $(seq 0 $((script_count - 1))); do
+      script_name=$(cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['setup_scripts'][$i].get('name','script-$i'))" 2>/dev/null || echo "script-$i")
+      echo -e "\n[addon:$script_name] Starting..."
+
+      cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['setup_scripts'][$i]['script'])" > "warpbuild_addon_${i}.sh" 2>/dev/null
+      chmod +x "warpbuild_addon_${i}.sh"
+      bash "warpbuild_addon_${i}.sh"
+      addon_exit=$?
+      rm -f "warpbuild_addon_${i}.sh"
+
+      if [ $addon_exit -ne 0 ]; then
+        echo "[addon:$script_name] FAILED with exit code $addon_exit"
+        exit 1
+      fi
+      echo "[addon:$script_name] Completed successfully."
+    done
+  fi
+fi
+
+rm -f warpbuild_response
+
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
