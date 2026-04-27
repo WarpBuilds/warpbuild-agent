@@ -85,4 +85,40 @@ catch {
     exit 1
 }
 
+# Execute addon setup scripts returned by the backend
+if ($response -and $response.Content) {
+    try {
+        $data = $response.Content | ConvertFrom-Json
+        $scripts = $data.setup_scripts
+        if ($scripts -and $scripts.Count -gt 0) {
+            Write-Host "`nExecuting $($scripts.Count) addon setup script(s)..."
+            for ($i = 0; $i -lt $scripts.Count; $i++) {
+                $scriptName = if ($scripts[$i].name) { $scripts[$i].name } else { "script-$i" }
+                Write-Host "`n[addon:$scriptName] Starting..."
+
+                $scriptContent = $scripts[$i].script
+                if (-not $scriptContent) {
+                    Write-Host "[addon:$scriptName] FAILED to extract script from response"
+                    exit 1
+                }
+                $scriptPath = "warpbuild_addon_$i.bat"
+                $scriptContent | Out-File -FilePath $scriptPath -Encoding ASCII
+                & cmd.exe /c $scriptPath
+                $addonExit = $LASTEXITCODE
+
+                Remove-Item -Path $scriptPath -Force -ErrorAction SilentlyContinue
+
+                if ($addonExit -ne 0) {
+                    Write-Host "[addon:$scriptName] FAILED with exit code $addonExit"
+                    exit 1
+                }
+                Write-Host "[addon:$scriptName] Completed successfully."
+            }
+        }
+    }
+    catch {
+        Write-Host "Warning: Failed to parse addon setup scripts: $($_.Exception.Message)"
+    }
+}
+
 Write-Host "`nPrehook for WarpBuild runner instance '$env:RUNNER_NAME' completed successfully."

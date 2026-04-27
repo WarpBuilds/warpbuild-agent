@@ -86,15 +86,19 @@ rm warpbuild_body.json
 
 # Execute addon setup scripts returned by the backend
 if [ -f warpbuild_response ]; then
-  script_count=$(cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); scripts=d.get('setup_scripts') or []; print(len(scripts))" 2>/dev/null || echo "0")
+  script_count=$(jq -r '.setup_scripts | length // 0' warpbuild_response 2>/dev/null || echo "0")
 
   if [ "$script_count" -gt 0 ]; then
     echo -e "\nExecuting $script_count addon setup script(s)..."
     for i in $(seq 0 $((script_count - 1))); do
-      script_name=$(cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['setup_scripts'][$i].get('name','script-$i'))" 2>/dev/null || echo "script-$i")
+      script_name=$(jq -r ".setup_scripts[$i].name // \"script-$i\"" warpbuild_response 2>/dev/null || echo "script-$i")
       echo -e "\n[addon:$script_name] Starting..."
 
-      cat warpbuild_response | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['setup_scripts'][$i]['script'])" > "warpbuild_addon_${i}.sh" 2>/dev/null
+      if ! jq -r ".setup_scripts[$i].script" warpbuild_response > "warpbuild_addon_${i}.sh" 2>/dev/null || [ ! -s "warpbuild_addon_${i}.sh" ]; then
+        echo "[addon:$script_name] FAILED to extract script from response"
+        rm -f "warpbuild_addon_${i}.sh"
+        exit 1
+      fi
       chmod +x "warpbuild_addon_${i}.sh"
       bash "warpbuild_addon_${i}.sh"
       addon_exit=$?
