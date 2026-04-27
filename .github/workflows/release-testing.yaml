@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/macos-init-commands
+      - feat/tailscale-oidc-addon
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
