@@ -72,6 +72,18 @@ builds:
     main: ./cmd/agentd_restarter
     ldflags:
       - -X github.com/warpbuilds/warpbuild-agent/cmd/agentd_restarter/cmd.Version={{.Version}}
+  - id: warpbuild-pty-broker
+    binary: warpbuild-pty-broker
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/pty-broker
+    ldflags:
+      - -s -w
 
 archives:
   - id: warpbuild-agentd
@@ -101,6 +113,12 @@ archives:
       - warpbuild-agentd-restarter
     name_template: >-
       {{ .Binary }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }}
+  - id: warpbuild-pty-broker
+    format: tar.gz
+    builds:
+      - warpbuild-pty-broker
+    name_template: >-
+      {{ .Binary }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else }}{{ .Arch }}{{ end }}
 
 checksum:
   name_template: "checksums.txt"
