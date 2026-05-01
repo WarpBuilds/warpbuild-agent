@@ -44,7 +44,7 @@ before:
     # Note: Windows ARM64 is not available for v0.133.0
     # Create tools-only archives for managed runner refreshes
     - tar czf tools.tar.gz -C tools .
-    - cd tools && zip -r ../tools.zip . && cd ..
+    - bash -c "cd tools && zip -r ../tools.zip ."
 builds:
   - id: warpbuild-agentd
     env:
