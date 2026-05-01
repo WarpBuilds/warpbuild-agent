@@ -34,7 +34,7 @@ jobs:
 
       - name: Define S3 Path
         id: vars
-        run: echo "s3_path=warpbuild-agentd/${GITHUB_REF_NAME}/" >> $GITHUB_ENV
+        run: echo "s3_path=WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/" >> $GITHUB_ENV
 
       - name: Run GoReleaser (Snapshot)
         uses: goreleaser/goreleaser-action@v6
@@ -44,6 +44,11 @@ jobs:
           args: release --snapshot --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy tools archives into dist
+        run: |
+          cp tools.tar.gz dist/
+          cp tools.zip dist/
 
       - name: List all dist files
         run: ls -l dist
@@ -70,11 +75,6 @@ jobs:
       - name: Sync to R2 with rclone
         run: |
           rclone sync dist r2:${AWS_S3_BUCKET}/${{ env.s3_path }} --progress
-
-      - name: Upload tools archives to R2
-        run: |
-          rclone copyto tools.tar.gz r2:${AWS_S3_BUCKET}/WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/tools.tar.gz --progress
-          rclone copyto tools.zip r2:${AWS_S3_BUCKET}/WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/tools.zip --progress
 
   mirror-runner-release:
     runs-on: ubuntu-latest
