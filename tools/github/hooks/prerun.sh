@@ -99,35 +99,22 @@ if [ -f warpbuild_response ]; then
 
       echo -e "\n[addon:$script_name] Starting..."
 
-      if [ -n "$script_path" ]; then
-        addon_script="${TOOLS_DIR}/${script_path}"
-        if [ ! -f "$addon_script" ]; then
-          echo "[addon:$script_name] FAILED: script not found at $addon_script"
-          exit 1
-        fi
-
-        # Export env vars for this addon
-        env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
-        for key in $env_keys; do
-          val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
-          export "$key=$val"
-        done
-
-        chmod +x "$addon_script"
-        bash "$addon_script"
-        addon_exit=$?
-      else
-        # Fallback: inline script field (legacy)
-        if ! jq -r ".setup_scripts[$i].script // empty" warpbuild_response > "warpbuild_addon_${i}.sh" 2>/dev/null || [ ! -s "warpbuild_addon_${i}.sh" ]; then
-          echo "[addon:$script_name] FAILED to extract script from response"
-          rm -f "warpbuild_addon_${i}.sh"
-          exit 1
-        fi
-        chmod +x "warpbuild_addon_${i}.sh"
-        bash "warpbuild_addon_${i}.sh"
-        addon_exit=$?
-        rm -f "warpbuild_addon_${i}.sh"
+      addon_script="${TOOLS_DIR}/${script_path}"
+      if [ -z "$script_path" ] || [ ! -f "$addon_script" ]; then
+        echo "[addon:$script_name] FAILED: script not found at $addon_script"
+        exit 1
       fi
+
+      # Export env vars for this addon
+      env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
+      for key in $env_keys; do
+        val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
+        export "$key=$val"
+      done
+
+      chmod +x "$addon_script"
+      bash "$addon_script"
+      addon_exit=$?
 
       if [ $addon_exit -ne 0 ]; then
         echo "[addon:$script_name] FAILED with exit code $addon_exit"

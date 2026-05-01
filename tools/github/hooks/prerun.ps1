@@ -99,41 +99,26 @@ if ($response -and $response.Content) {
                 Write-Host "`n[addon:$scriptName] Starting..."
 
                 $addonScriptPath = $scripts[$i].script_path
-
-                if ($addonScriptPath) {
-                    $fullPath = Join-Path $toolsDir $addonScriptPath
-                    if (-not (Test-Path $fullPath)) {
-                        Write-Host "[addon:$scriptName] FAILED: script not found at $fullPath"
-                        exit 1
-                    }
-
-                    # Export env vars for this addon
-                    $envMap = $scripts[$i].env
-                    if ($envMap) {
-                        $envMap.PSObject.Properties | ForEach-Object {
-                            [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value, "Process")
-                        }
-                    }
-
-                    if ($fullPath -match '\.ps1$') {
-                        & powershell -ExecutionPolicy Bypass -File $fullPath
-                    } else {
-                        & cmd.exe /c $fullPath
-                    }
-                    $addonExit = $LASTEXITCODE
-                } else {
-                    # Fallback: inline script field (legacy)
-                    $scriptContent = $scripts[$i].script
-                    if (-not $scriptContent) {
-                        Write-Host "[addon:$scriptName] FAILED to extract script from response"
-                        exit 1
-                    }
-                    $tempPath = "warpbuild_addon_$i.bat"
-                    $scriptContent | Out-File -FilePath $tempPath -Encoding ASCII
-                    & cmd.exe /c $tempPath
-                    $addonExit = $LASTEXITCODE
-                    Remove-Item -Path $tempPath -Force -ErrorAction SilentlyContinue
+                $fullPath = Join-Path $toolsDir $addonScriptPath
+                if (-not $addonScriptPath -or -not (Test-Path $fullPath)) {
+                    Write-Host "[addon:$scriptName] FAILED: script not found at $fullPath"
+                    exit 1
                 }
+
+                # Export env vars for this addon
+                $envMap = $scripts[$i].env
+                if ($envMap) {
+                    $envMap.PSObject.Properties | ForEach-Object {
+                        [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value, "Process")
+                    }
+                }
+
+                if ($fullPath -match '\.ps1$') {
+                    & powershell -ExecutionPolicy Bypass -File $fullPath
+                } else {
+                    & cmd.exe /c $fullPath
+                }
+                $addonExit = $LASTEXITCODE
 
                 if ($addonExit -ne 0) {
                     Write-Host "[addon:$scriptName] FAILED with exit code $addonExit"
