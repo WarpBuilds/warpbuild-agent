@@ -1,12 +1,6 @@
 name: Sync Tools to R2
 
 on:
-  push:
-    branches:
-      - main
-      - feat/custom-win-setup-images
-    paths:
-      - "tools/**"
   workflow_dispatch:
 
 env:
@@ -49,9 +43,17 @@ jobs:
           acl             = private
           EOF
 
+      - name: Create tools archive
+        run: |
+          tar czf tools.tar.gz -C tools .
+
       - name: Sync tools directory to R2 with rclone
         run: |
           rclone sync tools/ r2:${AWS_S3_BUCKET}/${{ env.s3_path }} --progress --verbose
+
+      - name: Upload tools archive to R2
+        run: |
+          rclone copyto tools.tar.gz r2:${AWS_S3_BUCKET}/WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/tools.tar.gz --progress --verbose
 
       - name: List synced files
         run: |
