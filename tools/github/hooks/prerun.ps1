@@ -85,4 +85,52 @@ catch {
     exit 1
 }
 
+# Execute addon setup scripts returned by the backend
+$toolsDir = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+
+if ($response -and $response.Content) {
+    try {
+        $data = $response.Content | ConvertFrom-Json
+        $scripts = $data.setup_scripts
+        if ($scripts -and $scripts.Count -gt 0) {
+            Write-Host "`nExecuting $($scripts.Count) addon setup script(s)..."
+            for ($i = 0; $i -lt $scripts.Count; $i++) {
+                $scriptName = if ($scripts[$i].name) { $scripts[$i].name } else { "addon-$i" }
+                Write-Host "`n[addon:$scriptName] Starting..."
+
+                $addonScriptPath = $scripts[$i].script_path
+                $fullPath = Join-Path $toolsDir $addonScriptPath
+                if (-not $addonScriptPath -or -not (Test-Path $fullPath)) {
+                    Write-Host "[addon:$scriptName] FAILED: script not found at $fullPath"
+                    exit 1
+                }
+
+                # Export env vars for this addon
+                $envMap = $scripts[$i].env
+                if ($envMap) {
+                    $envMap.PSObject.Properties | ForEach-Object {
+                        [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value, "Process")
+                    }
+                }
+
+                if ($fullPath -match '\.ps1$') {
+                    & powershell -ExecutionPolicy Bypass -File $fullPath
+                } else {
+                    & cmd.exe /c $fullPath
+                }
+                $addonExit = $LASTEXITCODE
+
+                if ($addonExit -ne 0) {
+                    Write-Host "[addon:$scriptName] FAILED with exit code $addonExit"
+                    exit 1
+                }
+                Write-Host "[addon:$scriptName] Completed successfully."
+            }
+        }
+    }
+    catch {
+        Write-Host "Warning: Failed to parse addon setup scripts: $($_.Exception.Message)"
+    }
+}
+
 Write-Host "`nPrehook for WarpBuild runner instance '$env:RUNNER_NAME' completed successfully."
