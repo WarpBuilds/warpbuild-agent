@@ -36,8 +36,8 @@ while ($loginElapsed -lt $loginTimeout) {
         $tsArgs += $env:WARPBUILD_ADDON_TS_ARGS -split '\s+'
     }
 
-    $proc = Start-Process -FilePath $TS_BIN -ArgumentList $tsArgs -Wait -PassThru -NoNewWindow 2>&1
-    if ($proc.ExitCode -eq 0) {
+    & $TS_BIN @tsArgs 2>&1
+    if ($LASTEXITCODE -eq 0) {
         Write-Host "[tailscale-addon] Tailscale is connected"
         & $TS_BIN status
         Write-Host "[tailscale-addon] Tailscale setup complete"

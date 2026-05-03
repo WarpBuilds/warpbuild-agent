@@ -105,15 +105,15 @@ if [ -f warpbuild_response ]; then
         exit 1
       fi
 
-      # Export env vars for this addon
+      # Build env vars and pass scoped to addon subprocess
+      chmod +x "$addon_script"
+      env_args=""
       env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
       for key in $env_keys; do
         val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
-        export "$key=$val"
+        env_args="$env_args $key=$val"
       done
-
-      chmod +x "$addon_script"
-      bash "$addon_script"
+      env $env_args bash "$addon_script"
       addon_exit=$?
 
       if [ $addon_exit -ne 0 ]; then

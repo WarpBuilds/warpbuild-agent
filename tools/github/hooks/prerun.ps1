@@ -105,10 +105,12 @@ if ($response -and $response.Content) {
                     exit 1
                 }
 
-                # Export env vars for this addon
+                # Set env vars for addon subprocess, clean up after
                 $envMap = $scripts[$i].env
+                $envKeys = @()
                 if ($envMap) {
                     $envMap.PSObject.Properties | ForEach-Object {
+                        $envKeys += $_.Name
                         [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value, "Process")
                     }
                 }
@@ -120,6 +122,11 @@ if ($response -and $response.Content) {
                 }
                 $addonExit = $LASTEXITCODE
 
+                # Clean up addon env vars
+                foreach ($key in $envKeys) {
+                    [System.Environment]::SetEnvironmentVariable($key, $null, "Process")
+                }
+
                 if ($addonExit -ne 0) {
                     Write-Host "[addon:$scriptName] FAILED with exit code $addonExit"
                     exit 1
@@ -129,7 +136,8 @@ if ($response -and $response.Content) {
         }
     }
     catch {
-        Write-Host "Warning: Failed to parse addon setup scripts: $($_.Exception.Message)"
+        Write-Host "[addon] FAILED to parse addon setup scripts: $($_.Exception.Message)"
+        exit 1
     }
 }
 
