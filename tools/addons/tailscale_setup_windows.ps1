@@ -22,10 +22,19 @@ if (-not (Test-Path $TS_BIN)) {
 Write-Host "[tailscale-addon] Starting Tailscale service..."
 Start-Service Tailscale -ErrorAction SilentlyContinue
 
+Write-Host "[tailscale-addon] Checking service status..."
+$svc = Get-Service Tailscale -ErrorAction SilentlyContinue
+Write-Host "[tailscale-addon] Service state: $($svc.Status)"
+
 Write-Host "[tailscale-addon] Performing OIDC login..."
 $loginTimeout = 30
 $loginElapsed = 0
 while ($loginElapsed -lt $loginTimeout) {
+    Write-Host "[tailscale-addon] Attempt at ${loginElapsed}s - calling tailscale up..."
+    Write-Host "[tailscale-addon]   --hostname=warpbuild-$env:WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID"
+    Write-Host "[tailscale-addon]   --client-id=$env:WARPBUILD_ADDON_TS_CLIENT_ID"
+    Write-Host "[tailscale-addon]   --id-token=<redacted:$($env:WARPBUILD_ADDON_TS_OIDC_TOKEN.Length) chars>"
+
     $tsArgs = @(
         "up",
         "--hostname=warpbuild-$env:WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID",
@@ -33,13 +42,37 @@ while ($loginElapsed -lt $loginTimeout) {
         "--id-token=$env:WARPBUILD_ADDON_TS_OIDC_TOKEN"
     )
     if ($env:WARPBUILD_ADDON_TS_ARGS) {
+        Write-Host "[tailscale-addon]   extra args: $env:WARPBUILD_ADDON_TS_ARGS"
         $tsArgs += $env:WARPBUILD_ADDON_TS_ARGS -split '\s+'
     }
 
-    & $TS_BIN @tsArgs 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "[tailscale-addon] Tailscale is connected"
-        & $TS_BIN status
+    # Stream daemon logs in background during tailscale up
+    $logJob = Start-Job -ScriptBlock {
+        param($bin)
+        & $bin debug daemon-logs 2>&1
+    } -ArgumentList $TS_BIN
+
+    $upOutput = & $TS_BIN @tsArgs 2>&1 | Out-String
+    $upExit = $LASTEXITCODE
+
+    # Collect daemon logs
+    Start-Sleep -Milliseconds 500
+    Stop-Job $logJob -ErrorAction SilentlyContinue
+    $daemonLogs = Receive-Job $logJob 2>&1 | Out-String
+    Remove-Job $logJob -ErrorAction SilentlyContinue
+
+    Write-Host "[tailscale-addon] tailscale up exit code: $upExit"
+    if ($upOutput.Trim()) {
+        Write-Host "[tailscale-addon] tailscale up output: $($upOutput.Trim())"
+    }
+    if ($daemonLogs.Trim()) {
+        Write-Host "[tailscale-addon] daemon logs during up:"
+        $daemonLogs.Trim() -split "`n" | ForEach-Object { Write-Host "[tailscale-addon]   $_" }
+    }
+
+    if ($upExit -eq 0) {
+        Write-Host "[tailscale-addon] Post-login status:"
+        & $TS_BIN status 2>&1 | ForEach-Object { Write-Host "[tailscale-addon]   $_" }
         Write-Host "[tailscale-addon] Tailscale setup complete"
         exit 0
     }
