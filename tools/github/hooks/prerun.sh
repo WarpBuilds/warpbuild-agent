@@ -105,15 +105,16 @@ if [ -f warpbuild_response ]; then
         exit 1
       fi
 
-      # Build env vars and pass scoped to addon subprocess
+      # Run addon in subshell so env vars don't leak to parent
       chmod +x "$addon_script"
-      env_args=""
-      env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
-      for key in $env_keys; do
-        val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
-        env_args="$env_args $key=$val"
-      done
-      env $env_args bash "$addon_script"
+      (
+        env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
+        for key in $env_keys; do
+          val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
+          export "$key=$val"
+        done
+        bash "$addon_script"
+      )
       addon_exit=$?
 
       if [ $addon_exit -ne 0 ]; then
