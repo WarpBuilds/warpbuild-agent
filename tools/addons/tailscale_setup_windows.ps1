@@ -19,6 +19,9 @@ if (-not (Test-Path $TS_BIN)) {
 
 & $TS_BIN version
 
+Write-Host "[tailscale-addon] Enabling unattended mode..."
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Tailscale IPN" -Name "UnattendedMode" -Value "always" -Type String -Force
+
 Write-Host "[tailscale-addon] Ensuring Tailscale service is running..."
 net start Tailscale 2>&1 | ForEach-Object { Write-Host "[tailscale-addon] $_" }
 
