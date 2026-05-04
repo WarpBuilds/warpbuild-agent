@@ -20,10 +20,13 @@ if ([string]::IsNullOrWhiteSpace($agentVersion)) {
     Write-Host "ERROR: WARPBUILD_AGENT_VERSION environment variable is not set"
     exit 1
 }
-$agentVersion = "v" + $agentVersion
 
 Write-Host "Using agent version: $agentVersion"
-$bucketPrefix = "https://packages.warpbuild.com/WarpBuilds/warpbuild-agent"
+$packageHost = $env:WARPBUILD_PACKAGE_MANAGER_HOST
+if ([string]::IsNullOrWhiteSpace($packageHost)) {
+    $packageHost = "https://packages.warpbuild.com"
+}
+$bucketPrefix = "$packageHost/WarpBuilds/warpbuild-agent"
 
 # Download and extract the agent
 $agentUrl = "$bucketPrefix/$agentVersion/warpbuild-agentd_Windows_x86_64.zip"
