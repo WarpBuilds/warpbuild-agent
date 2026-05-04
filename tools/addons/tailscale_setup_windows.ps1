@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 $TS_BIN = "C:\Program Files\Tailscale\tailscale.exe"
 $INSTALLER_URL = "https://pkgs.tailscale.com/stable/tailscale-setup-1.96.3-amd64.msi"
@@ -37,10 +37,8 @@ while ($loginElapsed -lt $loginTimeout) {
         $tsArgs += $env:WARPBUILD_ADDON_TS_ARGS -split '\s+'
     }
 
-    $ErrorActionPreference = "Continue"
     $upOutput = & $TS_BIN @tsArgs 2>&1 | Out-String
     $upExit = $LASTEXITCODE
-    $ErrorActionPreference = "Stop"
 
     if ($upExit -eq 0) {
         Write-Host "[tailscale-addon] Tailscale is connected"
