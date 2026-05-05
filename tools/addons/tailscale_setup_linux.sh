@@ -32,7 +32,7 @@ login_timeout=30
 login_elapsed=0
 while [ $login_elapsed -lt $login_timeout ]; do
   if sudo tailscale up \
-    --hostname="warpbuild-${WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID}" \
+    --hostname="${WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID}" \
     --client-id="${WARPBUILD_ADDON_TS_CLIENT_ID}" \
     --id-token="${WARPBUILD_ADDON_TS_OIDC_TOKEN}" \
     ${WARPBUILD_ADDON_TS_ARGS:-} 2>&1; then
