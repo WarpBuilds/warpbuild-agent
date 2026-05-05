@@ -33,7 +33,7 @@ $loginElapsed = 0
 while ($loginElapsed -lt $loginTimeout) {
     $tsArgs = @(
         "up",
-        "--hostname=warpbuild-$env:WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID",
+        "--hostname=$env:WARPBUILD_ADDON_TS_RUNNER_INSTANCE_ID",
         "--client-id=$env:WARPBUILD_ADDON_TS_CLIENT_ID",
         "--id-token=$env:WARPBUILD_ADDON_TS_OIDC_TOKEN"
     )
