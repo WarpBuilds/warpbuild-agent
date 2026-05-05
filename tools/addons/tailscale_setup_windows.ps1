@@ -47,7 +47,7 @@ while ($loginElapsed -lt $loginTimeout) {
 
     if ($upExit -eq 0) {
         Write-Host "[tailscale-addon] Tailscale is connected"
-        & $TS_BIN status 2>&1 | ForEach-Object { Write-Host "[tailscale-addon]   $_" }
+        & $TS_BIN status --peers=false 2>&1 | ForEach-Object { Write-Host "[tailscale-addon]   $_" }
         Write-Host "[tailscale-addon] Tailscale setup complete"
         exit 0
     }

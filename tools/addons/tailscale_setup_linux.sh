@@ -37,7 +37,7 @@ while [ $login_elapsed -lt $login_timeout ]; do
     --id-token="${WARPBUILD_ADDON_TS_OIDC_TOKEN}" \
     ${WARPBUILD_ADDON_TS_ARGS:-} 2>&1; then
     echo "[tailscale-addon] Tailscale is connected"
-    sudo tailscale status || true
+    sudo tailscale status --peers=false || true
     echo "[tailscale-addon] Tailscale setup complete"
     exit 0
   fi
