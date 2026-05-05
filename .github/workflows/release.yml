@@ -32,8 +32,8 @@ jobs:
 
   goreleaser-prerelease:
     runs-on: warp-ubuntu-latest-x64-16x
-    # Only run if push to branch
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
+    # Disabled: use release-testing.yaml for branch builds instead
+    if: false
     steps:
       - name: Check out code
         uses: actions/checkout@v4

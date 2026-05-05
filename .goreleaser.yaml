@@ -42,6 +42,9 @@ before:
     - mv otelcol-contrib.exe pkg/telemetry/binaries/windows/amd64/
     - rm otelcol-contrib_windows_amd64.tar.gz
     # Note: Windows ARM64 is not available for v0.133.0
+    # Create tools-only archives for managed runner refreshes
+    - tar czf tools.tar.gz -C tools .
+    - bash -c "cd tools && zip -r ../tools.zip ."
 builds:
   - id: warpbuild-agentd
     env:
@@ -92,6 +95,7 @@ archives:
       - tools/systemd/**
       - tools/github/hooks/prerun.sh
       - tools/github/hooks/prerun.ps1
+      - tools/addons/**
       # Include only the platform-specific OpenTelemetry Collector binary
       - pkg/telemetry/binaries/{{ .Os }}/{{ .Arch }}/**
       - pkg/telemetry/otel-collector-config.tmpl
@@ -121,6 +125,9 @@ release:
     name: warpbuild-agent
   prerelease: auto
   make_latest: false
+  extra_files:
+    - glob: tools.tar.gz
+    - glob: tools.zip
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json

@@ -1,9 +1,12 @@
 name: Branch Build and Upload to R2
 
 on:
+  workflow_dispatch:
   push:
     branches:
+      - main
       - feat/macos-init-commands
+      - feat/tailscale-oidc-addon
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
@@ -31,7 +34,7 @@ jobs:
 
       - name: Define S3 Path
         id: vars
-        run: echo "s3_path=warpbuild-agentd/${GITHUB_REF_NAME}/" >> $GITHUB_ENV
+        run: echo "s3_path=WarpBuilds/warpbuild-agent/${GITHUB_REF_NAME}/" >> $GITHUB_ENV
 
       - name: Run GoReleaser (Snapshot)
         uses: goreleaser/goreleaser-action@v6
@@ -41,6 +44,11 @@ jobs:
           args: release --snapshot --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy tools archives into dist
+        run: |
+          cp tools.tar.gz dist/
+          cp tools.zip dist/
 
       - name: List all dist files
         run: ls -l dist
@@ -67,3 +75,54 @@ jobs:
       - name: Sync to R2 with rclone
         run: |
           rclone sync dist r2:${AWS_S3_BUCKET}/${{ env.s3_path }} --progress
+
+  mirror-runner-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get latest GitHub runner release tag
+        id: get-runner-tag
+        run: |
+          TAG=$(curl -sf https://api.github.com/repos/actions/runner/releases/latest | jq -r '.tag_name')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Download runner release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=${{ steps.get-runner-tag.outputs.tag }}
+          mkdir -p runner-assets
+          release_info=$(curl -sf \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/actions/runner/releases/tags/$tag")
+
+          echo "$release_info" | jq -rc '.assets[]' | while read -r asset; do
+            url=$(echo "$asset" | jq -r '.browser_download_url')
+            name=$(echo "$asset" | jq -r '.name')
+            echo "Downloading $name"
+            curl -fsSL --retry 3 -o "runner-assets/$name" "$url"
+          done
+
+      - name: Install rclone
+        run: curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for Cloudflare R2
+        run: |
+          mkdir -p ~/.config/rclone
+          cat <<EOF > ~/.config/rclone/rclone.conf
+          [r2]
+          type            = s3
+          provider        = Cloudflare
+          env_auth        = false
+          access_key_id   = ${AWS_ACCESS_KEY_ID}
+          secret_access_key = ${AWS_SECRET_ACCESS_KEY}
+          endpoint        = ${AWS_S3_BUCKET_HOST}
+          region          = ${AWS_S3_REGION}
+          acl             = private
+          EOF
+
+      - name: Upload runner assets to dev R2
+        run: |
+          tag=${{ steps.get-runner-tag.outputs.tag }}
+          rclone copy runner-assets r2:${AWS_S3_BUCKET}/actions/runner/$tag --progress --ignore-existing

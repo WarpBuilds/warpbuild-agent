@@ -84,4 +84,48 @@ fi
 
 rm warpbuild_body.json
 
+# Execute addon setup scripts returned by the backend
+TOOLS_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+
+if [ -f warpbuild_response ]; then
+  script_count=$(jq -r '.setup_scripts | length // empty' warpbuild_response 2>/dev/null || echo "0")
+  [ -z "$script_count" ] && script_count=0
+
+  if [ "$script_count" -gt 0 ]; then
+    echo -e "\nExecuting $script_count addon setup script(s)..."
+    for i in $(seq 0 $((script_count - 1))); do
+      script_name=$(jq -r ".setup_scripts[$i].name // \"addon-$i\"" warpbuild_response 2>/dev/null || echo "addon-$i")
+      script_path=$(jq -r ".setup_scripts[$i].script_path // empty" warpbuild_response 2>/dev/null || true)
+
+      echo -e "\n[addon:$script_name] Starting..."
+
+      addon_script="${TOOLS_DIR}/${script_path}"
+      if [ -z "$script_path" ] || [ ! -f "$addon_script" ]; then
+        echo "[addon:$script_name] FAILED: script not found at $addon_script"
+        exit 1
+      fi
+
+      # Run addon in subshell so env vars don't leak to parent
+      chmod +x "$addon_script"
+      (
+        env_keys=$(jq -r ".setup_scripts[$i].env // {} | keys[]" warpbuild_response 2>/dev/null || true)
+        for key in $env_keys; do
+          val=$(jq -r ".setup_scripts[$i].env[\"$key\"]" warpbuild_response 2>/dev/null || true)
+          export "$key=$val"
+        done
+        bash "$addon_script"
+      )
+      addon_exit=$?
+
+      if [ $addon_exit -ne 0 ]; then
+        echo "[addon:$script_name] FAILED with exit code $addon_exit"
+        exit 1
+      fi
+      echo "[addon:$script_name] Completed successfully."
+    done
+  fi
+fi
+
+rm -f warpbuild_response
+
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
