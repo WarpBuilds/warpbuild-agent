@@ -141,6 +141,9 @@ if ($response -and $response.Content) {
     }
 }
 
+Write-Host "Checking for user-defined pre-hook script..."
+$hookCheckTimer = [System.Diagnostics.Stopwatch]::StartNew()
+
 $byocPreHook = $env:WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED
 if ($byocPreHook) {
     Write-Host "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byocPreHook"
@@ -161,5 +164,8 @@ if ($byocPreHook) {
     }
     Write-Host "User-defined pre-hook completed successfully."
 }
+
+$hookCheckTimer.Stop()
+Write-Host ("Done checking. Time taken: {0:N0}μs" -f ($hookCheckTimer.Elapsed.TotalMilliseconds * 1000))
 
 Write-Host "`nPrehook for WarpBuild runner instance '$env:RUNNER_NAME' completed successfully."
