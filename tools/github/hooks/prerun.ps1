@@ -141,4 +141,25 @@ if ($response -and $response.Content) {
     }
 }
 
+$byocPreHook = $env:WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED
+if ($byocPreHook) {
+    Write-Host "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byocPreHook"
+    if (-not (Test-Path -Path $byocPreHook -PathType Leaf)) {
+        Write-Host "User-defined pre-hook script not found at: $byocPreHook"
+        exit 1
+    }
+    Write-Host "Executing user-defined pre-hook"
+    if ($byocPreHook -match '\.ps1$') {
+        & powershell -ExecutionPolicy Bypass -File $byocPreHook
+    } else {
+        & cmd.exe /c $byocPreHook
+    }
+    $hookExitCode = $LASTEXITCODE
+    if ($hookExitCode -ne 0) {
+        Write-Host "User-defined pre-hook exited with non-zero status: $hookExitCode"
+        exit $hookExitCode
+    }
+    Write-Host "User-defined pre-hook completed successfully."
+}
+
 Write-Host "`nPrehook for WarpBuild runner instance '$env:RUNNER_NAME' completed successfully."
