@@ -129,3 +129,20 @@ fi
 rm -f warpbuild_response
 
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
+
+byoc_pre_hook="$WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED"
+if [ -n "$byoc_pre_hook" ]; then
+    echo "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byoc_pre_hook"
+    if [ -f "$byoc_pre_hook" ] && [ -x "$byoc_pre_hook" ]; then
+        echo "Executing user-defined pre-hook"
+        "$byoc_pre_hook"
+        hook_exit_code=$?
+        if [ $hook_exit_code -ne 0 ]; then
+            echo "User-defined pre-hook exited with non-zero status: $hook_exit_code"
+            exit $hook_exit_code
+        fi
+        echo "User-defined pre-hook completed successfully."
+    else
+        echo "User-defined pre-hook script is not a valid executable file. Skipping."
+    fi
+fi
