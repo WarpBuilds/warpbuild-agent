@@ -145,7 +145,7 @@ if ($response -and $response.Content) {
 # See: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/run-scripts
 $byocPreHook = $env:WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED
 if ($byocPreHook) {
-    Write-Host "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byocPreHook"
+    Write-Host "`nWARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED is set to: $byocPreHook"
 
     if (-not [System.IO.Path]::IsPathRooted($byocPreHook)) {
         Write-Host "User-defined pre-hook script path must be absolute: $byocPreHook"
@@ -177,10 +177,8 @@ if ($byocPreHook) {
         Write-Host "User-defined pre-hook script has an unsupported extension. Supported: .sh, .ps1"
         exit 1
     }
-    $hookExitCode = $LASTEXITCODE
-    if ($hookExitCode -ne 0) {
-        Write-Host "User-defined pre-hook exited with non-zero status: $hookExitCode"
-        exit $hookExitCode
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
     }
     Write-Host "User-defined pre-hook completed successfully."
 }
