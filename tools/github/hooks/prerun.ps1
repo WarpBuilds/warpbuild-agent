@@ -141,18 +141,41 @@ if ($response -and $response.Content) {
     }
 }
 
+# BYOC substitute to ACTIONS_RUNNER_HOOK_JOB_STARTED
+# See: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/run-scripts
 $byocPreHook = $env:WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED
 if ($byocPreHook) {
     Write-Host "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byocPreHook"
+
+    if (-not [System.IO.Path]::IsPathRooted($byocPreHook)) {
+        Write-Host "User-defined pre-hook script path must be absolute: $byocPreHook"
+        exit 1
+    }
+
     if (-not (Test-Path -Path $byocPreHook -PathType Leaf)) {
         Write-Host "User-defined pre-hook script not found at: $byocPreHook"
         exit 1
     }
+
     Write-Host "Executing user-defined pre-hook"
-    if ($byocPreHook -match '\.ps1$') {
-        & powershell -ExecutionPolicy Bypass -File $byocPreHook
+    $hookExt = [System.IO.Path]::GetExtension($byocPreHook).ToLowerInvariant()
+    if ($hookExt -eq '.ps1') {
+        $hookCommand = ". '$byocPreHook'"
+        if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+            & pwsh -command $hookCommand
+        } else {
+            & powershell -command $hookCommand
+        }
+    } elseif ($hookExt -eq '.sh') {
+        if (Get-Command bash -ErrorAction SilentlyContinue) {
+            & bash --noprofile --norc -e -o pipefail $byocPreHook
+        } else {
+            Write-Host "Cannot run .sh pre-hook: bash is not installed."
+            exit 1
+        }
     } else {
-        & cmd.exe /c $byocPreHook
+        Write-Host "User-defined pre-hook script has an unsupported extension. Supported: .sh, .ps1"
+        exit 1
     }
     $hookExitCode = $LASTEXITCODE
     if ($hookExitCode -ne 0) {

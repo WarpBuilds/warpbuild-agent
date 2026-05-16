@@ -128,20 +128,41 @@ fi
 
 rm -f warpbuild_response
 
+# BYOC substitute to ACTIONS_RUNNER_HOOK_JOB_STARTED
+# See: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/run-scripts
 byoc_pre_hook="$WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED"
 if [ -n "$byoc_pre_hook" ]; then
     echo "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byoc_pre_hook"
+
+    if [ "${byoc_pre_hook:0:1}" != "/" ]; then
+        echo "User-defined pre-hook script path must be absolute: $byoc_pre_hook"
+        exit 1
+    fi
+
     if [ ! -f "$byoc_pre_hook" ]; then
         echo "User-defined pre-hook script not found at: $byoc_pre_hook"
         exit 1
     fi
-    if [ ! -x "$byoc_pre_hook" ]; then
-        echo "User-defined pre-hook script is not executable: $byoc_pre_hook"
-        echo "Run 'chmod +x $byoc_pre_hook' when building your image."
+
+    echo "Executing user-defined pre-hook"
+    hook_ext="${byoc_pre_hook##*.}"
+    if [ "$hook_ext" = "sh" ]; then
+        if command -v bash >/dev/null 2>&1; then
+            bash --noprofile --norc -e -o pipefail "$byoc_pre_hook"
+        else
+            sh -e "$byoc_pre_hook"
+        fi
+    elif [ "$hook_ext" = "ps1" ]; then
+        if command -v pwsh >/dev/null 2>&1; then
+            pwsh -command ". '$byoc_pre_hook'"
+        else
+            echo "Cannot run .ps1 pre-hook: pwsh is not installed."
+            exit 1
+        fi
+    else
+        echo "User-defined pre-hook script has an unsupported extension. Supported: .sh, .ps1"
         exit 1
     fi
-    echo "Executing user-defined pre-hook"
-    "$byoc_pre_hook"
     hook_exit_code=$?
     if [ $hook_exit_code -ne 0 ]; then
         echo "User-defined pre-hook exited with non-zero status: $hook_exit_code"
