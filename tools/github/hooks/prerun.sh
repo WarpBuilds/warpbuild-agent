@@ -128,9 +128,6 @@ fi
 
 rm -f warpbuild_response
 
-echo "Checking for user-defined pre-hook script..."
-hook_check_start_ns=$(date +%s%N)
-
 byoc_pre_hook="$WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED"
 if [ -n "$byoc_pre_hook" ]; then
     echo "Found user-defined pre-hook script (WARPBUILD_ACTIONS_RUNNER_HOOK_JOB_STARTED): $byoc_pre_hook"
@@ -152,7 +149,5 @@ if [ -n "$byoc_pre_hook" ]; then
     fi
     echo "User-defined pre-hook completed successfully."
 fi
-
-echo "Done checking. Time taken: $(( ($(date +%s%N) - hook_check_start_ns) / 1000 ))μs"
 
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
