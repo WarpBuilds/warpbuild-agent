@@ -24,6 +24,7 @@ type CommonsRunnerInstanceAllocationDetails struct {
 	RunnerApplication *string `json:"runner_application,omitempty"`
 	RunnerInstance *CommonsRunnerInstance `json:"runner_instance,omitempty"`
 	Status *string `json:"status,omitempty"`
+	ClaudeAgentApplicationDetails *CommonsClaudeAgentApplicationDetails `json:"claude_agent_application_details,omitempty"`
 	TelemetryEnabled *bool `json:"telemetry_enabled,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -175,6 +176,38 @@ func (o *CommonsRunnerInstanceAllocationDetails) SetStatus(v string) {
 	o.Status = &v
 }
 
+// GetClaudeAgentApplicationDetails returns the ClaudeAgentApplicationDetails field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetClaudeAgentApplicationDetails() CommonsClaudeAgentApplicationDetails {
+	if o == nil || IsNil(o.ClaudeAgentApplicationDetails) {
+		var ret CommonsClaudeAgentApplicationDetails
+		return ret
+	}
+	return *o.ClaudeAgentApplicationDetails
+}
+
+// GetClaudeAgentApplicationDetailsOk returns a tuple with the ClaudeAgentApplicationDetails field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) GetClaudeAgentApplicationDetailsOk() (*CommonsClaudeAgentApplicationDetails, bool) {
+	if o == nil || IsNil(o.ClaudeAgentApplicationDetails) {
+		return nil, false
+	}
+	return o.ClaudeAgentApplicationDetails, true
+}
+
+// HasClaudeAgentApplicationDetails returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasClaudeAgentApplicationDetails() bool {
+	if o != nil && !IsNil(o.ClaudeAgentApplicationDetails) {
+		return true
+	}
+
+	return false
+}
+
+// SetClaudeAgentApplicationDetails gets a reference to the given CommonsClaudeAgentApplicationDetails and assigns it to the ClaudeAgentApplicationDetails field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetClaudeAgentApplicationDetails(v CommonsClaudeAgentApplicationDetails) {
+	o.ClaudeAgentApplicationDetails = &v
+}
+
 // GetTelemetryEnabled returns the TelemetryEnabled field value if set, zero value otherwise.
 func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryEnabled() bool {
 	if o == nil || IsNil(o.TelemetryEnabled) {
@@ -229,6 +262,9 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
 	}
+	if !IsNil(o.ClaudeAgentApplicationDetails) {
+		toSerialize["claude_agent_application_details"] = o.ClaudeAgentApplicationDetails
+	}
 	if !IsNil(o.TelemetryEnabled) {
 		toSerialize["telemetry_enabled"] = o.TelemetryEnabled
 	}
@@ -258,6 +294,7 @@ func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (er
 		delete(additionalProperties, "runner_application")
 		delete(additionalProperties, "runner_instance")
 		delete(additionalProperties, "status")
+		delete(additionalProperties, "claude_agent_application_details")
 		delete(additionalProperties, "telemetry_enabled")
 		o.AdditionalProperties = additionalProperties
 	}

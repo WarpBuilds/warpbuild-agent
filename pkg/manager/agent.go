@@ -121,6 +121,24 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			// TODO: verify the correct status
 			if *allocationDetails.Status == "assigned" {
 
+				// Claude managed-agent sandbox: the VM boots from the generic runner image
+				// (settings.provider=github), and the backend decides the runner application
+				// at allocation. Run the Anthropic self-hosted worker instead of a GitHub runner.
+				if allocationDetails.RunnerApplication != nil && *allocationDetails.RunnerApplication == string(ProviderClaudeAgent) {
+					startRunnerOutput, err := a.startClaudeAgent(ctx, allocationDetails)
+					if err != nil {
+						log.Logger().Errorf("failed to start claude agent worker: %v", err)
+						return err
+					}
+					if startRunnerOutput.RunCompletedSuccessfully {
+						if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
+							log.Logger().Errorf("failed to write exit file: %v", err)
+							return err
+						}
+					}
+					continue
+				}
+
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
 					os.Setenv(key, val)
@@ -174,6 +192,34 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 		}
 	}
 
+}
+
+func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) (*StartRunnerOutput, error) {
+	details := allocationDetails.ClaudeAgentApplicationDetails
+	if details == nil {
+		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
+	}
+
+	// Export the Anthropic identity for the worker process. The environment key is a
+	// secret: it is set in-process only and intentionally not logged.
+	if details.EnvId != nil {
+		os.Setenv("ANTHROPIC_ENVIRONMENT_ID", *details.EnvId)
+	}
+	if details.EnvKey != nil {
+		os.Setenv("ANTHROPIC_ENVIRONMENT_KEY", *details.EnvKey)
+	}
+	if details.SessionId != nil {
+		os.Setenv("ANTHROPIC_SESSION_ID", *details.SessionId)
+	}
+
+	sessionId := ""
+	if details.SessionId != nil {
+		sessionId = *details.SessionId
+	}
+	log.Logger().Infof("Starting Claude managed-agent worker for session %s", sessionId)
+
+	m := NewClaudeManager(DefaultClaudeOptions())
+	return m.StartRunner(ctx, &StartRunnerOptions{AgentOptions: a.opts})
 }
 
 func (a *agentImpl) writeExitFile(ctx context.Context, opts *StartRunnerOutput) error {
