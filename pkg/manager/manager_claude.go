@@ -172,20 +172,14 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 		case <-doneChan:
 			wg.Wait()
 
-			// Run post-end hooks (the cleanup hook tears the VM down) — same lifecycle
-			// as the github manager.
-			for _, hook := range GetHooks[IPostEndHook]() {
-				if err := hook.PostEndHook(ctx, &PostEndHookOptions{
-					StartRunnerOptions: opts,
-					ManagerOptions:     managerOpts,
-				}); err != nil {
-					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
-				}
-			}
-
-			return &StartRunnerOutput{
-				RunCompletedSuccessfully: true,
-			}, nil
+			// DEBUG (temporary): the worker (`ant beta:worker run`) has exited. Normally the post-end
+			// hooks run here and the cleanup hook tears the VM down immediately — which kills the VM at
+			// ~15s, before its 60s telemetry can push. To debug the tool-execution issue we SKIP the
+			// teardown and block, so the VM stays alive (telemetry keeps pushing, it can be SSH'd /
+			// consoled) until the backend idle-TTL reaper reclaims it (~30m). Restore the post-end hook
+			// loop + return below to return to the normal lifecycle.
+			log.Logger().Warnf("[DEBUG] claude worker exited; SKIPPING teardown and keeping the VM alive for inspection (idle-TTL reaper will reclaim it)")
+			select {} // block forever so the agentd stays up and the VM is not reaped on worker exit
 		}
 	}
 }
