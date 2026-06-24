@@ -23,6 +23,7 @@ type CommonsClaudeAgentApplicationDetails struct {
 	EnvId *string `json:"env_id,omitempty"`
 	EnvKey *string `json:"env_key,omitempty"`
 	SessionId *string `json:"session_id,omitempty"`
+	MaxIdle *string `json:"max_idle,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -141,6 +142,38 @@ func (o *CommonsClaudeAgentApplicationDetails) SetSessionId(v string) {
 	o.SessionId = &v
 }
 
+// GetMaxIdle returns the MaxIdle field value if set, zero value otherwise.
+func (o *CommonsClaudeAgentApplicationDetails) GetMaxIdle() string {
+	if o == nil || IsNil(o.MaxIdle) {
+		var ret string
+		return ret
+	}
+	return *o.MaxIdle
+}
+
+// GetMaxIdleOk returns a tuple with the MaxIdle field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsClaudeAgentApplicationDetails) GetMaxIdleOk() (*string, bool) {
+	if o == nil || IsNil(o.MaxIdle) {
+		return nil, false
+	}
+	return o.MaxIdle, true
+}
+
+// HasMaxIdle returns a boolean if a field has been set.
+func (o *CommonsClaudeAgentApplicationDetails) HasMaxIdle() bool {
+	if o != nil && !IsNil(o.MaxIdle) {
+		return true
+	}
+
+	return false
+}
+
+// SetMaxIdle gets a reference to the given string and assigns it to the MaxIdle field.
+func (o *CommonsClaudeAgentApplicationDetails) SetMaxIdle(v string) {
+	o.MaxIdle = &v
+}
+
 func (o CommonsClaudeAgentApplicationDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -159,6 +192,9 @@ func (o CommonsClaudeAgentApplicationDetails) ToMap() (map[string]interface{}, e
 	}
 	if !IsNil(o.SessionId) {
 		toSerialize["session_id"] = o.SessionId
+	}
+	if !IsNil(o.MaxIdle) {
+		toSerialize["max_idle"] = o.MaxIdle
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -185,6 +221,7 @@ func (o *CommonsClaudeAgentApplicationDetails) UnmarshalJSON(bytes []byte) (err 
 		delete(additionalProperties, "env_id")
 		delete(additionalProperties, "env_key")
 		delete(additionalProperties, "session_id")
+		delete(additionalProperties, "max_idle")
 		o.AdditionalProperties = additionalProperties
 	}
 

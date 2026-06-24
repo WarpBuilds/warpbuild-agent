@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -25,15 +26,35 @@ type ClaudeOptions struct {
 	StderrFile string   `json:"stderr_file"`
 }
 
-// DefaultClaudeOptions runs `ant beta:worker run --workdir /workspace`. `ant` (the
-// Anthropic CLI) must be present in the runner image / on PATH.
-func DefaultClaudeOptions() *ClaudeOptions {
+// anthropicWorkerMaxIdle is the FALLBACK --max-idle for `ant beta:worker run`, used only when the
+// backend's allocation_details doesn't supply one (e.g. an older backend). Normally the value comes
+// from the backend (sandbox.idle_ttl_seconds) via DefaultClaudeOptions, so the worker self-terminates
+// on the same threshold the idle-TTL reaper backstops. ant's own default is 60s.
+const anthropicWorkerMaxIdle = "300s"
+
+// DefaultClaudeOptions runs `ant beta:worker run --workdir /workspace --max-idle <maxIdle>`. maxIdle
+// is supplied by the backend's allocation_details (sandbox.idle_ttl_seconds), which the agent polls
+// before starting the worker; empty falls back to anthropicWorkerMaxIdle. `ant` (the Anthropic CLI)
+// is installed on demand by StartRunner (see ensureAnthropicWorkerInstalled), so it does not need to
+// be baked into the runner image.
+func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
+	if maxIdle == "" {
+		maxIdle = anthropicWorkerMaxIdle
+	}
+	workdir := "/workspace"
+	stdout := "/var/log/warpbuild-agentd/runner.claude.stdout.log"
+	stderr := "/var/log/warpbuild-agentd/runner.claude.stderr.log"
+	if runtime.GOOS == "windows" {
+		workdir = `C:\workspace`
+		stdout = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
+		stderr = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
+	}
 	return &ClaudeOptions{
-		Command:    "ant",
-		Args:       []string{"beta:worker", "run", "--workdir", "/workspace"},
-		Workdir:    "/workspace",
-		StdoutFile: "/var/log/warpbuild-agentd/runner.claude.stdout.log",
-		StderrFile: "/var/log/warpbuild-agentd/runner.claude.stderr.log",
+		Command:    anthropicWorkerBinary,
+		Args:       []string{"beta:worker", "run", "--workdir", workdir, "--max-idle", maxIdle},
+		Workdir:    workdir,
+		StdoutFile: stdout,
+		StderrFile: stderr,
 	}
 }
 
@@ -52,7 +73,19 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 		return nil, err
 	}
 
-	cmd := exec.CommandContext(ctx, m.Command, m.Args...)
+	// claude_agent sandbox VMs boot the generic runner image, which does not ship the
+	// Anthropic CLI. Install it on demand (a single cross-OS path) and run it by absolute
+	// path. A non-default Command is treated as an explicit override and left untouched.
+	command := m.Command
+	if command == anthropicWorkerBinary {
+		antPath, err := ensureAnthropicWorkerInstalled(ctx)
+		if err != nil {
+			return nil, err
+		}
+		command = antPath
+	}
+
+	cmd := exec.CommandContext(ctx, command, m.Args...)
 	if m.Workdir != "" {
 		cmd.Dir = m.Workdir
 	}
@@ -150,6 +183,12 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 }
 
 func (m *claudeManager) createFiles() error {
+	if m.Workdir != "" {
+		if err := os.MkdirAll(m.Workdir, 0755); err != nil {
+			log.Logger().Errorf("Failed to create workdir %s: %v", m.Workdir, err)
+			return err
+		}
+	}
 	for _, fullPath := range []string{m.StderrFile, m.StdoutFile} {
 		baseDir := filepath.Dir(fullPath)
 		if _, err := os.Stat(baseDir); os.IsNotExist(err) {
