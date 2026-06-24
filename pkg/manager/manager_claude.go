@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +24,7 @@ type ClaudeOptions struct {
 	Command    string   `json:"command"`
 	Args       []string `json:"args"`
 	Workdir    string   `json:"workdir"`
+	OutputsDir string   `json:"outputs_dir"`
 	StdoutFile string   `json:"stdout_file"`
 	StderrFile string   `json:"stderr_file"`
 }
@@ -42,10 +45,14 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 		maxIdle = anthropicWorkerMaxIdle
 	}
 	workdir := "/workspace"
+	// /mnt/session/outputs is where the worker harness has Claude write final deliverables (the docs'
+	// system default for self-hosted sandbox mode). Linux-pathed; left empty on Windows.
+	outputsDir := "/mnt/session/outputs"
 	stdout := "/var/log/warpbuild-agentd/runner.claude.stdout.log"
 	stderr := "/var/log/warpbuild-agentd/runner.claude.stderr.log"
 	if runtime.GOOS == "windows" {
 		workdir = `C:\workspace`
+		outputsDir = ""
 		stdout = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
 		stderr = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
 	}
@@ -53,6 +60,7 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 		Command:    anthropicWorkerBinary,
 		Args:       []string{"beta:worker", "run", "--workdir", workdir, "--max-idle", maxIdle},
 		Workdir:    workdir,
+		OutputsDir: outputsDir,
 		StdoutFile: stdout,
 		StderrFile: stderr,
 	}
@@ -183,20 +191,23 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 }
 
 func (m *claudeManager) createFiles() error {
-	if m.Workdir != "" {
-		if err := os.MkdirAll(m.Workdir, 0755); err != nil {
-			log.Logger().Errorf("Failed to create workdir %s: %v", m.Workdir, err)
+	// The worker runs as the non-root `runner`. /workspace and /mnt/session/outputs are Anthropic-
+	// documented paths it must use (they can't be relocated), and its stdout/stderr live under a log
+	// dir — all at locations `runner` can't create under the filesystem root. ensureWritableDir creates
+	// each and hands ownership to the current user, escalating via the sandbox VM's passwordless sudo on
+	// a unix permission error. All idempotent.
+	seen := map[string]bool{}
+	for _, dir := range []string{m.Workdir, m.OutputsDir, filepath.Dir(m.StdoutFile), filepath.Dir(m.StderrFile)} {
+		if dir == "" || dir == "." || seen[dir] {
+			continue
+		}
+		seen[dir] = true
+		if err := ensureWritableDir(dir); err != nil {
+			log.Logger().Errorf("Failed to provision claude worker dir %s: %v", dir, err)
 			return err
 		}
 	}
 	for _, fullPath := range []string{m.StderrFile, m.StdoutFile} {
-		baseDir := filepath.Dir(fullPath)
-		if _, err := os.Stat(baseDir); os.IsNotExist(err) {
-			if err := os.MkdirAll(baseDir, 0755); err != nil {
-				log.Logger().Errorf("Failed to create base directory %s: %v", baseDir, err)
-				return err
-			}
-		}
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 			f, err := os.Create(fullPath)
 			if err != nil {
@@ -205,6 +216,32 @@ func (m *claudeManager) createFiles() error {
 			}
 			f.Close()
 		}
+	}
+	return nil
+}
+
+// ensureWritableDir makes dir exist and writable by the current (non-root worker) user. It tries a
+// direct MkdirAll first — which succeeds on Windows, when the user already has permission, or when the
+// dir already exists — and on a unix permission error escalates via the sandbox VM's passwordless sudo,
+// creating the dir as root and chowning it back to the current user. Idempotent.
+func ensureWritableDir(dir string) error {
+	if dir == "" {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0o755); err == nil {
+		return nil
+	} else if runtime.GOOS == "windows" || !os.IsPermission(err) {
+		return err
+	}
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	if out, err := exec.Command("sudo", "-n", "mkdir", "-p", dir).CombinedOutput(); err != nil {
+		return fmt.Errorf("sudo mkdir -p %s: %w (%s)", dir, err, strings.TrimSpace(string(out)))
+	}
+	if out, err := exec.Command("sudo", "-n", "chown", u.Username, dir).CombinedOutput(); err != nil {
+		return fmt.Errorf("sudo chown %s %s: %w (%s)", u.Username, dir, err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

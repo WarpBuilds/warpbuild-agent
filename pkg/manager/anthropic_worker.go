@@ -125,8 +125,10 @@ func resolveAnthropicWorkerVersion() string {
 	return defaultAnthropicWorkerVersion
 }
 
-// anthropicWorkerInstallDir is a writable, conventional bin dir per OS. The worker is invoked
-// by its absolute install path, so this dir does not need to be on PATH.
+// anthropicWorkerInstallDir is a writable, conventional bin dir per OS. The worker is invoked by its
+// absolute install path, so this dir does not need to be on PATH. It must be writable by the non-root
+// `runner` the worker runs as, so on unix we use a dir under the user's home rather than /usr/local/bin
+// (which only root can write). Falls back to TempDir if HOME is unavailable.
 func anthropicWorkerInstallDir() string {
 	if runtime.GOOS == "windows" {
 		if pd := os.Getenv("ProgramData"); pd != "" {
@@ -134,7 +136,10 @@ func anthropicWorkerInstallDir() string {
 		}
 		return filepath.Join(os.TempDir(), "warpbuild", "bin")
 	}
-	return "/usr/local/bin"
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		return filepath.Join(home, ".warpbuild", "bin")
+	}
+	return filepath.Join(os.TempDir(), "warpbuild", "bin")
 }
 
 func downloadToTempFile(ctx context.Context, url string) (string, error) {
