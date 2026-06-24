@@ -139,6 +139,11 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 					continue
 				}
 
+				if allocationDetails.GhRunnerApplicationDetails == nil || allocationDetails.GhRunnerApplicationDetails.Variables == nil {
+					log.Logger().Warnf("assigned allocation missing GitHub runner application details; retrying in %s", Interval)
+					continue
+				}
+
 				log.Logger().Infof("Setting additonal environment variables")
 				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
 					os.Setenv(key, val)

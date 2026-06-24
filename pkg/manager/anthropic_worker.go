@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -20,7 +19,7 @@ import (
 
 const (
 	// anthropicWorkerBinary is the Anthropic CLI that runs the self-hosted worker
-	// (`ant beta:worker run`). exec.LookPath resolves it to ant.exe on Windows.
+	// (`ant beta:worker run`). workerAssetForPlatform appends .exe on Windows.
 	anthropicWorkerBinary = "ant"
 
 	// defaultAnthropicWorkerVersion is the pinned `ant` release installed on sandbox VMs.
@@ -52,19 +51,23 @@ type workerAsset struct {
 // worker on demand. Single cross-OS path (Linux/macOS/Windows); idempotent: if `ant` already
 // resolves (baked image, a prior run, or a retry) it is used as-is.
 func ensureAnthropicWorkerInstalled(ctx context.Context) (string, error) {
-	if path, err := exec.LookPath(anthropicWorkerBinary); err == nil {
-		log.Logger().Infof("anthropic worker CLI already present at %s", path)
-		return path, nil
-	}
-
 	asset, err := workerAssetForPlatform()
 	if err != nil {
 		return "", err
 	}
+	dst := filepath.Join(anthropicWorkerInstallDir(), asset.binary)
+
+	// Idempotent: reuse the binary WE installed on a prior run/retry. We deliberately do NOT use
+	// exec.LookPath("ant") — on the generic runner image /usr/bin/ant is Apache Ant (the Java build
+	// tool). Invoking that with `beta:worker run …` just prints Ant's usage and exits, so the worker
+	// never connects. Always resolve the Anthropic CLI by our own install path instead.
+	if _, statErr := os.Stat(dst); statErr == nil {
+		log.Logger().Infof("anthropic worker CLI already installed at %s", dst)
+		return dst, nil
+	}
 
 	version := resolveAnthropicWorkerVersion()
 	url := fmt.Sprintf("%s/v%s/ant_%s_%s_%s.%s", anthropicCLIDownloadBase, version, version, asset.osToken, asset.arch, asset.ext)
-	installDir := anthropicWorkerInstallDir()
 
 	log.Logger().Infof("installing anthropic worker CLI v%s from %s", version, url)
 
@@ -74,10 +77,9 @@ func ensureAnthropicWorkerInstalled(ctx context.Context) (string, error) {
 	}
 	defer os.Remove(archivePath)
 
-	if err := os.MkdirAll(installDir, 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return "", err
 	}
-	dst := filepath.Join(installDir, asset.binary)
 
 	switch asset.ext {
 	case extTarGz:
