@@ -216,6 +216,12 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	if details.SessionId != nil {
 		os.Setenv("ANTHROPIC_SESSION_ID", *details.SessionId)
 	}
+	// ANTHROPIC_WORK_ID is the work item backend-core claimed off the env queue; `ant beta:worker run`
+	// requires it (exits with `Required flag "work-id" not set` otherwise) to attach to and heartbeat
+	// the lease for this specific work.
+	if details.WorkId != nil {
+		os.Setenv("ANTHROPIC_WORK_ID", *details.WorkId)
+	}
 
 	sessionId := ""
 	if details.SessionId != nil {

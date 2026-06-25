@@ -23,6 +23,7 @@ type CommonsClaudeAgentApplicationDetails struct {
 	EnvId *string `json:"env_id,omitempty"`
 	EnvKey *string `json:"env_key,omitempty"`
 	SessionId *string `json:"session_id,omitempty"`
+	WorkId *string `json:"work_id,omitempty"`
 	MaxIdle *string `json:"max_idle,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -193,6 +194,9 @@ func (o CommonsClaudeAgentApplicationDetails) ToMap() (map[string]interface{}, e
 	if !IsNil(o.SessionId) {
 		toSerialize["session_id"] = o.SessionId
 	}
+	if !IsNil(o.WorkId) {
+		toSerialize["work_id"] = o.WorkId
+	}
 	if !IsNil(o.MaxIdle) {
 		toSerialize["max_idle"] = o.MaxIdle
 	}
@@ -221,6 +225,7 @@ func (o *CommonsClaudeAgentApplicationDetails) UnmarshalJSON(bytes []byte) (err 
 		delete(additionalProperties, "env_id")
 		delete(additionalProperties, "env_key")
 		delete(additionalProperties, "session_id")
+		delete(additionalProperties, "work_id")
 		delete(additionalProperties, "max_idle")
 		o.AdditionalProperties = additionalProperties
 	}
