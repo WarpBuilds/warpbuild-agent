@@ -55,6 +55,15 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 		outputsDir = ""
 		stdout = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
 		stderr = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
+	} else if runtime.GOOS == "darwin" {
+		// macOS runners boot with a sealed, read-only system volume (SIP), so /workspace,
+		// /mnt/session/outputs and /var/log can't be created even via sudo. Anchor everything
+		// under the runner's home on the writable data volume instead.
+		home, _ := os.UserHomeDir()
+		workdir = filepath.Join(home, ".warpbuild", "workspace")
+		outputsDir = filepath.Join(home, ".warpbuild", "session-outputs")
+		stdout = filepath.Join(home, ".warpbuild", "agent", "log", "runner.claude.stdout.log")
+		stderr = filepath.Join(home, ".warpbuild", "agent", "log", "runner.claude.stderr.log")
 	}
 	return &ClaudeOptions{
 		Command:    anthropicWorkerBinary,
