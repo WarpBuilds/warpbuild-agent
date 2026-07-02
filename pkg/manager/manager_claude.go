@@ -27,6 +27,10 @@ type ClaudeOptions struct {
 	OutputsDir string   `json:"outputs_dir"`
 	StdoutFile string   `json:"stdout_file"`
 	StderrFile string   `json:"stderr_file"`
+	// Backend coordinates for uploading session deliverables (OutputsDir) to S3 when the worker exits.
+	HostURL          string `json:"host_url"`
+	PollingSecret    string `json:"polling_secret"`
+	RunnerInstanceID string `json:"runner_instance_id"`
 }
 
 // anthropicWorkerMaxIdle is the FALLBACK --max-idle for `ant beta:worker run`, used only when the
@@ -181,14 +185,22 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 		case <-doneChan:
 			wg.Wait()
 
-			// DEBUG (temporary): the worker (`ant beta:worker run`) has exited. Normally the post-end
-			// hooks run here and the cleanup hook tears the VM down immediately — which kills the VM at
-			// ~15s, before its 60s telemetry can push. To debug the tool-execution issue we SKIP the
-			// teardown and block, so the VM stays alive (telemetry keeps pushing, it can be SSH'd /
-			// consoled) until the backend idle-TTL reaper reclaims it (~30m). Restore the post-end hook
-			// loop + return below to return to the normal lifecycle.
-			log.Logger().Warnf("[DEBUG] claude worker exited; SKIPPING teardown and keeping the VM alive for inspection (idle-TTL reaper will reclaim it)")
-			select {} // block forever so the agentd stays up and the VM is not reaped on worker exit
+			// Upload the session deliverables (/mnt/session/outputs) to S3 BEFORE the post-end
+			// hooks run: the cleanup hook reaps this single-use VM. Synchronous + best-effort.
+			uploadSessionOutputs(ctx, m.OutputsDir, m.HostURL, m.PollingSecret, m.RunnerInstanceID)
+			// The worker (`ant beta:worker run`) exited — the session ended (end_turn + --max-idle) or
+			// the lease was lost. Run the post-end hooks: the cleanup hook calls the backend cleanup_hook
+			// → RemoveRunner, which reaps this single-use VM. Then return.
+			for _, hook := range GetHooks[IPostEndHook]() {
+				if err := hook.PostEndHook(ctx, &PostEndHookOptions{
+					StartRunnerOptions: opts,
+					ManagerOptions:     managerOpts,
+				}); err != nil {
+					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
+				}
+			}
+
+			return &StartRunnerOutput{RunCompletedSuccessfully: true}, nil
 		}
 	}
 }

@@ -232,7 +232,11 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	// The worker's --max-idle comes from the backend (sandbox.idle_ttl_seconds) over this same
 	// allocation_details poll; GetMaxIdle() returns "" when absent and DefaultClaudeOptions falls
 	// back to its built-in default.
-	m := NewClaudeManager(DefaultClaudeOptions(details.GetMaxIdle()))
+	copts := DefaultClaudeOptions(details.GetMaxIdle())
+	copts.HostURL = a.hostURL
+	copts.PollingSecret = a.pollingSecret
+	copts.RunnerInstanceID = a.id
+	m := NewClaudeManager(copts)
 	return m.StartRunner(ctx, &StartRunnerOptions{AgentOptions: a.opts})
 }
 
