@@ -82,7 +82,7 @@ func requestOutputUploadURL(ctx context.Context, hostURL, pollingSecret, runnerI
 	if err != nil {
 		return "", err
 	}
-	endpoint := strings.TrimRight(hostURL, "/") + "/api/v1/sandboxes/outputs/upload-url"
+	endpoint := strings.TrimRight(hostURL, "/") + "/sandboxes/outputs/upload-url"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return "", err

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,16 +19,15 @@ import (
 // (ANTHROPIC_ENVIRONMENT_ID/KEY/SESSION_ID) is exported into the process environment by the
 // agent before StartRunner, so the worker inherits it.
 type ClaudeOptions struct {
-	Command    string   `json:"command"`
-	Args       []string `json:"args"`
-	Workdir    string   `json:"workdir"`
-	OutputsDir string   `json:"outputs_dir"`
-	StdoutFile string   `json:"stdout_file"`
-	StderrFile string   `json:"stderr_file"`
-	// Backend coordinates for uploading session deliverables (OutputsDir) to S3 when the worker exits.
-	HostURL          string `json:"host_url"`
-	PollingSecret    string `json:"polling_secret"`
-	RunnerInstanceID string `json:"runner_instance_id"`
+	Command          string   `json:"command"`
+	Args             []string `json:"args"`
+	Workdir          string   `json:"workdir"`
+	OutputsDir       string   `json:"outputs_dir"`
+	StdoutFile       string   `json:"stdout_file"`
+	StderrFile       string   `json:"stderr_file"`
+	HostURL          string   `json:"host_url"`
+	PollingSecret    string   `json:"polling_secret"`
+	RunnerInstanceID string   `json:"runner_instance_id"`
 }
 
 // anthropicWorkerMaxIdle is the FALLBACK --max-idle for `ant beta:worker run`, used only when the
@@ -235,28 +232,25 @@ func (m *claudeManager) createFiles() error {
 	return nil
 }
 
-// ensureWritableDir makes dir exist and writable by the current (non-root worker) user. It tries a
-// direct MkdirAll first — which succeeds on Windows, when the user already has permission, or when the
-// dir already exists — and on a unix permission error escalates via the sandbox VM's passwordless sudo,
-// creating the dir as root and chowning it back to the current user. Idempotent.
+// ensureWritableDir makes dir exist and world-writable so the non-root user the worker runs Claude's
+// tools as can write to it (agentd runs as root, so the default mode leaves session dirs unwritable by
+// the worker). Idempotent; escalates via passwordless sudo only when it lacks permission to create or
+// chmod the dir directly.
 func ensureWritableDir(dir string) error {
 	if dir == "" {
 		return nil
 	}
-	if err := os.MkdirAll(dir, 0o755); err == nil {
+	// Create the dir (idempotent), then force it world-writable. The managed-agent worker runs Claude's
+	// tools as a NON-root user, but agentd — which creates these — runs as root, so a dir left at
+	// MkdirAll's umask-masked mode (or a pre-existing root-owned one) isn't writable by the worker.
+	// That's why Claude's writes to /mnt/session/outputs (deliverables) and /workspace fail. 0777 is safe
+	// on a single-use, single-tenant sandbox VM; running as root, MkdirAll + Chmod need no privilege
+	// escalation. MkdirAll's mode is umask-masked and is a no-op on an existing dir, so chmod explicitly.
+	if err := os.MkdirAll(dir, 0o777); err != nil {
+		return err
+	}
+	if runtime.GOOS == "windows" {
 		return nil
-	} else if runtime.GOOS == "windows" || !os.IsPermission(err) {
-		return err
 	}
-	u, err := user.Current()
-	if err != nil {
-		return err
-	}
-	if out, err := exec.Command("sudo", "-n", "mkdir", "-p", dir).CombinedOutput(); err != nil {
-		return fmt.Errorf("sudo mkdir -p %s: %w (%s)", dir, err, strings.TrimSpace(string(out)))
-	}
-	if out, err := exec.Command("sudo", "-n", "chown", u.Username, dir).CombinedOutput(); err != nil {
-		return fmt.Errorf("sudo chown %s %s: %w (%s)", u.Username, dir, err, strings.TrimSpace(string(out)))
-	}
-	return nil
+	return os.Chmod(dir, 0o777)
 }
