@@ -25,7 +25,7 @@ const (
 	// defaultAnthropicWorkerVersion is the pinned `ant` release installed on sandbox VMs.
 	// Bump it (and re-verify the asset names) to take a newer worker. Overridable per-VM via
 	// WARPBUILD_ANTHROPIC_WORKER_VERSION without rebuilding the agent.
-	defaultAnthropicWorkerVersion = "1.12.1"
+	defaultAnthropicWorkerVersion = "1.16.0"
 	anthropicWorkerVersionEnv     = "WARPBUILD_ANTHROPIC_WORKER_VERSION"
 
 	anthropicCLIDownloadBase = "https://github.com/anthropics/anthropic-cli/releases/download"
