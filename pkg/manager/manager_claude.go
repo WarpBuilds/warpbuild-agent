@@ -45,22 +45,23 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	if maxIdle == "" {
 		maxIdle = anthropicWorkerMaxIdle
 	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" || home == "/" {
+		home = "/tmp"
+	}
 	workdir := "/workspace"
-	// /mnt/session/outputs is where the worker harness has Claude write final deliverables (the docs'
-	// system default for self-hosted sandbox mode). Linux-pathed; left empty on Windows.
 	outputsDir := "/mnt/session/outputs"
-	stdout := "/var/log/warpbuild-agentd/runner.claude.stdout.log"
-	stderr := "/var/log/warpbuild-agentd/runner.claude.stderr.log"
+	stdout := filepath.Join(home, ".warpbuild", "warpbuild-agentd", "runner.claude.stdout.log")
+	stderr := filepath.Join(home, ".warpbuild", "warpbuild-agentd", "runner.claude.stderr.log")
 	if runtime.GOOS == "windows" {
 		workdir = `C:\workspace`
 		outputsDir = ""
 		stdout = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
 		stderr = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
 	} else if runtime.GOOS == "darwin" {
-		// macOS runners boot with a sealed, read-only system volume (SIP), so /workspace,
-		// /mnt/session/outputs and /var/log can't be created even via sudo. Anchor everything
-		// under the runner's home on the writable data volume instead.
-		home, _ := os.UserHomeDir()
+		// macOS runners boot with a sealed, read-only system volume (SIP), so /workspace and
+		// /mnt/session/outputs can't be created even via sudo. Anchor everything under the runner's
+		// home on the writable data volume instead.
 		workdir = filepath.Join(home, ".warpbuild", "workspace")
 		outputsDir = filepath.Join(home, ".warpbuild", "session-outputs")
 		stdout = filepath.Join(home, ".warpbuild", "agent", "log", "runner.claude.stdout.log")
@@ -203,11 +204,11 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 }
 
 func (m *claudeManager) createFiles() error {
-	// The worker runs as the non-root `runner`. /workspace and /mnt/session/outputs are Anthropic-
-	// documented paths it must use (they can't be relocated), and its stdout/stderr live under a log
-	// dir — all at locations `runner` can't create under the filesystem root. ensureWritableDir creates
-	// each and hands ownership to the current user, escalating via the sandbox VM's passwordless sudo on
-	// a unix permission error. All idempotent.
+	// /workspace and /mnt/session/outputs (the worker's workdir + session deliverables) are Anthropic-
+	// documented paths pre-created by the VM cloud-init — owned by the agentd user and world-writable —
+	// because agentd may run non-root (e.g. x64 images) and can't create dirs under the root-owned
+	// filesystem root. ensureWritableDir just ensures each exists and is 0777; stdout/stderr live under a
+	// log dir agentd can create itself. All idempotent.
 	seen := map[string]bool{}
 	for _, dir := range []string{m.Workdir, m.OutputsDir, filepath.Dir(m.StdoutFile), filepath.Dir(m.StderrFile)} {
 		if dir == "" || dir == "." || seen[dir] {
@@ -232,20 +233,17 @@ func (m *claudeManager) createFiles() error {
 	return nil
 }
 
-// ensureWritableDir makes dir exist and world-writable so the non-root user the worker runs Claude's
-// tools as can write to it (agentd runs as root, so the default mode leaves session dirs unwritable by
-// the worker). Idempotent; escalates via passwordless sudo only when it lacks permission to create or
-// chmod the dir directly.
+// ensureWritableDir makes dir exist and world-writable (0777) so the worker's (possibly non-root) tool
+// user can write to it. The session dirs (/workspace, /mnt/session/outputs) are pre-created by the VM
+// cloud-init owned by the agentd user, so this finds them and re-applies 0777; the log dir, which agentd
+// can create itself, is created here. Std-lib only, no privilege escalation. Idempotent.
 func ensureWritableDir(dir string) error {
 	if dir == "" {
 		return nil
 	}
-	// Create the dir (idempotent), then force it world-writable. The managed-agent worker runs Claude's
-	// tools as a NON-root user, but agentd — which creates these — runs as root, so a dir left at
-	// MkdirAll's umask-masked mode (or a pre-existing root-owned one) isn't writable by the worker.
-	// That's why Claude's writes to /mnt/session/outputs (deliverables) and /workspace fail. 0777 is safe
-	// on a single-use, single-tenant sandbox VM; running as root, MkdirAll + Chmod need no privilege
-	// escalation. MkdirAll's mode is umask-masked and is a no-op on an existing dir, so chmod explicitly.
+	// MkdirAll is a no-op on the cloud-init-pre-created session dirs (and creates the log dir where agentd
+	// has permission); its mode is umask-masked, so chmod explicitly to guarantee 0777 for the non-root
+	// worker. 0777 is safe on a single-use, single-tenant sandbox VM.
 	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return err
 	}
