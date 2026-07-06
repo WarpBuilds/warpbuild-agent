@@ -59,11 +59,13 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 		stdout = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
 		stderr = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
 	} else if runtime.GOOS == "darwin" {
-		// macOS runners boot with a sealed, read-only system volume (SIP), so /workspace and
-		// /mnt/session/outputs can't be created even via sudo. Anchor everything under the runner's
-		// home on the writable data volume instead.
+		// macOS runners boot with a sealed, read-only system volume (SIP), so the workdir + the stdout/
+		// stderr log dir live under the runner's home (they'd fail under / or /var/log). But the agent
+		// writes deliverables to the Anthropic-mandated /mnt/session/outputs (server-side; not
+		// configurable) — the orchard startup makes /mnt a writable synthetic firmlink, so we upload from
+		// it directly. A home-relative OutputsDir would never match where the agent actually writes.
 		workdir = filepath.Join(home, ".warpbuild", "workspace")
-		outputsDir = filepath.Join(home, ".warpbuild", "session-outputs")
+		outputsDir = "/mnt/session/outputs"
 		stdout = filepath.Join(home, ".warpbuild", "agent", "log", "runner.claude.stdout.log")
 		stderr = filepath.Join(home, ".warpbuild", "agent", "log", "runner.claude.stderr.log")
 	}
