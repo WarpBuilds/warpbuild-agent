@@ -137,6 +137,10 @@ func (m *ghWindowsCriManager) StartRunner(ctx context.Context, opts *StartRunner
 
 			wg.Wait()
 
+			// Upload any checkout snapshots the job recorded on a cache miss BEFORE
+			// the cleanup hook reaps this single-use VM. Best-effort, off billed job time.
+			uploadGitSnapshots(ctx, m.RunnerDir)
+
 			// Exit the loop when command completes
 			// Run all the post-end hooks
 			for _, hook := range GetHooks[IPostEndHook]() {

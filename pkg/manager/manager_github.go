@@ -135,6 +135,11 @@ func (m *ghManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (
 
 			wg.Wait()
 
+			// Upload any checkout snapshots the job recorded on a cache miss BEFORE
+			// the cleanup hook reaps this single-use VM. Best-effort, and off the
+			// customer's billed job time.
+			uploadGitSnapshots(ctx, m.RunnerDir)
+
 			// Exit the loop when command completes
 			// Run all the post-end hooks
 			for _, hook := range GetHooks[IPostEndHook]() {
