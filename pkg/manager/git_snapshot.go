@@ -94,7 +94,35 @@ func uploadOneGitSnapshot(ctx context.Context, hostURL, token string, m snapshot
 	if url == "" {
 		return nil // disabled org or another job holds the lock — skip quietly
 	}
-	return putFile(uploadCtx, url, archivePath)
+	return httpPutSnapshot(uploadCtx, url, archivePath)
+}
+
+// httpPutSnapshot streams a file to a presigned S3 PUT URL, bounded memory (read from disk).
+func httpPutSnapshot(ctx context.Context, url, path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, f)
+	if err != nil {
+		return err
+	}
+	req.ContentLength = info.Size()
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("PUT returned %s: %s", resp.Status, string(b))
+	}
+	return nil
 }
 
 // tarGitObjects writes an uncompressed tar of gitDir/objects (+ shallow) with Go's
