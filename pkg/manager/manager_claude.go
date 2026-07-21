@@ -96,9 +96,9 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 
 	command := m.Command
 	if command == anthropicWorkerBinary {
-		antPath, err := ensureAnthropicWorkerInstalled(ctx)
-		if err != nil {
-			return nil, err
+		antPath := anthropicWorkerPath()
+		if _, err := os.Stat(antPath); err != nil {
+			return nil, fmt.Errorf("anthropic worker CLI not found at %s (cloud-init installs it on claude_agent sandbox VMs): %w", antPath, err)
 		}
 		command = antPath
 	}
