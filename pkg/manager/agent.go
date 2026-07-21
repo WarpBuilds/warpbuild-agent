@@ -122,19 +122,11 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			if *allocationDetails.Status == "assigned" {
 
 				// Claude managed-agent sandbox: the VM boots from the generic runner image
-				// (settings.provider=github), and the backend decides the runner application
-				// at allocation. Run the Anthropic self-hosted worker instead of a GitHub runner.
-				if allocationDetails.RunnerApplication != nil && *allocationDetails.RunnerApplication == string(ProviderClaudeAgent) {
-					startRunnerOutput, err := a.startClaudeAgent(ctx, allocationDetails)
-					if err != nil {
-						log.Logger().Errorf("failed to start claude agent worker: %v", err)
+				// (settings.provider=github); the backend picks the runner application at
+				// allocation. Run the Anthropic self-hosted worker instead of a GitHub runner.
+				if isClaudeAgentAllocation(allocationDetails) {
+					if err := a.handleClaudeAgentAllocation(ctx, allocationDetails); err != nil {
 						return err
-					}
-					if startRunnerOutput.RunCompletedSuccessfully {
-						if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
-							log.Logger().Errorf("failed to write exit file: %v", err)
-							return err
-						}
 					}
 					continue
 				}
@@ -199,14 +191,33 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 }
 
+// isClaudeAgentAllocation reports whether the backend assigned this VM the Claude managed-agent worker.
+func isClaudeAgentAllocation(details *warpbuild.CommonsRunnerInstanceAllocationDetails) bool {
+	return details.RunnerApplication != nil && *details.RunnerApplication == string(ProviderClaudeAgent)
+}
+
+// handleClaudeAgentAllocation runs the Claude worker and, on a clean run, marks the VM dirty.
+func (a *agentImpl) handleClaudeAgentAllocation(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) error {
+	startRunnerOutput, err := a.startClaudeAgent(ctx, allocationDetails)
+	if err != nil {
+		log.Logger().Errorf("failed to start claude agent worker: %v", err)
+		return err
+	}
+	if startRunnerOutput.RunCompletedSuccessfully {
+		if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
+			log.Logger().Errorf("failed to write exit file: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) (*StartRunnerOutput, error) {
 	details := allocationDetails.ClaudeAgentApplicationDetails
 	if details == nil {
 		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
 	}
 
-	// Export the Anthropic identity for the worker process. The environment key is a
-	// secret: it is set in-process only and intentionally not logged.
 	if details.EnvId != nil {
 		os.Setenv("ANTHROPIC_ENVIRONMENT_ID", *details.EnvId)
 	}
@@ -216,9 +227,6 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	if details.SessionId != nil {
 		os.Setenv("ANTHROPIC_SESSION_ID", *details.SessionId)
 	}
-	// ANTHROPIC_WORK_ID is the work item backend-core claimed off the env queue; `ant beta:worker run`
-	// requires it (exits with `Required flag "work-id" not set` otherwise) to attach to and heartbeat
-	// the lease for this specific work.
 	if details.WorkId != nil {
 		os.Setenv("ANTHROPIC_WORK_ID", *details.WorkId)
 	}
@@ -229,9 +237,6 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	}
 	log.Logger().Infof("Starting Claude managed-agent worker for session %s", sessionId)
 
-	// The worker's --max-idle comes from the backend (sandbox.idle_ttl_seconds) over this same
-	// allocation_details poll; GetMaxIdle() returns "" when absent and DefaultClaudeOptions falls
-	// back to its built-in default.
 	copts := DefaultClaudeOptions(details.GetMaxIdle())
 	copts.HostURL = a.hostURL
 	copts.PollingSecret = a.pollingSecret

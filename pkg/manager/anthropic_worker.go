@@ -44,12 +44,9 @@ type workerAsset struct {
 	binary  string // ant | ant.exe
 }
 
-// ensureAnthropicWorkerInstalled guarantees the `ant` CLI is runnable and returns its path.
-// claude_agent sandbox VMs boot the generic runner image (which does not ship `ant`), so
-// rather than rebuild images per OS or special-case each provider's cloud-init, the agent —
-// the one component present on every sandbox VM regardless of OS/provider — installs the
-// worker on demand. Single cross-OS path (Linux/macOS/Windows); idempotent: if `ant` already
-// resolves (baked image, a prior run, or a retry) it is used as-is.
+// ensureAnthropicWorkerInstalled installs Anthropic's `ant` CLI on demand and returns its path.
+// Neither the generic runner image nor cloud-init ships it — cloud-init only pre-creates the worker
+// dirs and swaps agentd — so the agent installs it here, idempotently (reused if a prior run did).
 func ensureAnthropicWorkerInstalled(ctx context.Context) (string, error) {
 	asset, err := workerAssetForPlatform()
 	if err != nil {
