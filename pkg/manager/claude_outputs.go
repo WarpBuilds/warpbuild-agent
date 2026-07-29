@@ -75,8 +75,6 @@ func tarGzDir(ctx context.Context, dir string) (string, error) {
 	return path, nil
 }
 
-// requestOutputUploadURL asks backend-core for a presigned PUT URL, authenticating with the runner
-// polling secret (same credential the agent uses for allocation_details / cleanup_hook).
 func requestOutputUploadURL(ctx context.Context, hostURL, pollingSecret, runnerInstanceID string) (string, error) {
 	body, err := json.Marshal(map[string]string{"runner_instance_id": runnerInstanceID})
 	if err != nil {
@@ -110,8 +108,6 @@ func requestOutputUploadURL(ctx context.Context, hostURL, pollingSecret, runnerI
 	return out.URL, nil
 }
 
-// putFile streams a file to a presigned S3 PUT URL (bounded memory — the archive is read from disk, not
-// buffered).
 func putFile(ctx context.Context, url, path string) error {
 	f, err := os.Open(path)
 	if err != nil {

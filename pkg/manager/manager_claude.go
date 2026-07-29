@@ -31,13 +31,10 @@ const anthropicWorkerMaxIdle = "300s"
 // Claude worker filesystem layout. Workdir + session-deliverables dir vary per OS; the log leaf
 // names are shared and joined under an OS-specific dir at runtime.
 const (
-	claudeWorkspaceDir   = "/workspace"           // linux worker workdir
-	claudeOutputsDir     = "/mnt/session/outputs" // session deliverables (linux + darwin; firmlinked on macOS)
-	claudeWindowsWorkdir = `C:\workspace`
-	claudeWindowsStdout  = `C:\ProgramData\warpbuild\logs\runner.claude.stdout.log`
-	claudeWindowsStderr  = `C:\ProgramData\warpbuild\logs\runner.claude.stderr.log`
-	claudeStdoutLogName  = "runner.claude.stdout.log"
-	claudeStderrLogName  = "runner.claude.stderr.log"
+	claudeWorkspaceDir  = "/workspace"           // linux worker workdir
+	claudeOutputsDir    = "/mnt/session/outputs" // session deliverables (linux + darwin; firmlinked on macOS)
+	claudeStdoutLogName = "runner.claude.stdout.log"
+	claudeStderrLogName = "runner.claude.stderr.log"
 )
 
 // DefaultClaudeOptions runs `ant beta:worker run --workdir <workdir> --max-idle <maxIdle>`
@@ -52,11 +49,6 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 
 	var workdir, outputsDir, stdout, stderr string
 	switch runtime.GOOS {
-	case "windows":
-		workdir = claudeWindowsWorkdir
-		outputsDir = "" // no writable /mnt on Windows; deliverables upload is skipped
-		stdout = claudeWindowsStdout
-		stderr = claudeWindowsStderr
 	case "darwin":
 		workdir = filepath.Join(home, ".warpbuild", "workspace")
 		outputsDir = claudeOutputsDir // intentionally the linux path — macOS firmlinks /mnt/session/outputs
@@ -204,7 +196,7 @@ func (m *claudeManager) StartRunner(ctx context.Context, opts *StartRunnerOption
 
 // provisionWorkerFiles ensures the worker's dirs (workspace, session outputs, log dir) and log files exist.
 func (m *claudeManager) provisionWorkerFiles() error {
-	// ensureWritableDir no-ops on "" (no Windows outputs dir) and is idempotent, so overlapping dirs are fine.
+	// ensureWritableDir is idempotent, so overlapping dirs are fine.
 	for _, dir := range []string{m.Workdir, m.OutputsDir, filepath.Dir(m.StdoutFile), filepath.Dir(m.StderrFile)} {
 		if err := ensureWritableDir(dir); err != nil {
 			log.Logger().Errorf("Failed to provision claude worker dir %s: %v", dir, err)
@@ -226,17 +218,11 @@ func (m *claudeManager) provisionWorkerFiles() error {
 
 // ensureWritableDir ensures /workspace and /mnt/session/outputs (the worker's workdir + session deliverables) exists and is 0777
 func ensureWritableDir(dir string) error {
-	if dir == "" {
-		return nil
-	}
 	// MkdirAll is a no-op on the cloud-init-pre-created session dirs (and creates the log dir where agentd
 	// has permission); its mode is umask-masked, so chmod explicitly to guarantee 0777 for the non-root
 	// worker. 0777 is safe on a single-use, single-tenant sandbox VM.
 	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return err
-	}
-	if runtime.GOOS == "windows" {
-		return nil
 	}
 	return os.Chmod(dir, 0o777)
 }
