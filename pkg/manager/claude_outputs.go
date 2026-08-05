@@ -1,14 +1,17 @@
 package manager
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,9 +20,6 @@ import (
 
 const outputsUploadTimeout = 5 * time.Minute
 
-// UploadSessionOutputs archives OutputsDir and uploads it to the backend-issued presigned URL when the
-// managed-agent worker exits. Best-effort: on any error it logs and returns so a failed upload never
-// fails the run. Called by the claude outputs-upload post-end hook, before cleanup reaps the VM.
 func UploadSessionOutputs(ctx context.Context, outputsDir, hostURL, pollingSecret, runnerInstanceID string) {
 	if outputsDir == "" || hostURL == "" || runnerInstanceID == "" {
 		return
@@ -56,21 +56,62 @@ func UploadSessionOutputs(ctx context.Context, outputsDir, hostURL, pollingSecre
 	log.Logger().Infof("[claude_outputs] uploaded session outputs from %s", outputsDir)
 }
 
-// tarGzDir tars+gzips the contents of dir to a temp file using the system `tar` (present on the Linux/
-// macOS sandbox hosts), streaming to disk so the whole archive is never held in memory. Returns the
-// temp file path; the caller must remove it. `-C dir .` archives dir's contents with relative paths.
 func tarGzDir(ctx context.Context, dir string) (string, error) {
 	f, err := os.CreateTemp("", "warpbuild-outputs-*.tar.gz")
 	if err != nil {
 		return "", err
 	}
 	path := f.Name()
-	_ = f.Close() // tar (re)creates it
 
-	cmd := exec.CommandContext(ctx, "tar", "-czf", path, "-C", dir, ".")
-	if out, cerr := cmd.CombinedOutput(); cerr != nil {
+	gz := gzip.NewWriter(f)
+	tw := tar.NewWriter(gz)
+
+	walkErr := filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(dir, file)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+		link := ""
+		if fi.Mode()&os.ModeSymlink != 0 {
+			if link, err = os.Readlink(file); err != nil {
+				return err
+			}
+		}
+		hdr, err := tar.FileInfoHeader(fi, link)
+		if err != nil {
+			return err
+		}
+		hdr.Name = filepath.ToSlash(rel)
+		if fi.IsDir() {
+			hdr.Name += "/"
+		}
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+		if !fi.Mode().IsRegular() {
+			return nil
+		}
+		src, err := os.Open(file)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(tw, src)
+		_ = src.Close()
+		return err
+	})
+
+	if err := errors.Join(walkErr, tw.Close(), gz.Close(), f.Close()); err != nil {
 		_ = os.Remove(path)
-		return "", fmt.Errorf("tar failed: %v: %s", cerr, strings.TrimSpace(string(out)))
+		return "", fmt.Errorf("archive %s: %w", dir, err)
 	}
 	return path, nil
 }

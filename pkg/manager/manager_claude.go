@@ -9,7 +9,6 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-// ClaudeOptions configures the Anthropic managed-agent worker a claude_agent sandbox VM runs
 type ClaudeOptions struct {
 	Command          string               `json:"command"`
 	Args             []string             `json:"args"`
@@ -25,16 +24,13 @@ type ClaudeOptions struct {
 
 const anthropicWorkerMaxIdle = "300s"
 
-// Claude worker filesystem layout. Workdir + session-deliverables dir vary per OS; the log leaf
-// names are shared and joined under an OS-specific dir at runtime.
 const (
-	claudeWorkspaceDir  = "/workspace"           // linux worker workdir
-	claudeOutputsDir    = "/mnt/session/outputs" // session deliverables (linux + darwin; firmlinked on macOS)
+	claudeWorkspaceDir  = "/workspace"
+	claudeOutputsDir    = "/mnt/session/outputs"
 	claudeStdoutLogName = "runner.claude.stdout.log"
 	claudeStderrLogName = "runner.claude.stderr.log"
 )
 
-// DefaultClaudeOptions runs `ant beta:worker run --workdir <workdir> --max-idle <maxIdle>`
 func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	if maxIdle == "" {
 		maxIdle = anthropicWorkerMaxIdle
@@ -48,10 +44,10 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	switch runtime.GOOS {
 	case "darwin":
 		workdir = filepath.Join(home, ".warpbuild", "workspace")
-		outputsDir = claudeOutputsDir // intentionally the linux path — macOS firmlinks /mnt/session/outputs
+		outputsDir = claudeOutputsDir
 		stdout = filepath.Join(home, ".warpbuild", "agent", "log", claudeStdoutLogName)
 		stderr = filepath.Join(home, ".warpbuild", "agent", "log", claudeStderrLogName)
-	default: // linux
+	default:
 		workdir = claudeWorkspaceDir
 		outputsDir = claudeOutputsDir
 		stdout = filepath.Join(home, ".warpbuild", "warpbuild-agentd", claudeStdoutLogName)
@@ -68,8 +64,6 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	}
 }
 
-// resolvedCommand is the absolute path the worker is invoked by. The `ant` binary is resolved to the
-// path cloud-init installs it to (never via PATH — the generic runner image ships a different `ant`).
 func (c *ClaudeOptions) resolvedCommand() string {
 	if c.Command == "" || c.Command == anthropicWorkerBinary {
 		return anthropicWorkerPath()
@@ -77,16 +71,13 @@ func (c *ClaudeOptions) resolvedCommand() string {
 	return c.Command
 }
 
-// newClaudeManager runs the Anthropic worker through the shared command runner (ghcriManager): the
-// worker is just a command (CMDOptions, env via CMDOptions.Envs), and the outputs upload + cleanup run
-// as post-end hooks. provisionClaudeWorker must have run first (the agent calls it before NewManager).
 func newClaudeManager(opts *ManagerOptions) IManager {
 	c := opts.Claude
 	return &ghcriManager{
 		GithubCRIOptions: &GithubCRIOptions{
 			StdoutFile:       c.StdoutFile,
 			StderrFile:       c.StderrFile,
-			InheritParentEnv: true, // the ant worker needs PATH/HOME from the agent process
+			InheritParentEnv: true,
 			CMDOptions: &CMDOptions{
 				CMD:  c.resolvedCommand(),
 				Args: c.Args,
@@ -99,9 +90,6 @@ func newClaudeManager(opts *ManagerOptions) IManager {
 	}
 }
 
-// provisionClaudeWorker verifies the ant CLI is installed and creates the worker's writable dirs
-// (workspace + session outputs) before the worker starts. The shared runner creates the agentd log
-// files; these two dirs are what the non-root worker itself writes to.
 func provisionClaudeWorker(c *ClaudeOptions) error {
 	antPath := c.resolvedCommand()
 	if _, err := os.Stat(antPath); err != nil {
@@ -116,10 +104,7 @@ func provisionClaudeWorker(c *ClaudeOptions) error {
 	return nil
 }
 
-// ensureWritableDir ensures a worker dir (/workspace, /mnt/session/outputs) exists and is 0777.
 func ensureWritableDir(dir string) error {
-	// MkdirAll is a no-op on the cloud-init-pre-created session dirs; its mode is umask-masked, so chmod
-	// explicitly to guarantee 0777 for the non-root worker. 0777 is safe on a single-use sandbox VM.
 	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return err
 	}

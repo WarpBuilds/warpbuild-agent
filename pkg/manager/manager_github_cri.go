@@ -13,20 +13,16 @@ import (
 
 type ghcriManager struct {
 	*GithubCRIOptions
-	// provider + managerOpts are what this run reports to its hooks. Set per provider so the same
-	// command-runner serves github_cri and claude_agent while hooks still gate on the real provider.
 	provider    Provider
 	managerOpts *ManagerOptions
 }
 
 type GithubCRIOptions struct {
-	StdoutFile string      `json:"stdout_file"`
-	StderrFile string      `json:"stderr_file"`
-	RunnerDir  string      `json:"runner_dir"`
-	CMDOptions *CMDOptions `json:"cmd_options"`
-	// InheritParentEnv seeds the command's env from the agent process env before CMDOptions.Envs.
-	// The github_cri runner runs with a clean env (default false); the claude worker needs PATH/HOME.
-	InheritParentEnv bool `json:"inherit_parent_env"`
+	StdoutFile       string      `json:"stdout_file"`
+	StderrFile       string      `json:"stderr_file"`
+	RunnerDir        string      `json:"runner_dir"`
+	CMDOptions       *CMDOptions `json:"cmd_options"`
+	InheritParentEnv bool        `json:"inherit_parent_env"`
 }
 
 type CMDOptions struct {

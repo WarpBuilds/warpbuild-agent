@@ -119,68 +119,21 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			}
 
 			// TODO: verify the correct status
-			if *allocationDetails.Status == "assigned" {
-
-				// Claude managed-agent sandbox: the VM boots from the generic runner image
-				// (settings.provider=github); the backend picks the runner application at
-				// allocation. Run the Anthropic self-hosted worker instead of a GitHub runner.
-				if isClaudeAgentAllocation(allocationDetails) {
-					if err := a.handleClaudeAgentAllocation(ctx, allocationDetails); err != nil {
-						return err
-					}
-					continue
-				}
-
-				if allocationDetails.GhRunnerApplicationDetails == nil || allocationDetails.GhRunnerApplicationDetails.Variables == nil {
-					log.Logger().Warnf("assigned allocation missing GitHub runner application details; retrying in %s", Interval)
-					continue
-				}
-
-				log.Logger().Infof("Setting additonal environment variables")
-				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
-					os.Setenv(key, val)
-				}
-
-				if opts.Manager.Provider == ProviderGithubCRI {
-					for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
-						opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
-							Key:   key,
-							Value: val,
-						})
-					}
-				}
-
-				// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
-				if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
-					log.Logger().Infof("Starting transparent cache server")
-					if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
-						log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
-						return err
-					}
-				}
-
-				log.Logger().Infof("Starting runner")
-				m := NewManager(opts.Manager)
-				startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
-					JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
-					AgentOptions: a.opts,
-				})
-				if err != nil {
-					log.Logger().Errorf("failed to start runner: %v", err)
-					return err
-				}
-
-				if startRunnerOutput.RunCompletedSuccessfully {
-					err := a.writeExitFile(ctx, startRunnerOutput)
-					if err != nil {
-						log.Logger().Errorf("failed to write exit file: %v", err)
-						return err
-					}
-				}
-
-			} else {
+			if *allocationDetails.Status != "assigned" {
 				log.Logger().Infof("runner instance allocation details status: %s", *allocationDetails.Status)
 				log.Logger().Infof("Retrying in %s", Interval)
+				continue
+			}
+
+			switch runnerApplication(allocationDetails) {
+			case ProviderClaudeAgent:
+				if err := a.handleClaudeAgentAllocation(ctx, allocationDetails); err != nil {
+					return err
+				}
+			default:
+				if err := a.handleGithubAllocation(ctx, opts, allocationDetails); err != nil {
+					return err
+				}
 			}
 
 		case <-ctx.Done():
@@ -191,12 +144,62 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 }
 
-// isClaudeAgentAllocation reports whether the backend assigned this VM the Claude managed-agent worker.
-func isClaudeAgentAllocation(details *warpbuild.CommonsRunnerInstanceAllocationDetails) bool {
-	return details.RunnerApplication != nil && *details.RunnerApplication == string(ProviderClaudeAgent)
+func runnerApplication(details *warpbuild.CommonsRunnerInstanceAllocationDetails) Provider {
+	if details.RunnerApplication != nil {
+		return Provider(*details.RunnerApplication)
+	}
+	return ProviderGithub
 }
 
-// handleClaudeAgentAllocation runs the Claude worker and, on a clean run, marks the VM dirty.
+func (a *agentImpl) handleGithubAllocation(ctx context.Context, opts *StartAgentOptions, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) error {
+	if allocationDetails.GhRunnerApplicationDetails == nil || allocationDetails.GhRunnerApplicationDetails.Variables == nil {
+		log.Logger().Warnf("assigned allocation missing GitHub runner application details; retrying in %s", Interval)
+		return nil
+	}
+
+	log.Logger().Infof("Setting additonal environment variables")
+	for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+		os.Setenv(key, val)
+	}
+
+	if opts.Manager.Provider == ProviderGithubCRI {
+		for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+			opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
+				Key:   key,
+				Value: val,
+			})
+		}
+	}
+
+	// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
+	if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
+		log.Logger().Infof("Starting transparent cache server")
+		if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
+			log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
+			return err
+		}
+	}
+
+	log.Logger().Infof("Starting runner")
+	m := NewManager(opts.Manager)
+	startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
+		JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
+		AgentOptions: a.opts,
+	})
+	if err != nil {
+		log.Logger().Errorf("failed to start runner: %v", err)
+		return err
+	}
+
+	if startRunnerOutput.RunCompletedSuccessfully {
+		if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
+			log.Logger().Errorf("failed to write exit file: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *agentImpl) handleClaudeAgentAllocation(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) error {
 	startRunnerOutput, err := a.startClaudeAgent(ctx, allocationDetails)
 	if err != nil {
@@ -218,20 +221,18 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
 	}
 
-	// The worker reads its Anthropic identity from env; scope it to the worker command (CMDOptions.Envs)
-	// instead of the agent process env.
+	anthropicEnv := map[string]*string{
+		"ANTHROPIC_ENVIRONMENT_ID":  details.EnvId,
+		"ANTHROPIC_ENVIRONMENT_KEY": details.EnvKey,
+		"ANTHROPIC_SESSION_ID":      details.SessionId,
+		"ANTHROPIC_WORK_ID":         details.WorkId,
+	}
 	var envs EnvironmentVariables
-	if details.EnvId != nil {
-		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_ENVIRONMENT_ID", Value: *details.EnvId})
-	}
-	if details.EnvKey != nil {
-		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_ENVIRONMENT_KEY", Value: *details.EnvKey})
-	}
-	if details.SessionId != nil {
-		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_SESSION_ID", Value: *details.SessionId})
-	}
-	if details.WorkId != nil {
-		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_WORK_ID", Value: *details.WorkId})
+	for key, val := range anthropicEnv {
+		if val == nil {
+			continue
+		}
+		envs = append(envs, EnvironmentVariable{Key: key, Value: *val})
 	}
 
 	sessionId := ""
