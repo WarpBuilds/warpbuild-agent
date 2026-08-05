@@ -34,6 +34,10 @@ type AgentOptions struct {
 	WindowsOptions *WindowsOptions `json:"windows_options"`
 	// TransparentCacheOginyPort is the port for the transparent cache oginy server.
 	TransparentCacheOginyPort int `json:"transparent_cache_oginy_port"`
+	// CacheBackendHost + RunnerVerificationToken let a claude sandbox upload its deliverables to
+	// backend-cache (via the node warp-cache client).
+	CacheBackendHost        string `json:"cache_backend_host"`
+	RunnerVerificationToken string `json:"runner_verification_token"`
 }
 
 type WindowsOptions struct {
@@ -246,6 +250,9 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	copts.PollingSecret = a.pollingSecret
 	copts.RunnerInstanceID = a.id
 	copts.Envs = envs
+	copts.SessionID = sessionId
+	copts.CacheBackendHost = a.opts.CacheBackendHost
+	copts.RunnerVerificationToken = a.opts.RunnerVerificationToken
 	if err := provisionClaudeWorker(copts); err != nil {
 		return nil, err
 	}

@@ -20,6 +20,10 @@ type ClaudeOptions struct {
 	HostURL          string               `json:"host_url"`
 	PollingSecret    string               `json:"polling_secret"`
 	RunnerInstanceID string               `json:"runner_instance_id"`
+	SessionID        string               `json:"session_id"`
+	// CacheBackendHost + RunnerVerificationToken drive the deliverables upload to backend-cache.
+	CacheBackendHost        string `json:"cache_backend_host"`
+	RunnerVerificationToken string `json:"runner_verification_token"`
 }
 
 const anthropicWorkerMaxIdle = "300s"
