@@ -13,6 +13,10 @@ import (
 
 type ghcriManager struct {
 	*GithubCRIOptions
+	// provider + managerOpts are what this run reports to its hooks. Set per provider so the same
+	// command-runner serves github_cri and claude_agent while hooks still gate on the real provider.
+	provider    Provider
+	managerOpts *ManagerOptions
 }
 
 type GithubCRIOptions struct {
@@ -20,6 +24,9 @@ type GithubCRIOptions struct {
 	StderrFile string      `json:"stderr_file"`
 	RunnerDir  string      `json:"runner_dir"`
 	CMDOptions *CMDOptions `json:"cmd_options"`
+	// InheritParentEnv seeds the command's env from the agent process env before CMDOptions.Envs.
+	// The github_cri runner runs with a clean env (default false); the claude worker needs PATH/HOME.
+	InheritParentEnv bool `json:"inherit_parent_env"`
 }
 
 type CMDOptions struct {
@@ -34,6 +41,8 @@ var _ IManager = &ghcriManager{}
 func newGithubCRIManager(opts *ManagerOptions) IManager {
 	return &ghcriManager{
 		GithubCRIOptions: opts.GithubCRI,
+		provider:         ProviderGithubCRI,
+		managerOpts:      opts,
 	}
 }
 
@@ -44,9 +53,14 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	}
 
 	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
-	cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
+	if m.InheritParentEnv {
+		cmd.Env = os.Environ()
+	}
+	if opts.JitToken != "" {
+		cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
+	}
 	for _, env := range m.CMDOptions.Envs {
-		log.Logger().Infof("setting env %s=%s", env.Key, env.Value)
+		log.Logger().Infof("setting env %s", env.Key)
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", env.Key, env.Value))
 	}
 
@@ -70,10 +84,7 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	for _, hook := range GetHooks[IPreStartHook]() {
 		err := hook.PreStartHook(ctx, &PreStartHookOptions{
 			StartRunnerOptions: opts,
-			ManagerOptions: &ManagerOptions{
-				Provider:  ProviderGithubCRI,
-				GithubCRI: m.GithubCRIOptions,
-			},
+			ManagerOptions:     m.managerOpts,
 		})
 		if err != nil {
 			log.Logger().Errorf("error running pre-start hook %s: %v", hook.HookID(), err)
@@ -134,10 +145,7 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 			for _, hook := range GetHooks[IPostEndHook]() {
 				err := hook.PostEndHook(ctx, &PostEndHookOptions{
 					StartRunnerOptions: opts,
-					ManagerOptions: &ManagerOptions{
-						Provider:  ProviderGithubCRI,
-						GithubCRI: m.GithubCRIOptions,
-					},
+					ManagerOptions:     m.managerOpts,
 				})
 				if err != nil {
 					log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)

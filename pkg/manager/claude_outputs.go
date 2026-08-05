@@ -17,10 +17,10 @@ import (
 
 const outputsUploadTimeout = 5 * time.Minute
 
-// uploadSessionOutputs archives OutputsDir and uploads it to the backend-issued presigned URL when the
+// UploadSessionOutputs archives OutputsDir and uploads it to the backend-issued presigned URL when the
 // managed-agent worker exits. Best-effort: on any error it logs and returns so a failed upload never
-// fails the run. Runs synchronously before the cleanup hook so the VM isn't reaped mid-upload.
-func uploadSessionOutputs(ctx context.Context, outputsDir, hostURL, pollingSecret, runnerInstanceID string) {
+// fails the run. Called by the claude outputs-upload post-end hook, before cleanup reaps the VM.
+func UploadSessionOutputs(ctx context.Context, outputsDir, hostURL, pollingSecret, runnerInstanceID string) {
 	if outputsDir == "" || hostURL == "" || runnerInstanceID == "" {
 		return
 	}

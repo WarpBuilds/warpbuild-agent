@@ -218,17 +218,20 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
 	}
 
+	// The worker reads its Anthropic identity from env; scope it to the worker command (CMDOptions.Envs)
+	// instead of the agent process env.
+	var envs EnvironmentVariables
 	if details.EnvId != nil {
-		os.Setenv("ANTHROPIC_ENVIRONMENT_ID", *details.EnvId)
+		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_ENVIRONMENT_ID", Value: *details.EnvId})
 	}
 	if details.EnvKey != nil {
-		os.Setenv("ANTHROPIC_ENVIRONMENT_KEY", *details.EnvKey)
+		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_ENVIRONMENT_KEY", Value: *details.EnvKey})
 	}
 	if details.SessionId != nil {
-		os.Setenv("ANTHROPIC_SESSION_ID", *details.SessionId)
+		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_SESSION_ID", Value: *details.SessionId})
 	}
 	if details.WorkId != nil {
-		os.Setenv("ANTHROPIC_WORK_ID", *details.WorkId)
+		envs = append(envs, EnvironmentVariable{Key: "ANTHROPIC_WORK_ID", Value: *details.WorkId})
 	}
 
 	sessionId := ""
@@ -241,7 +244,11 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 	copts.HostURL = a.hostURL
 	copts.PollingSecret = a.pollingSecret
 	copts.RunnerInstanceID = a.id
-	m := NewClaudeManager(copts)
+	copts.Envs = envs
+	if err := provisionClaudeWorker(copts); err != nil {
+		return nil, err
+	}
+	m := NewManager(&ManagerOptions{Provider: ProviderClaudeAgent, Claude: copts})
 	return m.StartRunner(ctx, &StartRunnerOptions{AgentOptions: a.opts})
 }
 
