@@ -65,6 +65,7 @@ func (*ClaudeOutputsUploadHook) PostEndHook(ctx context.Context, opts *manager.P
 		"WARPBUILD_RUNNER_VERIFICATION_TOKEN="+c.RunnerVerificationToken,
 		"SANDBOX_OUTPUTS_DIR="+c.OutputsDir,
 		"SANDBOX_SESSION_ID="+c.SessionID,
+		"NODE_PATH="+os.Getenv("HOME")+"/.warpbuild/cache-client/node_modules",
 	)
 	out, cerr := cmd.CombinedOutput()
 	if cerr != nil {
