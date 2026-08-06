@@ -66,6 +66,7 @@ func (*ClaudeOutputsUploadHook) PostEndHook(ctx context.Context, opts *manager.P
 		"SANDBOX_OUTPUTS_DIR="+c.OutputsDir,
 		"SANDBOX_SESSION_ID="+c.SessionID,
 		"NODE_PATH="+os.Getenv("HOME")+"/.warpbuild/cache-client/node_modules",
+		"RUNNER_TEMP="+os.TempDir(),
 	)
 	out, cerr := cmd.CombinedOutput()
 	if cerr != nil {

@@ -34,7 +34,7 @@ type AgentOptions struct {
 	WindowsOptions *WindowsOptions `json:"windows_options"`
 	// TransparentCacheOginyPort is the port for the transparent cache oginy server.
 	TransparentCacheOginyPort int `json:"transparent_cache_oginy_port"`
-	// CacheBackendHost + RunnerVerificationToken let a claude sandbox upload its deliverables to
+	// CacheBackendHost + RunnerVerificationToken let a claude agent upload its deliverables to
 	// backend-cache (via the node warp-cache client).
 	CacheBackendHost        string `json:"cache_backend_host"`
 	RunnerVerificationToken string `json:"runner_verification_token"`

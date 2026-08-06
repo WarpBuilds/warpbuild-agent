@@ -97,7 +97,7 @@ func newClaudeManager(opts *ManagerOptions) IManager {
 func provisionClaudeWorker(c *ClaudeOptions) error {
 	antPath := c.resolvedCommand()
 	if _, err := os.Stat(antPath); err != nil {
-		return fmt.Errorf("anthropic worker CLI not found at %s (cloud-init installs it on claude_agent sandbox VMs): %w", antPath, err)
+		return fmt.Errorf("anthropic worker CLI not found at %s (cloud-init installs it on claude_agent VMs): %w", antPath, err)
 	}
 	for _, dir := range []string{c.Workdir, c.OutputsDir} {
 		if err := ensureWritableDir(dir); err != nil {
