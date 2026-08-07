@@ -123,8 +123,12 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			}
 
 			// TODO: verify the correct status
-			if *allocationDetails.Status != "assigned" {
-				log.Logger().Infof("runner instance allocation details status: %s", *allocationDetails.Status)
+			if allocationDetails.Status == nil || *allocationDetails.Status != "assigned" {
+				status := "<nil>"
+				if allocationDetails.Status != nil {
+					status = *allocationDetails.Status
+				}
+				log.Logger().Infof("runner instance allocation details status: %s", status)
 				log.Logger().Infof("Retrying in %s", Interval)
 				continue
 			}

@@ -121,6 +121,7 @@ func claudeHeartbeat(ctx context.Context, cancel context.CancelFunc, client anth
 	ttl := 30 * time.Second
 	last := "NO_HEARTBEAT"
 	lastSuccess := time.Now()
+	reclaims := 0
 
 	beat := func() bool { // returns: keep beating?
 		opts := append(reqOpts[:len(reqOpts):len(reqOpts)], option.WithRequestTimeout(interval))
@@ -131,6 +132,22 @@ func claudeHeartbeat(ctx context.Context, cancel context.CancelFunc, client anth
 		if err != nil {
 			if ctx.Err() != nil {
 				return false
+			}
+			// A 412 means the work item already carries a live lease — typically a
+			// prior worker instance from before an agentd restart (crash or the
+			// cloud-init binary swap). Since ONE VM owns this session, reclaim the
+			// lease by adopting the server's current last_heartbeat instead of dying.
+			// Bounded so two genuinely-live workers can't ping-pong forever.
+			var apierr *anthropic.Error
+			if errors.As(err, &apierr) && apierr.StatusCode == 412 && reclaims < 3 {
+				if lh := reclaimLastHeartbeat(apierr); lh != "" && lh != last {
+					reclaims++
+					logger.Warn("heartbeat 412; reclaiming lease from current_state",
+						slog.String("last_heartbeat", lh), slog.Int("reclaim", reclaims))
+					last = lh
+					lastSuccess = time.Now()
+					return true
+				}
 			}
 			if stale := time.Since(lastSuccess); stale > ttl {
 				logger.Error("heartbeat staleness ceiling; cancelling session runner",
@@ -143,6 +160,7 @@ func claudeHeartbeat(ctx context.Context, cancel context.CancelFunc, client anth
 		}
 		last = resp.LastHeartbeat
 		lastSuccess = time.Now()
+		reclaims = 0
 		if resp.TTLSeconds > 0 {
 			ttl = max(time.Duration(resp.TTLSeconds)*time.Second, floor)
 			interval = max(floor, min(30*time.Second, ttl/2))
@@ -219,6 +237,24 @@ func wrapNonEmptyResult(tools []anthropic.BetaTool) []anthropic.BetaTool {
 		out[i] = nonEmptyResultTool{inner: t}
 	}
 	return out
+}
+
+// reclaimLastHeartbeat extracts error.details.current_state.last_heartbeat from a
+// 412 heartbeat error body so the worker can adopt (reclaim) the existing lease.
+func reclaimLastHeartbeat(apierr *anthropic.Error) string {
+	var body struct {
+		Error struct {
+			Details struct {
+				CurrentState struct {
+					LastHeartbeat string `json:"last_heartbeat"`
+				} `json:"current_state"`
+			} `json:"details"`
+		} `json:"error"`
+	}
+	if json.Unmarshal([]byte(apierr.RawJSON()), &body) != nil {
+		return ""
+	}
+	return body.Error.Details.CurrentState.LastHeartbeat
 }
 
 func claudeEnvMap(envs EnvironmentVariables) map[string]string {
