@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 type ClaudeOptions struct {
 	Command          string               `json:"command"`
 	Args             []string             `json:"args"`
+	MaxIdle          string               `json:"max_idle"`
 	Workdir          string               `json:"workdir"`
 	OutputsDir       string               `json:"outputs_dir"`
 	StdoutFile       string               `json:"stdout_file"`
@@ -61,6 +63,7 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	return &ClaudeOptions{
 		Command:    anthropicWorkerBinary,
 		Args:       []string{"beta:worker", "run", "--workdir", workdir, "--max-idle", maxIdle},
+		MaxIdle:    maxIdle,
 		Workdir:    workdir,
 		OutputsDir: outputsDir,
 		StdoutFile: stdout,
@@ -76,29 +79,53 @@ func (c *ClaudeOptions) resolvedCommand() string {
 }
 
 func newClaudeManager(opts *ManagerOptions) IManager {
-	c := opts.Claude
-	return &ghcriManager{
-		GithubCRIOptions: &GithubCRIOptions{
-			StdoutFile:       c.StdoutFile,
-			StderrFile:       c.StderrFile,
-			InheritParentEnv: true,
-			CMDOptions: &CMDOptions{
-				CMD:  c.resolvedCommand(),
-				Args: c.Args,
-				Dir:  c.Workdir,
-				Envs: c.Envs,
-			},
-		},
-		provider:    ProviderClaudeAgent,
-		managerOpts: opts,
+	return &claudeInprocManager{opts: opts}
+}
+
+// claudeInprocManager runs the managed-agent session worker in-process (via the
+// anthropic-sdk-go SessionToolRunner) instead of exec'ing the `ant` binary, so we
+// own the exit/lifecycle policy end to end. On worker exit it fires the same
+// post-end hooks (outputs upload + cleanup callback) the ghcri-based path fired.
+type claudeInprocManager struct {
+	opts *ManagerOptions
+}
+
+var _ IManager = &claudeInprocManager{}
+
+func (m *claudeInprocManager) StartRunner(ctx context.Context, opts *StartRunnerOptions) (*StartRunnerOutput, error) {
+	c := m.opts.Claude
+	if c == nil {
+		return nil, fmt.Errorf("claude manager: missing claude options")
 	}
+	if c.StderrFile != "" {
+		_ = os.MkdirAll(filepath.Dir(c.StderrFile), 0o755)
+	}
+	log.Logger().Infof("Starting in-process Claude worker for session %s", c.SessionID)
+
+	for _, hook := range GetHooks[IPreStartHook]() {
+		if err := hook.PreStartHook(ctx, &PreStartHookOptions{StartRunnerOptions: opts, ManagerOptions: m.opts}); err != nil {
+			log.Logger().Errorf("error running pre-start hook %s: %v", hook.HookID(), err)
+			return nil, err
+		}
+	}
+
+	if err := runClaudeWorker(ctx, c); err != nil {
+		log.Logger().Errorf("claude in-process worker exited with error: %v", err)
+	}
+
+	// Post-end hooks (outputs upload + cleanup callback → VM reap), exactly as
+	// ghcriManager.StartRunner fired them after the ant exec returned.
+	for _, hook := range GetHooks[IPostEndHook]() {
+		if err := hook.PostEndHook(ctx, &PostEndHookOptions{StartRunnerOptions: opts, ManagerOptions: m.opts}); err != nil {
+			log.Logger().Errorf("error running post-end hook %s: %v", hook.HookID(), err)
+		}
+	}
+
+	return &StartRunnerOutput{RunCompletedSuccessfully: true}, nil
 }
 
 func provisionClaudeWorker(c *ClaudeOptions) error {
-	antPath := c.resolvedCommand()
-	if _, err := os.Stat(antPath); err != nil {
-		return fmt.Errorf("anthropic worker CLI not found at %s (cloud-init installs it on claude_agent VMs): %w", antPath, err)
-	}
+	// The in-process worker needs no `ant` binary on the VM — just the dirs.
 	for _, dir := range []string{c.Workdir, c.OutputsDir} {
 		if err := ensureWritableDir(dir); err != nil {
 			log.Logger().Errorf("Failed to provision claude worker dir %s: %v", dir, err)
