@@ -4,7 +4,20 @@
 // Env: WARPBUILD_CACHE_URL, WARPBUILD_RUNNER_VERIFICATION_TOKEN (warp-cache auth), SANDBOX_OUTPUTS_DIR,
 // SANDBOX_SESSION_ID. GITHUB_* are unset for a sandbox; the cache service resolves the runner as a
 // claude_agent and skips the CI/VCS requirements.
-const cache = require("@warpbuilds/cache");
+// @warpbuilds/cache 2.0.0 is ESM-only; resolve it from NODE_PATH and import by file URL
+// (a NODE_PATH-installed ESM package loads via neither require nor a bare import specifier).
+const path = require("path");
+const fs = require("fs");
+const { pathToFileURL } = require("url");
+
+async function loadSaveCache() {
+	const base = (process.env.NODE_PATH || "").split(path.delimiter)[0];
+	const pkgDir = path.join(base, "@warpbuilds", "cache");
+	const pj = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
+	const rel = (pj.exports && pj.exports["."] && (pj.exports["."].import || pj.exports["."].default)) || pj.main || "index.js";
+	const mod = await import(pathToFileURL(path.join(pkgDir, rel)).href);
+	return mod.saveCache || (mod.default && mod.default.saveCache);
+}
 
 async function main() {
 	const outputsDir = process.env.SANDBOX_OUTPUTS_DIR;
@@ -14,7 +27,8 @@ async function main() {
 		process.exit(2);
 	}
 	try {
-		const cacheId = await cache.saveCache([outputsDir], key);
+		const saveCache = await loadSaveCache();
+		const cacheId = await saveCache([outputsDir], key);
 		console.log(`upload-outputs: uploaded session ${key} (cache id ${cacheId})`);
 	} catch (err) {
 		console.error(`upload-outputs: saveCache failed: ${err && err.message ? err.message : err}`);
