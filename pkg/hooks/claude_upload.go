@@ -60,14 +60,17 @@ func (*ClaudeOutputsUploadHook) PostEndHook(ctx context.Context, opts *manager.P
 	defer cancel()
 
 	cmd := exec.CommandContext(runCtx, "node", scriptPath)
-	cmd.Env = append(os.Environ(),
+	env := append(os.Environ(),
 		"WARPBUILD_CACHE_URL="+c.CacheBackendHost,
 		"WARPBUILD_RUNNER_VERIFICATION_TOKEN="+c.RunnerVerificationToken,
 		"SANDBOX_OUTPUTS_DIR="+c.OutputsDir,
 		"SANDBOX_SESSION_ID="+c.SessionID,
-		"NODE_PATH="+os.Getenv("HOME")+"/.warpbuild/cache-client/node_modules",
 		"RUNNER_TEMP="+os.TempDir(),
 	)
+	if os.Getenv("NODE_PATH") == "" {
+		env = append(env, "NODE_PATH="+os.Getenv("HOME")+"/.warpbuild/cache-client/node_modules")
+	}
+	cmd.Env = env
 	out, cerr := cmd.CombinedOutput()
 	if cerr != nil {
 		log.Logger().Errorf("[claude_outputs] upload failed: %v: %s", cerr, string(out))

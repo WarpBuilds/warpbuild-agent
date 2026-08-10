@@ -4,8 +4,6 @@
 // Env: WARPBUILD_CACHE_URL, WARPBUILD_RUNNER_VERIFICATION_TOKEN (warp-cache auth), SANDBOX_OUTPUTS_DIR,
 // SANDBOX_SESSION_ID. GITHUB_* are unset for a sandbox; the cache service resolves the runner as a
 // claude_agent and skips the CI/VCS requirements.
-// @warpbuilds/cache 2.0.0 is ESM-only; resolve it from NODE_PATH and import by file URL
-// (a NODE_PATH-installed ESM package loads via neither require nor a bare import specifier).
 const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
