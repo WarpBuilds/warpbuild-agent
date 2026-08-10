@@ -1,8 +1,8 @@
-// Uploads a Claude sandbox session's deliverables to backend-cache using the WarpBuild cache client,
-// keyed by the anthropic_session_id. Driven by the agentd outputs-upload hook.
+// Uploads a Claude agent-runner session's deliverables to backend-cache using the WarpBuild cache client,
+// keyed by the session_id. Driven by the agentd outputs-upload hook.
 //
-// Env: WARPBUILD_CACHE_URL, WARPBUILD_RUNNER_VERIFICATION_TOKEN (warp-cache auth), SANDBOX_OUTPUTS_DIR,
-// SANDBOX_SESSION_ID. GITHUB_* are unset for a sandbox; the cache service resolves the runner as a
+// Env: WARPBUILD_CACHE_URL, WARPBUILD_RUNNER_VERIFICATION_TOKEN (warp-cache auth), AGENT_RUNNERS_OUTPUTS_DIR,
+// AGENT_RUNNERS_SESSION_ID. GITHUB_* are unset for an agent runner; the cache service resolves the runner as a
 // claude_agent and skips the CI/VCS requirements.
 const path = require("path");
 const fs = require("fs");
@@ -18,10 +18,10 @@ async function loadSaveCache() {
 }
 
 async function main() {
-	const outputsDir = process.env.SANDBOX_OUTPUTS_DIR;
-	const key = process.env.SANDBOX_SESSION_ID;
+	const outputsDir = process.env.AGENT_RUNNERS_OUTPUTS_DIR;
+	const key = process.env.AGENT_RUNNERS_SESSION_ID;
 	if (!outputsDir || !key) {
-		console.error("upload-outputs: SANDBOX_OUTPUTS_DIR and SANDBOX_SESSION_ID are required");
+		console.error("upload-outputs: AGENT_RUNNERS_OUTPUTS_DIR and AGENT_RUNNERS_SESSION_ID are required");
 		process.exit(2);
 	}
 	try {

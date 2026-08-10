@@ -63,8 +63,8 @@ func (*ClaudeOutputsUploadHook) PostEndHook(ctx context.Context, opts *manager.P
 	env := append(os.Environ(),
 		"WARPBUILD_CACHE_URL="+c.CacheBackendHost,
 		"WARPBUILD_RUNNER_VERIFICATION_TOKEN="+c.RunnerVerificationToken,
-		"SANDBOX_OUTPUTS_DIR="+c.OutputsDir,
-		"SANDBOX_SESSION_ID="+c.SessionID,
+		"AGENT_RUNNERS_OUTPUTS_DIR="+c.OutputsDir,
+		"AGENT_RUNNERS_SESSION_ID="+c.SessionID,
 		"RUNNER_TEMP="+os.TempDir(),
 	)
 	if os.Getenv("NODE_PATH") == "" {

@@ -11,18 +11,18 @@ import (
 )
 
 type ClaudeOptions struct {
-	Command          string               `json:"command"`
-	Args             []string             `json:"args"`
-	MaxIdle          string               `json:"max_idle"`
-	Workdir          string               `json:"workdir"`
-	OutputsDir       string               `json:"outputs_dir"`
-	StdoutFile       string               `json:"stdout_file"`
-	StderrFile       string               `json:"stderr_file"`
-	Envs             EnvironmentVariables `json:"envs"`
-	HostURL          string               `json:"host_url"`
-	PollingSecret    string               `json:"polling_secret"`
-	RunnerInstanceID string               `json:"runner_instance_id"`
-	SessionID        string               `json:"session_id"`
+	MaxIdle          string `json:"max_idle"`
+	Workdir          string `json:"workdir"`
+	OutputsDir       string `json:"outputs_dir"`
+	StdoutFile       string `json:"stdout_file"`
+	StderrFile       string `json:"stderr_file"`
+	HostURL          string `json:"host_url"`
+	PollingSecret    string `json:"polling_secret"`
+	RunnerInstanceID string `json:"runner_instance_id"`
+	EnvID            string `json:"env_id"`
+	EnvKey           string `json:"env_key"`
+	SessionID        string `json:"session_id"`
+	WorkID           string `json:"work_id"`
 	// CacheBackendHost + RunnerVerificationToken drive the deliverables upload to backend-cache.
 	CacheBackendHost        string `json:"cache_backend_host"`
 	RunnerVerificationToken string `json:"runner_verification_token"`
@@ -61,21 +61,12 @@ func DefaultClaudeOptions(maxIdle string) *ClaudeOptions {
 	}
 
 	return &ClaudeOptions{
-		Command:    anthropicWorkerBinary,
-		Args:       []string{"beta:worker", "run", "--workdir", workdir, "--max-idle", maxIdle},
 		MaxIdle:    maxIdle,
 		Workdir:    workdir,
 		OutputsDir: outputsDir,
 		StdoutFile: stdout,
 		StderrFile: stderr,
 	}
-}
-
-func (c *ClaudeOptions) resolvedCommand() string {
-	if c.Command == "" || c.Command == anthropicWorkerBinary {
-		return anthropicWorkerPath()
-	}
-	return c.Command
 }
 
 func newClaudeManager(opts *ManagerOptions) IManager {
@@ -125,7 +116,6 @@ func (m *claudeInprocManager) StartRunner(ctx context.Context, opts *StartRunner
 }
 
 func provisionClaudeWorker(c *ClaudeOptions) error {
-	// The in-process worker needs no `ant` binary on the VM — just the dirs.
 	for _, dir := range []string{c.Workdir, c.OutputsDir} {
 		if err := ensureWritableDir(dir); err != nil {
 			log.Logger().Errorf("Failed to provision claude worker dir %s: %v", dir, err)

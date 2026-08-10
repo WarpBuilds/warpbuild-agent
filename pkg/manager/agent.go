@@ -229,32 +229,18 @@ func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *war
 		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
 	}
 
-	anthropicEnv := map[string]*string{
-		"ANTHROPIC_ENVIRONMENT_ID":  details.EnvId,
-		"ANTHROPIC_ENVIRONMENT_KEY": details.EnvKey,
-		"ANTHROPIC_SESSION_ID":      details.SessionId,
-		"ANTHROPIC_WORK_ID":         details.WorkId,
-	}
-	var envs EnvironmentVariables
-	for key, val := range anthropicEnv {
-		if val == nil {
-			continue
-		}
-		envs = append(envs, EnvironmentVariable{Key: key, Value: *val})
-	}
-
-	sessionId := ""
-	if details.SessionId != nil {
-		sessionId = *details.SessionId
-	}
-	log.Logger().Infof("Starting Claude managed-agent worker for session %s", sessionId)
+	log.Logger().Infof("Starting Claude managed-agent worker for session %s", details.GetSessionId())
 
 	copts := DefaultClaudeOptions(details.GetMaxIdle())
 	copts.HostURL = a.hostURL
 	copts.PollingSecret = a.pollingSecret
 	copts.RunnerInstanceID = a.id
-	copts.Envs = envs
-	copts.SessionID = sessionId
+	copts.EnvID = details.GetEnvId()
+	copts.EnvKey = details.GetEnvKey()
+	copts.SessionID = details.GetSessionId()
+	if details.WorkId != nil {
+		copts.WorkID = *details.WorkId
+	}
 	copts.CacheBackendHost = a.opts.CacheBackendHost
 	copts.RunnerVerificationToken = a.opts.RunnerVerificationToken
 	if err := provisionClaudeWorker(copts); err != nil {

@@ -20,26 +20,17 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-// runClaudeWorker runs the managed-agent session worker in-process, replacing the
-// `ant beta:worker run` exec. It drives the anthropic-sdk-go SessionToolRunner
-// (kept open for the whole session, so it rides every turn) alongside our own
-// work-item heartbeat. Unlike the SDK's own EnvironmentWorker, our heartbeat does
-// NOT cancel the session runner when the work item reports state=stopping/stopped
-// — the SSE session stream is independent of the work-item lease, so the worker
-// keeps serving turns. It exits only on:
+// runClaudeWorker runs the managed-agent session worker in-process.
+// It exits only on:
 //   - session.status_terminated / session.deleted (ErrSessionTerminated),
 //   - MaxIdle of continuous end_turn idle (ErrIdleTimeout),
 //   - ctx cancellation (SIGTERM / teardown), or
 //   - a heartbeat staleness ceiling (lease presumed lost).
-//
-// Creds come from exactly the ANTHROPIC_* vars agentd already sets on the worker
-// (nothing extra); no org API key ever touches the VM.
 func runClaudeWorker(ctx context.Context, c *ClaudeOptions) error {
-	creds := claudeEnvMap(c.Envs)
-	envKey := creds["ANTHROPIC_ENVIRONMENT_KEY"]
-	envID := creds["ANTHROPIC_ENVIRONMENT_ID"]
-	sessionID := creds["ANTHROPIC_SESSION_ID"]
-	workID := creds["ANTHROPIC_WORK_ID"]
+	envKey := c.EnvKey
+	envID := c.EnvID
+	sessionID := c.SessionID
+	workID := c.WorkID
 
 	logger := claudeSlog(c.StderrFile)
 	logger.Info("claude in-process worker start",
@@ -51,9 +42,6 @@ func runClaudeWorker(ctx context.Context, c *ClaudeOptions) error {
 	}
 
 	client := anthropic.NewClient() // no API key on the VM; env key is attached per-request
-	// The environment key is a bearer; it must be paired with an X-Api-Key delete
-	// or the parent client's default api-key rides along and the events stream
-	// rejects the dual auth.
 	bearer := []option.RequestOption{
 		option.WithHeaderDel("X-Api-Key"),
 		option.WithAuthToken(envKey),
@@ -72,10 +60,22 @@ func runClaudeWorker(ctx context.Context, c *ClaudeOptions) error {
 	runnerCtx, runnerCancel := context.WithCancel(ctx)
 	defer runnerCancel()
 
+	hb := &claudeHeartbeater{
+		client:      client,
+		workID:      workID,
+		envID:       envID,
+		reqOpts:     bearer,
+		logger:      logger,
+		cancel:      runnerCancel,
+		interval:    heartbeatInterval,
+		ttl:         heartbeatTTL,
+		last:        "NO_HEARTBEAT",
+		lastSuccess: time.Now(),
+	}
 	hbDone := make(chan struct{})
 	go func() {
 		defer close(hbDone)
-		claudeHeartbeat(runnerCtx, runnerCancel, client, workID, envID, bearer, logger)
+		hb.run(runnerCtx)
 	}()
 
 	mi := claudeMaxIdle(c.MaxIdle)
@@ -110,91 +110,117 @@ func runClaudeWorker(ctx context.Context, c *ClaudeOptions) error {
 	return nil
 }
 
-// claudeHeartbeat keeps the work-item lease alive and logs each beat's state.
+const (
+	heartbeatFloor       = time.Second
+	heartbeatInterval    = 30 * time.Second
+	heartbeatTTL         = 30 * time.Second
+	heartbeatMaxReclaims = 3
+)
+
+// claudeHeartbeater keeps the work-item lease alive and logs each beat's state.
 // Crucially — unlike the SDK's runHeartbeat — on a work-item state=stopping/stopped
 // (or a lease-not-extended) it does NOT cancel the session runner: it just stops
 // beating. The session stream is what governs the session's lifetime. It cancels
 // the runner only on a genuine staleness ceiling (lease presumed lost server-side).
-func claudeHeartbeat(ctx context.Context, cancel context.CancelFunc, client anthropic.Client, workID, envID string, reqOpts []option.RequestOption, logger *slog.Logger) {
-	const floor = time.Second
-	interval := 30 * time.Second
-	ttl := 30 * time.Second
-	last := "NO_HEARTBEAT"
-	lastSuccess := time.Now()
-	reclaims := 0
+type claudeHeartbeater struct {
+	client  anthropic.Client
+	workID  string
+	envID   string
+	reqOpts []option.RequestOption
+	logger  *slog.Logger
+	cancel  context.CancelFunc
 
-	beat := func() bool { // returns: keep beating?
-		opts := append(reqOpts[:len(reqOpts):len(reqOpts)], option.WithRequestTimeout(interval))
-		resp, err := client.Beta.Environments.Work.Heartbeat(ctx, workID, anthropic.BetaEnvironmentWorkHeartbeatParams{
-			EnvironmentID:         envID,
-			ExpectedLastHeartbeat: param.NewOpt(last),
-		}, opts...)
-		if err != nil {
-			if ctx.Err() != nil {
-				return false
-			}
-			// A 412 means the work item already carries a live lease — typically a
-			// prior worker instance from before an agentd restart (crash or the
-			// cloud-init binary swap). Since ONE VM owns this session, reclaim the
-			// lease by adopting the server's current last_heartbeat instead of dying.
-			// Bounded so two genuinely-live workers can't ping-pong forever.
-			var apierr *anthropic.Error
-			if errors.As(err, &apierr) && apierr.StatusCode == 412 && reclaims < 3 {
-				if lh := reclaimLastHeartbeat(apierr); lh != "" && lh != last {
-					reclaims++
-					logger.Warn("heartbeat 412; reclaiming lease from current_state",
-						slog.String("last_heartbeat", lh), slog.Int("reclaim", reclaims))
-					last = lh
-					lastSuccess = time.Now()
-					return true
-				}
-			}
-			if stale := time.Since(lastSuccess); stale > ttl {
-				logger.Error("heartbeat staleness ceiling; cancelling session runner",
-					slog.String("since_success", stale.String()), slog.String("ttl", ttl.String()), slog.Any("error", err))
-				cancel()
-				return false
-			}
-			logger.Warn("transient heartbeat error", slog.Any("error", err))
-			return true
-		}
-		last = resp.LastHeartbeat
-		lastSuccess = time.Now()
-		reclaims = 0
-		if resp.TTLSeconds > 0 {
-			ttl = max(time.Duration(resp.TTLSeconds)*time.Second, floor)
-			interval = max(floor, min(30*time.Second, ttl/2))
-		}
-		logger.Info("heartbeat", slog.String("state", string(resp.State)),
-			slog.Int64("ttl_s", resp.TTLSeconds), slog.Bool("lease_extended", resp.LeaseExtended))
-		switch resp.State {
-		case anthropic.BetaSelfHostedWorkHeartbeatResponseStateStopping,
-			anthropic.BetaSelfHostedWorkHeartbeatResponseStateStopped:
-			logger.Warn("work item stopped; keeping session runner alive (policy), stopping heartbeat only")
-			return false
-		}
-		if !resp.LeaseExtended {
-			logger.Warn("lease not extended; keeping session runner alive (policy), stopping heartbeat only")
-			return false
-		}
-		return true
-	}
+	interval    time.Duration
+	ttl         time.Duration
+	last        string
+	lastSuccess time.Time
+	reclaims    int
+}
 
-	if !beat() {
-		return
-	}
-	for {
-		t := time.NewTimer(interval)
+// run beats once immediately, then every h.interval until a beat says stop or ctx ends.
+func (h *claudeHeartbeater) run(ctx context.Context) {
+	for h.beat(ctx) {
+		t := time.NewTimer(h.interval)
 		select {
 		case <-ctx.Done():
 			t.Stop()
 			return
 		case <-t.C:
 		}
-		if !beat() {
-			return
-		}
 	}
+}
+
+// beat sends one heartbeat and reports whether to keep beating.
+func (h *claudeHeartbeater) beat(ctx context.Context) bool {
+	opts := append(h.reqOpts[:len(h.reqOpts):len(h.reqOpts)], option.WithRequestTimeout(h.interval))
+	resp, err := h.client.Beta.Environments.Work.Heartbeat(ctx, h.workID, anthropic.BetaEnvironmentWorkHeartbeatParams{
+		EnvironmentID:         h.envID,
+		ExpectedLastHeartbeat: param.NewOpt(h.last),
+	}, opts...)
+	if err != nil {
+		return h.onError(ctx, err)
+	}
+
+	h.last = resp.LastHeartbeat
+	h.lastSuccess = time.Now()
+	h.reclaims = 0
+	if resp.TTLSeconds > 0 {
+		h.ttl = max(time.Duration(resp.TTLSeconds)*time.Second, heartbeatFloor)
+		h.interval = max(heartbeatFloor, min(heartbeatInterval, h.ttl/2))
+	}
+	h.logger.Info("heartbeat", slog.String("state", string(resp.State)),
+		slog.Int64("ttl_s", resp.TTLSeconds), slog.Bool("lease_extended", resp.LeaseExtended))
+
+	switch {
+	case resp.State == anthropic.BetaSelfHostedWorkHeartbeatResponseStateStopping,
+		resp.State == anthropic.BetaSelfHostedWorkHeartbeatResponseStateStopped:
+		h.logger.Warn("work item stopped; keeping session runner alive (policy), stopping heartbeat only")
+		return false
+	case !resp.LeaseExtended:
+		h.logger.Warn("lease not extended; keeping session runner alive (policy), stopping heartbeat only")
+		return false
+	default:
+		return true
+	}
+}
+
+// onError decides whether to keep beating after a failed heartbeat: reclaim a 412
+// lease, tolerate transient errors until the staleness ceiling, else cancel the runner.
+func (h *claudeHeartbeater) onError(ctx context.Context, err error) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	if h.tryReclaimLease(err) {
+		return true
+	}
+	if stale := time.Since(h.lastSuccess); stale > h.ttl {
+		h.logger.Error("heartbeat staleness ceiling; cancelling session runner",
+			slog.String("since_success", stale.String()), slog.String("ttl", h.ttl.String()), slog.Any("error", err))
+		h.cancel()
+		return false
+	}
+	h.logger.Warn("transient heartbeat error", slog.Any("error", err))
+	return true
+}
+
+// tryReclaimLease adopts the server's current last_heartbeat on a 412 (the work item
+// already carries a live lease — typically a prior worker). One VM owns this session,
+// so we reclaim instead of dying; bounded so two live workers can't ping-pong forever.
+func (h *claudeHeartbeater) tryReclaimLease(err error) bool {
+	var apierr *anthropic.Error
+	if !errors.As(err, &apierr) || apierr.StatusCode != 412 || h.reclaims >= heartbeatMaxReclaims {
+		return false
+	}
+	lh := reclaimLastHeartbeat(apierr)
+	if lh == "" || lh == h.last {
+		return false
+	}
+	h.reclaims++
+	h.logger.Warn("heartbeat 412; reclaiming lease from current_state",
+		slog.String("last_heartbeat", lh), slog.Int("reclaim", h.reclaims))
+	h.last = lh
+	h.lastSuccess = time.Now()
+	return true
 }
 
 // nonEmptyResultTool wraps a BetaTool so an empty tool result never reaches the
@@ -202,9 +228,11 @@ func claudeHeartbeat(ctx context.Context, cancel context.CancelFunc, client anth
 // "content.0.text: value is required", stalling the turn). Empty output → "(no output)".
 type nonEmptyResultTool struct{ inner anthropic.BetaTool }
 
-func (t nonEmptyResultTool) Name() string                                { return t.inner.Name() }
-func (t nonEmptyResultTool) Description() string                         { return t.inner.Description() }
-func (t nonEmptyResultTool) InputSchema() anthropic.BetaToolInputSchemaParam { return t.inner.InputSchema() }
+func (t nonEmptyResultTool) Name() string        { return t.inner.Name() }
+func (t nonEmptyResultTool) Description() string { return t.inner.Description() }
+func (t nonEmptyResultTool) InputSchema() anthropic.BetaToolInputSchemaParam {
+	return t.inner.InputSchema()
+}
 
 func (t nonEmptyResultTool) Execute(ctx context.Context, input json.RawMessage) ([]anthropic.BetaToolResultBlockParamContentUnion, error) {
 	res, err := t.inner.Execute(ctx, input)
@@ -239,30 +267,33 @@ func wrapNonEmptyResult(tools []anthropic.BetaTool) []anthropic.BetaTool {
 	return out
 }
 
+// heartbeatErrorBody mirrors the 412 heartbeat error body just far enough to reach
+// error.details.current_state.last_heartbeat — the server's authoritative lease token.
+// The SDK's *anthropic.Error doesn't type this detail, so we parse it from raw JSON.
+type heartbeatErrorBody struct {
+	Error heartbeatErrorContent `json:"error"`
+}
+
+type heartbeatErrorContent struct {
+	Details heartbeatErrorDetails `json:"details"`
+}
+
+type heartbeatErrorDetails struct {
+	CurrentState heartbeatWorkCurrentState `json:"current_state"`
+}
+
+type heartbeatWorkCurrentState struct {
+	LastHeartbeat string `json:"last_heartbeat"`
+}
+
 // reclaimLastHeartbeat extracts error.details.current_state.last_heartbeat from a
 // 412 heartbeat error body so the worker can adopt (reclaim) the existing lease.
 func reclaimLastHeartbeat(apierr *anthropic.Error) string {
-	var body struct {
-		Error struct {
-			Details struct {
-				CurrentState struct {
-					LastHeartbeat string `json:"last_heartbeat"`
-				} `json:"current_state"`
-			} `json:"details"`
-		} `json:"error"`
-	}
+	var body heartbeatErrorBody
 	if json.Unmarshal([]byte(apierr.RawJSON()), &body) != nil {
 		return ""
 	}
 	return body.Error.Details.CurrentState.LastHeartbeat
-}
-
-func claudeEnvMap(envs EnvironmentVariables) map[string]string {
-	m := make(map[string]string, len(envs))
-	for _, e := range envs {
-		m[e.Key] = e.Value
-	}
-	return m
 }
 
 func claudeMaxIdle(s string) *time.Duration {
@@ -278,15 +309,21 @@ func claudeMaxIdle(s string) *time.Duration {
 // ant exec used (so telemetry that reads runner.claude.stderr.log keeps working);
 // falls back to os.Stderr.
 func claudeSlog(path string) *slog.Logger {
-	var w io.Writer = os.Stderr
-	if path != "" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {
-			if f, ferr := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); ferr == nil {
-				w = f
-			} else {
-				log.Logger().Warnf("claude worker: could not open %s, logging to stderr: %v", path, ferr)
-			}
-		}
+	return slog.New(slog.NewTextHandler(claudeLogWriter(path), &slog.HandlerOptions{Level: slog.LevelDebug}))
+}
+
+// claudeLogWriter opens the log file, falling back to os.Stderr on any failure.
+func claudeLogWriter(path string) io.Writer {
+	if path == "" {
+		return os.Stderr
 	}
-	return slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return os.Stderr
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		log.Logger().Warnf("claude worker: could not open %s, logging to stderr: %v", path, err)
+		return os.Stderr
+	}
+	return f
 }
