@@ -296,6 +296,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			HostURL:                   settings.Agent.HostURL,
 			ExitFileLocation:          settings.Agent.ExitFileLocation,
 			TransparentCacheOginyPort: transparentCacheOginyPort,
+			CacheBackendHost:          settings.Proxy.CacheBackendHost,
+			RunnerVerificationToken:   settings.Agent.RunnerVerificationToken,
 		})
 		if err != nil {
 			log.Logger().Errorf("failed to create agent: %v", err)

@@ -34,6 +34,10 @@ type AgentOptions struct {
 	WindowsOptions *WindowsOptions `json:"windows_options"`
 	// TransparentCacheOginyPort is the port for the transparent cache oginy server.
 	TransparentCacheOginyPort int `json:"transparent_cache_oginy_port"`
+	// CacheBackendHost + RunnerVerificationToken let a claude agent upload its deliverables to
+	// backend-cache (via the node warp-cache client).
+	CacheBackendHost        string `json:"cache_backend_host"`
+	RunnerVerificationToken string `json:"runner_verification_token"`
 }
 
 type WindowsOptions struct {
@@ -100,7 +104,6 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 			log.Logger().Infof("host url: %s", a.hostURL)
 			log.Logger().Infof("checking for runner instance allocation details for %s", a.id)
-			log.Logger().Infof("polling secret: %s", a.pollingSecret)
 
 			allocationDetails, resp, err := a.client.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
@@ -119,53 +122,25 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 			}
 
 			// TODO: verify the correct status
-			if *allocationDetails.Status == "assigned" {
-
-				log.Logger().Infof("Setting additonal environment variables")
-				for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
-					os.Setenv(key, val)
+			if allocationDetails.Status == nil || *allocationDetails.Status != "assigned" {
+				status := "<nil>"
+				if allocationDetails.Status != nil {
+					status = *allocationDetails.Status
 				}
+				log.Logger().Infof("runner instance allocation details status: %s", status)
+				log.Logger().Infof("Retrying in %s", Interval)
+				continue
+			}
 
-				if opts.Manager.Provider == ProviderGithubCRI {
-					for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
-						opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
-							Key:   key,
-							Value: val,
-						})
-					}
-				}
-
-				// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
-				if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
-					log.Logger().Infof("Starting transparent cache server")
-					if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
-						log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
-						return err
-					}
-				}
-
-				log.Logger().Infof("Starting runner")
-				m := NewManager(opts.Manager)
-				startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
-					JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
-					AgentOptions: a.opts,
-				})
-				if err != nil {
-					log.Logger().Errorf("failed to start runner: %v", err)
+			switch runnerApplication(allocationDetails) {
+			case ProviderClaudeAgent:
+				if err := a.handleClaudeAgentAllocation(ctx, allocationDetails); err != nil {
 					return err
 				}
-
-				if startRunnerOutput.RunCompletedSuccessfully {
-					err := a.writeExitFile(ctx, startRunnerOutput)
-					if err != nil {
-						log.Logger().Errorf("failed to write exit file: %v", err)
-						return err
-					}
+			default:
+				if err := a.handleGithubAllocation(ctx, opts, allocationDetails); err != nil {
+					return err
 				}
-
-			} else {
-				log.Logger().Infof("runner instance allocation details status: %s", *allocationDetails.Status)
-				log.Logger().Infof("Retrying in %s", Interval)
 			}
 
 		case <-ctx.Done():
@@ -174,6 +149,104 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 		}
 	}
 
+}
+
+func runnerApplication(details *warpbuild.CommonsRunnerInstanceAllocationDetails) Provider {
+	if details.RunnerApplication != nil {
+		return Provider(*details.RunnerApplication)
+	}
+	return ProviderGithub
+}
+
+func (a *agentImpl) handleGithubAllocation(ctx context.Context, opts *StartAgentOptions, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) error {
+	if allocationDetails.GhRunnerApplicationDetails == nil || allocationDetails.GhRunnerApplicationDetails.Variables == nil {
+		log.Logger().Warnf("assigned allocation missing GitHub runner application details; retrying in %s", Interval)
+		return nil
+	}
+
+	log.Logger().Infof("Setting additonal environment variables")
+	for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+		os.Setenv(key, val)
+	}
+
+	if opts.Manager.Provider == ProviderGithubCRI {
+		for key, val := range *allocationDetails.GhRunnerApplicationDetails.Variables {
+			opts.Manager.GithubCRI.CMDOptions.Envs = append(opts.Manager.GithubCRI.CMDOptions.Envs, EnvironmentVariable{
+				Key:   key,
+				Value: val,
+			})
+		}
+	}
+
+	// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
+	if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
+		log.Logger().Infof("Starting transparent cache server")
+		if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
+			log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
+			return err
+		}
+	}
+
+	log.Logger().Infof("Starting runner")
+	m := NewManager(opts.Manager)
+	startRunnerOutput, err := m.StartRunner(ctx, &StartRunnerOptions{
+		JitToken:     *allocationDetails.GhRunnerApplicationDetails.Jit,
+		AgentOptions: a.opts,
+	})
+	if err != nil {
+		log.Logger().Errorf("failed to start runner: %v", err)
+		return err
+	}
+
+	if startRunnerOutput.RunCompletedSuccessfully {
+		if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
+			log.Logger().Errorf("failed to write exit file: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *agentImpl) handleClaudeAgentAllocation(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) error {
+	startRunnerOutput, err := a.startClaudeAgent(ctx, allocationDetails)
+	if err != nil {
+		log.Logger().Errorf("failed to start claude agent worker: %v", err)
+		return err
+	}
+	if startRunnerOutput.RunCompletedSuccessfully {
+		if err := a.writeExitFile(ctx, startRunnerOutput); err != nil {
+			log.Logger().Errorf("failed to write exit file: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *agentImpl) startClaudeAgent(ctx context.Context, allocationDetails *warpbuild.CommonsRunnerInstanceAllocationDetails) (*StartRunnerOutput, error) {
+	details := allocationDetails.ClaudeAgentApplicationDetails
+	if details == nil {
+		return nil, fmt.Errorf("claude_agent allocation is missing claude_agent_application_details")
+	}
+
+	log.Logger().Infof("Starting Claude managed-agent worker for session %s", details.GetSessionId())
+
+	copts := DefaultClaudeOptions(details.GetMaxIdle())
+	copts.HostURL = a.hostURL
+	copts.PollingSecret = a.pollingSecret
+	copts.RunnerInstanceID = a.id
+	copts.EnvID = details.GetEnvId()
+	copts.EnvKey = details.GetEnvKey()
+	copts.SessionID = details.GetSessionId()
+	if details.WorkId != nil {
+		copts.WorkID = *details.WorkId
+	}
+	copts.CacheBackendHost = a.opts.CacheBackendHost
+	copts.RunnerVerificationToken = a.opts.RunnerVerificationToken
+	if err := provisionClaudeWorker(copts); err != nil {
+		return nil, err
+	}
+	m := NewManager(&ManagerOptions{Provider: ProviderClaudeAgent, Claude: copts})
+	return m.StartRunner(ctx, &StartRunnerOptions{AgentOptions: a.opts})
 }
 
 func (a *agentImpl) writeExitFile(ctx context.Context, opts *StartRunnerOutput) error {
