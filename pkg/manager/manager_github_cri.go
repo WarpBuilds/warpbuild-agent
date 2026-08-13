@@ -18,11 +18,10 @@ type ghcriManager struct {
 }
 
 type GithubCRIOptions struct {
-	StdoutFile       string      `json:"stdout_file"`
-	StderrFile       string      `json:"stderr_file"`
-	RunnerDir        string      `json:"runner_dir"`
-	CMDOptions       *CMDOptions `json:"cmd_options"`
-	InheritParentEnv bool        `json:"inherit_parent_env"`
+	StdoutFile string      `json:"stdout_file"`
+	StderrFile string      `json:"stderr_file"`
+	RunnerDir  string      `json:"runner_dir"`
+	CMDOptions *CMDOptions `json:"cmd_options"`
 }
 
 type CMDOptions struct {
@@ -49,9 +48,6 @@ func (m *ghcriManager) StartRunner(ctx context.Context, opts *StartRunnerOptions
 	}
 
 	cmd := exec.CommandContext(ctx, m.CMDOptions.CMD, m.CMDOptions.Args...)
-	if m.InheritParentEnv {
-		cmd.Env = os.Environ()
-	}
 	if opts.JitToken != "" {
 		cmd.Env = append(cmd.Env, "WARPBUILD_GH_JIT_TOKEN="+opts.JitToken)
 	}
