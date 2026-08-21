@@ -25,6 +25,19 @@ receivers:
     include_file_path: true
     poll_interval: 20s
 
+  # Cloud-init log; written fully before the collector starts, so read from the
+  # beginning. The path may not exist on all images — filelog just matches nothing.
+  filelog/cloudinit:
+    include:
+      - 'C:\debuginit.txt'
+    start_at: beginning
+    max_log_size: 200KiB
+    include_file_name: true
+    include_file_path: true
+    poll_interval: 60s
+    attributes:
+      log.type: cloud_init
+
   # GitHub Actions job logs and diagnostic logs
   filelog/gha_logs:
     include:
@@ -364,7 +377,7 @@ service:
       level: none
   pipelines:
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services, filelog/cloudinit{{- else }}filelog{{- end}}]
       processors: [batch/logs]
       exporters: [otlphttp]
     logs/gha_logs:
