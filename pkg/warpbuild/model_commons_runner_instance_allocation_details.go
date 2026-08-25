@@ -26,6 +26,7 @@ type CommonsRunnerInstanceAllocationDetails struct {
 	Status *string `json:"status,omitempty"`
 	ClaudeAgentApplicationDetails *CommonsClaudeAgentApplicationDetails `json:"claude_agent_application_details,omitempty"`
 	TelemetryEnabled *bool `json:"telemetry_enabled,omitempty"`
+	ObservabilityExport *CommonsObservabilityExportConfig `json:"observability_export,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -240,6 +241,38 @@ func (o *CommonsRunnerInstanceAllocationDetails) SetTelemetryEnabled(v bool) {
 	o.TelemetryEnabled = &v
 }
 
+// GetObservabilityExport returns the ObservabilityExport field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetObservabilityExport() CommonsObservabilityExportConfig {
+	if o == nil || IsNil(o.ObservabilityExport) {
+		var ret CommonsObservabilityExportConfig
+		return ret
+	}
+	return *o.ObservabilityExport
+}
+
+// GetObservabilityExportOk returns a tuple with the ObservabilityExport field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) GetObservabilityExportOk() (*CommonsObservabilityExportConfig, bool) {
+	if o == nil || IsNil(o.ObservabilityExport) {
+		return nil, false
+	}
+	return o.ObservabilityExport, true
+}
+
+// HasObservabilityExport returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasObservabilityExport() bool {
+	if o != nil && !IsNil(o.ObservabilityExport) {
+		return true
+	}
+
+	return false
+}
+
+// SetObservabilityExport gets a reference to the given CommonsObservabilityExportConfig and assigns it to the ObservabilityExport field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetObservabilityExport(v CommonsObservabilityExportConfig) {
+	o.ObservabilityExport = &v
+}
+
 func (o CommonsRunnerInstanceAllocationDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -267,6 +300,9 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 	}
 	if !IsNil(o.TelemetryEnabled) {
 		toSerialize["telemetry_enabled"] = o.TelemetryEnabled
+	}
+	if !IsNil(o.ObservabilityExport) {
+		toSerialize["observability_export"] = o.ObservabilityExport
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -296,6 +332,7 @@ func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (er
 		delete(additionalProperties, "status")
 		delete(additionalProperties, "claude_agent_application_details")
 		delete(additionalProperties, "telemetry_enabled")
+		delete(additionalProperties, "observability_export")
 		o.AdditionalProperties = additionalProperties
 	}
 

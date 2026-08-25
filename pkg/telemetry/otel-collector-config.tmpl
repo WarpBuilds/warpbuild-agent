@@ -328,6 +328,39 @@ processors:
             new_label: scope
             new_value: fs_max_percent
 
+{{- if .ExportEnabled}}
+
+  # Export-only. This must never be added to our own pipelines: our
+  # ClickHouse view keys on host.name = runner instance id, and the
+  # rewrite below deliberately moves that to a plain attribute so the
+  # destination does not see a new host per job.
+  resource/customer:
+    attributes:
+      # Internal markers, meaningless outside our own dashboards.
+      - key: telemetry.version
+        action: delete
+      - key: telemetry.vm_os
+        action: delete
+{{- range $key, $value := .ExportResourceAttrs}}
+      - key: {{$key}}
+        value: {{yamlStr $value}}
+        action: upsert
+{{- end}}
+{{- end}}
+
+{{- if .ExportEnabled}}
+
+connectors:
+  # Fan out after our own processing rather than duplicating the whole
+  # processor chain — the customer gets the same normalised signals we do.
+{{- if .ExportMetrics}}
+  forward/customer_metrics:
+{{- end}}
+{{- if .ExportLogs}}
+  forward/customer_logs:
+{{- end}}
+{{- end}}
+
 exporters:
   otlphttp:
     logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
@@ -340,23 +373,36 @@ exporters:
     encoding: "json"
     compression: "none"
 
-{{if .EnableSigNoz}}
-  # 
-  # SigNoz Cloud exporter
-  # Only to be used for debugging on non-prod environments
-  otlp/signoz:
-    endpoint: "{{.SigNozEndpoint}}"
-    tls:
-      insecure: false
-    headers:
-      signoz-ingestion-key: "{{.SigNozAPIKey}}"
+{{- if .ExportEnabled}}
 
-  # Debug exporter to see what's being sent to SigNoz
-  debug:
-    verbosity: normal
-    sampling_initial: 10
-    sampling_thereafter: 100
-{{end}}
+  # Org-owned OTLP destination. Purely additive — the exporters above keep
+  # running regardless, so a customer endpoint that is down or rejecting
+  # cannot affect our own collection.
+  #
+  # Credentials arrive as env vars rather than being written here: the
+  # config file outlives any single request and tends to end up in bug
+  # reports.
+  otlphttp/customer:
+    endpoint: {{yamlStr .ExportEndpoint}}
+    compression: gzip
+    timeout: 30s
+    headers:
+{{- range $name, $env := .ExportHeaderEnv}}
+      {{$name}}: "${env:{{$env}}}"
+{{- end}}
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      initial_interval: 2s
+      max_interval: 15s
+      # The VM is reaped shortly after the job ends, so retrying beyond
+      # this only burns the flush window. Our S3 copy stays the record of
+      # truth for anything dropped here.
+      max_elapsed_time: 90s
+{{- end}}
 
 service:
   telemetry:
@@ -366,11 +412,19 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp]
+      exporters: [otlphttp{{if .ExportLogs}}, forward/customer_logs{{end}}]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs]
+      exporters: [otlphttp/gha_logs{{if .ExportLogs}}, forward/customer_logs{{end}}]
+{{- if .ExportLogs}}
+    # Both log pipelines above feed this one, so the org receives exactly
+    # the logs we upload ourselves.
+    logs/customer:
+      receivers: [forward/customer_logs]
+      processors: [resource/customer]
+      exporters: [otlphttp/customer]
+{{- end}}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -405,4 +459,10 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
+      exporters: [otlphttp{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
+{{- if .ExportMetrics}}
+    metrics/customer:
+      receivers: [forward/customer_metrics]
+      processors: [resource/customer]
+      exporters: [otlphttp/customer]
+{{- end}}
