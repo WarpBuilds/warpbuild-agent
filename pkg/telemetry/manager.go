@@ -47,6 +47,10 @@ type TelemetryManager struct {
 	pollingSecret string
 	hostURL       string
 
+	sigNozEnable   bool
+	sigNozEndpoint string
+	sigNozAPIKey   string
+
 	// Org-owned OTLP destination, delivered on the allocation poll. Nil
 	// until the runner is allocated to a job — warm runners sitting idle
 	// export nothing.
@@ -60,19 +64,22 @@ type TelemetryManager struct {
 }
 
 // NewTelemetryManager creates a new telemetry manager
-func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string) *TelemetryManager {
+func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, warpbuildAPI *warpbuild.APIClient, runnerID, pollingSecret, hostURL string, sigNozEnable bool, sigNozEndpoint, sigNozAPIKey string) *TelemetryManager {
 	managerCtx, cancel := context.WithCancel(ctx)
 	return &TelemetryManager{
-		ctx:           managerCtx,
-		cancel:        cancel,
-		port:          port,
-		baseDirectory: baseDirectory,
-		warpbuildAPI:  warpbuildAPI,
-		runnerID:      runnerID,
-		pollingSecret: pollingSecret,
-		hostURL:       hostURL,
-		restartCh:     make(chan struct{}, 1),
-		drainTimeout:  defaultCollectorDrainTimeout,
+		ctx:            managerCtx,
+		cancel:         cancel,
+		port:           port,
+		baseDirectory:  baseDirectory,
+		warpbuildAPI:   warpbuildAPI,
+		runnerID:       runnerID,
+		pollingSecret:  pollingSecret,
+		hostURL:        hostURL,
+		sigNozEnable:   sigNozEnable,
+		sigNozEndpoint: sigNozEndpoint,
+		sigNozAPIKey:   sigNozAPIKey,
+		restartCh:      make(chan struct{}, 1),
+		drainTimeout:   defaultCollectorDrainTimeout,
 	}
 }
 
@@ -361,6 +368,9 @@ type collectorTemplateData struct {
 	Arch                  string
 	Port                  int
 	RunnerID              string
+	SigNozEndpoint        string
+	SigNozAPIKey          string
+	EnableSigNoz          bool
 
 	ExportEnabled       bool
 	ExportEndpoint      string
@@ -401,6 +411,9 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		Arch:                  runtime.GOARCH,
 		Port:                  tm.port,
 		RunnerID:              tm.runnerID,
+		SigNozEndpoint:        tm.sigNozEndpoint,
+		SigNozAPIKey:          tm.sigNozAPIKey,
+		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
 	}
 	if export != nil {
 		data.ExportEnabled = true

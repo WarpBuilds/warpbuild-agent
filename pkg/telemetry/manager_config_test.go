@@ -32,7 +32,7 @@ func repoRoot(t *testing.T) string {
 
 func newTestManager(t *testing.T, export *exportConfig) *TelemetryManager {
 	t.Helper()
-	tm := NewTelemetryManager(t.Context(), 33931, repoRoot(t), nil, "wr_test_runner", "secret", "https://api.warpbuild.com/api/v1")
+	tm := NewTelemetryManager(t.Context(), 33931, repoRoot(t), nil, "wr_test_runner", "secret", "https://api.warpbuild.com/api/v1", false, "", "")
 	tm.exportCfg = export
 	return tm
 }

@@ -373,6 +373,23 @@ exporters:
     encoding: "json"
     compression: "none"
 
+{{if .EnableSigNoz}}
+  # 
+  # SigNoz Cloud exporter
+  # Only to be used for debugging on non-prod environments
+  otlp/signoz:
+    endpoint: "{{.SigNozEndpoint}}"
+    tls:
+      insecure: false
+    headers:
+      signoz-ingestion-key: "{{.SigNozAPIKey}}"
+
+  # Debug exporter to see what's being sent to SigNoz
+  debug:
+    verbosity: normal
+    sampling_initial: 10
+    sampling_thereafter: 100
+{{end}}
 {{- if .ExportEnabled}}
 
   # Org-owned OTLP destination. Purely additive — the exporters above keep
@@ -459,7 +476,7 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
 {{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]
