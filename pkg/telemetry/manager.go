@@ -496,22 +496,46 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 				continue
 			}
 
-			// An absent key defaults to enabled.
-			if allocationDetails.HasTelemetryEnabled() && !allocationDetails.GetTelemetryEnabled() {
-				log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
-
+			if !tm.applyAllocationDetails(allocationDetails) {
 				// Cancel the context to stop the entire telemetry manager
 				tm.cancel()
 				return
 			}
-
-			tm.applyExportConfig(exportConfigFrom(allocationDetails.ObservabilityExport))
 
 		case <-tm.ctx.Done():
 			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
 			return
 		}
 	}
+}
+
+// applyAllocationDetails folds one poll response into the manager's state.
+// It reports whether telemetry should keep running.
+func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) bool {
+	if details == nil {
+		return true
+	}
+
+	// An absent key defaults to enabled.
+	if details.HasTelemetryEnabled() && !details.GetTelemetryEnabled() {
+		log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
+		return false
+	}
+
+	// Only a delivered export block carries information. The backend builds
+	// allocation details on several paths and only the freshly-ALLOCATED one
+	// populates this field, so an absent block means "this response says
+	// nothing about the export", not "the export was removed". Treating
+	// absence as removal tore the customer exporter down as soon as the
+	// runner moved to RUNNING, a couple of seconds into every job.
+	//
+	// telemetry_enabled above stays the kill switch: it is populated on every
+	// path, and it stops collection outright rather than just the fan-out.
+	if next := exportConfigFrom(details.ObservabilityExport); next != nil {
+		tm.applyExportConfig(next)
+	}
+
+	return true
 }
 
 // Drain flushes whatever the collector is holding.
