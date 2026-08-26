@@ -108,3 +108,34 @@ func TestTerminateCollector_KillsWhenDrainStalls(t *testing.T) {
 		"killed before the drain window elapsed")
 	assert.Equal(t, syscall.SIGKILL, exitSignal(t, cmd))
 }
+
+// Drain stops the collector rather than cycling it: the job is over, so
+// there is nothing to come back up for, and a restart would only churn the
+// process and briefly drop our own collection too.
+func TestDrainStopsRatherThanRestarts(t *testing.T) {
+	tm := newTestManager(t, nil)
+
+	tm.Drain()
+
+	assert.Len(t, tm.drainCh, 1, "drain should be pending")
+	assert.Empty(t, tm.restartCh, "drain must not schedule a restart")
+}
+
+// The post-end hook can fire more than once; a second drain must not block.
+func TestDrainIsIdempotent(t *testing.T) {
+	tm := newTestManager(t, nil)
+
+	done := make(chan struct{})
+	go func() {
+		tm.Drain()
+		tm.Drain()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Drain blocked on a full channel")
+	}
+	assert.Len(t, tm.drainCh, 1)
+}

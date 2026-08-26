@@ -1,9 +1,6 @@
 package manager
 
-import (
-	"context"
-	"sort"
-)
+import "context"
 
 type PreStartHookOptions struct {
 	StartRunnerOptions *StartRunnerOptions `json:"start_runner_options"`
@@ -31,6 +28,7 @@ type IPostEndHook interface {
 // pkg/hooks so hookRunOrder below can name them: pkg/hooks imports this
 // package, not the other way round.
 const (
+	TELEMETRY_DRAIN_HOOK       = "TELEMETRY_DRAIN_HOOK"
 	CLAUDE_OUTPUTS_UPLOAD_HOOK = "CLAUDE_OUTPUTS_UPLOAD_HOOK"
 	CLEANUP_CALLBACK_HOOK      = "CLEANUP_CALLBACK_HOOK"
 )
@@ -41,6 +39,7 @@ const (
 // CLEANUP_CALLBACK_HOOK tells the backend it may reap the VM, so anything
 // that needs the VM alive belongs above it.
 var hookRunOrder = []string{
+	TELEMETRY_DRAIN_HOOK,
 	CLAUDE_OUTPUTS_UPLOAD_HOOK,
 	CLEANUP_CALLBACK_HOOK,
 }
@@ -56,31 +55,37 @@ func RegisterHook[T any](hook T) {
 	hooks = append(hooks, hook)
 }
 
+// GetHooks returns the registered hooks of type T, in hookRunOrder.
+// Anything not named there follows, in registration order.
 func GetHooks[T any]() []T {
-	var result []T
+	var matching []T
 	for _, hook := range hooks {
 		if h, ok := hook.(T); ok {
-			result = append(result, h)
+			matching = append(matching, h)
 		}
 	}
-	// Stable, so unlisted hooks keep registration order behind the listed ones.
-	sort.SliceStable(result, func(i, j int) bool {
-		return hookRunRank(result[i]) < hookRunRank(result[j])
-	})
-	return result
-}
 
-// hookRunRank is the hook's index in hookRunOrder, or len(hookRunOrder)
-// for anything unlisted.
-func hookRunRank(hook any) int {
-	h, ok := hook.(hookIDer)
-	if !ok {
-		return len(hookRunOrder)
-	}
-	for i, name := range hookRunOrder {
-		if name == h.HookID() {
-			return i
+	result := make([]T, 0, len(matching))
+	placed := make([]bool, len(matching))
+
+	// hookRunOrder is already the order we want, so walk it directly.
+	for _, name := range hookRunOrder {
+		for i, hook := range matching {
+			if placed[i] {
+				continue
+			}
+			if h, ok := any(hook).(hookIDer); ok && h.HookID() == name {
+				result = append(result, hook)
+				placed[i] = true
+			}
 		}
 	}
-	return len(hookRunOrder)
+
+	for i, hook := range matching {
+		if !placed[i] {
+			result = append(result, hook)
+		}
+	}
+
+	return result
 }

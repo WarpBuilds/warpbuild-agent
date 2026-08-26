@@ -9,8 +9,8 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-func apiExport(endpoint string) *warpbuild.CommonsObservabilityExportConfig {
-	out := warpbuild.NewCommonsObservabilityExportConfig()
+func apiExport(endpoint string) *warpbuild.CommonsTelemetryExportConfig {
+	out := warpbuild.NewCommonsTelemetryExportConfig()
 	if endpoint != "" {
 		out.SetEndpoint(endpoint)
 	}
@@ -21,7 +21,7 @@ func apiExport(endpoint string) *warpbuild.CommonsObservabilityExportConfig {
 
 func TestExportConfigFrom(t *testing.T) {
 	cases := []struct {
-		in      *warpbuild.CommonsObservabilityExportConfig
+		in      *warpbuild.CommonsTelemetryExportConfig
 		name    string
 		wantNil bool
 	}{

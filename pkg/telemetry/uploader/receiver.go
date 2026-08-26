@@ -21,6 +21,9 @@ type Receiver struct {
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 	mu      sync.RWMutex
+
+	// onDrain is invoked by /internal/drain. Set by the manager.
+	onDrain func()
 }
 
 // NewReceiver creates a new OTEL receiver
@@ -32,6 +35,12 @@ func NewReceiver(port int, service TelemetryProcessor) *Receiver {
 		ctx:     ctx,
 		cancel:  cancel,
 	}
+}
+
+// SetOnDrain registers the flush callback for /internal/drain. Must be
+// called before Start.
+func (r *Receiver) SetOnDrain(fn func()) {
+	r.onDrain = fn
 }
 
 // Start starts the receiver on the specified port
@@ -51,6 +60,8 @@ func (r *Receiver) Start() error {
 
 	// Health check endpoint (no middleware needed)
 	mux.HandleFunc("/health", r.handleHealth)
+
+	mux.HandleFunc("/internal/drain", r.handleDrain)
 
 	r.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", r.port),
@@ -191,6 +202,44 @@ func (r *Receiver) handleGHALogs(w http.ResponseWriter, req *http.Request) {
 	r.processGHALogs(body)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// handleDrain flushes what the collector is holding.
+//
+// agentd calls this when a job ends: batches are on a 30s timer, so
+// without it the tail of every job can die with the VM. Loopback only —
+// the port is local to the box but job code shares that box.
+func (r *Receiver) handleDrain(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isLoopback(req.RemoteAddr) {
+		log.Logger().Warnf("Rejected drain request from %s", req.RemoteAddr)
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if r.onDrain == nil {
+		http.Error(w, "Drain not supported", http.StatusNotImplemented)
+		return
+	}
+
+	log.Logger().Infof("Drain requested, flushing telemetry")
+	r.onDrain()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"draining"}`))
+}
+
+func isLoopback(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // handleHealth handles health check requests

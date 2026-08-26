@@ -61,6 +61,7 @@ type TelemetryManager struct {
 	// export nothing.
 	exportCfg *exportConfig
 	restartCh chan struct{}
+	drainCh   chan struct{}
 
 	// drainTimeout is a field rather than a constant so tests can stop
 	// waiting out the real window.
@@ -83,6 +84,7 @@ func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, wa
 		sigNozEndpoint: sigNozEndpoint,
 		sigNozAPIKey:   sigNozAPIKey,
 		restartCh:      make(chan struct{}, 1),
+		drainCh:        make(chan struct{}, 1),
 		drainTimeout:   defaultCollectorDrainTimeout,
 	}
 }
@@ -101,6 +103,7 @@ func (tm *TelemetryManager) Start() error {
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)
+	tm.receiver.SetOnDrain(tm.Drain)
 
 	// Start receiver
 	if err := tm.receiver.Start(); err != nil {
@@ -234,6 +237,12 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 		tm.terminateCollector(cmd, waitDone)
 		restart = true
 
+	case <-tm.drainCh:
+		// Shutdown is what makes the collector flush, and the job is over,
+		// so there is nothing to come back up for.
+		log.Logger().Infof("Draining OTEL collector (PID: %d) at end of job...", cmd.Process.Pid)
+		tm.terminateCollector(cmd, waitDone)
+
 	case err := <-waitDone:
 		if err != nil {
 			log.Logger().Errorf("OpenTelemetry Collector exited with error: %v", err)
@@ -288,11 +297,7 @@ func requestCollectorShutdown(cmd *exec.Cmd) error {
 func awaitCollectorExit(waitDone <-chan error, timeout time.Duration) bool {
 	select {
 	case err := <-waitDone:
-		if err != nil {
-			log.Logger().Infof("OpenTelemetry Collector exited: %v", err)
-		} else {
-			log.Logger().Infof("OpenTelemetry Collector exited cleanly")
-		}
+		log.Logger().Infof("OpenTelemetry Collector exited: %v", err)
 		return true
 	case <-time.After(timeout):
 		return false
@@ -498,7 +503,7 @@ const (
 func (tm *TelemetryManager) monitorTelemetryStatus() {
 	defer tm.wg.Done()
 
-	log.Logger().Infof("Watching for the organization's observability export destination...")
+	log.Logger().Infof("Watching for the organization's telemetry export destination...")
 
 	ticker := time.NewTicker(telemetryPollInterval)
 	defer ticker.Stop()
@@ -526,7 +531,7 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 			case pollApplied:
 				return
 			case pollNoExport:
-				log.Logger().Infof("No observability export configured for this organization; nothing to fan out")
+				log.Logger().Infof("No telemetry export configured for this organization; nothing to fan out")
 				return
 			case pollWait:
 			}
@@ -558,13 +563,28 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 
 	// The job details are here. Whatever the export block says now is the
 	// answer for this run.
-	next := exportConfigFrom(details.ObservabilityExport)
+	next := exportConfigFrom(details.TelemetryExport)
 	if next == nil {
 		return pollNoExport
 	}
 
 	tm.applyExportConfig(next)
 	return pollApplied
+}
+
+// Drain flushes whatever the collector is holding and leaves it stopped.
+//
+// A graceful shutdown is the only thing that makes the collector flush its
+// batch processors and drain its sending queue — there is no runtime flush
+// API. It is called at end of job, so stopping rather than restarting is
+// both simpler and correct: the VM is about to be reaped, and our own
+// upload path gets flushed by the same shutdown.
+func (tm *TelemetryManager) Drain() {
+	select {
+	case tm.drainCh <- struct{}{}:
+	default:
+		// A drain is already pending, which flushes just the same.
+	}
 }
 
 // applyExportConfig stores the export config and restarts the collector
@@ -574,7 +594,7 @@ func (tm *TelemetryManager) applyExportConfig(next *exportConfig) {
 	tm.exportCfg = next
 	tm.mu.Unlock()
 
-	log.Logger().Infof("Observability export configured: endpoint=%s", next.Endpoint)
+	log.Logger().Infof("Telemetry export configured: endpoint=%s", next.Endpoint)
 	tm.restartCollector()
 }
 

@@ -14,7 +14,7 @@ const (
 	exportHeaderEnvPrefix = "WARPBUILD_OTLP_HEADER_"
 )
 
-// exportConfig is the runner-local view of the org's observability
+// exportConfig is the runner-local view of the org's telemetry
 // export, delivered on the allocation-details poll.
 // Both metrics and logs are always exported; the two signals get their
 // own exporter instances in the collector config so a destination that
@@ -27,7 +27,7 @@ type exportConfig struct {
 
 // exportConfigFrom converts an allocation-details payload, returning nil
 // when the org has not configured an export or the config is unusable.
-func exportConfigFrom(in *warpbuild.CommonsObservabilityExportConfig) *exportConfig {
+func exportConfigFrom(in *warpbuild.CommonsTelemetryExportConfig) *exportConfig {
 	if in == nil || in.GetEndpoint() == "" {
 		return nil
 	}

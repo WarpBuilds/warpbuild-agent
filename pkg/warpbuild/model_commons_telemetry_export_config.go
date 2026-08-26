@@ -15,39 +15,39 @@ import (
 	"encoding/json"
 )
 
-// checks if the CommonsObservabilityExportConfig type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &CommonsObservabilityExportConfig{}
+// checks if the CommonsTelemetryExportConfig type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &CommonsTelemetryExportConfig{}
 
-// CommonsObservabilityExportConfig struct for CommonsObservabilityExportConfig
-type CommonsObservabilityExportConfig struct {
-	Endpoint *string `json:"endpoint,omitempty"`
-	Headers *map[string]string `json:"headers,omitempty"`
-	ResourceAttrs *map[string]string `json:"resource_attrs,omitempty"`
-	Signals []string `json:"signals,omitempty"`
+// CommonsTelemetryExportConfig struct for CommonsTelemetryExportConfig
+type CommonsTelemetryExportConfig struct {
+	Endpoint             *string            `json:"endpoint,omitempty"`
+	Headers              *map[string]string `json:"headers,omitempty"`
+	ResourceAttrs        *map[string]string `json:"resource_attrs,omitempty"`
+	Signals              []string           `json:"signals,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
-type _CommonsObservabilityExportConfig CommonsObservabilityExportConfig
+type _CommonsTelemetryExportConfig CommonsTelemetryExportConfig
 
-// NewCommonsObservabilityExportConfig instantiates a new CommonsObservabilityExportConfig object
+// NewCommonsTelemetryExportConfig instantiates a new CommonsTelemetryExportConfig object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCommonsObservabilityExportConfig() *CommonsObservabilityExportConfig {
-	this := CommonsObservabilityExportConfig{}
+func NewCommonsTelemetryExportConfig() *CommonsTelemetryExportConfig {
+	this := CommonsTelemetryExportConfig{}
 	return &this
 }
 
-// NewCommonsObservabilityExportConfigWithDefaults instantiates a new CommonsObservabilityExportConfig object
+// NewCommonsTelemetryExportConfigWithDefaults instantiates a new CommonsTelemetryExportConfig object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewCommonsObservabilityExportConfigWithDefaults() *CommonsObservabilityExportConfig {
-	this := CommonsObservabilityExportConfig{}
+func NewCommonsTelemetryExportConfigWithDefaults() *CommonsTelemetryExportConfig {
+	this := CommonsTelemetryExportConfig{}
 	return &this
 }
 
 // GetEndpoint returns the Endpoint field value if set, zero value otherwise.
-func (o *CommonsObservabilityExportConfig) GetEndpoint() string {
+func (o *CommonsTelemetryExportConfig) GetEndpoint() string {
 	if o == nil || IsNil(o.Endpoint) {
 		var ret string
 		return ret
@@ -57,7 +57,7 @@ func (o *CommonsObservabilityExportConfig) GetEndpoint() string {
 
 // GetEndpointOk returns a tuple with the Endpoint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsObservabilityExportConfig) GetEndpointOk() (*string, bool) {
+func (o *CommonsTelemetryExportConfig) GetEndpointOk() (*string, bool) {
 	if o == nil || IsNil(o.Endpoint) {
 		return nil, false
 	}
@@ -65,7 +65,7 @@ func (o *CommonsObservabilityExportConfig) GetEndpointOk() (*string, bool) {
 }
 
 // HasEndpoint returns a boolean if a field has been set.
-func (o *CommonsObservabilityExportConfig) HasEndpoint() bool {
+func (o *CommonsTelemetryExportConfig) HasEndpoint() bool {
 	if o != nil && !IsNil(o.Endpoint) {
 		return true
 	}
@@ -74,12 +74,12 @@ func (o *CommonsObservabilityExportConfig) HasEndpoint() bool {
 }
 
 // SetEndpoint gets a reference to the given string and assigns it to the Endpoint field.
-func (o *CommonsObservabilityExportConfig) SetEndpoint(v string) {
+func (o *CommonsTelemetryExportConfig) SetEndpoint(v string) {
 	o.Endpoint = &v
 }
 
 // GetHeaders returns the Headers field value if set, zero value otherwise.
-func (o *CommonsObservabilityExportConfig) GetHeaders() map[string]string {
+func (o *CommonsTelemetryExportConfig) GetHeaders() map[string]string {
 	if o == nil || IsNil(o.Headers) {
 		var ret map[string]string
 		return ret
@@ -89,7 +89,7 @@ func (o *CommonsObservabilityExportConfig) GetHeaders() map[string]string {
 
 // GetHeadersOk returns a tuple with the Headers field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsObservabilityExportConfig) GetHeadersOk() (*map[string]string, bool) {
+func (o *CommonsTelemetryExportConfig) GetHeadersOk() (*map[string]string, bool) {
 	if o == nil || IsNil(o.Headers) {
 		return nil, false
 	}
@@ -97,7 +97,7 @@ func (o *CommonsObservabilityExportConfig) GetHeadersOk() (*map[string]string, b
 }
 
 // HasHeaders returns a boolean if a field has been set.
-func (o *CommonsObservabilityExportConfig) HasHeaders() bool {
+func (o *CommonsTelemetryExportConfig) HasHeaders() bool {
 	if o != nil && !IsNil(o.Headers) {
 		return true
 	}
@@ -106,12 +106,12 @@ func (o *CommonsObservabilityExportConfig) HasHeaders() bool {
 }
 
 // SetHeaders gets a reference to the given map[string]string and assigns it to the Headers field.
-func (o *CommonsObservabilityExportConfig) SetHeaders(v map[string]string) {
+func (o *CommonsTelemetryExportConfig) SetHeaders(v map[string]string) {
 	o.Headers = &v
 }
 
 // GetResourceAttrs returns the ResourceAttrs field value if set, zero value otherwise.
-func (o *CommonsObservabilityExportConfig) GetResourceAttrs() map[string]string {
+func (o *CommonsTelemetryExportConfig) GetResourceAttrs() map[string]string {
 	if o == nil || IsNil(o.ResourceAttrs) {
 		var ret map[string]string
 		return ret
@@ -121,7 +121,7 @@ func (o *CommonsObservabilityExportConfig) GetResourceAttrs() map[string]string 
 
 // GetResourceAttrsOk returns a tuple with the ResourceAttrs field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsObservabilityExportConfig) GetResourceAttrsOk() (*map[string]string, bool) {
+func (o *CommonsTelemetryExportConfig) GetResourceAttrsOk() (*map[string]string, bool) {
 	if o == nil || IsNil(o.ResourceAttrs) {
 		return nil, false
 	}
@@ -129,7 +129,7 @@ func (o *CommonsObservabilityExportConfig) GetResourceAttrsOk() (*map[string]str
 }
 
 // HasResourceAttrs returns a boolean if a field has been set.
-func (o *CommonsObservabilityExportConfig) HasResourceAttrs() bool {
+func (o *CommonsTelemetryExportConfig) HasResourceAttrs() bool {
 	if o != nil && !IsNil(o.ResourceAttrs) {
 		return true
 	}
@@ -138,12 +138,12 @@ func (o *CommonsObservabilityExportConfig) HasResourceAttrs() bool {
 }
 
 // SetResourceAttrs gets a reference to the given map[string]string and assigns it to the ResourceAttrs field.
-func (o *CommonsObservabilityExportConfig) SetResourceAttrs(v map[string]string) {
+func (o *CommonsTelemetryExportConfig) SetResourceAttrs(v map[string]string) {
 	o.ResourceAttrs = &v
 }
 
 // GetSignals returns the Signals field value if set, zero value otherwise.
-func (o *CommonsObservabilityExportConfig) GetSignals() []string {
+func (o *CommonsTelemetryExportConfig) GetSignals() []string {
 	if o == nil || IsNil(o.Signals) {
 		var ret []string
 		return ret
@@ -153,7 +153,7 @@ func (o *CommonsObservabilityExportConfig) GetSignals() []string {
 
 // GetSignalsOk returns a tuple with the Signals field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CommonsObservabilityExportConfig) GetSignalsOk() ([]string, bool) {
+func (o *CommonsTelemetryExportConfig) GetSignalsOk() ([]string, bool) {
 	if o == nil || IsNil(o.Signals) {
 		return nil, false
 	}
@@ -161,7 +161,7 @@ func (o *CommonsObservabilityExportConfig) GetSignalsOk() ([]string, bool) {
 }
 
 // HasSignals returns a boolean if a field has been set.
-func (o *CommonsObservabilityExportConfig) HasSignals() bool {
+func (o *CommonsTelemetryExportConfig) HasSignals() bool {
 	if o != nil && !IsNil(o.Signals) {
 		return true
 	}
@@ -170,19 +170,19 @@ func (o *CommonsObservabilityExportConfig) HasSignals() bool {
 }
 
 // SetSignals gets a reference to the given []string and assigns it to the Signals field.
-func (o *CommonsObservabilityExportConfig) SetSignals(v []string) {
+func (o *CommonsTelemetryExportConfig) SetSignals(v []string) {
 	o.Signals = v
 }
 
-func (o CommonsObservabilityExportConfig) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+func (o CommonsTelemetryExportConfig) MarshalJSON() ([]byte, error) {
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
 	return json.Marshal(toSerialize)
 }
 
-func (o CommonsObservabilityExportConfig) ToMap() (map[string]interface{}, error) {
+func (o CommonsTelemetryExportConfig) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Endpoint) {
 		toSerialize["endpoint"] = o.Endpoint
@@ -204,16 +204,16 @@ func (o CommonsObservabilityExportConfig) ToMap() (map[string]interface{}, error
 	return toSerialize, nil
 }
 
-func (o *CommonsObservabilityExportConfig) UnmarshalJSON(bytes []byte) (err error) {
-	varCommonsObservabilityExportConfig := _CommonsObservabilityExportConfig{}
+func (o *CommonsTelemetryExportConfig) UnmarshalJSON(bytes []byte) (err error) {
+	varCommonsTelemetryExportConfig := _CommonsTelemetryExportConfig{}
 
-	err = json.Unmarshal(bytes, &varCommonsObservabilityExportConfig)
+	err = json.Unmarshal(bytes, &varCommonsTelemetryExportConfig)
 
 	if err != nil {
 		return err
 	}
 
-	*o = CommonsObservabilityExportConfig(varCommonsObservabilityExportConfig)
+	*o = CommonsTelemetryExportConfig(varCommonsTelemetryExportConfig)
 
 	additionalProperties := make(map[string]interface{})
 
@@ -228,38 +228,38 @@ func (o *CommonsObservabilityExportConfig) UnmarshalJSON(bytes []byte) (err erro
 	return err
 }
 
-type NullableCommonsObservabilityExportConfig struct {
-	value *CommonsObservabilityExportConfig
+type NullableCommonsTelemetryExportConfig struct {
+	value *CommonsTelemetryExportConfig
 	isSet bool
 }
 
-func (v NullableCommonsObservabilityExportConfig) Get() *CommonsObservabilityExportConfig {
+func (v NullableCommonsTelemetryExportConfig) Get() *CommonsTelemetryExportConfig {
 	return v.value
 }
 
-func (v *NullableCommonsObservabilityExportConfig) Set(val *CommonsObservabilityExportConfig) {
+func (v *NullableCommonsTelemetryExportConfig) Set(val *CommonsTelemetryExportConfig) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableCommonsObservabilityExportConfig) IsSet() bool {
+func (v NullableCommonsTelemetryExportConfig) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableCommonsObservabilityExportConfig) Unset() {
+func (v *NullableCommonsTelemetryExportConfig) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableCommonsObservabilityExportConfig(val *CommonsObservabilityExportConfig) *NullableCommonsObservabilityExportConfig {
-	return &NullableCommonsObservabilityExportConfig{value: val, isSet: true}
+func NewNullableCommonsTelemetryExportConfig(val *CommonsTelemetryExportConfig) *NullableCommonsTelemetryExportConfig {
+	return &NullableCommonsTelemetryExportConfig{value: val, isSet: true}
 }
 
-func (v NullableCommonsObservabilityExportConfig) MarshalJSON() ([]byte, error) {
+func (v NullableCommonsTelemetryExportConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableCommonsObservabilityExportConfig) UnmarshalJSON(src []byte) (err error) {
+func (v *NullableCommonsTelemetryExportConfig) UnmarshalJSON(src []byte) (err error) {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

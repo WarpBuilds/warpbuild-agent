@@ -9,14 +9,14 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-func allocationDetails(status string, telemetryEnabled *bool, export *warpbuild.CommonsObservabilityExportConfig) *warpbuild.CommonsRunnerInstanceAllocationDetails {
+func allocationDetails(status string, telemetryEnabled *bool, export *warpbuild.CommonsTelemetryExportConfig) *warpbuild.CommonsRunnerInstanceAllocationDetails {
 	out := warpbuild.NewCommonsRunnerInstanceAllocationDetails()
 	out.SetStatus(status)
 	if telemetryEnabled != nil {
 		out.SetTelemetryEnabled(*telemetryEnabled)
 	}
 	if export != nil {
-		out.ObservabilityExport = export
+		out.TelemetryExport = export
 	}
 	return out
 }
