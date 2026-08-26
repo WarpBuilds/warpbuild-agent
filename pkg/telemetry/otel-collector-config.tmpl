@@ -353,12 +353,8 @@ processors:
 connectors:
   # Fan out after our own processing rather than duplicating the whole
   # processor chain — the customer gets the same normalised signals we do.
-{{- if .ExportMetrics}}
   forward/customer_metrics:
-{{- end}}
-{{- if .ExportLogs}}
   forward/customer_logs:
-{{- end}}
 {{- end}}
 
 exporters:
@@ -396,10 +392,35 @@ exporters:
   # running regardless, so a customer endpoint that is down or rejecting
   # cannot affect our own collection.
   #
+  # One exporter instance per signal: the sending queue and retry state are
+  # per-exporter, so a destination that rejects logs keeps accepting metrics
+  # instead of the two sharing a queue and failing together.
+  #
   # Credentials arrive as env vars rather than being written here: the
   # config file outlives any single request and tends to end up in bug
   # reports.
-  otlphttp/customer:
+  otlphttp/customer_metrics:
+    endpoint: {{yamlStr .ExportEndpoint}}
+    compression: gzip
+    timeout: 30s
+    headers:
+{{- range $name, $env := .ExportHeaderEnv}}
+      {{$name}}: "${env:{{$env}}}"
+{{- end}}
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      initial_interval: 2s
+      max_interval: 15s
+      # The VM is reaped shortly after the job ends, so retrying beyond
+      # this only burns the flush window. Our S3 copy stays the record of
+      # truth for anything dropped here.
+      max_elapsed_time: 90s
+
+  otlphttp/customer_logs:
     endpoint: {{yamlStr .ExportEndpoint}}
     compression: gzip
     timeout: 30s
@@ -429,18 +450,18 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp{{if .ExportLogs}}, forward/customer_logs{{end}}]
+      exporters: [otlphttp{{if .ExportEnabled}}, forward/customer_logs{{end}}]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs{{if .ExportLogs}}, forward/customer_logs{{end}}]
-{{- if .ExportLogs}}
+      exporters: [otlphttp/gha_logs{{if .ExportEnabled}}, forward/customer_logs{{end}}]
+{{- if .ExportEnabled}}
     # Both log pipelines above feed this one, so the org receives exactly
     # the logs we upload ourselves.
     logs/customer:
       receivers: [forward/customer_logs]
       processors: [resource/customer]
-      exporters: [otlphttp/customer]
+      exporters: [otlphttp/customer_logs]
 {{- end}}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
@@ -476,10 +497,10 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
-{{- if .ExportMetrics}}
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportEnabled}}, forward/customer_metrics{{end}}]
+{{- if .ExportEnabled}}
     metrics/customer:
       receivers: [forward/customer_metrics]
       processors: [resource/customer]
-      exporters: [otlphttp/customer]
+      exporters: [otlphttp/customer_metrics]
 {{- end}}

@@ -27,15 +27,27 @@ type IPostEndHook interface {
 	PostEndHook(ctx context.Context, opts *PostEndHookOptions) error
 }
 
-// IHookPriority lets a hook state where it belongs in the running order
-// rather than inheriting whatever order package init happened to produce.
-// Lower runs first; a hook that does not implement this is 0.
+// Hook IDs. Declared here rather than alongside each implementation in
+// pkg/hooks so hookRunOrder below can name them: pkg/hooks imports this
+// package, not the other way round.
+const (
+	CLAUDE_OUTPUTS_UPLOAD_HOOK = "CLAUDE_OUTPUTS_UPLOAD_HOOK"
+	CLEANUP_CALLBACK_HOOK      = "CLEANUP_CALLBACK_HOOK"
+)
+
+// hookRunOrder is the order hooks run in. Anything not listed runs after
+// these, in registration order.
 //
-// This matters for post-end hooks: the cleanup callback tells the backend
-// it may reap the VM, so anything that needs the VM alive has to run
-// before it.
-type IHookPriority interface {
-	HookPriority() int
+// CLEANUP_CALLBACK_HOOK tells the backend it may reap the VM, so anything
+// that needs the VM alive belongs above it.
+var hookRunOrder = []string{
+	CLAUDE_OUTPUTS_UPLOAD_HOOK,
+	CLEANUP_CALLBACK_HOOK,
+}
+
+// hookIDer is what both hook interfaces embed; used to order them.
+type hookIDer interface {
+	HookID() string
 }
 
 var hooks []any
@@ -51,16 +63,24 @@ func GetHooks[T any]() []T {
 			result = append(result, h)
 		}
 	}
-	// Stable, so hooks that share a priority keep registration order.
+	// Stable, so unlisted hooks keep registration order behind the listed ones.
 	sort.SliceStable(result, func(i, j int) bool {
-		return hookPriority(result[i]) < hookPriority(result[j])
+		return hookRunRank(result[i]) < hookRunRank(result[j])
 	})
 	return result
 }
 
-func hookPriority(hook any) int {
-	if p, ok := hook.(IHookPriority); ok {
-		return p.HookPriority()
+// hookRunRank is the hook's index in hookRunOrder, or len(hookRunOrder)
+// for anything unlisted.
+func hookRunRank(hook any) int {
+	h, ok := hook.(hookIDer)
+	if !ok {
+		return len(hookRunOrder)
 	}
-	return 0
+	for i, name := range hookRunOrder {
+		if name == h.HookID() {
+			return i
+		}
+	}
+	return len(hookRunOrder)
 }

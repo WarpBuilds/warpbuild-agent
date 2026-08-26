@@ -10,7 +10,8 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-const CLEANUP_CALLBACK_HOOK string = "CLEANUP_CALLBACK_HOOK"
+// CLEANUP_CALLBACK_HOOK is defined in pkg/manager so the hook run order can name it.
+const CLEANUP_CALLBACK_HOOK = manager.CLEANUP_CALLBACK_HOOK
 
 type CleanupCallbackHook struct{}
 

@@ -18,9 +18,14 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-// telemetryPollInterval is how often allocation details are polled for
-// the telemetry kill switch and the org's export destination.
+// telemetryPollInterval is how often allocation details are polled while
+// waiting for the runner to be allocated to a job.
 const telemetryPollInterval = 5 * time.Second
+
+// allocationStatusUnassigned is the status the backend reports until the
+// runner is allocated to a job. Until then the response carries no job
+// details, and therefore no export destination.
+const allocationStatusUnassigned = "unassigned"
 
 // defaultCollectorDrainTimeout bounds how long we wait for the collector
 // to flush on shutdown. Generous enough for a 30s batch plus a queued
@@ -54,9 +59,8 @@ type TelemetryManager struct {
 	// Org-owned OTLP destination, delivered on the allocation poll. Nil
 	// until the runner is allocated to a job — warm runners sitting idle
 	// export nothing.
-	exportCfg         *exportConfig
-	exportFingerprint string
-	restartCh         chan struct{}
+	exportCfg *exportConfig
+	restartCh chan struct{}
 
 	// drainTimeout is a field rather than a constant so tests can stop
 	// waiting out the real window.
@@ -97,7 +101,6 @@ func (tm *TelemetryManager) Start() error {
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)
-	tm.receiver.SetOnDrain(tm.Drain)
 
 	// Start receiver
 	if err := tm.receiver.Start(); err != nil {
@@ -243,53 +246,56 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 	return restart
 }
 
-// terminateCollector stops the process and waits, bounded, for it to go.
+// collectorKillTimeout bounds the wait after SIGKILL, which the kernel
+// should honour immediately; this only guards against an unreapable process.
+const collectorKillTimeout = 5 * time.Second
+
+// terminateCollector stops the collector and returns once it is gone.
 //
-// SIGTERM first: the collector drains its batch processors and sending
-// queue on a graceful shutdown, and a SIGKILL here would drop up to a
-// full batch interval of data — which on an ephemeral runner is the tail
-// of the job, the part people most want. SIGKILL remains the fallback.
+// It asks nicely first: a graceful shutdown is what makes the collector
+// flush its batch processors and drain its sending queue. Killing outright
+// would discard up to a full batch interval, which on an ephemeral runner
+// is the tail of the job — the part people care about most.
 func (tm *TelemetryManager) terminateCollector(cmd *exec.Cmd, waitDone <-chan error) {
-	if signalErr := signalCollectorShutdown(cmd); signalErr != nil {
-		log.Logger().Warnf("Graceful stop unavailable (%v), killing OpenTelemetry Collector", signalErr)
+	if err := requestCollectorShutdown(cmd); err != nil {
+		log.Logger().Warnf("Cannot signal OpenTelemetry Collector (%v); killing it", err)
+	} else if awaitCollectorExit(waitDone, tm.drainTimeout) {
+		return
 	} else {
-		select {
-		case err := <-waitDone:
-			logCollectorExit(err)
-			return
-		case <-time.After(tm.drainTimeout):
-			log.Logger().Warnf("OpenTelemetry Collector did not drain within %s, killing it", tm.drainTimeout)
-		}
+		log.Logger().Warnf("OpenTelemetry Collector did not drain within %s; killing it", tm.drainTimeout)
 	}
 
 	if err := cmd.Process.Kill(); err != nil {
-		log.Logger().Errorf("Failed to kill OpenTelemetry Collector process: %v", err)
+		log.Logger().Errorf("Failed to kill OpenTelemetry Collector: %v", err)
 	}
-
-	select {
-	case err := <-waitDone:
-		logCollectorExit(err)
-	case <-time.After(5 * time.Second):
-		log.Logger().Warnf("Timeout waiting for OpenTelemetry Collector to exit after 5 seconds")
+	if !awaitCollectorExit(waitDone, collectorKillTimeout) {
+		log.Logger().Warnf("OpenTelemetry Collector still running %s after kill", collectorKillTimeout)
 	}
 }
 
-// signalCollectorShutdown asks the collector to shut down gracefully.
-// Windows has no SIGTERM equivalent for a foreign process, so the caller
-// falls back to a kill there.
-func signalCollectorShutdown(cmd *exec.Cmd) error {
+// requestCollectorShutdown asks the collector to exit gracefully. Windows
+// has no equivalent signal for another process, so it reports an error and
+// the caller falls back to a kill.
+func requestCollectorShutdown(cmd *exec.Cmd) error {
 	if runtime.GOOS == "windows" {
-		return fmt.Errorf("graceful signals are not supported on windows")
+		return fmt.Errorf("graceful signals are unsupported on windows")
 	}
 	log.Logger().Infof("Draining OpenTelemetry Collector (PID: %d)...", cmd.Process.Pid)
 	return cmd.Process.Signal(syscall.SIGTERM)
 }
 
-func logCollectorExit(err error) {
-	if err != nil {
-		log.Logger().Infof("OpenTelemetry Collector terminated with error: %v", err)
-	} else {
-		log.Logger().Infof("OpenTelemetry Collector terminated successfully")
+// awaitCollectorExit reports whether the process exited within timeout.
+func awaitCollectorExit(waitDone <-chan error, timeout time.Duration) bool {
+	select {
+	case err := <-waitDone:
+		if err != nil {
+			log.Logger().Infof("OpenTelemetry Collector exited: %v", err)
+		} else {
+			log.Logger().Infof("OpenTelemetry Collector exited cleanly")
+		}
+		return true
+	case <-time.After(timeout):
+		return false
 	}
 }
 
@@ -358,28 +364,6 @@ func (tm *TelemetryManager) getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
-// collectorTemplateData is everything otel-collector-config.tmpl reads.
-// Export* is empty until the runner is allocated to a job.
-type collectorTemplateData struct {
-	LogExportFilePath     string
-	MetricsExportFilePath string
-	PushFrequency         time.Duration
-	OS                    string
-	Arch                  string
-	Port                  int
-	RunnerID              string
-	SigNozEndpoint        string
-	SigNozAPIKey          string
-	EnableSigNoz          bool
-
-	ExportEnabled       bool
-	ExportEndpoint      string
-	ExportMetrics       bool
-	ExportLogs          bool
-	ExportHeaderEnv     map[string]string
-	ExportResourceAttrs map[string]string
-}
-
 // yamlStr renders a value as a quoted YAML scalar. Resource attributes
 // and endpoints are partly org-supplied, so they cannot be interpolated
 // raw. YAML's double-quoted escapes match JSON's.
@@ -401,9 +385,31 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		return fmt.Errorf("failed to parse template file: %w", err)
 	}
 
+	file, err := os.Create(tm.getConfigFilePath())
+	if err != nil {
+		return fmt.Errorf("failed to create config file: %w", err)
+	}
+	defer file.Close()
+
 	export := tm.currentExportConfig()
 
-	data := collectorTemplateData{
+	data := struct {
+		LogExportFilePath     string
+		MetricsExportFilePath string
+		PushFrequency         time.Duration
+		OS                    string
+		Arch                  string
+		Port                  int
+		RunnerID              string
+		SigNozEndpoint        string
+		SigNozAPIKey          string
+		EnableSigNoz          bool
+		// Export* stays zero until the runner is allocated to a job.
+		ExportEnabled       bool
+		ExportEndpoint      string
+		ExportHeaderEnv     map[string]string
+		ExportResourceAttrs map[string]string
+	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
 		PushFrequency:         60 * time.Second, // Default push frequency
@@ -418,24 +424,16 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	if export != nil {
 		data.ExportEnabled = true
 		data.ExportEndpoint = export.Endpoint
-		data.ExportMetrics = export.Metrics
-		data.ExportLogs = export.Logs
 		data.ExportHeaderEnv = export.headerEnv()
 		data.ExportResourceAttrs = export.ResourceAttrs
 	}
 
-	// Logged without the header env map's values — those live in the
-	// process environment, never in a log line.
-	log.Logger().Infof("Rendering collector config: os=%s arch=%s port=%d export_enabled=%t export_metrics=%t export_logs=%t",
-		data.OS, data.Arch, data.Port, data.ExportEnabled, data.ExportMetrics, data.ExportLogs)
+	// ExportHeaderEnv holds env var *names*, not credentials; the values
+	// only ever live in the collector's process environment.
+	log.Logger().Infof("Parsing template with vars: %+v", data)
 
-	file, err := os.Create(tm.getConfigFilePath())
+	err = tmpl.Execute(file, data)
 	if err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
-	}
-	defer file.Close()
-
-	if err := tmpl.Execute(file, data); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
 	}
 
@@ -472,17 +470,35 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
 }
 
-// monitorTelemetryStatus polls allocation details for the telemetry kill
-// switch and for the org's export destination.
+// allocationPollResult is what one allocation-details response tells us.
+type allocationPollResult int
+
+const (
+	// pollWait means the runner is not allocated yet, so the response
+	// carries no job details and no verdict on the export.
+	pollWait allocationPollResult = iota
+	// pollApplied means the export destination was found and applied.
+	pollApplied
+	// pollNoExport means the job details arrived without an export block:
+	// this org has none configured, so this run exports nothing.
+	pollNoExport
+	// pollDisabled means the org has telemetry switched off.
+	pollDisabled
+)
+
+// monitorTelemetryStatus polls allocation details until the runner is
+// allocated to a job, reads the export destination off that response, and
+// stops.
 //
-// This must keep polling rather than settling after the first response:
-// at boot the runner is unassigned and carries no export config, and the
-// destination only appears once it is allocated to a job. Exiting early
-// would mean never seeing that transition.
+// It has to keep polling past the first responses because at boot the
+// runner is unassigned and carries no job details. Once those arrive the
+// answer is final either way — a destination, or none configured for this
+// org — so there is nothing further to wait for. A change to the org's
+// export config mid-job takes effect on the next run, not this one.
 func (tm *TelemetryManager) monitorTelemetryStatus() {
 	defer tm.wg.Done()
 
-	log.Logger().Infof("Starting telemetry status monitoring...")
+	log.Logger().Infof("Watching for the organization's observability export destination...")
 
 	ticker := time.NewTicker(telemetryPollInterval)
 	defer ticker.Stop()
@@ -490,12 +506,10 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 	for {
 		select {
 		case <-ticker.C:
-			// Poll the API to check telemetry status
 			allocationDetails, resp, err := tm.warpbuildAPI.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(tm.ctx, tm.runnerID).
 				XPOLLINGSECRET(tm.pollingSecret).
 				Execute()
-
 			if err != nil {
 				log.Logger().Debugf("Failed to get runner instance allocation details: %v", err)
 				if resp != nil {
@@ -504,15 +518,17 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 				continue
 			}
 
-			if allocationDetails == nil {
-				log.Logger().Debugf("No runner instance allocation details found")
-				continue
-			}
-
-			if !tm.applyAllocationDetails(allocationDetails) {
+			switch tm.applyAllocationDetails(allocationDetails) {
+			case pollDisabled:
 				// Cancel the context to stop the entire telemetry manager
 				tm.cancel()
 				return
+			case pollApplied:
+				return
+			case pollNoExport:
+				log.Logger().Infof("No observability export configured for this organization; nothing to fan out")
+				return
+			case pollWait:
 			}
 
 		case <-tm.ctx.Done():
@@ -523,71 +539,48 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 }
 
 // applyAllocationDetails folds one poll response into the manager's state.
-// It reports whether telemetry should keep running.
-func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) bool {
+func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) allocationPollResult {
 	if details == nil {
-		return true
+		return pollWait
 	}
 
 	// An absent key defaults to enabled.
 	if details.HasTelemetryEnabled() && !details.GetTelemetryEnabled() {
 		log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
-		return false
+		return pollDisabled
 	}
 
-	// Only a delivered export block carries information. The backend builds
-	// allocation details on several paths and only the freshly-ALLOCATED one
-	// populates this field, so an absent block means "this response says
-	// nothing about the export", not "the export was removed". Treating
-	// absence as removal tore the customer exporter down as soon as the
-	// runner moved to RUNNING, a couple of seconds into every job.
-	//
-	// telemetry_enabled above stays the kill switch: it is populated on every
-	// path, and it stops collection outright rather than just the fan-out.
-	if next := exportConfigFrom(details.ObservabilityExport); next != nil {
-		tm.applyExportConfig(next)
+	// Until the runner is allocated the response carries no job details, so
+	// an absent export block says nothing yet.
+	if details.GetStatus() == allocationStatusUnassigned {
+		return pollWait
 	}
 
-	return true
+	// The job details are here. Whatever the export block says now is the
+	// answer for this run.
+	next := exportConfigFrom(details.ObservabilityExport)
+	if next == nil {
+		return pollNoExport
+	}
+
+	tm.applyExportConfig(next)
+	return pollApplied
 }
 
-// Drain flushes whatever the collector is holding.
-//
-// Implemented as a restart rather than a stop: shutdown is what makes the
-// collector drain its batch processors and sending queue, and the
-// supervisor brings it straight back up, so a drain on a VM that turns
-// out to live longer costs a second of collection rather than ending it.
-func (tm *TelemetryManager) Drain() {
-	select {
-	case tm.restartCh <- struct{}{}:
-	default:
-		// A restart is already pending, which drains just the same.
-	}
-}
-
-// applyExportConfig stores a new export config and asks the supervisor to
-// restart the collector, if anything actually changed.
+// applyExportConfig stores the export config and restarts the collector
+// onto it. Called once per run.
 func (tm *TelemetryManager) applyExportConfig(next *exportConfig) {
-	fingerprint := next.fingerprint()
-
 	tm.mu.Lock()
-	if fingerprint == tm.exportFingerprint {
-		tm.mu.Unlock()
-		return
-	}
 	tm.exportCfg = next
-	tm.exportFingerprint = fingerprint
 	tm.mu.Unlock()
 
-	if next == nil {
-		log.Logger().Infof("Observability export cleared")
-	} else {
-		log.Logger().Infof("Observability export configured: endpoint=%s metrics=%t logs=%t config=%s",
-			next.Endpoint, next.Metrics, next.Logs, fingerprint)
-	}
+	log.Logger().Infof("Observability export configured: endpoint=%s", next.Endpoint)
+	tm.restartCollector()
+}
 
-	// Non-blocking: a restart already pending will pick up this config
-	// anyway, since the supervisor re-reads it when it re-renders.
+// restartCollector asks the supervisor to re-render the config and start a
+// fresh collector. Non-blocking: a restart already pending does the same job.
+func (tm *TelemetryManager) restartCollector() {
 	select {
 	case tm.restartCh <- struct{}{}:
 	default:

@@ -3,11 +3,15 @@ package telemetry
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-func allocationDetails(telemetryEnabled *bool, export *warpbuild.CommonsObservabilityExportConfig) *warpbuild.CommonsRunnerInstanceAllocationDetails {
+func allocationDetails(status string, telemetryEnabled *bool, export *warpbuild.CommonsObservabilityExportConfig) *warpbuild.CommonsRunnerInstanceAllocationDetails {
 	out := warpbuild.NewCommonsRunnerInstanceAllocationDetails()
+	out.SetStatus(status)
 	if telemetryEnabled != nil {
 		out.SetTelemetryEnabled(*telemetryEnabled)
 	}
@@ -17,72 +21,64 @@ func allocationDetails(telemetryEnabled *bool, export *warpbuild.CommonsObservab
 	return out
 }
 
-// The backend only populates observability_export on the freshly-ALLOCATED
-// response path. Every later poll -- the whole time the job actually runs --
-// omits it. Reading that as "export removed" tore the customer exporter out of
-// the collector seconds into every job while the internal pipeline, which is
-// rendered unconditionally, carried on none the wiser.
-func TestPollWithoutExportBlockKeepsExisting(t *testing.T) {
+func enabled() *bool { b := true; return &b }
+
+// Until the runner is allocated, the response carries no job details — so an
+// absent export block says nothing yet and discovery keeps waiting.
+func TestPollWaitsWhileUnassigned(t *testing.T) {
 	tm := &TelemetryManager{}
-	enabled := true
 
-	if !tm.applyAllocationDetails(allocationDetails(&enabled, apiExport("https://otlp.example.com", []string{"metrics"}))) {
-		t.Fatal("telemetry should stay enabled")
-	}
-
-	applied, fingerprint := tm.exportCfg, tm.exportFingerprint
-	if applied == nil {
-		t.Fatal("the allocated response should have applied an export config")
-	}
-
-	// Every subsequent poll for the life of the job looks like this.
-	for i := 0; i < 3; i++ {
-		if !tm.applyAllocationDetails(allocationDetails(&enabled, nil)) {
-			t.Fatal("telemetry should stay enabled")
-		}
-	}
-
-	if tm.exportCfg == nil {
-		t.Fatal("export config was cleared by a poll that simply did not carry one")
-	}
-	if tm.exportCfg != applied || tm.exportFingerprint != fingerprint {
-		t.Errorf("export config changed: %+v (fingerprint %s), want %+v (fingerprint %s)",
-			tm.exportCfg, tm.exportFingerprint, applied, fingerprint)
+	for i := range 3 {
+		got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, enabled(), nil))
+		assert.Equalf(t, pollWait, got, "poll %d", i)
+		assert.Nil(t, tm.exportCfg, "an unassigned response must not configure an export")
 	}
 }
 
-func TestPollAppliesChangedExport(t *testing.T) {
+// Once the job details arrive the answer is final: a destination is applied
+// and discovery stops. A later change takes effect on the next run.
+func TestPollAppliesExportOnceAllocated(t *testing.T) {
 	tm := &TelemetryManager{}
-	enabled := true
 
-	tm.applyAllocationDetails(allocationDetails(&enabled, apiExport("https://one.example.com", []string{"metrics"})))
-	first := tm.exportFingerprint
+	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), apiExport("https://otlp.example.com")))
 
-	tm.applyAllocationDetails(allocationDetails(&enabled, apiExport("https://two.example.com", []string{"metrics", "logs"})))
-
-	if tm.exportFingerprint == first {
-		t.Error("a delivered export block with new values must still be applied")
-	}
-	if tm.exportCfg == nil || tm.exportCfg.Endpoint != "https://two.example.com" {
-		t.Errorf("expected the second endpoint, got %+v", tm.exportCfg)
-	}
+	require.Equal(t, pollApplied, got)
+	require.NotNil(t, tm.exportCfg)
+	assert.Equal(t, "https://otlp.example.com", tm.exportCfg.Endpoint)
 }
 
-// telemetry_enabled is populated on every response path, so it stays the kill
-// switch even though a missing export block no longer is one.
+// The job details arriving without an export block is a definitive "this org
+// has none" — not something to keep polling for.
+func TestPollStopsWhenAllocatedWithoutExport(t *testing.T) {
+	tm := &TelemetryManager{}
+
+	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), nil))
+
+	assert.Equal(t, pollNoExport, got)
+	assert.Nil(t, tm.exportCfg)
+}
+
+// telemetry_enabled is populated on every response path, including while the
+// runner is still unassigned, so it stops collection outright.
 func TestPollStopsWhenTelemetryDisabled(t *testing.T) {
 	tm := &TelemetryManager{}
 	disabled := false
 
-	if tm.applyAllocationDetails(allocationDetails(&disabled, nil)) {
-		t.Error("telemetry_enabled=false must stop telemetry")
-	}
+	got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
+
+	assert.Equal(t, pollDisabled, got)
 }
 
 func TestPollWithAbsentTelemetryFlagKeepsRunning(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	if !tm.applyAllocationDetails(allocationDetails(nil, nil)) {
-		t.Error("an absent telemetry_enabled key defaults to enabled")
-	}
+	got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, nil, nil))
+
+	assert.Equal(t, pollWait, got)
+}
+
+func TestPollWithNilDetailsWaits(t *testing.T) {
+	tm := &TelemetryManager{}
+
+	assert.Equal(t, pollWait, tm.applyAllocationDetails(nil))
 }

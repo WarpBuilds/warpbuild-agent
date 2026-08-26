@@ -1,9 +1,6 @@
 package telemetry
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -11,9 +8,6 @@ import (
 )
 
 const (
-	signalMetrics = "metrics"
-	signalLogs    = "logs"
-
 	// exportHeaderEnvPrefix keeps the org's ingest credential out of the
 	// rendered collector config, which is long-lived and gets attached to
 	// bug reports. Values reach the collector as process env instead.
@@ -22,10 +16,11 @@ const (
 
 // exportConfig is the runner-local view of the org's observability
 // export, delivered on the allocation-details poll.
+// Both metrics and logs are always exported; the two signals get their
+// own exporter instances in the collector config so a destination that
+// rejects one keeps accepting the other.
 type exportConfig struct {
 	Endpoint      string
-	Metrics       bool
-	Logs          bool
 	Headers       map[string]string
 	ResourceAttrs map[string]string
 }
@@ -37,24 +32,11 @@ func exportConfigFrom(in *warpbuild.CommonsObservabilityExportConfig) *exportCon
 		return nil
 	}
 
-	out := &exportConfig{
+	return &exportConfig{
 		Endpoint:      in.GetEndpoint(),
 		Headers:       in.GetHeaders(),
 		ResourceAttrs: in.GetResourceAttrs(),
 	}
-	for _, s := range in.GetSignals() {
-		switch s {
-		case signalMetrics:
-			out.Metrics = true
-		case signalLogs:
-			out.Logs = true
-		}
-	}
-
-	if !out.Metrics && !out.Logs {
-		return nil
-	}
-	return out
 }
 
 // headerEnv maps each header name to the env var carrying its value.
@@ -90,24 +72,4 @@ func (e *exportConfig) envPairs() []string {
 	}
 	sort.Strings(pairs)
 	return pairs
-}
-
-// fingerprint identifies a config for change detection. Hashed rather
-// than compared field-wise so the credential never reaches a log line.
-func (e *exportConfig) fingerprint() string {
-	if e == nil {
-		return ""
-	}
-	payload, err := json.Marshal(struct {
-		Endpoint      string            `json:"endpoint"`
-		Metrics       bool              `json:"metrics"`
-		Logs          bool              `json:"logs"`
-		Headers       map[string]string `json:"headers"`
-		ResourceAttrs map[string]string `json:"resource_attrs"`
-	}{e.Endpoint, e.Metrics, e.Logs, e.Headers, e.ResourceAttrs})
-	if err != nil {
-		return ""
-	}
-	sum := sha256.Sum256(payload)
-	return hex.EncodeToString(sum[:8])
 }

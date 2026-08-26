@@ -15,7 +15,8 @@ import (
 //go:embed upload_outputs.js
 var uploadOutputsScript []byte
 
-const CLAUDE_OUTPUTS_UPLOAD_HOOK string = "CLAUDE_OUTPUTS_UPLOAD_HOOK"
+// CLAUDE_OUTPUTS_UPLOAD_HOOK is defined in pkg/manager so the hook run order can name it.
+const CLAUDE_OUTPUTS_UPLOAD_HOOK = manager.CLAUDE_OUTPUTS_UPLOAD_HOOK
 
 const outputsUploadTimeout = 5 * time.Minute
 

@@ -290,18 +290,12 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			transparentCacheOginyPort = settings.TransparentCache.OginyPort
 		}
 
-		telemetryPort := 0
-		if settings.Telemetry != nil {
-			telemetryPort = settings.Telemetry.Port
-		}
-
 		agent, err := manager.NewAgent(&manager.AgentOptions{
 			ID:                        settings.Agent.ID,
 			PollingSecret:             settings.Agent.PollingSecret,
 			HostURL:                   settings.Agent.HostURL,
 			ExitFileLocation:          settings.Agent.ExitFileLocation,
 			TransparentCacheOginyPort: transparentCacheOginyPort,
-			TelemetryPort:             telemetryPort,
 			CacheBackendHost:          settings.Proxy.CacheBackendHost,
 			RunnerVerificationToken:   settings.Agent.RunnerVerificationToken,
 		})
