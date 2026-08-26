@@ -8,40 +8,35 @@ import (
 )
 
 const (
-	// exportHeaderEnvPrefix keeps the org's ingest credential out of the
-	// rendered collector config, which is long-lived and gets attached to
-	// bug reports. Values reach the collector as process env instead.
 	exportHeaderEnvPrefix = "WARPBUILD_OTLP_HEADER_"
 )
 
-// exportConfig is the runner-local view of the org's telemetry
-// export, delivered on the allocation-details poll.
-// Both metrics and logs are always exported; the two signals get their
-// own exporter instances in the collector config so a destination that
-// rejects one keeps accepting the other.
 type exportConfig struct {
-	Endpoint      string
-	Headers       map[string]string
-	ResourceAttrs map[string]string
+	MetricsEndpoint string
+	LogsEndpoint    string
+	Headers         map[string]string
+	ResourceAttrs   map[string]string
 }
 
-// exportConfigFrom converts an allocation-details payload, returning nil
-// when the org has not configured an export or the config is unusable.
+func (e *exportConfig) exportsMetrics() bool { return e != nil && e.MetricsEndpoint != "" }
+func (e *exportConfig) exportsLogs() bool    { return e != nil && e.LogsEndpoint != "" }
+
 func exportConfigFrom(in *warpbuild.CommonsTelemetryExportConfig) *exportConfig {
-	if in == nil || in.GetEndpoint() == "" {
+	if in == nil {
 		return nil
 	}
-
-	return &exportConfig{
-		Endpoint:      in.GetEndpoint(),
-		Headers:       in.GetHeaders(),
-		ResourceAttrs: in.GetResourceAttrs(),
+	out := &exportConfig{
+		MetricsEndpoint: in.GetMetricsEndpoint(),
+		LogsEndpoint:    in.GetLogsEndpoint(),
+		Headers:         in.GetHeaders(),
+		ResourceAttrs:   in.GetResourceAttrs(),
 	}
+	if !out.exportsMetrics() && !out.exportsLogs() {
+		return nil
+	}
+	return out
 }
 
-// headerEnv maps each header name to the env var carrying its value.
-// Header names are not valid env var identifiers, so they are indexed by
-// sorted position — which also keeps the rendered config stable.
 func (e *exportConfig) headerEnv() map[string]string {
 	if e == nil {
 		return nil
@@ -59,8 +54,6 @@ func (e *exportConfig) headerEnv() map[string]string {
 	return env
 }
 
-// envPairs renders the header values as KEY=value strings for the
-// collector's environment.
 func (e *exportConfig) envPairs() []string {
 	if e == nil {
 		return nil

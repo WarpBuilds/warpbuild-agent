@@ -20,10 +20,10 @@ var _ MappedNullable = &CommonsTelemetryExportConfig{}
 
 // CommonsTelemetryExportConfig struct for CommonsTelemetryExportConfig
 type CommonsTelemetryExportConfig struct {
-	Endpoint             *string            `json:"endpoint,omitempty"`
-	Headers              *map[string]string `json:"headers,omitempty"`
-	ResourceAttrs        *map[string]string `json:"resource_attrs,omitempty"`
-	Signals              []string           `json:"signals,omitempty"`
+	Headers *map[string]string `json:"headers,omitempty"`
+	LogsEndpoint *string `json:"logs_endpoint,omitempty"`
+	MetricsEndpoint *string `json:"metrics_endpoint,omitempty"`
+	ResourceAttrs *map[string]string `json:"resource_attrs,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,38 +44,6 @@ func NewCommonsTelemetryExportConfig() *CommonsTelemetryExportConfig {
 func NewCommonsTelemetryExportConfigWithDefaults() *CommonsTelemetryExportConfig {
 	this := CommonsTelemetryExportConfig{}
 	return &this
-}
-
-// GetEndpoint returns the Endpoint field value if set, zero value otherwise.
-func (o *CommonsTelemetryExportConfig) GetEndpoint() string {
-	if o == nil || IsNil(o.Endpoint) {
-		var ret string
-		return ret
-	}
-	return *o.Endpoint
-}
-
-// GetEndpointOk returns a tuple with the Endpoint field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsTelemetryExportConfig) GetEndpointOk() (*string, bool) {
-	if o == nil || IsNil(o.Endpoint) {
-		return nil, false
-	}
-	return o.Endpoint, true
-}
-
-// HasEndpoint returns a boolean if a field has been set.
-func (o *CommonsTelemetryExportConfig) HasEndpoint() bool {
-	if o != nil && !IsNil(o.Endpoint) {
-		return true
-	}
-
-	return false
-}
-
-// SetEndpoint gets a reference to the given string and assigns it to the Endpoint field.
-func (o *CommonsTelemetryExportConfig) SetEndpoint(v string) {
-	o.Endpoint = &v
 }
 
 // GetHeaders returns the Headers field value if set, zero value otherwise.
@@ -110,6 +78,70 @@ func (o *CommonsTelemetryExportConfig) SetHeaders(v map[string]string) {
 	o.Headers = &v
 }
 
+// GetLogsEndpoint returns the LogsEndpoint field value if set, zero value otherwise.
+func (o *CommonsTelemetryExportConfig) GetLogsEndpoint() string {
+	if o == nil || IsNil(o.LogsEndpoint) {
+		var ret string
+		return ret
+	}
+	return *o.LogsEndpoint
+}
+
+// GetLogsEndpointOk returns a tuple with the LogsEndpoint field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsTelemetryExportConfig) GetLogsEndpointOk() (*string, bool) {
+	if o == nil || IsNil(o.LogsEndpoint) {
+		return nil, false
+	}
+	return o.LogsEndpoint, true
+}
+
+// HasLogsEndpoint returns a boolean if a field has been set.
+func (o *CommonsTelemetryExportConfig) HasLogsEndpoint() bool {
+	if o != nil && !IsNil(o.LogsEndpoint) {
+		return true
+	}
+
+	return false
+}
+
+// SetLogsEndpoint gets a reference to the given string and assigns it to the LogsEndpoint field.
+func (o *CommonsTelemetryExportConfig) SetLogsEndpoint(v string) {
+	o.LogsEndpoint = &v
+}
+
+// GetMetricsEndpoint returns the MetricsEndpoint field value if set, zero value otherwise.
+func (o *CommonsTelemetryExportConfig) GetMetricsEndpoint() string {
+	if o == nil || IsNil(o.MetricsEndpoint) {
+		var ret string
+		return ret
+	}
+	return *o.MetricsEndpoint
+}
+
+// GetMetricsEndpointOk returns a tuple with the MetricsEndpoint field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsTelemetryExportConfig) GetMetricsEndpointOk() (*string, bool) {
+	if o == nil || IsNil(o.MetricsEndpoint) {
+		return nil, false
+	}
+	return o.MetricsEndpoint, true
+}
+
+// HasMetricsEndpoint returns a boolean if a field has been set.
+func (o *CommonsTelemetryExportConfig) HasMetricsEndpoint() bool {
+	if o != nil && !IsNil(o.MetricsEndpoint) {
+		return true
+	}
+
+	return false
+}
+
+// SetMetricsEndpoint gets a reference to the given string and assigns it to the MetricsEndpoint field.
+func (o *CommonsTelemetryExportConfig) SetMetricsEndpoint(v string) {
+	o.MetricsEndpoint = &v
+}
+
 // GetResourceAttrs returns the ResourceAttrs field value if set, zero value otherwise.
 func (o *CommonsTelemetryExportConfig) GetResourceAttrs() map[string]string {
 	if o == nil || IsNil(o.ResourceAttrs) {
@@ -142,40 +174,8 @@ func (o *CommonsTelemetryExportConfig) SetResourceAttrs(v map[string]string) {
 	o.ResourceAttrs = &v
 }
 
-// GetSignals returns the Signals field value if set, zero value otherwise.
-func (o *CommonsTelemetryExportConfig) GetSignals() []string {
-	if o == nil || IsNil(o.Signals) {
-		var ret []string
-		return ret
-	}
-	return o.Signals
-}
-
-// GetSignalsOk returns a tuple with the Signals field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CommonsTelemetryExportConfig) GetSignalsOk() ([]string, bool) {
-	if o == nil || IsNil(o.Signals) {
-		return nil, false
-	}
-	return o.Signals, true
-}
-
-// HasSignals returns a boolean if a field has been set.
-func (o *CommonsTelemetryExportConfig) HasSignals() bool {
-	if o != nil && !IsNil(o.Signals) {
-		return true
-	}
-
-	return false
-}
-
-// SetSignals gets a reference to the given []string and assigns it to the Signals field.
-func (o *CommonsTelemetryExportConfig) SetSignals(v []string) {
-	o.Signals = v
-}
-
 func (o CommonsTelemetryExportConfig) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -184,17 +184,17 @@ func (o CommonsTelemetryExportConfig) MarshalJSON() ([]byte, error) {
 
 func (o CommonsTelemetryExportConfig) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Endpoint) {
-		toSerialize["endpoint"] = o.Endpoint
-	}
 	if !IsNil(o.Headers) {
 		toSerialize["headers"] = o.Headers
 	}
+	if !IsNil(o.LogsEndpoint) {
+		toSerialize["logs_endpoint"] = o.LogsEndpoint
+	}
+	if !IsNil(o.MetricsEndpoint) {
+		toSerialize["metrics_endpoint"] = o.MetricsEndpoint
+	}
 	if !IsNil(o.ResourceAttrs) {
 		toSerialize["resource_attrs"] = o.ResourceAttrs
-	}
-	if !IsNil(o.Signals) {
-		toSerialize["signals"] = o.Signals
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -218,10 +218,10 @@ func (o *CommonsTelemetryExportConfig) UnmarshalJSON(bytes []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(bytes, &additionalProperties); err == nil {
-		delete(additionalProperties, "endpoint")
 		delete(additionalProperties, "headers")
+		delete(additionalProperties, "logs_endpoint")
+		delete(additionalProperties, "metrics_endpoint")
 		delete(additionalProperties, "resource_attrs")
-		delete(additionalProperties, "signals")
 		o.AdditionalProperties = additionalProperties
 	}
 

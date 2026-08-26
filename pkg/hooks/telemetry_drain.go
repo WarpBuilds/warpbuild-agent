@@ -10,8 +10,6 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 )
 
-// TELEMETRY_DRAIN_HOOK is defined in pkg/manager so the hook run order
-// can name it.
 const TELEMETRY_DRAIN_HOOK = manager.TELEMETRY_DRAIN_HOOK
 
 const telemetryDrainTimeout = 10 * time.Second
@@ -28,12 +26,6 @@ func (*TelemetryDrainHook) HookID() string {
 	return TELEMETRY_DRAIN_HOOK
 }
 
-// PostEndHook asks the telemetryd sibling process to flush.
-//
-// Batches are on a 30s timer, so the tail of a job — usually the
-// interesting part — would otherwise still be buffered when this VM is
-// destroyed. Best-effort: telemetry must never fail a run, and a runner
-// with telemetry disabled has nothing listening at all.
 func (*TelemetryDrainHook) PostEndHook(ctx context.Context, opts *manager.PostEndHookOptions) error {
 	if opts == nil || opts.StartRunnerOptions == nil || opts.StartRunnerOptions.AgentOptions == nil {
 		return nil

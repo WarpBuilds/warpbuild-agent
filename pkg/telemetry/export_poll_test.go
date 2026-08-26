@@ -23,8 +23,6 @@ func allocationDetails(status string, telemetryEnabled *bool, export *warpbuild.
 
 func enabled() *bool { b := true; return &b }
 
-// Until the runner is allocated, the response carries no job details — so an
-// absent export block says nothing yet and discovery keeps waiting.
 func TestPollWaitsWhileUnassigned(t *testing.T) {
 	tm := &TelemetryManager{}
 
@@ -35,20 +33,16 @@ func TestPollWaitsWhileUnassigned(t *testing.T) {
 	}
 }
 
-// Once the job details arrive the answer is final: a destination is applied
-// and discovery stops. A later change takes effect on the next run.
 func TestPollAppliesExportOnceAllocated(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), apiExport("https://otlp.example.com")))
+	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), apiExport("https://otlp.example.com/v1/metrics")))
 
 	require.Equal(t, pollApplied, got)
 	require.NotNil(t, tm.exportCfg)
-	assert.Equal(t, "https://otlp.example.com", tm.exportCfg.Endpoint)
+	assert.Equal(t, "https://otlp.example.com/v1/metrics", tm.exportCfg.MetricsEndpoint)
 }
 
-// The job details arriving without an export block is a definitive "this org
-// has none" — not something to keep polling for.
 func TestPollStopsWhenAllocatedWithoutExport(t *testing.T) {
 	tm := &TelemetryManager{}
 
@@ -58,8 +52,6 @@ func TestPollStopsWhenAllocatedWithoutExport(t *testing.T) {
 	assert.Nil(t, tm.exportCfg)
 }
 
-// telemetry_enabled is populated on every response path, including while the
-// runner is still unassigned, so it stops collection outright.
 func TestPollStopsWhenTelemetryDisabled(t *testing.T) {
 	tm := &TelemetryManager{}
 	disabled := false

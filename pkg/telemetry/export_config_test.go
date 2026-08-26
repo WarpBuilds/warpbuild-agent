@@ -9,10 +9,10 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-func apiExport(endpoint string) *warpbuild.CommonsTelemetryExportConfig {
+func apiExport(metricsEndpoint string) *warpbuild.CommonsTelemetryExportConfig {
 	out := warpbuild.NewCommonsTelemetryExportConfig()
-	if endpoint != "" {
-		out.SetEndpoint(endpoint)
+	if metricsEndpoint != "" {
+		out.SetMetricsEndpoint(metricsEndpoint)
 	}
 	out.SetHeaders(map[string]string{"dd-api-key": "secret"})
 	out.SetResourceAttrs(map[string]string{"service.name": "ci"})
@@ -27,7 +27,7 @@ func TestExportConfigFrom(t *testing.T) {
 	}{
 		{name: "nil payload", in: nil, wantNil: true},
 		{name: "no endpoint", in: apiExport(""), wantNil: true},
-		{name: "endpoint set", in: apiExport("https://x.example.com")},
+		{name: "metrics endpoint set", in: apiExport("https://x.example.com/v1/metrics")},
 	}
 
 	for _, tc := range cases {
@@ -38,7 +38,9 @@ func TestExportConfigFrom(t *testing.T) {
 				return
 			}
 			require.NotNil(t, got)
-			assert.Equal(t, "https://x.example.com", got.Endpoint)
+			assert.Equal(t, "https://x.example.com/v1/metrics", got.MetricsEndpoint)
+			assert.True(t, got.exportsMetrics())
+			assert.False(t, got.exportsLogs())
 		})
 	}
 }
@@ -48,8 +50,6 @@ func TestExportConfigHeaderEnv(t *testing.T) {
 	env := cfg.headerEnv()
 
 	require.Len(t, env, len(cfg.Headers))
-	// Sorted-position indexing keeps the rendered config stable across
-	// restarts that change nothing.
 	assert.Equal(t, exportHeaderEnvPrefix+"0", env["dd-api-key"])
 	assert.Equal(t, exportHeaderEnvPrefix+"1", env["dd-otel-metric-config"])
 
@@ -62,6 +62,5 @@ func TestExportConfigHeaderEnv(t *testing.T) {
 func TestExportConfigNilSafety(t *testing.T) {
 	var cfg *exportConfig
 	assert.Nil(t, cfg.headerEnv())
-	// runOtelCollector appends this unconditionally.
 	assert.Nil(t, cfg.envPairs())
 }

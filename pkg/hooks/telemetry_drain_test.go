@@ -30,7 +30,6 @@ func drainOpts(port int) *manager.PostEndHookOptions {
 	}
 }
 
-// stubTelemetryd stands in for the sibling process on loopback.
 func stubTelemetryd(t *testing.T, handler http.HandlerFunc) int {
 	t.Helper()
 
@@ -56,8 +55,6 @@ func TestTelemetryDrainHook_CallsDrain(t *testing.T) {
 	assert.Equal(t, "/internal/drain", gotPath)
 }
 
-// Telemetry must never fail a customer's run, so every failure mode here
-// is a no-op rather than an error.
 func TestTelemetryDrainHook_NeverFailsTheRun(t *testing.T) {
 	hook := &TelemetryDrainHook{}
 
@@ -82,8 +79,6 @@ func TestTelemetryDrainHook_NeverFailsTheRun(t *testing.T) {
 	})
 }
 
-// The cleanup callback tells the backend it may reap the VM, so draining
-// after it is a race we would lose.
 func TestTelemetryDrainRunsBeforeCleanup(t *testing.T) {
 	postEnd := manager.GetHooks[manager.IPostEndHook]()
 

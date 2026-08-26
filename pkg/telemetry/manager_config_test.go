@@ -13,8 +13,6 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 )
 
-// The package logs through a process-global logger that the daemon
-// initialises at startup; tests have to stand it up themselves.
 func TestMain(m *testing.M) {
 	if _, err := log.Init(&log.InitOptions{LogLevel: "error"}); err != nil {
 		panic(err)
@@ -22,8 +20,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// repoRoot resolves the module root, which is what baseDirectory points
-// at on a runner — the template and collector binaries hang off it.
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	wd, err := os.Getwd()
@@ -40,7 +36,8 @@ func newTestManager(t *testing.T, export *exportConfig) *TelemetryManager {
 
 func testExportConfig() *exportConfig {
 	return &exportConfig{
-		Endpoint: "https://otlp.datadoghq.com",
+		MetricsEndpoint: "https://otlp.datadoghq.com/v1/metrics",
+		LogsEndpoint:    "https://http-intake.logs.datadoghq.com/v1/logs",
 		Headers: map[string]string{
 			"dd-api-key":            "super-secret-value",
 			"dd-otel-metric-config": `{"resource_attributes_as_tags": true}`,
@@ -50,14 +47,11 @@ func testExportConfig() *exportConfig {
 			"host.name":                    "warp-ubuntu-latest-x64-4x",
 			"warpbuild.runner.instance_id": "wr_test_runner",
 			"vcs.repository.name":          "widgets",
-			// Deliberately awkward: must survive YAML quoting.
-			"warpbuild.note": `he said "hi"\and left`,
+			"warpbuild.note":               `he said "hi"\and left`,
 		},
 	}
 }
 
-// renderConfig writes the collector config into a temp base dir that
-// symlinks the real template, and returns the rendered text.
 func renderConfig(t *testing.T, tm *TelemetryManager) string {
 	t.Helper()
 
@@ -76,8 +70,6 @@ func renderConfig(t *testing.T, tm *TelemetryManager) string {
 	return string(out)
 }
 
-// validateWithCollector runs the bundled collector's own config
-// validator. Skips where the binary for this platform isn't present.
 func validateWithCollector(t *testing.T, tm *TelemetryManager) {
 	t.Helper()
 
@@ -99,7 +91,6 @@ func TestRenderConfig_WithoutExport(t *testing.T) {
 	for _, absent := range []string{"otlphttp/customer", "resource/customer", "connectors:", "forward/customer"} {
 		assert.NotContainsf(t, got, absent, "unconfigured export should not emit %q", absent)
 	}
-	// Our own pipelines must still be intact.
 	for _, present := range []string{"otlphttp:", "otlphttp/gha_logs:", "hostmetrics:"} {
 		assert.Containsf(t, got, present, "expected %q in rendered config", present)
 	}
@@ -118,15 +109,13 @@ func TestRenderConfig_WithExport(t *testing.T) {
 		"forward/customer_logs:",
 		"metrics/customer:",
 		"logs/customer:",
-		`endpoint: "https://otlp.datadoghq.com"`,
+		`metrics_endpoint: "https://otlp.datadoghq.com/v1/metrics"`,
 	} {
 		assert.Containsf(t, got, present, "expected %q in rendered config:\n%s", present, got)
 	}
 	validateWithCollector(t, tm)
 }
 
-// The credential must reach the collector through the environment, never
-// the config file — that file is long-lived and ends up in bug reports.
 func TestRenderConfig_SecretNotInFile(t *testing.T) {
 	tm := newTestManager(t, testExportConfig())
 	got := renderConfig(t, tm)
@@ -138,8 +127,6 @@ func TestRenderConfig_SecretNotInFile(t *testing.T) {
 		"credential missing from collector environment")
 }
 
-// Our own pipelines must keep exporting to the local receiver even when
-// an export is configured — the customer path is additive.
 func TestRenderConfig_InternalPipelinesUntouched(t *testing.T) {
 	tm := newTestManager(t, testExportConfig())
 	got := renderConfig(t, tm)
@@ -152,15 +139,11 @@ func TestRenderConfig_InternalPipelinesUntouched(t *testing.T) {
 		assert.Containsf(t, got, present, "expected %q in rendered config:\n%s", present, got)
 	}
 
-	// resource/customer must never appear in our own metrics pipeline:
-	// it rewrites host.name, which our ClickHouse view keys on.
 	internalMetrics := section(got, "    metrics:\n", "\n    ")
 	assert.NotContainsf(t, internalMetrics, "resource/customer",
 		"resource/customer leaked into the internal metrics pipeline:\n%s", internalMetrics)
 }
 
-// Each signal gets its own exporter instance, so a destination that
-// rejects one keeps accepting the other rather than sharing a queue.
 func TestRenderConfig_SignalsExportIndependently(t *testing.T) {
 	tm := newTestManager(t, testExportConfig())
 	got := renderConfig(t, tm)
@@ -174,8 +157,36 @@ func TestRenderConfig_SignalsExportIndependently(t *testing.T) {
 	validateWithCollector(t, tm)
 }
 
-// section returns the slice of s starting at start up to the next
-// occurrence of sep, for coarse pipeline assertions.
+func TestRenderConfig_MetricsOnly(t *testing.T) {
+	cfg := testExportConfig()
+	cfg.LogsEndpoint = ""
+	tm := newTestManager(t, cfg)
+	got := renderConfig(t, tm)
+
+	for _, present := range []string{"otlphttp/customer_metrics:", "forward/customer_metrics:", "metrics/customer:"} {
+		assert.Containsf(t, got, present, "expected %q", present)
+	}
+	for _, absent := range []string{"otlphttp/customer_logs", "forward/customer_logs", "logs/customer:"} {
+		assert.NotContainsf(t, got, absent, "did not expect %q", absent)
+	}
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_LogsOnly(t *testing.T) {
+	cfg := testExportConfig()
+	cfg.MetricsEndpoint = ""
+	tm := newTestManager(t, cfg)
+	got := renderConfig(t, tm)
+
+	for _, present := range []string{"otlphttp/customer_logs:", "forward/customer_logs:", "logs/customer:"} {
+		assert.Containsf(t, got, present, "expected %q", present)
+	}
+	for _, absent := range []string{"otlphttp/customer_metrics", "forward/customer_metrics", "metrics/customer:"} {
+		assert.NotContainsf(t, got, absent, "did not expect %q", absent)
+	}
+	validateWithCollector(t, tm)
+}
+
 func section(s, start, sep string) string {
 	i := strings.Index(s, start)
 	if i < 0 {

@@ -328,15 +328,11 @@ processors:
             new_label: scope
             new_value: fs_max_percent
 
-{{- if .ExportEnabled}}
+{{- if or .ExportMetrics .ExportLogs}}
 
-  # Export-only. This must never be added to our own pipelines: our
-  # ClickHouse view keys on host.name = runner instance id, and the
-  # rewrite below deliberately moves that to a plain attribute so the
-  # destination does not see a new host per job.
+  # Export-only: never add to our own pipelines, they key on host.name.
   resource/customer:
     attributes:
-      # Internal markers, meaningless outside our own dashboards.
       - key: telemetry.version
         action: delete
       - key: telemetry.vm_os
@@ -348,13 +344,16 @@ processors:
 {{- end}}
 {{- end}}
 
-{{- if .ExportEnabled}}
+{{- if or .ExportMetrics .ExportLogs}}
 
 connectors:
-  # Fan out after our own processing rather than duplicating the whole
-  # processor chain — the customer gets the same normalised signals we do.
+  # Fan out after our own processing rather than duplicating the chain.
+{{- if .ExportMetrics}}
   forward/customer_metrics:
+{{- end}}
+{{- if .ExportLogs}}
   forward/customer_logs:
+{{- end}}
 {{- end}}
 
 exporters:
@@ -386,21 +385,11 @@ exporters:
     sampling_initial: 10
     sampling_thereafter: 100
 {{end}}
-{{- if .ExportEnabled}}
+{{- if .ExportMetrics}}
 
-  # Org-owned OTLP destination. Purely additive — the exporters above keep
-  # running regardless, so a customer endpoint that is down or rejecting
-  # cannot affect our own collection.
-  #
-  # One exporter instance per signal: the sending queue and retry state are
-  # per-exporter, so a destination that rejects logs keeps accepting metrics
-  # instead of the two sharing a queue and failing together.
-  #
-  # Credentials arrive as env vars rather than being written here: the
-  # config file outlives any single request and tends to end up in bug
-  # reports.
+  # Org-owned OTLP destination. Additive; one exporter per signal.
   otlphttp/customer_metrics:
-    endpoint: {{yamlStr .ExportEndpoint}}
+    metrics_endpoint: {{yamlStr .ExportMetricsEndpoint}}
     compression: gzip
     timeout: 30s
     headers:
@@ -415,13 +404,12 @@ exporters:
       enabled: true
       initial_interval: 2s
       max_interval: 15s
-      # The VM is reaped shortly after the job ends, so retrying beyond
-      # this only burns the flush window. Our S3 copy stays the record of
-      # truth for anything dropped here.
       max_elapsed_time: 90s
+{{- end}}
+{{- if .ExportLogs}}
 
   otlphttp/customer_logs:
-    endpoint: {{yamlStr .ExportEndpoint}}
+    logs_endpoint: {{yamlStr .ExportLogsEndpoint}}
     compression: gzip
     timeout: 30s
     headers:
@@ -436,9 +424,6 @@ exporters:
       enabled: true
       initial_interval: 2s
       max_interval: 15s
-      # The VM is reaped shortly after the job ends, so retrying beyond
-      # this only burns the flush window. Our S3 copy stays the record of
-      # truth for anything dropped here.
       max_elapsed_time: 90s
 {{- end}}
 
@@ -450,14 +435,12 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp{{if .ExportEnabled}}, forward/customer_logs{{end}}]
+      exporters: [otlphttp{{if .ExportLogs}}, forward/customer_logs{{end}}]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs{{if .ExportEnabled}}, forward/customer_logs{{end}}]
-{{- if .ExportEnabled}}
-    # Both log pipelines above feed this one, so the org receives exactly
-    # the logs we upload ourselves.
+      exporters: [otlphttp/gha_logs{{if .ExportLogs}}, forward/customer_logs{{end}}]
+{{- if .ExportLogs}}
     logs/customer:
       receivers: [forward/customer_logs]
       processors: [resource/customer]
@@ -497,8 +480,8 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportEnabled}}, forward/customer_metrics{{end}}]
-{{- if .ExportEnabled}}
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
+{{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]
       processors: [resource/customer]

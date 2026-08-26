@@ -22,7 +22,6 @@ type Receiver struct {
 	wg      sync.WaitGroup
 	mu      sync.RWMutex
 
-	// onDrain is invoked by /internal/drain. Set by the manager.
 	onDrain func()
 }
 
@@ -37,8 +36,6 @@ func NewReceiver(port int, service TelemetryProcessor) *Receiver {
 	}
 }
 
-// SetOnDrain registers the flush callback for /internal/drain. Must be
-// called before Start.
 func (r *Receiver) SetOnDrain(fn func()) {
 	r.onDrain = fn
 }
@@ -204,11 +201,6 @@ func (r *Receiver) handleGHALogs(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// handleDrain flushes what the collector is holding.
-//
-// agentd calls this when a job ends: batches are on a 30s timer, so
-// without it the tail of every job can die with the VM. Loopback only —
-// the port is local to the box but job code shares that box.
 func (r *Receiver) handleDrain(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

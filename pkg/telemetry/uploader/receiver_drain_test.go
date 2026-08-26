@@ -19,7 +19,6 @@ func TestHandleDrain(t *testing.T) {
 	}{
 		{"loopback post", http.MethodPost, "127.0.0.1:5555", true, http.StatusOK, true},
 		{"ipv6 loopback", http.MethodPost, "[::1]:5555", true, http.StatusOK, true},
-		// The port is local to the box, but so is the customer's job code.
 		{"remote rejected", http.MethodPost, "10.1.2.3:5555", true, http.StatusForbidden, false},
 		{"get rejected", http.MethodGet, "127.0.0.1:5555", true, http.StatusMethodNotAllowed, false},
 		{"no callback", http.MethodPost, "127.0.0.1:5555", false, http.StatusNotImplemented, false},

@@ -24,27 +24,18 @@ type IPostEndHook interface {
 	PostEndHook(ctx context.Context, opts *PostEndHookOptions) error
 }
 
-// Hook IDs. Declared here rather than alongside each implementation in
-// pkg/hooks so hookRunOrder below can name them: pkg/hooks imports this
-// package, not the other way round.
 const (
 	TELEMETRY_DRAIN_HOOK       = "TELEMETRY_DRAIN_HOOK"
 	CLAUDE_OUTPUTS_UPLOAD_HOOK = "CLAUDE_OUTPUTS_UPLOAD_HOOK"
 	CLEANUP_CALLBACK_HOOK      = "CLEANUP_CALLBACK_HOOK"
 )
 
-// hookRunOrder is the order hooks run in. Anything not listed runs after
-// these, in registration order.
-//
-// CLEANUP_CALLBACK_HOOK tells the backend it may reap the VM, so anything
-// that needs the VM alive belongs above it.
 var hookRunOrder = []string{
 	TELEMETRY_DRAIN_HOOK,
 	CLAUDE_OUTPUTS_UPLOAD_HOOK,
 	CLEANUP_CALLBACK_HOOK,
 }
 
-// hookIDer is what both hook interfaces embed; used to order them.
 type hookIDer interface {
 	HookID() string
 }
@@ -55,8 +46,6 @@ func RegisterHook[T any](hook T) {
 	hooks = append(hooks, hook)
 }
 
-// GetHooks returns the registered hooks of type T, in hookRunOrder.
-// Anything not named there follows, in registration order.
 func GetHooks[T any]() []T {
 	var matching []T
 	for _, hook := range hooks {
@@ -68,7 +57,6 @@ func GetHooks[T any]() []T {
 	result := make([]T, 0, len(matching))
 	placed := make([]bool, len(matching))
 
-	// hookRunOrder is already the order we want, so walk it directly.
 	for _, name := range hookRunOrder {
 		for i, hook := range matching {
 			if placed[i] {

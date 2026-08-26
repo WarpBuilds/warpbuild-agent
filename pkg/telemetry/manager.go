@@ -18,18 +18,10 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-// telemetryPollInterval is how often allocation details are polled while
-// waiting for the runner to be allocated to a job.
 const telemetryPollInterval = 5 * time.Second
 
-// allocationStatusUnassigned is the status the backend reports until the
-// runner is allocated to a job. Until then the response carries no job
-// details, and therefore no export destination.
 const allocationStatusUnassigned = "unassigned"
 
-// defaultCollectorDrainTimeout bounds how long we wait for the collector
-// to flush on shutdown. Generous enough for a 30s batch plus a queued
-// export, short enough not to hold up a VM that is being reaped.
 const defaultCollectorDrainTimeout = 25 * time.Second
 
 // TelemetryManager coordinates all telemetry components
@@ -56,15 +48,10 @@ type TelemetryManager struct {
 	sigNozEndpoint string
 	sigNozAPIKey   string
 
-	// Org-owned OTLP destination, delivered on the allocation poll. Nil
-	// until the runner is allocated to a job — warm runners sitting idle
-	// export nothing.
 	exportCfg *exportConfig
 	restartCh chan struct{}
 	drainCh   chan struct{}
 
-	// drainTimeout is a field rather than a constant so tests can stop
-	// waiting out the real window.
 	drainTimeout time.Duration
 }
 
@@ -163,10 +150,6 @@ func (tm *TelemetryManager) startOtelCollector() {
 
 	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
 
-	// Supervise: the collector is re-rendered and restarted whenever the
-	// org's export config changes, which is how a runner picks up its
-	// destination on allocation. The collector has no config hot-reload,
-	// so a restart is the mechanism.
 	for {
 		if err := tm.writeOtelCollectorConfig(); err != nil {
 			log.Logger().Errorf("Failed to write OTEL collector config: %v", err)
@@ -186,9 +169,6 @@ func (tm *TelemetryManager) startOtelCollector() {
 	log.Logger().Infof("OTEL collector goroutine exited")
 }
 
-// runOtelCollector runs one OTEL collector process. It returns true when
-// the caller should re-render the config and start a new one, false when
-// the manager is shutting down or the process is gone for good.
 func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 	configPath := tm.getConfigFilePath()
 	log.Logger().Infof("Starting OpenTelemetry Collector with config: %s", configPath)
@@ -199,8 +179,6 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	// Ingest credentials are passed as env rather than written into the
-	// config file, which is long-lived and ends up in bug reports.
 	cmd.Env = append(os.Environ(), tm.currentExportConfig().envPairs()...)
 
 	log.Logger().Infof("OpenTelemetry Collector command: %s --config %s", collectorPath, configPath)
@@ -225,7 +203,6 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 		waitDone <- cmd.Wait()
 	}()
 
-	// Wait for context cancellation, a config change, or process exit
 	restart := false
 	select {
 	case <-tm.ctx.Done():
@@ -238,8 +215,6 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 		restart = true
 
 	case <-tm.drainCh:
-		// Shutdown is what makes the collector flush, and the job is over,
-		// so there is nothing to come back up for.
 		log.Logger().Infof("Draining OTEL collector (PID: %d) at end of job...", cmd.Process.Pid)
 		tm.terminateCollector(cmd, waitDone)
 
@@ -255,36 +230,39 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 	return restart
 }
 
-// collectorKillTimeout bounds the wait after SIGKILL, which the kernel
-// should honour immediately; this only guards against an unreapable process.
 const collectorKillTimeout = 5 * time.Second
 
-// terminateCollector stops the collector and returns once it is gone.
-//
-// It asks nicely first: a graceful shutdown is what makes the collector
-// flush its batch processors and drain its sending queue. Killing outright
-// would discard up to a full batch interval, which on an ephemeral runner
-// is the tail of the job — the part people care about most.
 func (tm *TelemetryManager) terminateCollector(cmd *exec.Cmd, waitDone <-chan error) {
+	if tm.drainCollector(cmd, waitDone) {
+		return
+	}
+	killCollector(cmd, waitDone)
+}
+
+func (tm *TelemetryManager) drainCollector(cmd *exec.Cmd, waitDone <-chan error) bool {
 	if err := requestCollectorShutdown(cmd); err != nil {
 		log.Logger().Warnf("Cannot signal OpenTelemetry Collector (%v); killing it", err)
-	} else if awaitCollectorExit(waitDone, tm.drainTimeout) {
-		return
-	} else {
-		log.Logger().Warnf("OpenTelemetry Collector did not drain within %s; killing it", tm.drainTimeout)
+		return false
 	}
 
+	if awaitCollectorExit(waitDone, tm.drainTimeout) {
+		return true
+	}
+
+	log.Logger().Warnf("OpenTelemetry Collector did not drain within %s; killing it", tm.drainTimeout)
+	return false
+}
+
+func killCollector(cmd *exec.Cmd, waitDone <-chan error) {
 	if err := cmd.Process.Kill(); err != nil {
 		log.Logger().Errorf("Failed to kill OpenTelemetry Collector: %v", err)
 	}
+
 	if !awaitCollectorExit(waitDone, collectorKillTimeout) {
 		log.Logger().Warnf("OpenTelemetry Collector still running %s after kill", collectorKillTimeout)
 	}
 }
 
-// requestCollectorShutdown asks the collector to exit gracefully. Windows
-// has no equivalent signal for another process, so it reports an error and
-// the caller falls back to a kill.
 func requestCollectorShutdown(cmd *exec.Cmd) error {
 	if runtime.GOOS == "windows" {
 		return fmt.Errorf("graceful signals are unsupported on windows")
@@ -293,7 +271,6 @@ func requestCollectorShutdown(cmd *exec.Cmd) error {
 	return cmd.Process.Signal(syscall.SIGTERM)
 }
 
-// awaitCollectorExit reports whether the process exited within timeout.
 func awaitCollectorExit(waitDone <-chan error, timeout time.Duration) bool {
 	select {
 	case err := <-waitDone:
@@ -369,9 +346,6 @@ func (tm *TelemetryManager) getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
-// yamlStr renders a value as a quoted YAML scalar. Resource attributes
-// and endpoints are partly org-supplied, so they cannot be interpolated
-// raw. YAML's double-quoted escapes match JSON's.
 func yamlStr(v string) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
@@ -409,11 +383,12 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		SigNozEndpoint        string
 		SigNozAPIKey          string
 		EnableSigNoz          bool
-		// Export* stays zero until the runner is allocated to a job.
-		ExportEnabled       bool
-		ExportEndpoint      string
-		ExportHeaderEnv     map[string]string
-		ExportResourceAttrs map[string]string
+		ExportMetrics         bool
+		ExportLogs            bool
+		ExportMetricsEndpoint string
+		ExportLogsEndpoint    string
+		ExportHeaderEnv       map[string]string
+		ExportResourceAttrs   map[string]string
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -427,14 +402,14 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
 	}
 	if export != nil {
-		data.ExportEnabled = true
-		data.ExportEndpoint = export.Endpoint
+		data.ExportMetrics = export.exportsMetrics()
+		data.ExportLogs = export.exportsLogs()
+		data.ExportMetricsEndpoint = export.MetricsEndpoint
+		data.ExportLogsEndpoint = export.LogsEndpoint
 		data.ExportHeaderEnv = export.headerEnv()
 		data.ExportResourceAttrs = export.ResourceAttrs
 	}
 
-	// ExportHeaderEnv holds env var *names*, not credentials; the values
-	// only ever live in the collector's process environment.
 	log.Logger().Infof("Parsing template with vars: %+v", data)
 
 	err = tmpl.Execute(file, data)
@@ -445,7 +420,6 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	return nil
 }
 
-// currentExportConfig returns a snapshot so rendering never holds the lock.
 func (tm *TelemetryManager) currentExportConfig() *exportConfig {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
@@ -475,31 +449,15 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
 }
 
-// allocationPollResult is what one allocation-details response tells us.
 type allocationPollResult int
 
 const (
-	// pollWait means the runner is not allocated yet, so the response
-	// carries no job details and no verdict on the export.
 	pollWait allocationPollResult = iota
-	// pollApplied means the export destination was found and applied.
 	pollApplied
-	// pollNoExport means the job details arrived without an export block:
-	// this org has none configured, so this run exports nothing.
 	pollNoExport
-	// pollDisabled means the org has telemetry switched off.
 	pollDisabled
 )
 
-// monitorTelemetryStatus polls allocation details until the runner is
-// allocated to a job, reads the export destination off that response, and
-// stops.
-//
-// It has to keep polling past the first responses because at boot the
-// runner is unassigned and carries no job details. Once those arrive the
-// answer is final either way — a destination, or none configured for this
-// org — so there is nothing further to wait for. A change to the org's
-// export config mid-job takes effect on the next run, not this one.
 func (tm *TelemetryManager) monitorTelemetryStatus() {
 	defer tm.wg.Done()
 
@@ -525,7 +483,6 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 
 			switch tm.applyAllocationDetails(allocationDetails) {
 			case pollDisabled:
-				// Cancel the context to stop the entire telemetry manager
 				tm.cancel()
 				return
 			case pollApplied:
@@ -543,26 +500,20 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 	}
 }
 
-// applyAllocationDetails folds one poll response into the manager's state.
 func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) allocationPollResult {
 	if details == nil {
 		return pollWait
 	}
 
-	// An absent key defaults to enabled.
 	if details.HasTelemetryEnabled() && !details.GetTelemetryEnabled() {
 		log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
 		return pollDisabled
 	}
 
-	// Until the runner is allocated the response carries no job details, so
-	// an absent export block says nothing yet.
 	if details.GetStatus() == allocationStatusUnassigned {
 		return pollWait
 	}
 
-	// The job details are here. Whatever the export block says now is the
-	// answer for this run.
 	next := exportConfigFrom(details.TelemetryExport)
 	if next == nil {
 		return pollNoExport
@@ -572,34 +523,23 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 	return pollApplied
 }
 
-// Drain flushes whatever the collector is holding and leaves it stopped.
-//
-// A graceful shutdown is the only thing that makes the collector flush its
-// batch processors and drain its sending queue — there is no runtime flush
-// API. It is called at end of job, so stopping rather than restarting is
-// both simpler and correct: the VM is about to be reaped, and our own
-// upload path gets flushed by the same shutdown.
 func (tm *TelemetryManager) Drain() {
 	select {
 	case tm.drainCh <- struct{}{}:
 	default:
-		// A drain is already pending, which flushes just the same.
 	}
 }
 
-// applyExportConfig stores the export config and restarts the collector
-// onto it. Called once per run.
 func (tm *TelemetryManager) applyExportConfig(next *exportConfig) {
 	tm.mu.Lock()
 	tm.exportCfg = next
 	tm.mu.Unlock()
 
-	log.Logger().Infof("Telemetry export configured: endpoint=%s", next.Endpoint)
+	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q",
+		next.MetricsEndpoint, next.LogsEndpoint)
 	tm.restartCollector()
 }
 
-// restartCollector asks the supervisor to re-render the config and start a
-// fresh collector. Non-blocking: a restart already pending does the same job.
 func (tm *TelemetryManager) restartCollector() {
 	select {
 	case tm.restartCh <- struct{}{}:

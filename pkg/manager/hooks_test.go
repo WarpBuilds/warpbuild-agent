@@ -15,7 +15,6 @@ func (h fakePostEndHook) PostEndHook(context.Context, *PostEndHookOptions) error
 	return nil
 }
 
-// withHooks swaps the package-level registry for the duration of a test.
 func withHooks(t *testing.T, ids ...string) {
 	t.Helper()
 
@@ -38,9 +37,6 @@ func hookIDs(t *testing.T) []string {
 	return got
 }
 
-// The cleanup callback tells the backend it may reap the VM, so anything
-// that needs the VM alive has to run before it — regardless of the order
-// package init happened to register them in.
 func TestGetHooksAppliesRunOrder(t *testing.T) {
 	withHooks(t, CLEANUP_CALLBACK_HOOK, CLAUDE_OUTPUTS_UPLOAD_HOOK, TELEMETRY_DRAIN_HOOK)
 
@@ -51,7 +47,6 @@ func TestGetHooksAppliesRunOrder(t *testing.T) {
 	}, hookIDs(t))
 }
 
-// Hooks nobody ordered run after the ordered ones, keeping registration order.
 func TestGetHooksPutsUnlistedHooksLast(t *testing.T) {
 	withHooks(t, "ZEBRA_HOOK", CLEANUP_CALLBACK_HOOK, "ALPHA_HOOK", TELEMETRY_DRAIN_HOOK)
 
