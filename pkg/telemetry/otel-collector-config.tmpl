@@ -338,7 +338,7 @@ processors:
       - key: telemetry.vm_os
         action: delete
 {{- range $key, $value := .ExportResourceAttrs}}
-      - key: {{$key}}
+      - key: {{yamlStr $key}}
         value: {{yamlStr $value}}
         action: upsert
 {{- end}}
@@ -391,10 +391,10 @@ exporters:
   otlphttp/customer_metrics:
     metrics_endpoint: {{yamlStr .ExportMetricsEndpoint}}
     compression: gzip
-    timeout: 30s
+    timeout: 10s
     headers:
 {{- range $name, $env := .ExportHeaderEnv}}
-      {{$name}}: "${env:{{$env}}}"
+      {{yamlStr $name}}: "${env:{{$env}}}"
 {{- end}}
     sending_queue:
       enabled: true
@@ -404,17 +404,17 @@ exporters:
       enabled: true
       initial_interval: 2s
       max_interval: 15s
-      max_elapsed_time: 90s
+      max_elapsed_time: 15s
 {{- end}}
 {{- if .ExportLogs}}
 
   otlphttp/customer_logs:
     logs_endpoint: {{yamlStr .ExportLogsEndpoint}}
     compression: gzip
-    timeout: 30s
+    timeout: 10s
     headers:
 {{- range $name, $env := .ExportHeaderEnv}}
-      {{$name}}: "${env:{{$env}}}"
+      {{yamlStr $name}}: "${env:{{$env}}}"
 {{- end}}
     sending_queue:
       enabled: true
@@ -424,7 +424,7 @@ exporters:
       enabled: true
       initial_interval: 2s
       max_interval: 15s
-      max_elapsed_time: 90s
+      max_elapsed_time: 15s
 {{- end}}
 
 service:

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"text/template"
 	"time"
@@ -22,7 +23,7 @@ const telemetryPollInterval = 5 * time.Second
 
 const allocationStatusUnassigned = "unassigned"
 
-const defaultCollectorDrainTimeout = 25 * time.Second
+const defaultCollectorDrainTimeout = 20 * time.Second
 
 // TelemetryManager coordinates all telemetry components
 type TelemetryManager struct {
@@ -48,9 +49,11 @@ type TelemetryManager struct {
 	sigNozEndpoint string
 	sigNozAPIKey   string
 
-	exportCfg *exportConfig
-	restartCh chan struct{}
-	drainCh   chan struct{}
+	exportCfg        *exportConfig
+	restartCh        chan struct{}
+	drainCh          chan struct{}
+	collectorDone    chan struct{}
+	collectorStarted atomic.Bool
 
 	drainTimeout time.Duration
 }
@@ -72,6 +75,7 @@ func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, wa
 		sigNozAPIKey:   sigNozAPIKey,
 		restartCh:      make(chan struct{}, 1),
 		drainCh:        make(chan struct{}, 1),
+		collectorDone:  make(chan struct{}),
 		drainTimeout:   defaultCollectorDrainTimeout,
 	}
 }
@@ -101,6 +105,7 @@ func (tm *TelemetryManager) Start() error {
 
 	// Start OTEL collector
 	tm.wg.Add(1)
+	tm.collectorStarted.Store(true)
 	go tm.startOtelCollector()
 
 	// Start telemetry status monitoring
@@ -114,7 +119,6 @@ func (tm *TelemetryManager) Start() error {
 // Stop stops the telemetry manager and all its components
 func (tm *TelemetryManager) Stop() error {
 	tm.mu.Lock()
-	defer tm.mu.Unlock()
 
 	log.Logger().Debugf("Stopping telemetry manager...")
 
@@ -128,6 +132,9 @@ func (tm *TelemetryManager) Stop() error {
 		}
 	}
 
+	// Released before Wait: the collector goroutine takes tm.mu on its way out.
+	tm.mu.Unlock()
+
 	// Wait for all goroutines to finish
 	tm.wg.Wait()
 
@@ -138,6 +145,7 @@ func (tm *TelemetryManager) Stop() error {
 // startOtelCollector starts the OTEL collector process
 func (tm *TelemetryManager) startOtelCollector() {
 	defer tm.wg.Done()
+	defer close(tm.collectorDone)
 
 	log.Logger().Infof("Starting OpenTelemetry Collector process...")
 
@@ -404,10 +412,10 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	if export != nil {
 		data.ExportMetrics = export.exportsMetrics()
 		data.ExportLogs = export.exportsLogs()
-		data.ExportMetricsEndpoint = export.MetricsEndpoint
-		data.ExportLogsEndpoint = export.LogsEndpoint
-		data.ExportHeaderEnv = export.headerEnv()
-		data.ExportResourceAttrs = export.ResourceAttrs
+		data.ExportMetricsEndpoint = escapeExpansion(export.MetricsEndpoint)
+		data.ExportLogsEndpoint = escapeExpansion(export.LogsEndpoint)
+		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
+		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
 	}
 
 	log.Logger().Infof("Parsing template with vars: %+v", data)
@@ -523,10 +531,22 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 	return pollApplied
 }
 
+// Drain blocks until the collector has flushed and exited, so the caller can
+// sequence it before VM teardown.
 func (tm *TelemetryManager) Drain() {
 	select {
 	case tm.drainCh <- struct{}{}:
 	default:
+	}
+
+	if !tm.collectorStarted.Load() {
+		return
+	}
+
+	select {
+	case <-tm.collectorDone:
+	case <-time.After(tm.drainTimeout + collectorKillTimeout):
+		log.Logger().Warnf("Telemetry drain did not finish within %s", tm.drainTimeout+collectorKillTimeout)
 	}
 }
 

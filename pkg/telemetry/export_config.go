@@ -3,9 +3,38 @@ package telemetry
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
+
+// The collector expands ${...} in config keys and values, and expands again on
+// what it pulls from env, so customer-controlled strings are doubled to stay literal.
+func escapeExpansion(v string) string {
+	return strings.ReplaceAll(v, "$", "$$")
+}
+
+func escapeExpansionMap(in map[string]string) map[string]string {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[escapeExpansion(k)] = escapeExpansion(v)
+	}
+	return out
+}
+
+func escapeExpansionKeys(in map[string]string) map[string]string {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[escapeExpansion(k)] = v
+	}
+	return out
+}
 
 const (
 	exportHeaderEnvPrefix = "WARPBUILD_OTLP_HEADER_"
@@ -61,7 +90,7 @@ func (e *exportConfig) envPairs() []string {
 	env := e.headerEnv()
 	pairs := make([]string, 0, len(env))
 	for name, key := range env {
-		pairs = append(pairs, fmt.Sprintf("%s=%s", key, e.Headers[name]))
+		pairs = append(pairs, fmt.Sprintf("%s=%s", key, escapeExpansion(e.Headers[name])))
 	}
 	sort.Strings(pairs)
 	return pairs

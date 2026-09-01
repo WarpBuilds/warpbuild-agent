@@ -121,3 +121,29 @@ func TestDrainIsIdempotent(t *testing.T) {
 	}
 	assert.Len(t, tm.drainCh, 1)
 }
+
+func TestStopDoesNotDeadlockAgainstCollectorGoroutine(t *testing.T) {
+	tm := newTestManager(t, testExportConfig())
+
+	running := make(chan struct{})
+	tm.wg.Add(1)
+	go func() {
+		defer tm.wg.Done()
+		close(running)
+		<-tm.ctx.Done()
+		_ = tm.currentExportConfig()
+	}()
+	<-running
+
+	done := make(chan struct{})
+	go func() {
+		_ = tm.Stop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Stop held tm.mu across wg.Wait(); the collector goroutine can never acquire it")
+	}
+}

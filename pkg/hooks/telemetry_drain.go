@@ -12,7 +12,7 @@ import (
 
 const TELEMETRY_DRAIN_HOOK = manager.TELEMETRY_DRAIN_HOOK
 
-const telemetryDrainTimeout = 10 * time.Second
+const telemetryDrainTimeout = 30 * time.Second
 
 type TelemetryDrainHook struct{}
 
