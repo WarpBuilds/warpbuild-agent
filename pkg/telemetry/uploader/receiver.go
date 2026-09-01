@@ -21,6 +21,8 @@ type Receiver struct {
 	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 	mu      sync.RWMutex
+
+	onDrain func()
 }
 
 // NewReceiver creates a new OTEL receiver
@@ -32,6 +34,10 @@ func NewReceiver(port int, service TelemetryProcessor) *Receiver {
 		ctx:     ctx,
 		cancel:  cancel,
 	}
+}
+
+func (r *Receiver) SetOnDrain(fn func()) {
+	r.onDrain = fn
 }
 
 // Start starts the receiver on the specified port
@@ -51,6 +57,8 @@ func (r *Receiver) Start() error {
 
 	// Health check endpoint (no middleware needed)
 	mux.HandleFunc("/health", r.handleHealth)
+
+	mux.HandleFunc("/internal/drain", r.handleDrain)
 
 	r.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", r.port),
@@ -191,6 +199,39 @@ func (r *Receiver) handleGHALogs(w http.ResponseWriter, req *http.Request) {
 	r.processGHALogs(body)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (r *Receiver) handleDrain(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !isLoopback(req.RemoteAddr) {
+		log.Logger().Warnf("Rejected drain request from %s", req.RemoteAddr)
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if r.onDrain == nil {
+		http.Error(w, "Drain not supported", http.StatusNotImplemented)
+		return
+	}
+
+	log.Logger().Infof("Drain requested, flushing telemetry")
+	r.onDrain()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"drained"}`))
+}
+
+func isLoopback(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // handleHealth handles health check requests

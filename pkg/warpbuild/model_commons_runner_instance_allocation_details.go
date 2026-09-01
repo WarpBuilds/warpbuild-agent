@@ -26,6 +26,7 @@ type CommonsRunnerInstanceAllocationDetails struct {
 	Status *string `json:"status,omitempty"`
 	ClaudeAgentApplicationDetails *CommonsClaudeAgentApplicationDetails `json:"claude_agent_application_details,omitempty"`
 	TelemetryEnabled *bool `json:"telemetry_enabled,omitempty"`
+	TelemetryExport *CommonsTelemetryExportConfig `json:"telemetry_export,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -240,6 +241,38 @@ func (o *CommonsRunnerInstanceAllocationDetails) SetTelemetryEnabled(v bool) {
 	o.TelemetryEnabled = &v
 }
 
+// GetTelemetryExport returns the TelemetryExport field value if set, zero value otherwise.
+func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryExport() CommonsTelemetryExportConfig {
+	if o == nil || IsNil(o.TelemetryExport) {
+		var ret CommonsTelemetryExportConfig
+		return ret
+	}
+	return *o.TelemetryExport
+}
+
+// GetTelemetryExportOk returns a tuple with the TelemetryExport field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) GetTelemetryExportOk() (*CommonsTelemetryExportConfig, bool) {
+	if o == nil || IsNil(o.TelemetryExport) {
+		return nil, false
+	}
+	return o.TelemetryExport, true
+}
+
+// HasTelemetryExport returns a boolean if a field has been set.
+func (o *CommonsRunnerInstanceAllocationDetails) HasTelemetryExport() bool {
+	if o != nil && !IsNil(o.TelemetryExport) {
+		return true
+	}
+
+	return false
+}
+
+// SetTelemetryExport gets a reference to the given CommonsTelemetryExportConfig and assigns it to the TelemetryExport field.
+func (o *CommonsRunnerInstanceAllocationDetails) SetTelemetryExport(v CommonsTelemetryExportConfig) {
+	o.TelemetryExport = &v
+}
+
 func (o CommonsRunnerInstanceAllocationDetails) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -267,6 +300,9 @@ func (o CommonsRunnerInstanceAllocationDetails) ToMap() (map[string]interface{},
 	}
 	if !IsNil(o.TelemetryEnabled) {
 		toSerialize["telemetry_enabled"] = o.TelemetryEnabled
+	}
+	if !IsNil(o.TelemetryExport) {
+		toSerialize["telemetry_export"] = o.TelemetryExport
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -296,6 +332,7 @@ func (o *CommonsRunnerInstanceAllocationDetails) UnmarshalJSON(bytes []byte) (er
 		delete(additionalProperties, "status")
 		delete(additionalProperties, "claude_agent_application_details")
 		delete(additionalProperties, "telemetry_enabled")
+		delete(additionalProperties, "telemetry_export")
 		o.AdditionalProperties = additionalProperties
 	}
 

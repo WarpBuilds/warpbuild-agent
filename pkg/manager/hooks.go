@@ -24,6 +24,22 @@ type IPostEndHook interface {
 	PostEndHook(ctx context.Context, opts *PostEndHookOptions) error
 }
 
+const (
+	TELEMETRY_DRAIN_HOOK       = "TELEMETRY_DRAIN_HOOK"
+	CLAUDE_OUTPUTS_UPLOAD_HOOK = "CLAUDE_OUTPUTS_UPLOAD_HOOK"
+	CLEANUP_CALLBACK_HOOK      = "CLEANUP_CALLBACK_HOOK"
+)
+
+var hookRunOrder = []string{
+	TELEMETRY_DRAIN_HOOK,
+	CLAUDE_OUTPUTS_UPLOAD_HOOK,
+	CLEANUP_CALLBACK_HOOK,
+}
+
+type hookIDer interface {
+	HookID() string
+}
+
 var hooks []any
 
 func RegisterHook[T any](hook T) {
@@ -31,11 +47,33 @@ func RegisterHook[T any](hook T) {
 }
 
 func GetHooks[T any]() []T {
-	var result []T
+	var matching []T
 	for _, hook := range hooks {
 		if h, ok := hook.(T); ok {
-			result = append(result, h)
+			matching = append(matching, h)
 		}
 	}
+
+	result := make([]T, 0, len(matching))
+	placed := make([]bool, len(matching))
+
+	for _, name := range hookRunOrder {
+		for i, hook := range matching {
+			if placed[i] {
+				continue
+			}
+			if h, ok := any(hook).(hookIDer); ok && h.HookID() == name {
+				result = append(result, hook)
+				placed[i] = true
+			}
+		}
+	}
+
+	for i, hook := range matching {
+		if !placed[i] {
+			result = append(result, hook)
+		}
+	}
+
 	return result
 }

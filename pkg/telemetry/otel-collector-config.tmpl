@@ -328,6 +328,34 @@ processors:
             new_label: scope
             new_value: fs_max_percent
 
+{{- if or .ExportMetrics .ExportLogs}}
+
+  # Export-only: never add to our own pipelines, they key on host.name.
+  resource/customer:
+    attributes:
+      - key: telemetry.version
+        action: delete
+      - key: telemetry.vm_os
+        action: delete
+{{- range $key, $value := .ExportResourceAttrs}}
+      - key: {{yamlStr $key}}
+        value: {{yamlStr $value}}
+        action: upsert
+{{- end}}
+{{- end}}
+
+{{- if or .ExportMetrics .ExportLogs}}
+
+connectors:
+  # Fan out after our own processing rather than duplicating the chain.
+{{- if .ExportMetrics}}
+  forward/customer_metrics:
+{{- end}}
+{{- if .ExportLogs}}
+  forward/customer_logs:
+{{- end}}
+{{- end}}
+
 exporters:
   otlphttp:
     logs_endpoint: "http://localhost:{{.Port}}/v1/logs"
@@ -357,6 +385,47 @@ exporters:
     sampling_initial: 10
     sampling_thereafter: 100
 {{end}}
+{{- if .ExportMetrics}}
+
+  # Org-owned OTLP destination. Additive; one exporter per signal.
+  otlphttp/customer_metrics:
+    metrics_endpoint: {{yamlStr .ExportMetricsEndpoint}}
+    compression: gzip
+    timeout: 10s
+    headers:
+{{- range $name, $env := .ExportHeaderEnv}}
+      {{yamlStr $name}}: "${env:{{$env}}}"
+{{- end}}
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      initial_interval: 2s
+      max_interval: 15s
+      max_elapsed_time: 15s
+{{- end}}
+{{- if .ExportLogs}}
+
+  otlphttp/customer_logs:
+    logs_endpoint: {{yamlStr .ExportLogsEndpoint}}
+    compression: gzip
+    timeout: 10s
+    headers:
+{{- range $name, $env := .ExportHeaderEnv}}
+      {{yamlStr $name}}: "${env:{{$env}}}"
+{{- end}}
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      initial_interval: 2s
+      max_interval: 15s
+      max_elapsed_time: 15s
+{{- end}}
 
 service:
   telemetry:
@@ -366,11 +435,17 @@ service:
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp]
+      exporters: [otlphttp{{if .ExportLogs}}, forward/customer_logs{{end}}]
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs]
+      exporters: [otlphttp/gha_logs{{if .ExportLogs}}, forward/customer_logs{{end}}]
+{{- if .ExportLogs}}
+    logs/customer:
+      receivers: [forward/customer_logs]
+      processors: [resource/customer]
+      exporters: [otlphttp/customer_logs]
+{{- end}}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -405,4 +480,10 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}]
+      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
+{{- if .ExportMetrics}}
+    metrics/customer:
+      receivers: [forward/customer_metrics]
+      processors: [resource/customer]
+      exporters: [otlphttp/customer_metrics]
+{{- end}}

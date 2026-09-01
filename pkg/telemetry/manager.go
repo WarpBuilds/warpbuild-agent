@@ -2,12 +2,15 @@ package telemetry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
+	"syscall"
 	"text/template"
 	"time"
 
@@ -15,6 +18,12 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry/uploader"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
+
+const telemetryPollInterval = 5 * time.Second
+
+const allocationStatusUnassigned = "unassigned"
+
+const defaultCollectorDrainTimeout = 20 * time.Second
 
 // TelemetryManager coordinates all telemetry components
 type TelemetryManager struct {
@@ -29,15 +38,24 @@ type TelemetryManager struct {
 	otelCollectorCmd *exec.Cmd
 
 	// Configuration
-	port           int
-	baseDirectory  string
-	warpbuildAPI   *warpbuild.APIClient
-	runnerID       string
-	pollingSecret  string
-	hostURL        string
+	port          int
+	baseDirectory string
+	warpbuildAPI  *warpbuild.APIClient
+	runnerID      string
+	pollingSecret string
+	hostURL       string
+
 	sigNozEnable   bool
 	sigNozEndpoint string
 	sigNozAPIKey   string
+
+	exportCfg        *exportConfig
+	restartCh        chan struct{}
+	drainCh          chan struct{}
+	collectorDone    chan struct{}
+	collectorStarted atomic.Bool
+
+	drainTimeout time.Duration
 }
 
 // NewTelemetryManager creates a new telemetry manager
@@ -55,6 +73,10 @@ func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, wa
 		sigNozEnable:   sigNozEnable,
 		sigNozEndpoint: sigNozEndpoint,
 		sigNozAPIKey:   sigNozAPIKey,
+		restartCh:      make(chan struct{}, 1),
+		drainCh:        make(chan struct{}, 1),
+		collectorDone:  make(chan struct{}),
+		drainTimeout:   defaultCollectorDrainTimeout,
 	}
 }
 
@@ -72,6 +94,7 @@ func (tm *TelemetryManager) Start() error {
 
 	// Create receiver
 	tm.receiver = uploader.NewReceiver(tm.port, service)
+	tm.receiver.SetOnDrain(tm.Drain)
 
 	// Start receiver
 	if err := tm.receiver.Start(); err != nil {
@@ -82,6 +105,7 @@ func (tm *TelemetryManager) Start() error {
 
 	// Start OTEL collector
 	tm.wg.Add(1)
+	tm.collectorStarted.Store(true)
 	go tm.startOtelCollector()
 
 	// Start telemetry status monitoring
@@ -95,7 +119,6 @@ func (tm *TelemetryManager) Start() error {
 // Stop stops the telemetry manager and all its components
 func (tm *TelemetryManager) Stop() error {
 	tm.mu.Lock()
-	defer tm.mu.Unlock()
 
 	log.Logger().Debugf("Stopping telemetry manager...")
 
@@ -109,6 +132,9 @@ func (tm *TelemetryManager) Stop() error {
 		}
 	}
 
+	// Released before Wait: the collector goroutine takes tm.mu on its way out.
+	tm.mu.Unlock()
+
 	// Wait for all goroutines to finish
 	tm.wg.Wait()
 
@@ -119,6 +145,7 @@ func (tm *TelemetryManager) Stop() error {
 // startOtelCollector starts the OTEL collector process
 func (tm *TelemetryManager) startOtelCollector() {
 	defer tm.wg.Done()
+	defer close(tm.collectorDone)
 
 	log.Logger().Infof("Starting OpenTelemetry Collector process...")
 
@@ -131,24 +158,26 @@ func (tm *TelemetryManager) startOtelCollector() {
 
 	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
 
-	// Write the OpenTelemetry Collector configuration file
-	if err := tm.writeOtelCollectorConfig(); err != nil {
-		log.Logger().Errorf("Failed to write OTEL collector config: %v", err)
-		return
+	for {
+		if err := tm.writeOtelCollectorConfig(); err != nil {
+			log.Logger().Errorf("Failed to write OTEL collector config: %v", err)
+			return
+		}
+
+		log.Logger().Infof("OpenTelemetry Collector configuration written successfully")
+		log.Logger().Infof("Launching OpenTelemetry Collector in background...")
+
+		if restart := tm.runOtelCollector(collectorPath); !restart {
+			break
+		}
+
+		log.Logger().Infof("Export configuration changed, restarting OTEL collector")
 	}
-
-	log.Logger().Infof("OpenTelemetry Collector configuration written successfully")
-
-	log.Logger().Infof("Launching OpenTelemetry Collector in background...")
-
-	// Start the OTEL collector and wait for context cancellation
-	tm.runOtelCollector(collectorPath)
 
 	log.Logger().Infof("OTEL collector goroutine exited")
 }
 
-// runOtelCollector runs the OTEL collector process
-func (tm *TelemetryManager) runOtelCollector(collectorPath string) {
+func (tm *TelemetryManager) runOtelCollector(collectorPath string) bool {
 	configPath := tm.getConfigFilePath()
 	log.Logger().Infof("Starting OpenTelemetry Collector with config: %s", configPath)
 
@@ -158,11 +187,13 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	cmd.Env = append(os.Environ(), tm.currentExportConfig().envPairs()...)
+
 	log.Logger().Infof("OpenTelemetry Collector command: %s --config %s", collectorPath, configPath)
 
 	if err := cmd.Start(); err != nil {
 		log.Logger().Errorf("Failed to start OpenTelemetry Collector: %v", err)
-		return
+		return false
 	}
 
 	// Store the command reference so we can stop it later
@@ -180,27 +211,20 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) {
 		waitDone <- cmd.Wait()
 	}()
 
-	// Wait for either context cancellation or process exit
+	restart := false
 	select {
 	case <-tm.ctx.Done():
 		log.Logger().Infof("Context cancelled, stopping OTEL collector (PID: %d)...", cmd.Process.Pid)
+		tm.terminateCollector(cmd, waitDone)
 
-		// Kill the process - Go handles OS-specific details
-		if err := cmd.Process.Kill(); err != nil {
-			log.Logger().Errorf("Failed to kill OpenTelemetry Collector process: %v", err)
-		}
+	case <-tm.restartCh:
+		log.Logger().Infof("Reloading OTEL collector (PID: %d) for new export configuration...", cmd.Process.Pid)
+		tm.terminateCollector(cmd, waitDone)
+		restart = true
 
-		// Wait for the process to actually exit (with timeout)
-		select {
-		case err := <-waitDone:
-			if err != nil {
-				log.Logger().Infof("OpenTelemetry Collector terminated with error: %v", err)
-			} else {
-				log.Logger().Infof("OpenTelemetry Collector terminated successfully")
-			}
-		case <-time.After(5 * time.Second):
-			log.Logger().Warnf("Timeout waiting for OpenTelemetry Collector to exit after 5 seconds")
-		}
+	case <-tm.drainCh:
+		log.Logger().Infof("Draining OTEL collector (PID: %d) at end of job...", cmd.Process.Pid)
+		tm.terminateCollector(cmd, waitDone)
 
 	case err := <-waitDone:
 		if err != nil {
@@ -211,6 +235,58 @@ func (tm *TelemetryManager) runOtelCollector(collectorPath string) {
 	}
 
 	log.Logger().Infof("OpenTelemetry Collector process handler completed")
+	return restart
+}
+
+const collectorKillTimeout = 5 * time.Second
+
+func (tm *TelemetryManager) terminateCollector(cmd *exec.Cmd, waitDone <-chan error) {
+	if tm.drainCollector(cmd, waitDone) {
+		return
+	}
+	killCollector(cmd, waitDone)
+}
+
+func (tm *TelemetryManager) drainCollector(cmd *exec.Cmd, waitDone <-chan error) bool {
+	if err := requestCollectorShutdown(cmd); err != nil {
+		log.Logger().Warnf("Cannot signal OpenTelemetry Collector (%v); killing it", err)
+		return false
+	}
+
+	if awaitCollectorExit(waitDone, tm.drainTimeout) {
+		return true
+	}
+
+	log.Logger().Warnf("OpenTelemetry Collector did not drain within %s; killing it", tm.drainTimeout)
+	return false
+}
+
+func killCollector(cmd *exec.Cmd, waitDone <-chan error) {
+	if err := cmd.Process.Kill(); err != nil {
+		log.Logger().Errorf("Failed to kill OpenTelemetry Collector: %v", err)
+	}
+
+	if !awaitCollectorExit(waitDone, collectorKillTimeout) {
+		log.Logger().Warnf("OpenTelemetry Collector still running %s after kill", collectorKillTimeout)
+	}
+}
+
+func requestCollectorShutdown(cmd *exec.Cmd) error {
+	if runtime.GOOS == "windows" {
+		return fmt.Errorf("graceful signals are unsupported on windows")
+	}
+	log.Logger().Infof("Draining OpenTelemetry Collector (PID: %d)...", cmd.Process.Pid)
+	return cmd.Process.Signal(syscall.SIGTERM)
+}
+
+func awaitCollectorExit(waitDone <-chan error, timeout time.Duration) bool {
+	select {
+	case err := <-waitDone:
+		log.Logger().Infof("OpenTelemetry Collector exited: %v", err)
+		return true
+	case <-time.After(timeout):
+		return false
+	}
 }
 
 // handlePanic handles panics in goroutines
@@ -278,9 +354,20 @@ func (tm *TelemetryManager) getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
+func yamlStr(v string) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
 // writeOtelCollectorConfig writes the OTEL collector configuration
 func (tm *TelemetryManager) writeOtelCollectorConfig() error {
-	tmpl, err := template.ParseFiles(tm.getConfigTemplatePath())
+	tmplPath := tm.getConfigTemplatePath()
+	tmpl, err := template.New(filepath.Base(tmplPath)).
+		Funcs(template.FuncMap{"yamlStr": yamlStr}).
+		ParseFiles(tmplPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse template file: %w", err)
 	}
@@ -290,6 +377,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
 	defer file.Close()
+
+	export := tm.currentExportConfig()
 
 	data := struct {
 		LogExportFilePath     string
@@ -302,6 +391,12 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		SigNozEndpoint        string
 		SigNozAPIKey          string
 		EnableSigNoz          bool
+		ExportMetrics         bool
+		ExportLogs            bool
+		ExportMetricsEndpoint string
+		ExportLogsEndpoint    string
+		ExportHeaderEnv       map[string]string
+		ExportResourceAttrs   map[string]string
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -314,6 +409,14 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		SigNozAPIKey:          tm.sigNozAPIKey,
 		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
 	}
+	if export != nil {
+		data.ExportMetrics = export.exportsMetrics()
+		data.ExportLogs = export.exportsLogs()
+		data.ExportMetricsEndpoint = escapeExpansion(export.MetricsEndpoint)
+		data.ExportLogsEndpoint = escapeExpansion(export.LogsEndpoint)
+		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
+		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
+	}
 
 	log.Logger().Infof("Parsing template with vars: %+v", data)
 
@@ -323,6 +426,12 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	}
 
 	return nil
+}
+
+func (tm *TelemetryManager) currentExportConfig() *exportConfig {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return tm.exportCfg
 }
 
 // getConfigFilePath gets the path to the OTEL collector config file
@@ -348,24 +457,30 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
 }
 
-// monitorTelemetryStatus monitors the telemetry enabled status via API polling
+type allocationPollResult int
+
+const (
+	pollWait allocationPollResult = iota
+	pollApplied
+	pollNoExport
+	pollDisabled
+)
+
 func (tm *TelemetryManager) monitorTelemetryStatus() {
 	defer tm.wg.Done()
 
-	log.Logger().Infof("Starting telemetry status monitoring...")
+	log.Logger().Infof("Watching for the organization's telemetry export destination...")
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(telemetryPollInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			// Poll the API to check telemetry status
 			allocationDetails, resp, err := tm.warpbuildAPI.V1RunnerInstanceAPI.
 				GetRunnerInstanceAllocationDetails(tm.ctx, tm.runnerID).
 				XPOLLINGSECRET(tm.pollingSecret).
 				Execute()
-
 			if err != nil {
 				log.Logger().Debugf("Failed to get runner instance allocation details: %v", err)
 				if resp != nil {
@@ -374,29 +489,17 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 				continue
 			}
 
-			if allocationDetails == nil {
-				log.Logger().Debugf("No runner instance allocation details found")
-				continue
+			switch tm.applyAllocationDetails(allocationDetails) {
+			case pollDisabled:
+				tm.cancel()
+				return
+			case pollApplied:
+				return
+			case pollNoExport:
+				log.Logger().Infof("No telemetry export configured for this organization; nothing to fan out")
+				return
+			case pollWait:
 			}
-
-			// Check if telemetry is disabled
-			if allocationDetails.HasTelemetryEnabled() {
-				telemetryEnabled := allocationDetails.GetTelemetryEnabled()
-
-				if !telemetryEnabled {
-					log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
-					tm.stopOtelCollector()
-
-					// Cancel the context to stop the entire telemetry manager
-					tm.cancel()
-					return
-				}
-			}
-
-			// Allocation details were found and telemetry key was
-			// 1. not set; which defaults to enabled.
-			// 2. set and telemetry value was enabled.
-			return
 
 		case <-tm.ctx.Done():
 			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
@@ -405,16 +508,61 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 	}
 }
 
-// stopOtelCollector stops the OTEL collector process by canceling the context
-func (tm *TelemetryManager) stopOtelCollector() {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
+func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) allocationPollResult {
+	if details == nil {
+		return pollWait
+	}
 
-	if tm.otelCollectorCmd == nil || tm.otelCollectorCmd.Process == nil {
-		log.Logger().Infof("OTEL collector process not running")
+	if details.HasTelemetryEnabled() && !details.GetTelemetryEnabled() {
+		log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
+		return pollDisabled
+	}
+
+	if details.GetStatus() == allocationStatusUnassigned {
+		return pollWait
+	}
+
+	next := exportConfigFrom(details.TelemetryExport)
+	if next == nil {
+		return pollNoExport
+	}
+
+	tm.applyExportConfig(next)
+	return pollApplied
+}
+
+// Drain blocks until the collector has flushed and exited, so the caller can
+// sequence it before VM teardown.
+func (tm *TelemetryManager) Drain() {
+	select {
+	case tm.drainCh <- struct{}{}:
+	default:
+	}
+
+	if !tm.collectorStarted.Load() {
 		return
 	}
 
-	log.Logger().Infof("Stopping OTEL collector process (PID: %d)...", tm.otelCollectorCmd.Process.Pid)
-	// The actual termination will be handled by the context cancellation in runOtelCollector
+	select {
+	case <-tm.collectorDone:
+	case <-time.After(tm.drainTimeout + collectorKillTimeout):
+		log.Logger().Warnf("Telemetry drain did not finish within %s", tm.drainTimeout+collectorKillTimeout)
+	}
+}
+
+func (tm *TelemetryManager) applyExportConfig(next *exportConfig) {
+	tm.mu.Lock()
+	tm.exportCfg = next
+	tm.mu.Unlock()
+
+	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q",
+		next.MetricsEndpoint, next.LogsEndpoint)
+	tm.restartCollector()
+}
+
+func (tm *TelemetryManager) restartCollector() {
+	select {
+	case tm.restartCh <- struct{}{}:
+	default:
+	}
 }
