@@ -1,6 +1,8 @@
 package telemetry
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -124,4 +126,40 @@ func TestPollResumesCollectionAfterParking(t *testing.T) {
 	assert.Equal(t, pollNoExport, got)
 	assert.False(t, tm.parked, "a re-enabled runner must not sit idle for the whole job")
 	assert.True(t, tm.collect)
+}
+
+// backend-core main has no export feature at all: its allocation details carry
+// telemetry_enabled and no telemetry_export key whatsoever. Decode that exact
+// wire shape rather than constructing the struct, so the generated client's
+// absent-vs-null handling is part of what is under test.
+func mainBackendWire(t *testing.T, status string, telemetryEnabled bool) *warpbuild.CommonsRunnerInstanceAllocationDetails {
+	t.Helper()
+	raw := fmt.Sprintf(`{"status":%q,"runner_application":"github","telemetry_enabled":%t,
+	  "gh_runner_application_details":{"runner_name":"wr_1","labels":["warp-ubuntu-latest-x64-2x"]}}`,
+		status, telemetryEnabled)
+	out := warpbuild.NewCommonsRunnerInstanceAllocationDetails()
+	require.NoError(t, json.Unmarshal([]byte(raw), out))
+	require.Nil(t, out.TelemetryExport, "main never sends telemetry_export")
+	return out
+}
+
+func TestBackwardCompat_MainBackend_TelemetryOn(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+
+	assert.Equal(t, pollWait, tm.applyAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, true)))
+	assert.False(t, tm.parked, "collection is on; nothing to park")
+
+	assert.Equal(t, pollNoExport, tm.applyAllocationDetails(mainBackendWire(t, "assigned", true)))
+	assert.True(t, tm.collect, "our own exporters must stay wired against an old backend")
+	assert.False(t, tm.parked)
+}
+
+func TestBackwardCompat_MainBackend_TelemetryOff(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+
+	assert.Equal(t, pollWait, tm.applyAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, false)))
+	assert.True(t, tm.parked, "collection off with no export: idle until allocation")
+	assert.False(t, tm.collect)
+
+	assert.Equal(t, pollDisabled, tm.applyAllocationDetails(mainBackendWire(t, "assigned", false)))
 }
