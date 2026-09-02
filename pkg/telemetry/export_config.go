@@ -95,3 +95,18 @@ func (e *exportConfig) envPairs() []string {
 	sort.Strings(pairs)
 	return pairs
 }
+
+func exporterList(entries ...exporterEntry) string {
+	out := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.include {
+			out = append(out, e.name)
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+type exporterEntry struct {
+	name    string
+	include bool
+}

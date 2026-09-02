@@ -135,6 +135,10 @@ receivers:
             attributes:
               state: idle
 {{- end}}
+{{- if .Parked}}
+
+  nop: {}
+{{- end}}
 
 processors:
   batch/logs:
@@ -426,26 +430,40 @@ exporters:
       max_interval: 15s
       max_elapsed_time: 15s
 {{- end}}
+{{- if .Parked}}
+
+  nop: {}
+{{- end}}
 
 service:
   telemetry:
     metrics:
       level: none
   pipelines:
+{{- if .Parked}}
+    metrics/idle:
+      receivers: [nop]
+      exporters: [nop]
+{{- end}}
+{{- if .LogsExporters}}
     logs:
       receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [otlphttp{{if .ExportLogs}}, forward/customer_logs{{end}}]
+      exporters: [{{.LogsExporters}}]
+{{- end}}
+{{- if .GHALogsExporters}}
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [otlphttp/gha_logs{{if .ExportLogs}}, forward/customer_logs{{end}}]
+      exporters: [{{.GHALogsExporters}}]
+{{- end}}
 {{- if .ExportLogs}}
     logs/customer:
       receivers: [forward/customer_logs]
       processors: [resource/customer]
       exporters: [otlphttp/customer_logs]
 {{- end}}
+{{- if .MetricsExporters}}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -480,7 +498,8 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [otlphttp{{if .EnableSigNoz}}, otlp/signoz, debug{{end}}{{if .ExportMetrics}}, forward/customer_metrics{{end}}]
+      exporters: [{{.MetricsExporters}}]
+{{- end}}
 {{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]

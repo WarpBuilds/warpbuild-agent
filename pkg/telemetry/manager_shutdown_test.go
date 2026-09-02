@@ -147,3 +147,43 @@ func TestStopDoesNotDeadlockAgainstCollectorGoroutine(t *testing.T) {
 		t.Fatal("Stop held tm.mu across wg.Wait(); the collector goroutine can never acquire it")
 	}
 }
+
+// A parked collector still has to answer the end-of-job drain. Parking by
+// leaving the collector goroutine idle instead would never close collectorDone,
+// so every job on a collection-off runner would wait out the whole drain budget.
+func TestDrainReturnsPromptlyWhileParked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("no graceful signal on windows")
+	}
+
+	tm := newCollectOffManager(t, nil)
+	tm.parked = true
+	tm.drainTimeout = 3 * time.Second
+	renderConfig(t, tm)
+
+	if _, err := tm.getOtelCollectorPath(); err != nil {
+		t.Skipf("collector binary unavailable: %v", err)
+	}
+
+	tm.wg.Add(1)
+	tm.collectorStarted.Store(true)
+	go tm.startOtelCollector()
+
+	require.Eventually(t, func() bool {
+		tm.mu.RLock()
+		defer tm.mu.RUnlock()
+		return tm.otelCollectorCmd != nil && tm.otelCollectorCmd.Process != nil
+	}, 10*time.Second, 20*time.Millisecond, "parked collector never started")
+
+	start := time.Now()
+	done := make(chan struct{})
+	go func() { tm.Drain(); close(done) }()
+
+	select {
+	case <-done:
+	case <-time.After(tm.drainTimeout + collectorKillTimeout):
+		t.Fatal("Drain never returned against a parked collector")
+	}
+	assert.Less(t, time.Since(start), tm.drainTimeout,
+		"a parked collector should exit on SIGTERM, not wait out the drain window")
+}

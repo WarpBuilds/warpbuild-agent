@@ -52,13 +52,49 @@ func TestPollStopsWhenAllocatedWithoutExport(t *testing.T) {
 	assert.Nil(t, tm.exportCfg)
 }
 
-func TestPollStopsWhenTelemetryDisabled(t *testing.T) {
-	tm := &TelemetryManager{}
+func TestPollParksWhileUnassignedWithCollectionOff(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
 	disabled := false
 
-	got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
+	for i := range 3 {
+		got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
+		assert.Equalf(t, pollWait, got, "poll %d must keep waiting for the export destination", i)
+	}
+
+	assert.True(t, tm.parked)
+	assert.False(t, tm.collect)
+}
+
+func TestPollStopsWhenAllocatedWithCollectionOffAndNoExport(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+	disabled := false
+
+	got := tm.applyAllocationDetails(allocationDetails("assigned", &disabled, nil))
 
 	assert.Equal(t, pollDisabled, got)
+}
+
+func TestPollExportsWithCollectionOff(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+	disabled := false
+
+	got := tm.applyAllocationDetails(
+		allocationDetails("assigned", &disabled, apiExport("https://otlp.example.com/v1/metrics")))
+
+	require.Equal(t, pollApplied, got)
+	require.NotNil(t, tm.exportCfg)
+	assert.False(t, tm.collect, "our own exporters must be dropped")
+	assert.False(t, tm.parked)
+}
+
+func TestPollKeepsCollectingWhenFlagAbsent(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+
+	got := tm.applyAllocationDetails(
+		allocationDetails("assigned", nil, apiExport("https://otlp.example.com/v1/metrics")))
+
+	require.Equal(t, pollApplied, got)
+	assert.True(t, tm.collect, "an old backend omits the flag; that must not stop collection")
 }
 
 func TestPollWithAbsentTelemetryFlagKeepsRunning(t *testing.T) {
@@ -73,4 +109,19 @@ func TestPollWithNilDetailsWaits(t *testing.T) {
 	tm := &TelemetryManager{}
 
 	assert.Equal(t, pollWait, tm.applyAllocationDetails(nil))
+}
+
+func TestPollResumesCollectionAfterParking(t *testing.T) {
+	tm := &TelemetryManager{collect: true}
+	disabled, reenabled := false, true
+
+	require.Equal(t, pollWait,
+		tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil)))
+	require.True(t, tm.parked)
+
+	got := tm.applyAllocationDetails(allocationDetails("assigned", &reenabled, nil))
+
+	assert.Equal(t, pollNoExport, got)
+	assert.False(t, tm.parked, "a re-enabled runner must not sit idle for the whole job")
+	assert.True(t, tm.collect)
 }

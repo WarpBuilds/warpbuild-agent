@@ -198,3 +198,95 @@ func section(s, start, sep string) string {
 	}
 	return rest
 }
+
+func newCollectOffManager(t *testing.T, export *exportConfig) *TelemetryManager {
+	t.Helper()
+	tm := newTestManager(t, export)
+	tm.collect = false
+	return tm
+}
+
+// The exporter lists are the whole of what collection-off changes, so pin them
+// verbatim for the states that were already shipped.
+func TestRenderConfig_CollectOnExporterListsUnchanged(t *testing.T) {
+	t.Run("no export", func(t *testing.T) {
+		got := renderConfig(t, newTestManager(t, nil))
+		for _, line := range []string{
+			"      exporters: [otlphttp]",
+			"      exporters: [otlphttp/gha_logs]",
+		} {
+			assert.Containsf(t, got, line, "expected %q", line)
+		}
+	})
+
+	t.Run("with export", func(t *testing.T) {
+		got := renderConfig(t, newTestManager(t, testExportConfig()))
+		for _, line := range []string{
+			"      exporters: [otlphttp, forward/customer_logs]",
+			"      exporters: [otlphttp/gha_logs, forward/customer_logs]",
+			"      exporters: [otlphttp, forward/customer_metrics]",
+		} {
+			assert.Containsf(t, got, line, "expected %q", line)
+		}
+	})
+}
+
+func TestRenderConfig_CollectOffExportsOnly(t *testing.T) {
+	tm := newCollectOffManager(t, testExportConfig())
+	got := renderConfig(t, tm)
+
+	for _, present := range []string{
+		"      exporters: [forward/customer_logs]",
+		"      exporters: [forward/customer_metrics]",
+		"    logs/customer:",
+		"    metrics/customer:",
+	} {
+		assert.Containsf(t, got, present, "expected %q:\n%s", present, got)
+	}
+	for _, absent := range []string{"[otlphttp]", "[otlphttp,", "[otlphttp/gha_logs"} {
+		assert.NotContainsf(t, got, absent, "our own exporter %q must be off every pipeline", absent)
+	}
+	validateWithCollector(t, tm)
+}
+
+// A pipeline left with an empty exporter list is a fatal config error, so the
+// single-signal exports are where collection-off would take the collector down.
+func TestRenderConfig_CollectOffSingleSignal(t *testing.T) {
+	t.Run("metrics only", func(t *testing.T) {
+		export := testExportConfig()
+		export.LogsEndpoint = ""
+		tm := newCollectOffManager(t, export)
+		got := renderConfig(t, tm)
+
+		assert.Contains(t, got, "      exporters: [forward/customer_metrics]")
+		assert.NotContains(t, got, "      processors: [batch/logs]", "log pipelines have no destination left")
+		assert.NotContains(t, got, "forward/customer_logs")
+		validateWithCollector(t, tm)
+	})
+
+	t.Run("logs only", func(t *testing.T) {
+		export := testExportConfig()
+		export.MetricsEndpoint = ""
+		tm := newCollectOffManager(t, export)
+		got := renderConfig(t, tm)
+
+		assert.Contains(t, got, "      exporters: [forward/customer_logs]")
+		assert.NotContains(t, got, "      receivers: [hostmetrics", "the metrics pipeline has no destination left")
+		assert.NotContains(t, got, "forward/customer_metrics")
+		validateWithCollector(t, tm)
+	})
+}
+
+func TestRenderConfig_Parked(t *testing.T) {
+	tm := newCollectOffManager(t, nil)
+	tm.parked = true
+	got := renderConfig(t, tm)
+
+	for _, present := range []string{"  nop: {}", "    metrics/idle:", "      receivers: [nop]", "      exporters: [nop]"} {
+		assert.Containsf(t, got, present, "expected %q:\n%s", present, got)
+	}
+	for _, absent := range []string{"      processors: [batch/logs]", "      receivers: [hostmetrics"} {
+		assert.NotContainsf(t, got, absent, "a parked collector runs no real pipeline (%q)", absent)
+	}
+	validateWithCollector(t, tm)
+}

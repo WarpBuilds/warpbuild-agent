@@ -50,6 +50,8 @@ type TelemetryManager struct {
 	sigNozAPIKey   string
 
 	exportCfg        *exportConfig
+	collect          bool
+	parked           bool
 	restartCh        chan struct{}
 	drainCh          chan struct{}
 	collectorDone    chan struct{}
@@ -73,6 +75,7 @@ func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, wa
 		sigNozEnable:   sigNozEnable,
 		sigNozEndpoint: sigNozEndpoint,
 		sigNozAPIKey:   sigNozAPIKey,
+		collect:        true,
 		restartCh:      make(chan struct{}, 1),
 		drainCh:        make(chan struct{}, 1),
 		collectorDone:  make(chan struct{}),
@@ -378,7 +381,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	}
 	defer file.Close()
 
-	export := tm.currentExportConfig()
+	collect, parked, export := tm.currentRenderState()
 
 	data := struct {
 		LogExportFilePath     string
@@ -391,6 +394,11 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		SigNozEndpoint        string
 		SigNozAPIKey          string
 		EnableSigNoz          bool
+		Collect               bool
+		Parked                bool
+		LogsExporters         string
+		GHALogsExporters      string
+		MetricsExporters      string
 		ExportMetrics         bool
 		ExportLogs            bool
 		ExportMetricsEndpoint string
@@ -408,6 +416,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		SigNozEndpoint:        tm.sigNozEndpoint,
 		SigNozAPIKey:          tm.sigNozAPIKey,
 		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
+		Collect:               collect,
+		Parked:                parked,
 	}
 	if export != nil {
 		data.ExportMetrics = export.exportsMetrics()
@@ -417,6 +427,21 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
 		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
 	}
+
+	data.LogsExporters = exporterList(
+		exporterEntry{"otlphttp", collect},
+		exporterEntry{"forward/customer_logs", data.ExportLogs},
+	)
+	data.GHALogsExporters = exporterList(
+		exporterEntry{"otlphttp/gha_logs", collect},
+		exporterEntry{"forward/customer_logs", data.ExportLogs},
+	)
+	data.MetricsExporters = exporterList(
+		exporterEntry{"otlphttp", collect},
+		exporterEntry{"otlp/signoz", data.EnableSigNoz},
+		exporterEntry{"debug", data.EnableSigNoz},
+		exporterEntry{"forward/customer_metrics", data.ExportMetrics},
+	)
 
 	log.Logger().Infof("Parsing template with vars: %+v", data)
 
@@ -432,6 +457,12 @@ func (tm *TelemetryManager) currentExportConfig() *exportConfig {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 	return tm.exportCfg
+}
+
+func (tm *TelemetryManager) currentRenderState() (collect, parked bool, export *exportConfig) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return tm.collect, tm.parked, tm.exportCfg
 }
 
 // getConfigFilePath gets the path to the OTEL collector config file
@@ -513,22 +544,62 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 		return pollWait
 	}
 
-	if details.HasTelemetryEnabled() && !details.GetTelemetryEnabled() {
-		log.Logger().Infof("Telemetry has been disabled via API. Stopping telemetry collection...")
-		return pollDisabled
-	}
+	collect := !details.HasTelemetryEnabled() || details.GetTelemetryEnabled()
 
+	// The export destination only arrives with an allocation, so a runner that
+	// must not collect has nowhere legitimate to send until then.
 	if details.GetStatus() == allocationStatusUnassigned {
+		if collect {
+			tm.unpark()
+		} else {
+			tm.park()
+		}
 		return pollWait
 	}
 
 	next := exportConfigFrom(details.TelemetryExport)
 	if next == nil {
+		if !collect {
+			log.Logger().Infof("Collection is disabled and no export is configured. Stopping telemetry...")
+			return pollDisabled
+		}
+		tm.unpark()
 		return pollNoExport
 	}
 
-	tm.applyExportConfig(next)
+	tm.applyExportConfig(collect, next)
 	return pollApplied
+}
+
+// unpark restores our own exporters when collection was turned back on while
+// this runner sat idle.
+func (tm *TelemetryManager) unpark() {
+	tm.mu.Lock()
+	if !tm.parked {
+		tm.mu.Unlock()
+		return
+	}
+	tm.parked = false
+	tm.collect = true
+	tm.mu.Unlock()
+
+	log.Logger().Infof("Collection to WarpBuild is enabled again; resuming the collector")
+	tm.restartCollector()
+}
+
+// park drops our own exporters while we wait to learn the export destination.
+func (tm *TelemetryManager) park() {
+	tm.mu.Lock()
+	if tm.parked {
+		tm.mu.Unlock()
+		return
+	}
+	tm.parked = true
+	tm.collect = false
+	tm.mu.Unlock()
+
+	log.Logger().Infof("Collection to WarpBuild is disabled; idling the collector until this runner is allocated")
+	tm.restartCollector()
 }
 
 // Drain blocks until the collector has flushed and exited, so the caller can
@@ -550,13 +621,15 @@ func (tm *TelemetryManager) Drain() {
 	}
 }
 
-func (tm *TelemetryManager) applyExportConfig(next *exportConfig) {
+func (tm *TelemetryManager) applyExportConfig(collect bool, next *exportConfig) {
 	tm.mu.Lock()
 	tm.exportCfg = next
+	tm.collect = collect
+	tm.parked = false
 	tm.mu.Unlock()
 
-	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q",
-		next.MetricsEndpoint, next.LogsEndpoint)
+	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q collect=%t",
+		next.MetricsEndpoint, next.LogsEndpoint, collect)
 	tm.restartCollector()
 }
 
