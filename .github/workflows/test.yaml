@@ -21,3 +21,8 @@ jobs:
 
       - name: Test
         run: go test -race ./...
+
+      - name: Verify modules
+        run: |
+          go mod tidy -diff
+          go mod verify
