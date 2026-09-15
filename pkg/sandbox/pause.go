@@ -13,14 +13,23 @@ import (
 	"time"
 )
 
-const unmountTimeout = 20 * time.Second
+const (
+	unmountTimeout = 20 * time.Second
+	// A dissenting daemon usually lets go within a couple of seconds.
+	unmountRetries = 3
+	unmountBackoff = 2 * time.Second
+)
 
 type pausePrepareResult struct {
 	// Unmounted reports the data volume is gone. Past this point the guest has
 	// no $HOME and cannot start a process, so the sandbox is no longer servable.
-	Unmounted bool   `json:"unmounted"`
-	HadVolume bool   `json:"had_volume"`
-	Detail    string `json:"detail,omitempty"`
+	Unmounted bool `json:"unmounted"`
+	HadVolume bool `json:"had_volume"`
+	// Forced reports that the polite unmount was dissented and the volume had
+	// to be taken by force. The writes are still flushed — sync ran first — but
+	// it means something outside the agent's control was holding the volume.
+	Forced bool   `json:"forced,omitempty"`
+	Detail string `json:"detail,omitempty"`
 }
 
 // handlePausePrepare flushes the guest and releases the data volume so the host
@@ -67,10 +76,8 @@ func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := unmount(r.Context(), s.opts.DataVolume); err != nil {
-		// Deliberately no force unmount: forcing here is what silently discards
-		// the writes this endpoint exists to preserve. Let the writers continue
-		// and report failure; the caller suspends anyway.
+	forced, err := unmount(r.Context(), s.opts.DataVolume)
+	if err != nil {
 		s.resumeWriters(stopped)
 		writeJSON(w, http.StatusOK, pausePrepareResult{
 			HadVolume: true,
@@ -81,7 +88,9 @@ func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 	}
 
 	syscall.Sync()
-	writeJSON(w, http.StatusOK, pausePrepareResult{Unmounted: true, HadVolume: true})
+	writeJSON(w, http.StatusOK, pausePrepareResult{
+		Unmounted: true, HadVolume: true, Forced: forced,
+	})
 }
 
 // stopWriters SIGSTOPs every process group the agent spawned and returns the
@@ -106,12 +115,44 @@ func (s *Server) resumeWriters(pids []int) {
 	}
 }
 
-func unmount(ctx context.Context, path string) error {
+// unmount releases the data volume, reporting whether it had to force.
+//
+// Stopping our own writers is not enough on macOS: system daemons hold the
+// volume too — linkd dissents routinely — and the agent has no way to stop
+// something launchd owns. So a dissent is retried briefly and then forced.
+// Forcing is safe here in a way it would not be on its own: the caller has
+// already SIGSTOPped every process it spawned and run sync, so there is no
+// in-flight writer left whose data force would drop.
+func unmount(ctx context.Context, path string) (bool, error) {
+	var last error
+	for attempt := range unmountRetries {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return false, ctx.Err()
+			case <-time.After(unmountBackoff):
+			}
+		}
+		if err := diskutilUnmount(ctx, path); err == nil {
+			return false, nil
+		} else {
+			last = err
+		}
+	}
+
+	if err := diskutilUnmount(ctx, path, "force"); err != nil {
+		return false, fmt.Errorf("%w (polite unmount: %v)", err, last)
+	}
+
+	return true, nil
+}
+
+func diskutilUnmount(ctx context.Context, path string, extra ...string) error {
 	ctx, cancel := context.WithTimeout(ctx, unmountTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sudo", "diskutil", "unmount", path)
-	out, err := cmd.CombinedOutput()
+	args := append(append([]string{"diskutil", "unmount"}, extra...), path)
+	out, err := exec.CommandContext(ctx, "sudo", args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(out)))
 	}
