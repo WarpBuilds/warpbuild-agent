@@ -15,6 +15,7 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
+	"github.com/warpbuilds/warpbuild-agent/pkg/sandbox"
 	"github.com/warpbuilds/warpbuild-agent/pkg/sysinit"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
@@ -27,6 +28,7 @@ type ApplicationOptions struct {
 	LaunchTelemetry         bool   `json:"launch_telemetry"`
 	LaunchProxyServer       bool   `json:"launch_cache_proxy_server"`
 	LaunchTransparentCache  bool   `json:"launch_transparent_cache"`
+	LaunchSandbox           bool   `json:"launch_sandbox"`
 	LogLevel                string `json:"log_level"`
 	TelemetrySigNozEnable   bool   `json:"telemetry_signoz_enable"`
 	TelemetrySigNozEndpoint string `json:"telemetry_signoz_endpoint"`
@@ -49,6 +51,7 @@ type Settings struct {
 	Telemetry        *TelemetrySettings        `json:"telemetry"`
 	Proxy            *ProxySettings            `json:"proxy"`
 	TransparentCache *TransparentCacheSettings `json:"transparent_cache"`
+	Sandbox          *SandboxSettings          `json:"sandbox"`
 }
 
 func (s *Settings) ApplyDefaults() {
@@ -118,6 +121,34 @@ func (t *TransparentCacheSettings) ApplyDefaults() {
 		}
 		t.CertDir = filepath.Join(homeBase, "certs")
 	}
+}
+
+type SandboxSettings struct {
+	// The agent's own option set, so adding an option is one edit rather than
+	// three: these json tags are what the guest's settings file is written in.
+	sandbox.Options
+	// ControlTokenFile is read at startup. The token is delivered through the
+	// job's shared dir rather than inline, because settings.json is rendered
+	// into the Nomad jobspec and a jobspec is readable by anyone with API
+	// access.
+	ControlTokenFile string `json:"control_token_file"`
+}
+
+// resolve returns the options with the control token filled in from disk. The
+// inline ControlToken is the fallback, for local runs with no staged file.
+func (s *SandboxSettings) resolve() (sandbox.Options, error) {
+	opts := s.Options
+	if s.ControlTokenFile == "" {
+		return opts, nil
+	}
+
+	b, err := os.ReadFile(s.ControlTokenFile)
+	if err != nil {
+		return opts, err
+	}
+	opts.ControlToken = strings.TrimSpace(string(b))
+
+	return opts, nil
 }
 
 type RunnerSettings struct {
@@ -265,6 +296,25 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 				AuthToken: settings.Agent.RunnerVerificationToken,
 			},
 		})
+	} else if opts.LaunchSandbox {
+		if settings.Sandbox == nil {
+			log.Logger().Errorf("sandbox settings not configured")
+
+			return errors.New("sandbox settings not configured")
+		}
+
+		sandboxOpts, err := settings.Sandbox.resolve()
+		if err != nil {
+			log.Logger().Errorf("failed to read sandbox control token: %v", err)
+
+			return err
+		}
+
+		if err := sandbox.Serve(ctx, sandboxOpts); err != nil {
+			log.Logger().Errorf("failed to start sandbox data plane: %v", err)
+
+			return err
+		}
 	} else if opts.LaunchTransparentCache {
 		// Start the transparent cache server with configured ports
 		if settings.TransparentCache == nil {

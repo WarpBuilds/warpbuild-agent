@@ -19,6 +19,9 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Vet darwin/arm64
+        run: GOOS=darwin GOARCH=arm64 go vet ./...
+
       - name: Test
         run: go test -race ./...
 
