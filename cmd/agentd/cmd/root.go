@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,6 +14,7 @@ type flagsStruct struct {
 	launchTelemetry         bool
 	launchProxyServer       bool
 	launchTransparentCache  bool
+	launchSandbox           bool
 	logLevel                string
 	telemetrySigNozEnable   bool
 	telemetrySigNozEndpoint string
@@ -38,6 +38,7 @@ var rootCmd = &cobra.Command{
 			LaunchTelemetry:         flags.launchTelemetry,
 			LaunchProxyServer:       flags.launchProxyServer,
 			LaunchTransparentCache:  flags.launchTransparentCache,
+			LaunchSandbox:           flags.launchSandbox,
 			LogLevel:                flags.logLevel,
 			TelemetrySigNozEnable:   flags.telemetrySigNozEnable,
 			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
@@ -56,11 +57,6 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-
-	fmt.Println("Printing all the environment variables...")
-	for _, e := range os.Environ() {
-		fmt.Println(e)
-	}
 
 	err := rootCmd.Execute()
 	if err != nil {
@@ -87,6 +83,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flags.launchTelemetry, "launch-telemetry", false, "launch telemetry")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchProxyServer, "launch-proxy-server", false, "launch proxy server")
 	rootCmd.PersistentFlags().BoolVar(&flags.launchTransparentCache, "launch-transparent-cache", false, "launch transparent cache")
+	rootCmd.PersistentFlags().BoolVar(&flags.launchSandbox, "launch-sandbox", false, "launch the sandbox data plane")
 	rootCmd.PersistentFlags().StringVar(&flags.logLevel, "log-level", "info", "log level (debug, info, warn, error)")
 	rootCmd.PersistentFlags().BoolVar(&flags.telemetrySigNozEnable, "telemetry-signoz-enable", false, "enable SigNoz telemetry export")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozEndpoint, "telemetry-signoz-endpoint", "", "SigNoz OTLP endpoint (e.g., ingest.us.signoz.cloud:443)")
