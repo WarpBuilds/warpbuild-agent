@@ -282,6 +282,9 @@ processors:
         statements:
           # Convert ratio to percentage: multiply by 100
           - 'set(value_double, value_double * 100.0) where metric.name == "system.memory.utilization"'
+      - context: metric
+        statements:
+          - 'set(unit, "percent") where metric.name == "system.memory.utilization"'
   
   # Aggregate memory to show total used (macOS only - sums after filtering free/inactive)
   # For Linux, we keep individual states and the dashboard should filter for state=used
@@ -347,9 +350,7 @@ processors:
         action: upsert
 {{- end}}
 
-  # Prometheus-family backends drop resource attributes unless the vendor's
-  # promotion list names them, so copy the identifying ones onto datapoints,
-  # where every backend turns them into labels.
+  # Prometheus-family backends drop unpromoted resource attrs; copy the identifying ones onto datapoints.
   transform/customer_labels:
     error_mode: ignore
     metric_statements:

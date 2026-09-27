@@ -548,9 +548,7 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 
 	collect := !details.HasTelemetryEnabled() || details.GetTelemetryEnabled()
 
-	// Read the export config before the status check: the backend reports
-	// UNASSIGNED once a runner is RUNNING, so gating on status loses the
-	// destination for any poll that lands outside the brief ALLOCATED window.
+	// Export before status: the backend reports UNASSIGNED once RUNNING, so a status gate misses it.
 	if next := exportConfigFrom(details.TelemetryExport); next != nil {
 		tm.applyExportConfig(collect, next)
 		return pollApplied

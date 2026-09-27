@@ -1,9 +1,11 @@
 package telemetry
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -324,4 +326,15 @@ func TestRenderConfig_InternalPipelineHasNoPromotion(t *testing.T) {
 	internal = internal[:strings.Index(internal, "exporters: [otlphttp, forward/customer_metrics]")]
 	assert.NotContains(t, internal, "transform/customer_labels",
 		"our own pipeline keeps the clean resource model")
+}
+
+func TestRenderConfig_PercentScaledMetricsDeclarePercentUnit(t *testing.T) {
+	got := renderConfig(t, newTestManager(t, testExportConfig()))
+
+	scaled := regexp.MustCompile(`set\(value_double, value_double \* 100\.0\)\s+where metric\.name == "([^"]+)"`).FindAllStringSubmatch(got, -1)
+	require.NotEmpty(t, scaled)
+	for _, m := range scaled {
+		assert.Contains(t, got, fmt.Sprintf(`set(unit, "percent") where metric.name == %q`, m[1]),
+			"%s is scaled to 0-100, so its unit must say percent", m[1])
+	}
 }

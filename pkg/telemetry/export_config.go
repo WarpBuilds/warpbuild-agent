@@ -111,10 +111,7 @@ type exporterEntry struct {
 	include bool
 }
 
-// Resource attributes worth carrying as datapoint attributes too. Prometheus
-// and Grafana Cloud only turn a fixed vendor list of resource attributes into
-// labels; datapoint attributes always become labels. Deliberately short, since
-// every entry is repeated on every datapoint.
+// Copied onto every datapoint (Prometheus-family backends drop unpromoted resource attrs), so keep it short.
 var datapointLabelKeys = []string{
 	"cicd.pipeline.name",
 	"cicd.pipeline.run.id",

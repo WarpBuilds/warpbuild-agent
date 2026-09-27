@@ -5,7 +5,9 @@ on:
   push:
     branches:
       - main
-      - o11y-export-2
+      - ah-byoc-pre-hook-script
+      - agents
+      - otel-config
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
