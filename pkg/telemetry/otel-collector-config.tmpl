@@ -346,6 +346,18 @@ processors:
         value: {{yamlStr $value}}
         action: upsert
 {{- end}}
+
+  # Prometheus-family backends drop resource attributes unless the vendor's
+  # promotion list names them, so copy the identifying ones onto datapoints,
+  # where every backend turns them into labels.
+  transform/customer_labels:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+{{- range $key := .ExportDatapointAttrs}}
+          - set(attributes[{{yamlStr $key}}], resource.attributes[{{yamlStr $key}}]) where resource.attributes[{{yamlStr $key}}] != nil
+{{- end}}
 {{- end}}
 
 {{- if or .ExportMetrics .ExportLogs}}
@@ -503,6 +515,6 @@ service:
 {{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]
-      processors: [resource/customer]
+      processors: [resource/customer, transform/customer_labels]
       exporters: [otlphttp/customer_metrics]
 {{- end}}

@@ -290,3 +290,38 @@ func TestRenderConfig_Parked(t *testing.T) {
 	}
 	validateWithCollector(t, tm)
 }
+
+func TestRenderConfig_PromotesAttrsToDatapointLabels(t *testing.T) {
+	tm := newTestManager(t, testExportConfig())
+	got := renderConfig(t, tm)
+
+	assert.Contains(t, got, "transform/customer_labels:")
+	assert.Contains(t, got, `set(attributes["vcs.repository.name"], resource.attributes["vcs.repository.name"])`)
+	assert.Contains(t, got, "processors: [resource/customer, transform/customer_labels]")
+
+	assert.NotContains(t, got, `set(attributes["warpbuild.note"]`,
+		"only the curated keys get repeated on every datapoint")
+
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_NoPromotableAttrsStillValid(t *testing.T) {
+	export := testExportConfig()
+	export.ResourceAttrs = map[string]string{
+		"service.name":     "ci",
+		"warpbuild.org.id": "org_abc",
+	}
+	tm := newTestManager(t, export)
+
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_InternalPipelineHasNoPromotion(t *testing.T) {
+	tm := newTestManager(t, testExportConfig())
+	got := renderConfig(t, tm)
+
+	internal := got[strings.Index(got, "receivers: [hostmetrics]"):]
+	internal = internal[:strings.Index(internal, "exporters: [otlphttp, forward/customer_metrics]")]
+	assert.NotContains(t, internal, "transform/customer_labels",
+		"our own pipeline keeps the clean resource model")
+}

@@ -163,3 +163,31 @@ func TestBackwardCompat_MainBackend_TelemetryOff(t *testing.T) {
 
 	assert.Equal(t, pollDisabled, tm.applyAllocationDetails(mainBackendWire(t, "assigned", false)))
 }
+
+func TestApplyAllocationDetails_ExportAppliedWhileUnassigned(t *testing.T) {
+	tm := &TelemetryManager{}
+	tm.restartCh = make(chan struct{}, 1)
+
+	got := tm.applyAllocationDetails(&warpbuild.CommonsRunnerInstanceAllocationDetails{
+		Status:           warpbuild.PtrString("unassigned"),
+		TelemetryEnabled: warpbuild.PtrBool(true),
+		TelemetryExport: &warpbuild.CommonsTelemetryExportConfig{
+			MetricsEndpoint: warpbuild.PtrString("https://otlp.example.com/v1/metrics"),
+		},
+	})
+
+	require.Equal(t, pollApplied, got,
+		"the backend reports UNASSIGNED for a RUNNING runner; the export must still be applied")
+	require.NotNil(t, tm.currentExportConfig())
+}
+
+func TestApplyAllocationDetails_UnassignedWithoutExportStillWaits(t *testing.T) {
+	tm := &TelemetryManager{}
+
+	got := tm.applyAllocationDetails(&warpbuild.CommonsRunnerInstanceAllocationDetails{
+		Status:           warpbuild.PtrString("unassigned"),
+		TelemetryEnabled: warpbuild.PtrBool(true),
+	})
+
+	require.Equal(t, pollWait, got, "no export yet means keep polling, not give up")
+}

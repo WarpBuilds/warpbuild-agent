@@ -110,3 +110,28 @@ type exporterEntry struct {
 	name    string
 	include bool
 }
+
+// Resource attributes worth carrying as datapoint attributes too. Prometheus
+// and Grafana Cloud only turn a fixed vendor list of resource attributes into
+// labels; datapoint attributes always become labels. Deliberately short, since
+// every entry is repeated on every datapoint.
+var datapointLabelKeys = []string{
+	"cicd.pipeline.name",
+	"cicd.pipeline.run.id",
+	"cicd.pipeline.task.name",
+	"cicd.pipeline.task.run.id",
+	"vcs.repository.name",
+}
+
+func datapointLabelAttrs(resourceAttrs map[string]string) []string {
+	if len(resourceAttrs) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(datapointLabelKeys))
+	for _, key := range datapointLabelKeys {
+		if resourceAttrs[key] != "" {
+			out = append(out, key)
+		}
+	}
+	return out
+}

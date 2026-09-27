@@ -405,6 +405,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		ExportLogsEndpoint    string
 		ExportHeaderEnv       map[string]string
 		ExportResourceAttrs   map[string]string
+		ExportDatapointAttrs  []string
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -426,6 +427,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		data.ExportLogsEndpoint = escapeExpansion(export.LogsEndpoint)
 		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
 		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
+		data.ExportDatapointAttrs = datapointLabelAttrs(export.ResourceAttrs)
 	}
 
 	data.LogsExporters = exporterList(
@@ -546,8 +548,14 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 
 	collect := !details.HasTelemetryEnabled() || details.GetTelemetryEnabled()
 
-	// The export destination only arrives with an allocation, so a runner that
-	// must not collect has nowhere legitimate to send until then.
+	// Read the export config before the status check: the backend reports
+	// UNASSIGNED once a runner is RUNNING, so gating on status loses the
+	// destination for any poll that lands outside the brief ALLOCATED window.
+	if next := exportConfigFrom(details.TelemetryExport); next != nil {
+		tm.applyExportConfig(collect, next)
+		return pollApplied
+	}
+
 	if details.GetStatus() == allocationStatusUnassigned {
 		if collect {
 			tm.unpark()
@@ -557,18 +565,12 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 		return pollWait
 	}
 
-	next := exportConfigFrom(details.TelemetryExport)
-	if next == nil {
-		if !collect {
-			log.Logger().Infof("Collection is disabled and no export is configured. Stopping telemetry...")
-			return pollDisabled
-		}
-		tm.unpark()
-		return pollNoExport
+	if !collect {
+		log.Logger().Infof("Collection is disabled and no export is configured. Stopping telemetry...")
+		return pollDisabled
 	}
-
-	tm.applyExportConfig(collect, next)
-	return pollApplied
+	tm.unpark()
+	return pollNoExport
 }
 
 // unpark restores our own exporters when collection was turned back on while
