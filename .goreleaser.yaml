@@ -60,6 +60,10 @@ builds:
         # Set proper permissions for the telemetry binaries
         - find ./pkg/telemetry/binaries/ -type f -exec chmod +x {} \;
     main: ./cmd/agentd
+    # Leaves out the gRPC direct-path and xDS code that cloud.google.com/go/storage imports.
+    # The agent only uses the storage HTTP client.
+    flags:
+      - -tags=disable_grpc_modules
   - id: warpbuild-agentd-restarter
     binary: warpbuild-agentd-restarter
     env:

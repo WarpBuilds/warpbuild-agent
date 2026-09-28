@@ -14,13 +14,13 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: "1.26"
 
       - name: Vet
-        run: go vet ./...
+        run: go vet -tags=disable_grpc_modules ./...
 
       - name: Test
-        run: go test -race ./...
+        run: go test -race -tags=disable_grpc_modules ./...
 
       - name: Verify modules
         run: |
