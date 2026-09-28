@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -48,7 +49,17 @@ type exportConfig struct {
 }
 
 func (e *exportConfig) exportsMetrics() bool { return e != nil && e.MetricsEndpoint != "" }
-func (e *exportConfig) exportsLogs() bool    { return e != nil && e.LogsEndpoint != "" }
+
+func (e *exportConfig) equal(o *exportConfig) bool {
+	if e == nil || o == nil {
+		return e == o
+	}
+	return e.MetricsEndpoint == o.MetricsEndpoint &&
+		e.LogsEndpoint == o.LogsEndpoint &&
+		maps.Equal(e.Headers, o.Headers) &&
+		maps.Equal(e.ResourceAttrs, o.ResourceAttrs)
+}
+func (e *exportConfig) exportsLogs() bool { return e != nil && e.LogsEndpoint != "" }
 
 func exportConfigFrom(in *warpbuild.CommonsTelemetryExportConfig) *exportConfig {
 	if in == nil {

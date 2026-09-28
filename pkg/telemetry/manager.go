@@ -21,6 +21,8 @@ import (
 
 const telemetryPollInterval = 5 * time.Second
 
+const exportRefineWindow = 10 * time.Minute
+
 const allocationStatusUnassigned = "unassigned"
 
 const defaultCollectorDrainTimeout = 20 * time.Second
@@ -455,6 +457,12 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 	return nil
 }
 
+func (tm *TelemetryManager) exportUnchanged(next *exportConfig, collect bool) bool {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	return tm.exportCfg.equal(next) && tm.collect == collect
+}
+
 func (tm *TelemetryManager) currentExportConfig() *exportConfig {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
@@ -497,6 +505,7 @@ const (
 	pollApplied
 	pollNoExport
 	pollDisabled
+	pollProvisional
 )
 
 func (tm *TelemetryManager) monitorTelemetryStatus() {
@@ -507,6 +516,7 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 	ticker := time.NewTicker(telemetryPollInterval)
 	defer ticker.Stop()
 
+	var provisionalSince time.Time
 	for {
 		select {
 		case <-ticker.C:
@@ -531,6 +541,12 @@ func (tm *TelemetryManager) monitorTelemetryStatus() {
 			case pollNoExport:
 				log.Logger().Infof("No telemetry export configured for this organization; nothing to fan out")
 				return
+			case pollProvisional:
+				if provisionalSince.IsZero() {
+					provisionalSince = time.Now()
+				} else if time.Since(provisionalSince) > exportRefineWindow {
+					return
+				}
 			case pollWait:
 			}
 
@@ -548,13 +564,25 @@ func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRun
 
 	collect := !details.HasTelemetryEnabled() || details.GetTelemetryEnabled()
 
+	running := details.GetStatus() == allocationStatusUnassigned
+
 	// Export before status: the backend reports UNASSIGNED once RUNNING, so a status gate misses it.
 	if next := exportConfigFrom(details.TelemetryExport); next != nil {
-		tm.applyExportConfig(collect, next)
-		return pollApplied
+		if !tm.exportUnchanged(next, collect) {
+			tm.applyExportConfig(collect, next)
+		}
+		if running {
+			return pollApplied
+		}
+		// Allocated: GitHub may still hand this runner a sibling job, so wait for the running job's labels.
+		return pollProvisional
 	}
 
-	if details.GetStatus() == allocationStatusUnassigned {
+	if tm.currentExportConfig() != nil {
+		return pollProvisional
+	}
+
+	if running {
 		if collect {
 			tm.unpark()
 		} else {
