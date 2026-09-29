@@ -64,3 +64,28 @@ func TestExportConfigNilSafety(t *testing.T) {
 	assert.Nil(t, cfg.headerEnv())
 	assert.Nil(t, cfg.envPairs())
 }
+
+func TestDatapointLabelAttrs_OnlyPresentKeys(t *testing.T) {
+	got := datapointLabelAttrs(map[string]string{
+		"cicd.pipeline.task.name": "build (ubuntu)",
+		"vcs.repository.name":     "kitchen-sink",
+		"warpbuild.org.id":        "org_abc",
+		"cicd.pipeline.name":      "",
+	})
+
+	require.Equal(t, []string{"cicd.pipeline.task.name", "vcs.repository.name"}, got)
+}
+
+func TestDatapointLabelAttrs_NoExportAttrs(t *testing.T) {
+	require.Nil(t, datapointLabelAttrs(nil))
+	require.Nil(t, datapointLabelAttrs(map[string]string{}))
+}
+
+func TestDatapointLabelAttrs_IgnoresUnlistedKeys(t *testing.T) {
+	got := datapointLabelAttrs(map[string]string{
+		"warpbuild.telemetry.schema": "1",
+		"os.type":                    "linux",
+	})
+
+	require.Empty(t, got, "only the curated keys are worth repeating on every datapoint")
+}

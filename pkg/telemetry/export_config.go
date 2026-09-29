@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -48,7 +49,17 @@ type exportConfig struct {
 }
 
 func (e *exportConfig) exportsMetrics() bool { return e != nil && e.MetricsEndpoint != "" }
-func (e *exportConfig) exportsLogs() bool    { return e != nil && e.LogsEndpoint != "" }
+
+func (e *exportConfig) equal(o *exportConfig) bool {
+	if e == nil || o == nil {
+		return e == o
+	}
+	return e.MetricsEndpoint == o.MetricsEndpoint &&
+		e.LogsEndpoint == o.LogsEndpoint &&
+		maps.Equal(e.Headers, o.Headers) &&
+		maps.Equal(e.ResourceAttrs, o.ResourceAttrs)
+}
+func (e *exportConfig) exportsLogs() bool { return e != nil && e.LogsEndpoint != "" }
 
 func exportConfigFrom(in *warpbuild.CommonsTelemetryExportConfig) *exportConfig {
 	if in == nil {
@@ -109,4 +120,26 @@ func exporterList(entries ...exporterEntry) string {
 type exporterEntry struct {
 	name    string
 	include bool
+}
+
+// Copied onto every datapoint (Prometheus-family backends drop unpromoted resource attrs), so keep it short.
+var datapointLabelKeys = []string{
+	"cicd.pipeline.name",
+	"cicd.pipeline.run.id",
+	"cicd.pipeline.task.name",
+	"cicd.pipeline.task.run.id",
+	"vcs.repository.name",
+}
+
+func datapointLabelAttrs(resourceAttrs map[string]string) []string {
+	if len(resourceAttrs) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(datapointLabelKeys))
+	for _, key := range datapointLabelKeys {
+		if resourceAttrs[key] != "" {
+			out = append(out, key)
+		}
+	}
+	return out
 }

@@ -19,10 +19,6 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
-const telemetryPollInterval = 5 * time.Second
-
-const allocationStatusUnassigned = "unassigned"
-
 const defaultCollectorDrainTimeout = 20 * time.Second
 
 // TelemetryManager coordinates all telemetry components
@@ -405,6 +401,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		ExportLogsEndpoint    string
 		ExportHeaderEnv       map[string]string
 		ExportResourceAttrs   map[string]string
+		ExportDatapointAttrs  []string
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -426,6 +423,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		data.ExportLogsEndpoint = escapeExpansion(export.LogsEndpoint)
 		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
 		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
+		data.ExportDatapointAttrs = datapointLabelAttrs(export.ResourceAttrs)
 	}
 
 	data.LogsExporters = exporterList(
@@ -488,120 +486,6 @@ func (tm *TelemetryManager) getOtelCollectorOutputFilePath(isMetrics bool) strin
 	return filepath.Join(tm.baseDirectory, "otel-out.log")
 }
 
-type allocationPollResult int
-
-const (
-	pollWait allocationPollResult = iota
-	pollApplied
-	pollNoExport
-	pollDisabled
-)
-
-func (tm *TelemetryManager) monitorTelemetryStatus() {
-	defer tm.wg.Done()
-
-	log.Logger().Infof("Watching for the organization's telemetry export destination...")
-
-	ticker := time.NewTicker(telemetryPollInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			allocationDetails, resp, err := tm.warpbuildAPI.V1RunnerInstanceAPI.
-				GetRunnerInstanceAllocationDetails(tm.ctx, tm.runnerID).
-				XPOLLINGSECRET(tm.pollingSecret).
-				Execute()
-			if err != nil {
-				log.Logger().Debugf("Failed to get runner instance allocation details: %v", err)
-				if resp != nil {
-					log.Logger().Debugf("Response: %+v", resp)
-				}
-				continue
-			}
-
-			switch tm.applyAllocationDetails(allocationDetails) {
-			case pollDisabled:
-				tm.cancel()
-				return
-			case pollApplied:
-				return
-			case pollNoExport:
-				log.Logger().Infof("No telemetry export configured for this organization; nothing to fan out")
-				return
-			case pollWait:
-			}
-
-		case <-tm.ctx.Done():
-			log.Logger().Infof("Context cancelled, stopping telemetry status monitoring...")
-			return
-		}
-	}
-}
-
-func (tm *TelemetryManager) applyAllocationDetails(details *warpbuild.CommonsRunnerInstanceAllocationDetails) allocationPollResult {
-	if details == nil {
-		return pollWait
-	}
-
-	collect := !details.HasTelemetryEnabled() || details.GetTelemetryEnabled()
-
-	// The export destination only arrives with an allocation, so a runner that
-	// must not collect has nowhere legitimate to send until then.
-	if details.GetStatus() == allocationStatusUnassigned {
-		if collect {
-			tm.unpark()
-		} else {
-			tm.park()
-		}
-		return pollWait
-	}
-
-	next := exportConfigFrom(details.TelemetryExport)
-	if next == nil {
-		if !collect {
-			log.Logger().Infof("Collection is disabled and no export is configured. Stopping telemetry...")
-			return pollDisabled
-		}
-		tm.unpark()
-		return pollNoExport
-	}
-
-	tm.applyExportConfig(collect, next)
-	return pollApplied
-}
-
-// unpark restores our own exporters when collection was turned back on while
-// this runner sat idle.
-func (tm *TelemetryManager) unpark() {
-	tm.mu.Lock()
-	if !tm.parked {
-		tm.mu.Unlock()
-		return
-	}
-	tm.parked = false
-	tm.collect = true
-	tm.mu.Unlock()
-
-	log.Logger().Infof("Collection to WarpBuild is enabled again; resuming the collector")
-	tm.restartCollector()
-}
-
-// park drops our own exporters while we wait to learn the export destination.
-func (tm *TelemetryManager) park() {
-	tm.mu.Lock()
-	if tm.parked {
-		tm.mu.Unlock()
-		return
-	}
-	tm.parked = true
-	tm.collect = false
-	tm.mu.Unlock()
-
-	log.Logger().Infof("Collection to WarpBuild is disabled; idling the collector until this runner is allocated")
-	tm.restartCollector()
-}
-
 // Drain blocks until the collector has flushed and exited, so the caller can
 // sequence it before VM teardown.
 func (tm *TelemetryManager) Drain() {
@@ -619,18 +503,6 @@ func (tm *TelemetryManager) Drain() {
 	case <-time.After(tm.drainTimeout + collectorKillTimeout):
 		log.Logger().Warnf("Telemetry drain did not finish within %s", tm.drainTimeout+collectorKillTimeout)
 	}
-}
-
-func (tm *TelemetryManager) applyExportConfig(collect bool, next *exportConfig) {
-	tm.mu.Lock()
-	tm.exportCfg = next
-	tm.collect = collect
-	tm.parked = false
-	tm.mu.Unlock()
-
-	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q collect=%t",
-		next.MetricsEndpoint, next.LogsEndpoint, collect)
-	tm.restartCollector()
 }
 
 func (tm *TelemetryManager) restartCollector() {

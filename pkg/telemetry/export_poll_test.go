@@ -29,8 +29,8 @@ func TestPollWaitsWhileUnassigned(t *testing.T) {
 	tm := &TelemetryManager{}
 
 	for i := range 3 {
-		got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, enabled(), nil))
-		assert.Equalf(t, pollWait, got, "poll %d", i)
+		got := tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, enabled(), nil))
+		assert.Equalf(t, pollAgain, got, "poll %d", i)
 		assert.Nil(t, tm.exportCfg, "an unassigned response must not configure an export")
 	}
 }
@@ -38,9 +38,9 @@ func TestPollWaitsWhileUnassigned(t *testing.T) {
 func TestPollAppliesExportOnceAllocated(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), apiExport("https://otlp.example.com/v1/metrics")))
+	got := tm.handleAllocationDetails(allocationDetails("assigned", enabled(), apiExport("https://otlp.example.com/v1/metrics")))
 
-	require.Equal(t, pollApplied, got)
+	require.Equal(t, awaitRunningJob, got)
 	require.NotNil(t, tm.exportCfg)
 	assert.Equal(t, "https://otlp.example.com/v1/metrics", tm.exportCfg.MetricsEndpoint)
 }
@@ -48,9 +48,9 @@ func TestPollAppliesExportOnceAllocated(t *testing.T) {
 func TestPollStopsWhenAllocatedWithoutExport(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	got := tm.applyAllocationDetails(allocationDetails("assigned", enabled(), nil))
+	got := tm.handleAllocationDetails(allocationDetails("assigned", enabled(), nil))
 
-	assert.Equal(t, pollNoExport, got)
+	assert.Equal(t, stopPolling, got)
 	assert.Nil(t, tm.exportCfg)
 }
 
@@ -59,8 +59,8 @@ func TestPollParksWhileUnassignedWithCollectionOff(t *testing.T) {
 	disabled := false
 
 	for i := range 3 {
-		got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
-		assert.Equalf(t, pollWait, got, "poll %d must keep waiting for the export destination", i)
+		got := tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
+		assert.Equalf(t, pollAgain, got, "poll %d must keep waiting for the export destination", i)
 	}
 
 	assert.True(t, tm.parked)
@@ -71,19 +71,19 @@ func TestPollStopsWhenAllocatedWithCollectionOffAndNoExport(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 	disabled := false
 
-	got := tm.applyAllocationDetails(allocationDetails("assigned", &disabled, nil))
+	got := tm.handleAllocationDetails(allocationDetails("assigned", &disabled, nil))
 
-	assert.Equal(t, pollDisabled, got)
+	assert.Equal(t, stopTelemetry, got)
 }
 
 func TestPollExportsWithCollectionOff(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 	disabled := false
 
-	got := tm.applyAllocationDetails(
+	got := tm.handleAllocationDetails(
 		allocationDetails("assigned", &disabled, apiExport("https://otlp.example.com/v1/metrics")))
 
-	require.Equal(t, pollApplied, got)
+	require.Equal(t, awaitRunningJob, got)
 	require.NotNil(t, tm.exportCfg)
 	assert.False(t, tm.collect, "our own exporters must be dropped")
 	assert.False(t, tm.parked)
@@ -92,38 +92,38 @@ func TestPollExportsWithCollectionOff(t *testing.T) {
 func TestPollKeepsCollectingWhenFlagAbsent(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 
-	got := tm.applyAllocationDetails(
+	got := tm.handleAllocationDetails(
 		allocationDetails("assigned", nil, apiExport("https://otlp.example.com/v1/metrics")))
 
-	require.Equal(t, pollApplied, got)
+	require.Equal(t, awaitRunningJob, got)
 	assert.True(t, tm.collect, "an old backend omits the flag; that must not stop collection")
 }
 
 func TestPollWithAbsentTelemetryFlagKeepsRunning(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	got := tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, nil, nil))
+	got := tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, nil, nil))
 
-	assert.Equal(t, pollWait, got)
+	assert.Equal(t, pollAgain, got)
 }
 
 func TestPollWithNilDetailsWaits(t *testing.T) {
 	tm := &TelemetryManager{}
 
-	assert.Equal(t, pollWait, tm.applyAllocationDetails(nil))
+	assert.Equal(t, pollAgain, tm.handleAllocationDetails(nil))
 }
 
 func TestPollResumesCollectionAfterParking(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 	disabled, reenabled := false, true
 
-	require.Equal(t, pollWait,
-		tm.applyAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil)))
+	require.Equal(t, pollAgain,
+		tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil)))
 	require.True(t, tm.parked)
 
-	got := tm.applyAllocationDetails(allocationDetails("assigned", &reenabled, nil))
+	got := tm.handleAllocationDetails(allocationDetails("assigned", &reenabled, nil))
 
-	assert.Equal(t, pollNoExport, got)
+	assert.Equal(t, stopPolling, got)
 	assert.False(t, tm.parked, "a re-enabled runner must not sit idle for the whole job")
 	assert.True(t, tm.collect)
 }
@@ -146,10 +146,10 @@ func mainBackendWire(t *testing.T, status string, telemetryEnabled bool) *warpbu
 func TestBackwardCompat_MainBackend_TelemetryOn(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 
-	assert.Equal(t, pollWait, tm.applyAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, true)))
+	assert.Equal(t, pollAgain, tm.handleAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, true)))
 	assert.False(t, tm.parked, "collection is on; nothing to park")
 
-	assert.Equal(t, pollNoExport, tm.applyAllocationDetails(mainBackendWire(t, "assigned", true)))
+	assert.Equal(t, stopPolling, tm.handleAllocationDetails(mainBackendWire(t, "assigned", true)))
 	assert.True(t, tm.collect, "our own exporters must stay wired against an old backend")
 	assert.False(t, tm.parked)
 }
@@ -157,9 +157,82 @@ func TestBackwardCompat_MainBackend_TelemetryOn(t *testing.T) {
 func TestBackwardCompat_MainBackend_TelemetryOff(t *testing.T) {
 	tm := &TelemetryManager{collect: true}
 
-	assert.Equal(t, pollWait, tm.applyAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, false)))
+	assert.Equal(t, pollAgain, tm.handleAllocationDetails(mainBackendWire(t, allocationStatusUnassigned, false)))
 	assert.True(t, tm.parked, "collection off with no export: idle until allocation")
 	assert.False(t, tm.collect)
 
-	assert.Equal(t, pollDisabled, tm.applyAllocationDetails(mainBackendWire(t, "assigned", false)))
+	assert.Equal(t, stopTelemetry, tm.handleAllocationDetails(mainBackendWire(t, "assigned", false)))
+}
+
+func TestHandleAllocationDetails_ExportAppliedWhileUnassigned(t *testing.T) {
+	tm := &TelemetryManager{}
+	tm.restartCh = make(chan struct{}, 1)
+
+	got := tm.handleAllocationDetails(&warpbuild.CommonsRunnerInstanceAllocationDetails{
+		Status:           warpbuild.PtrString("unassigned"),
+		TelemetryEnabled: warpbuild.PtrBool(true),
+		TelemetryExport: &warpbuild.CommonsTelemetryExportConfig{
+			MetricsEndpoint: warpbuild.PtrString("https://otlp.example.com/v1/metrics"),
+		},
+	})
+
+	require.Equal(t, stopPolling, got,
+		"the backend reports UNASSIGNED for a RUNNING runner; the export must still be applied")
+	require.NotNil(t, tm.currentExportConfig())
+}
+
+func TestHandleAllocationDetails_UnassignedWithoutExportStillWaits(t *testing.T) {
+	tm := &TelemetryManager{}
+
+	got := tm.handleAllocationDetails(&warpbuild.CommonsRunnerInstanceAllocationDetails{
+		Status:           warpbuild.PtrString("unassigned"),
+		TelemetryEnabled: warpbuild.PtrBool(true),
+	})
+
+	require.Equal(t, pollAgain, got, "no export yet means keep polling, not give up")
+}
+
+func exportForJob(job string) *warpbuild.CommonsTelemetryExportConfig {
+	e := apiExport("https://otlp.example.com/v1/metrics")
+	e.SetResourceAttrs(map[string]string{"cicd.pipeline.task.name": job})
+	return e
+}
+
+func TestPollReappliesWhenTheRunningJobDiffers(t *testing.T) {
+	tm := &TelemetryManager{restartCh: make(chan struct{}, 4)}
+
+	require.Equal(t, awaitRunningJob,
+		tm.handleAllocationDetails(allocationDetails("assigned", enabled(), exportForJob("build (0)"))))
+	require.Equal(t, stopPolling,
+		tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, enabled(), exportForJob("build (5)"))))
+
+	assert.Equal(t, "build (5)", tm.currentExportConfig().ResourceAttrs["cicd.pipeline.task.name"],
+		"GitHub ran a sibling job; the labels must follow the job that ran")
+	assert.Len(t, tm.restartCh, 2)
+}
+
+func TestPollSkipsRestartWhenTheRunningJobMatches(t *testing.T) {
+	tm := &TelemetryManager{restartCh: make(chan struct{}, 4)}
+
+	require.Equal(t, awaitRunningJob,
+		tm.handleAllocationDetails(allocationDetails("assigned", enabled(), exportForJob("build (0)"))))
+	require.Equal(t, stopPolling,
+		tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, enabled(), exportForJob("build (0)"))))
+
+	assert.Len(t, tm.restartCh, 1, "same job, so no second collector restart")
+}
+
+func TestPollKeepsProvisionalExportUntilTheJobIsKnown(t *testing.T) {
+	disabled := false
+	tm := &TelemetryManager{collect: true, restartCh: make(chan struct{}, 4)}
+
+	require.Equal(t, awaitRunningJob,
+		tm.handleAllocationDetails(allocationDetails("assigned", &disabled, exportForJob("build (0)"))))
+	for i := range 3 {
+		got := tm.handleAllocationDetails(allocationDetails(allocationStatusUnassigned, &disabled, nil))
+		assert.Equalf(t, awaitRunningJob, got, "poll %d: running, but the backend has not named the job yet", i)
+	}
+
+	assert.Equal(t, "build (0)", tm.currentExportConfig().ResourceAttrs["cicd.pipeline.task.name"])
+	assert.False(t, tm.parked, "an applied export must not be parked while waiting")
 }

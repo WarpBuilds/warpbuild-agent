@@ -1,9 +1,11 @@
 package telemetry
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -289,4 +291,50 @@ func TestRenderConfig_Parked(t *testing.T) {
 		assert.NotContainsf(t, got, absent, "a parked collector runs no real pipeline (%q)", absent)
 	}
 	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_PromotesAttrsToDatapointLabels(t *testing.T) {
+	tm := newTestManager(t, testExportConfig())
+	got := renderConfig(t, tm)
+
+	assert.Contains(t, got, "transform/customer_labels:")
+	assert.Contains(t, got, `set(attributes["vcs.repository.name"], resource.attributes["vcs.repository.name"])`)
+	assert.Contains(t, got, "processors: [resource/customer, transform/customer_labels]")
+
+	assert.NotContains(t, got, `set(attributes["warpbuild.note"]`,
+		"only the curated keys get repeated on every datapoint")
+
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_NoPromotableAttrsStillValid(t *testing.T) {
+	export := testExportConfig()
+	export.ResourceAttrs = map[string]string{
+		"service.name":     "ci",
+		"warpbuild.org.id": "org_abc",
+	}
+	tm := newTestManager(t, export)
+
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_InternalPipelineHasNoPromotion(t *testing.T) {
+	tm := newTestManager(t, testExportConfig())
+	got := renderConfig(t, tm)
+
+	internal := got[strings.Index(got, "receivers: [hostmetrics]"):]
+	internal = internal[:strings.Index(internal, "exporters: [otlphttp, forward/customer_metrics]")]
+	assert.NotContains(t, internal, "transform/customer_labels",
+		"our own pipeline keeps the clean resource model")
+}
+
+func TestRenderConfig_PercentScaledMetricsDeclarePercentUnit(t *testing.T) {
+	got := renderConfig(t, newTestManager(t, testExportConfig()))
+
+	scaled := regexp.MustCompile(`set\(value_double, value_double \* 100\.0\)\s+where metric\.name == "([^"]+)"`).FindAllStringSubmatch(got, -1)
+	require.NotEmpty(t, scaled)
+	for _, m := range scaled {
+		assert.Contains(t, got, fmt.Sprintf(`set(unit, "percent") where metric.name == %q`, m[1]),
+			"%s is scaled to 0-100, so its unit must say percent", m[1])
+	}
 }

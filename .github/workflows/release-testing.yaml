@@ -8,6 +8,7 @@ on:
       - ah-byoc-pre-hook-script
       - agents
       - otel-config
+      - o11y-export-2
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.WB_PACKAGES_DEV_R2_ACCESS_KEY_ID }}
