@@ -24,7 +24,6 @@ import (
 func testServer(t *testing.T, opts Options) *httptest.Server {
 	t.Helper()
 	opts.applyDefaults()
-	// The tests run as whoever invoked them, not as the guest user.
 	opts.GuestUser = ""
 	srv, err := newServer(opts)
 	if err != nil {
@@ -36,8 +35,6 @@ func testServer(t *testing.T, opts Options) *httptest.Server {
 	return ts
 }
 
-// tokenRoundTripper stamps the token on every request, streams included, which
-// a unary interceptor would miss.
 type tokenRoundTripper struct {
 	token string
 	next  http.RoundTripper
@@ -59,8 +56,6 @@ func procClient(t *testing.T, ts *httptest.Server, token string) processconnect.
 	return processconnect.NewProcessClient(c, ts.URL)
 }
 
-// collect drains a Start stream into the ordered list of event kinds plus the
-// terminal event, which is what every ordering guarantee is expressed in terms of.
 func collectStart(t *testing.T, stream *connect.ServerStreamForClient[procrpc.StartResponse]) ([]string, string, *procrpc.ProcessEvent_EndEvent) {
 	t.Helper()
 	var kinds []string
@@ -119,8 +114,6 @@ func TestStartStreamsOutputAndOrdersEvents(t *testing.T) {
 	}
 }
 
-// quiesceGuest in backend-core matches the literal string "exit status 3" out of
-// the JSON stream, so this format is load-bearing beyond being informative.
 func TestEndEventStatusMatchesGoProcessStateFormat(t *testing.T) {
 	ts := testServer(t, Options{})
 	c := procClient(t, ts, "")
@@ -167,7 +160,6 @@ func TestStartRejectsMissingWorkingDirectory(t *testing.T) {
 	}
 }
 
-// The child must not inherit the agent's environment; only PATH carries over.
 func TestEnvironmentIsBuiltFromScratch(t *testing.T) {
 	t.Setenv("WARP_LEAKY_SECRET", "should-not-appear")
 	ts := testServer(t, Options{})
@@ -191,9 +183,6 @@ func TestEnvironmentIsBuiltFromScratch(t *testing.T) {
 	}
 }
 
-// Rule 3: a detached child must not outlive the command that spawned it. This is
-// the nohup shape — output redirected, so the leader's pipes close and the
-// command returns immediately, leaving the child to be reaped with the group.
 func TestDetachedChildIsReapedWithItsProcessGroup(t *testing.T) {
 	ts := testServer(t, Options{})
 	c := procClient(t, ts, "")
@@ -219,9 +208,6 @@ func TestDetachedChildIsReapedWithItsProcessGroup(t *testing.T) {
 	}
 }
 
-// The complement: a background child that still holds the command's stdout keeps
-// the stream open until it finishes, rather than being cut off mid-write. This is
-// what makes "$(long-running) &" still deliver its output.
 func TestBackgroundChildHoldingStdoutKeepsStreamOpen(t *testing.T) {
 	ts := testServer(t, Options{})
 	c := procClient(t, ts, "")
@@ -257,7 +243,6 @@ func TestListReportsRunningProcesses(t *testing.T) {
 	}
 	defer stream.Close()
 
-	// Wait for the StartEvent so the process is registered before listing.
 	if !stream.Receive() {
 		t.Fatalf("no start event: %v", stream.Err())
 	}
@@ -277,8 +262,6 @@ func TestListReportsRunningProcesses(t *testing.T) {
 	}
 }
 
-// A reattach arriving just after exit must still learn how the process ended,
-// rather than getting NotFound.
 func TestConnectReplaysRetainedExit(t *testing.T) {
 	ts := testServer(t, Options{})
 	c := procClient(t, ts, "")
@@ -416,7 +399,6 @@ func TestUploadThenDownloadRoundTrips(t *testing.T) {
 		t.Fatalf("upload status = %d", resp.StatusCode)
 	}
 
-	// Parent directories are created on the way.
 	got, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatalf("uploaded file missing: %v", err)
@@ -451,7 +433,6 @@ func TestListDirDepth(t *testing.T) {
 	ts := testServer(t, Options{})
 	c := filesystemconnect.NewFilesystemClient(ts.Client(), ts.URL)
 
-	// Depth is unset, which must behave as depth 1 rather than listing nothing.
 	resp, err := c.ListDir(context.Background(), connect.NewRequest(&fsrpc.ListDirRequest{Path: dir}))
 	if err != nil {
 		t.Fatal(err)
@@ -538,7 +519,6 @@ func TestWatchDirSendsStartFrameThenEvents(t *testing.T) {
 		t.Fatalf("first frame = %T, want StartEvent", stream.Msg().GetEvent())
 	}
 
-	// Only safe to write after the start frame says the watch is armed.
 	if err := os.WriteFile(filepath.Join(dir, "new.txt"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}

@@ -8,8 +8,6 @@ import (
 	"syscall"
 )
 
-// isMountPoint reports whether path is the root of its own filesystem, by
-// comparing its device with its parent's.
 func isMountPoint(path string) (bool, error) {
 	fi, err := os.Stat(path)
 	if err != nil {

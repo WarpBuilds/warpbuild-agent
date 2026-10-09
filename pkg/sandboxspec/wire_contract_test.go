@@ -86,9 +86,6 @@ func canon(fd protoreflect.FileDescriptor) []string {
 	return out
 }
 
-// The sandbox wire format is deliberately identical to e2b envd's so their SDKs
-// keep working and old clients need no upgrade. Any diff here is a breaking
-// change to every deployed client, not a refactor.
 func TestWireContractUnchanged(t *testing.T) {
 	var lines []string
 	lines = append(lines, canon(process.File_process_process_proto)...)
@@ -135,4 +132,5 @@ func TestWireContractUnchanged(t *testing.T) {
 			t.Errorf("wire contract entry ADDED: %s", l)
 		}
 	}
+	t.Error("the wire format must stay identical to e2b envd's: a diff breaks every deployed client, so -update only for a deliberate wire change")
 }

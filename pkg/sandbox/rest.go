@@ -24,8 +24,6 @@ const (
 	filesPath  = "/files"
 )
 
-// restEntryInfo is the upload response shape. It is narrower than the RPC
-// EntryInfo and the type is a lowercase literal, not an enum name.
 type restEntryInfo struct {
 	Path     string            `json:"path"`
 	Name     string            `json:"name"`
@@ -57,8 +55,6 @@ func writeError(w http.ResponseWriter, code int, err error) {
 	writeJSON(w, code, map[string]any{"code": code, "message": err.Error()})
 }
 
-// handleHealth answers 204, and is the one route left unauthenticated: the
-// control plane probes it to decide the sandbox is up, before it holds a token.
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(http.StatusNoContent)
@@ -139,7 +135,6 @@ func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(path))
-	// ServeContent so Range and conditional requests keep working.
 	http.ServeContent(w, r, filepath.Base(path), fi.ModTime(), f)
 }
 
@@ -244,13 +239,10 @@ func writeUpload(path string, body io.Reader) (*restEntryInfo, error) {
 	return &restEntryInfo{Path: path, Name: filepath.Base(path), Type: "file"}, nil
 }
 
-// writeUploadError maps a full disk to 507 so a client can tell "no space" from
-// a generic failure; everything else is the caller's problem or ours.
 func writeUploadError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, syscall.ENOSPC), errors.Is(err, syscall.EDQUOT):
 		writeError(w, http.StatusInsufficientStorage, err)
-	// OpenFile already reports a directory target; no pre-flight stat needed.
 	case errors.Is(err, syscall.EISDIR), errors.Is(err, errIsADirectory):
 		writeError(w, http.StatusBadRequest, err)
 	default:

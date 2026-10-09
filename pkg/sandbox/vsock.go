@@ -11,22 +11,12 @@ import (
 	"unsafe"
 )
 
-// A macOS guest under Virtualization.framework gets a real CID, so the host can
-// reach this daemon with no guest networking at all: no DHCP lease to wait for,
-// and no dependence on per-host NAT addresses that collide across machines.
-//
-// Go's net package does not know AF_VSOCK — net.FileListener and net.FileConn
-// probe the descriptor with getsockname and reject it with EAFNOSUPPORT — so the
-// listener and conn below are built directly on the fd.
 const (
 	afVSOCK = 40
 
-	// VMADDR_CID_ANY: accept on whatever CID the hypervisor assigned.
 	vmaddrCIDAny = ^uint32(0)
 )
 
-// sockaddrVM mirrors struct sockaddr_vm. The BSD layout leads with a length
-// byte and differs from Linux's.
 type sockaddrVM struct {
 	Len       uint8
 	Family    uint8
@@ -47,9 +37,6 @@ type vsockListener struct {
 
 func (l *vsockListener) Accept() (net.Conn, error) {
 	for {
-		// accept(fd, NULL, NULL): syscall.Accept decodes the peer sockaddr and Go's
-		// anyToSockaddr rejects AF_VSOCK. The peer address is useless here anyway,
-		// since every connection comes from the host.
 		r, _, errno := syscall.Syscall(syscall.SYS_ACCEPT, uintptr(l.fd), 0, 0)
 		if errno != 0 {
 			if errno == syscall.EINTR || errno == syscall.ECONNABORTED {
@@ -68,8 +55,6 @@ func (l *vsockListener) Accept() (net.Conn, error) {
 func (l *vsockListener) Close() error   { return syscall.Close(l.fd) }
 func (l *vsockListener) Addr() net.Addr { return l.addr }
 
-// os.File gives pollable Read/Write and deadline support; the addresses are
-// synthetic because getsockname is unavailable for this family.
 type vsockConn struct {
 	f    *os.File
 	addr *vsockAddr

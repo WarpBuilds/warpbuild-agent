@@ -15,27 +15,17 @@ import (
 
 const (
 	unmountTimeout = 20 * time.Second
-	// A dissenting daemon usually lets go within a couple of seconds.
 	unmountRetries = 3
 	unmountBackoff = 2 * time.Second
 )
 
 type pausePrepareResult struct {
-	// Unmounted reports the data volume is gone. Past this point the guest has
-	// no $HOME and cannot start a process, so the sandbox is no longer servable.
-	Unmounted bool `json:"unmounted"`
-	HadVolume bool `json:"had_volume"`
-	// Forced reports that the polite unmount was dissented and the volume had
-	// to be taken by force. The writes are still flushed — sync ran first — but
-	// it means something outside the agent's control was holding the volume.
-	Forced bool   `json:"forced,omitempty"`
-	Detail string `json:"detail,omitempty"`
+	Unmounted bool   `json:"unmounted"`
+	HadVolume bool   `json:"had_volume"`
+	Forced    bool   `json:"forced,omitempty"`
+	Detail    string `json:"detail,omitempty"`
 }
 
-// handlePausePrepare flushes the guest and releases the data volume so the host
-// can snapshot it. Two-phase on purpose: writers are stopped before the flush,
-// because a process that writes between the sync and the unmount would otherwise
-// lose those writes with nothing to show for it.
 func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST")
@@ -55,8 +45,6 @@ func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 
 	mounted, err := isMountPoint(s.opts.DataVolume)
 	if err != nil || !mounted {
-		// Idempotent: a second call, or a sandbox that never had a volume, is a
-		// success with nothing to do.
 		writeJSON(w, http.StatusOK, pausePrepareResult{Detail: "data volume is not mounted"})
 
 		return
@@ -65,7 +53,6 @@ func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 	stopped := s.stopWriters()
 	syscall.Sync()
 
-	// Our own cwd must not be the thing holding the volume open.
 	if err := os.Chdir("/"); err != nil {
 		s.resumeWriters(stopped)
 		writeJSON(w, http.StatusOK, pausePrepareResult{
@@ -93,8 +80,6 @@ func (s *Server) handlePausePrepare(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// stopWriters SIGSTOPs every process group the agent spawned and returns the
-// pids that were actually signalled, so they can be resumed if the pause aborts.
 func (s *Server) stopWriters() []int {
 	var stopped []int
 	for _, h := range s.procs.running() {
@@ -115,14 +100,6 @@ func (s *Server) resumeWriters(pids []int) {
 	}
 }
 
-// unmount releases the data volume, reporting whether it had to force.
-//
-// Stopping our own writers is not enough on macOS: system daemons hold the
-// volume too — linkd dissents routinely — and the agent has no way to stop
-// something launchd owns. So a dissent is retried briefly and then forced.
-// Forcing is safe here in a way it would not be on its own: the caller has
-// already SIGSTOPped every process it spawned and run sync, so there is no
-// in-flight writer left whose data force would drop.
 func unmount(ctx context.Context, path string) (bool, error) {
 	var last error
 	for attempt := range unmountRetries {

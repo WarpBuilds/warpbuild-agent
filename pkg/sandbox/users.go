@@ -10,10 +10,6 @@ import (
 	"syscall"
 )
 
-// userCache memoises account lookups. On darwin these are never the pure-Go
-// path even with CGO disabled — they go through opendirectoryd and allocate a
-// multi-kilobyte buffer per call — and a directory listing would otherwise pay
-// two of them per entry while resolving the same two or three ids over and over.
 type userCache struct {
 	fallback *user.User
 
@@ -32,9 +28,6 @@ func newUserCache(fallback *user.User) *userCache {
 	}
 }
 
-// lookup resolves a username to an account, falling back to the guest user for
-// an empty or unknown name. The name selects whose home resolves ~ and relative
-// paths; it is not a credential.
 func (c *userCache) lookup(name string) *user.User {
 	if name == "" {
 		return c.fallback
@@ -79,8 +72,6 @@ func (c *userCache) memo(m map[uint32]string, id uint32, resolve func(string) (s
 	return name
 }
 
-// ownerGroup resolves a file's uid and gid to names, falling back to the numbers
-// when the guest has no matching account.
 func (c *userCache) ownerGroup(fi os.FileInfo) (string, string) {
 	st, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {

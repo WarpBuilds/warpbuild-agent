@@ -124,18 +124,10 @@ func (t *TransparentCacheSettings) ApplyDefaults() {
 }
 
 type SandboxSettings struct {
-	// The agent's own option set, so adding an option is one edit rather than
-	// three: these json tags are what the guest's settings file is written in.
 	sandbox.Options
-	// ControlTokenFile is read at startup. The token is delivered through the
-	// job's shared dir rather than inline, because settings.json is rendered
-	// into the Nomad jobspec and a jobspec is readable by anyone with API
-	// access.
 	ControlTokenFile string `json:"control_token_file"`
 }
 
-// resolve returns the options with the control token filled in from disk. The
-// inline ControlToken is the fallback, for local runs with no staged file.
 func (s *SandboxSettings) resolve() (sandbox.Options, error) {
 	opts := s.Options
 	if s.ControlTokenFile == "" {

@@ -42,9 +42,6 @@ func newProcessService(users *userCache) *processService {
 	}
 }
 
-// processTimeout bounds the spawned process, not the request. Connect emits this
-// header from any client-side deadline, and e2b's SDKs rely on it as the command
-// timeout, so it must outlive the HTTP call.
 func processTimeout(h http.Header) (time.Duration, error) {
 	v := h.Get("Connect-Timeout-Ms")
 	if v == "" {
@@ -61,7 +58,6 @@ func processTimeout(h http.Header) (time.Duration, error) {
 func (s *processService) register(h *procHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// A reused pid, or a reused tag, must not resolve to a stale exit.
 	delete(s.terminated, h.pid)
 	if h.tag != "" {
 		for pid, t := range s.terminated {
@@ -116,7 +112,6 @@ func (s *processService) resolve(sel *rpc.ProcessSelector) (*procHandler, *termi
 	return nil, nil, 0
 }
 
-// liveProc resolves a selector to a running process, ignoring retained exits.
 func (s *processService) liveProc(sel *rpc.ProcessSelector) *procHandler {
 	h, _, _ := s.resolve(sel)
 
@@ -135,7 +130,6 @@ func (s *processService) Start(
 
 	u := s.users.lookup(basicAuthUsername(req.Header()))
 
-	// Unset means true, for clients that predate the field.
 	stdin := true
 	if req.Msg.Stdin != nil {
 		stdin = req.Msg.GetStdin()
@@ -193,8 +187,6 @@ func (s *processService) Connect(
 		return err
 	}
 
-	// The process already exited; replay the retained terminal event so a late
-	// reattach still learns how it ended.
 	if h == nil {
 		return send(&rpc.ProcessEvent{Event: &rpc.ProcessEvent_End{End: term.end}})
 	}
@@ -212,7 +204,6 @@ func (s *processService) Connect(
 	return s.pump(ctx, req.Header(), events, send)
 }
 
-// pump forwards process events, ending the stream on the terminal event.
 func (s *processService) pump(
 	ctx context.Context,
 	hdr http.Header,
@@ -290,7 +281,80 @@ func (s *processService) SendSignal(
 	return connect.NewResponse(&rpc.SendSignalResponse{}), nil
 }
 
-// running reports the pids the agent still owns, for the pause path.
+func (s *processService) SendInput(
+	ctx context.Context,
+	req *connect.Request[rpc.SendInputRequest],
+) (*connect.Response[rpc.SendInputResponse], error) {
+	h := s.liveProc(req.Msg.GetProcess())
+	if h == nil {
+		return nil, connect.NewError(connect.CodeNotFound, errProcessNotFound)
+	}
+	if err := writeInput(h, req.Msg.GetInput()); err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&rpc.SendInputResponse{}), nil
+}
+
+func (s *processService) StreamInput(
+	ctx context.Context,
+	stream *connect.ClientStream[rpc.StreamInputRequest],
+) (*connect.Response[rpc.StreamInputResponse], error) {
+	var h *procHandler
+	for stream.Receive() {
+		switch ev := stream.Msg().GetEvent().(type) {
+		case *rpc.StreamInputRequest_Start:
+			if h = s.liveProc(ev.Start.GetProcess()); h == nil {
+				return nil, connect.NewError(connect.CodeNotFound, errProcessNotFound)
+			}
+		case *rpc.StreamInputRequest_Data:
+			if h == nil {
+				return nil, connect.NewError(connect.CodeFailedPrecondition, errInputBeforeStart)
+			}
+			if err := writeInput(h, ev.Data.GetInput()); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err := stream.Err(); err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&rpc.StreamInputResponse{}), nil
+}
+
+func (s *processService) CloseStdin(
+	ctx context.Context,
+	req *connect.Request[rpc.CloseStdinRequest],
+) (*connect.Response[rpc.CloseStdinResponse], error) {
+	h := s.liveProc(req.Msg.GetProcess())
+	if h == nil {
+		return nil, connect.NewError(connect.CodeNotFound, errProcessNotFound)
+	}
+	if err := h.closeStdin(); err != nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+	}
+
+	return connect.NewResponse(&rpc.CloseStdinResponse{}), nil
+}
+
+func writeInput(h *procHandler, in *rpc.ProcessInput) error {
+	var err error
+	switch v := in.GetInput().(type) {
+	case *rpc.ProcessInput_Stdin:
+		err = h.writeStdin(v.Stdin)
+	case *rpc.ProcessInput_Pty:
+		err = h.writeTTY(v.Pty)
+	default:
+		return connect.NewError(connect.CodeInvalidArgument, errEmptyInput)
+	}
+	if err != nil {
+		return connect.NewError(connect.CodeFailedPrecondition, err)
+	}
+
+	return nil
+}
+
 func (s *processService) running() []*procHandler {
 	s.mu.Lock()
 	defer s.mu.Unlock()

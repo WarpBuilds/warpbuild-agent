@@ -27,9 +27,6 @@ const (
 	pipeReadChunk    = 32 * 1024
 )
 
-// broadcaster fans one process's events out to every attached stream. Events are
-// dropped when nobody is attached: output is live, never replayed, so a client
-// that reconnects mid-run sees only what follows.
 type broadcaster struct {
 	mu     sync.Mutex
 	subs   map[int]chan *rpc.ProcessEvent
@@ -68,8 +65,6 @@ func (b *broadcaster) send(ev *rpc.ProcessEvent) {
 	b.sendFunc(func() *rpc.ProcessEvent { return ev })
 }
 
-// sendFunc builds the event only when somebody is attached, so a process
-// nobody is watching does not pay for copying its own output.
 func (b *broadcaster) sendFunc(build func() *rpc.ProcessEvent) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -119,18 +114,14 @@ type procHandler struct {
 }
 
 type spawnOptions struct {
-	Config *rpc.ProcessConfig
-	PTY    *rpc.PTY
-	Tag    string
-	Stdin  bool
-	User   *user.User
-	// Timeout bounds the process, not the request: a dropped connection must
-	// leave the process reattachable, so the context is rooted at Background.
+	Config  *rpc.ProcessConfig
+	PTY     *rpc.PTY
+	Tag     string
+	Stdin   bool
+	User    *user.User
 	Timeout time.Duration
 }
 
-// expandPath resolves ~ against the given user's home and makes relative paths
-// relative to it. The ~user form is not supported, matching envd.
 func expandPath(p string, u *user.User) string {
 	if p == "" {
 		return u.HomeDir
@@ -148,9 +139,6 @@ func expandPath(p string, u *user.User) string {
 	return filepath.Join(u.HomeDir, p)
 }
 
-// buildEnv constructs the child environment from scratch rather than inheriting
-// ours: only PATH carries over, then the identity of the resolved user, then the
-// request's own vars last so they win.
 func buildEnv(cfg *rpc.ProcessConfig, u *user.User) []string {
 	env := []string{
 		"PATH=" + os.Getenv("PATH"),
@@ -176,6 +164,7 @@ func startProcess(opts spawnOptions) (*procHandler, error) {
 		return nil, fmt.Errorf("working directory %q does not exist", cwd)
 	}
 
+	// not the request ctx: the process must outlive a dropped connection and stay reattachable
 	procCtx, cancelProc := context.Background(), context.CancelFunc(func() {})
 	if opts.Timeout > 0 {
 		procCtx, cancelProc = context.WithTimeout(context.Background(), opts.Timeout)
@@ -213,8 +202,6 @@ func startProcess(opts spawnOptions) (*procHandler, error) {
 			return dataEvent(&rpc.ProcessEvent_DataEvent{Output: &rpc.ProcessEvent_DataEvent_Pty{Pty: b}})
 		})
 	} else {
-		// New process group so the whole tree can be reaped once the leader exits;
-		// this is what stops a backgrounded child from outliving its command.
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 		stdout, err := cmd.StdoutPipe()
@@ -272,8 +259,6 @@ func (h *procHandler) pump(r io.Reader, chunk int, wrap func([]byte) *rpc.Proces
 	}
 }
 
-// wait blocks until the process exits, then publishes the terminal event and
-// reaps anything left in its process group.
 func (h *procHandler) wait(onExit func(*rpc.ProcessEvent_EndEvent)) {
 	h.outWG.Wait()
 	err := h.cmd.Wait()
@@ -298,8 +283,6 @@ func (h *procHandler) wait(onExit func(*rpc.ProcessEvent_EndEvent)) {
 
 	h.events.send(&rpc.ProcessEvent{Event: &rpc.ProcessEvent_End{End: end}})
 
-	// Retain the exit before closing, so a Connect that arrives just after the
-	// close falls back to the retention cache instead of blocking.
 	if onExit != nil {
 		onExit(end)
 	}
@@ -309,8 +292,6 @@ func (h *procHandler) wait(onExit func(*rpc.ProcessEvent_EndEvent)) {
 	h.cancelProc()
 }
 
-// reapGroup kills anything still running in the leader's process group. Without
-// this a nohup'd child keeps the sandbox busy after its command returned.
 func (h *procHandler) reapGroup() {
 	if h.pid <= 0 {
 		return
@@ -382,9 +363,6 @@ func (h *procHandler) info() *rpc.ProcessInfo {
 	return info
 }
 
-// closePipes releases descriptors opened by StdoutPipe/StderrPipe/StdinPipe on a
-// spawn that never reached Start. exec.Cmd only closes them from Start or Wait,
-// so without this they leak for the life of the daemon.
 func closePipes(cmd *exec.Cmd) {
 	for _, c := range []io.Closer{asCloser(cmd.Stdout), asCloser(cmd.Stderr), asCloser(cmd.Stdin)} {
 		if c != nil {

@@ -95,7 +95,6 @@ func (s *filesystemService) ListDir(
 	var entries []*rpc.EntryInfo
 	walkErr := filepath.WalkDir(resolved, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
-			// Entries can vanish mid-walk; skip rather than fail the whole listing.
 			if os.IsNotExist(err) {
 				return nil
 			}
@@ -123,11 +122,8 @@ func (s *filesystemService) ListDir(
 		if infoErr != nil {
 			return nil
 		}
-		// Report the path the caller asked about, not the symlink-resolved one.
 		entries = append(entries, s.entryInfo(filepath.Join(root, rel), info))
 
-		// Descending further would read and sort a directory whose every child
-		// the depth test above will reject.
 		if d.IsDir() && level >= depth {
 			return filepath.SkipDir
 		}
@@ -176,8 +172,6 @@ func (s *filesystemService) WatchDir(
 		})
 	}
 
-	// The first frame always announces the watch is armed, so a client knows
-	// when it is safe to start making changes it expects to observe.
 	if err := stream.Send(&rpc.WatchDirResponse{
 		Event: &rpc.WatchDirResponse_Start{Start: &rpc.WatchDirResponse_StartEvent{}},
 	}); err != nil {
@@ -209,8 +203,6 @@ func (s *filesystemService) WatchDir(
 		}, nil)
 }
 
-// filesystemEvents fans one fsnotify event out into one message per op bit, so a
-// write-and-chmod arrives as two events rather than a compound one.
 func filesystemEvents(root string, ev fsnotify.Event, includeEntry bool, s *filesystemService) []*rpc.FilesystemEvent {
 	name, err := filepath.Rel(root, ev.Name)
 	if err != nil {
@@ -234,8 +226,6 @@ func filesystemEvents(root string, ev fsnotify.Event, includeEntry bool, s *file
 			continue
 		}
 		fe := &rpc.FilesystemEvent{Name: name, Type: o.typ}
-		// Remove and rename-away leave nothing to stat, and the path may already
-		// hold a replacement, so an entry is only attached where it is meaningful.
 		if includeEntry && (o.typ == rpc.EventType_EVENT_TYPE_CREATE ||
 			o.typ == rpc.EventType_EVENT_TYPE_WRITE ||
 			o.typ == rpc.EventType_EVENT_TYPE_CHMOD) {

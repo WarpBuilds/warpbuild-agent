@@ -7,12 +7,7 @@ import (
 	"net/http"
 )
 
-// basicAuthUsername reads the username half of a Basic header. It selects which
-// user's home resolves ~ and relative paths; the password is not consulted,
-// because the agent runs as a single unprivileged user and never setuids.
 func basicAuthUsername(h http.Header) string {
-	// Through the stdlib parser so the case-insensitive scheme prefix RFC 7617
-	// allows is handled the same way every other Go server handles it.
 	user, _, ok := (&http.Request{Header: h}).BasicAuth()
 	if !ok {
 		return ""
@@ -21,8 +16,6 @@ func basicAuthUsername(h http.Header) string {
 	return user
 }
 
-// tokenAuth gates every route but /health on a shared per-sandbox token. An
-// empty configured token leaves the agent open, which is only for local runs.
 type tokenAuth struct {
 	token string
 	next  http.Handler
