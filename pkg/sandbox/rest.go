@@ -57,6 +57,7 @@ func writeError(w http.ResponseWriter, code int, err error) {
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Connection", "close")
 	w.WriteHeader(http.StatusNoContent)
 }
 

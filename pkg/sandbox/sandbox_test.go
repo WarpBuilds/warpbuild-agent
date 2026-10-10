@@ -319,17 +319,27 @@ func TestConnectReplaysRetainedExit(t *testing.T) {
 	}
 }
 
-func TestHealthIsExemptFromAuthAndReturns204(t *testing.T) {
+func TestHealthRequiresTokenAndReturns204(t *testing.T) {
 	ts := testServer(t, Options{ControlToken: "sbxt_secret"})
 
 	resp, err := ts.Client().Get(ts.URL + "/health")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("without token: status = %d, want 401", resp.StatusCode)
+	}
 
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+"/health", nil)
+	req.Header.Set("X-Access-Token", "sbxt_secret")
+	resp, err = ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		t.Errorf("status = %d, want 204", resp.StatusCode)
+		t.Errorf("with token: status = %d, want 204", resp.StatusCode)
 	}
 }
 
@@ -374,7 +384,7 @@ func TestRPCRequiresToken(t *testing.T) {
 	}
 }
 
-func TestEmptyTokenRejectsEverythingButHealth(t *testing.T) {
+func TestEmptyTokenRejectsEverything(t *testing.T) {
 	srv, err := newServer(Options{})
 	if err != nil {
 		t.Fatalf("newServer: %v", err)
@@ -382,16 +392,7 @@ func TestEmptyTokenRejectsEverythingButHealth(t *testing.T) {
 	ts := httptest.NewServer(srv.handler())
 	t.Cleanup(ts.Close)
 
-	resp, err := ts.Client().Get(ts.URL + healthPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp.Body.Close()
-	if resp.StatusCode != http.StatusNoContent {
-		t.Errorf("health: status = %d, want 204", resp.StatusCode)
-	}
-
-	for _, path := range []string{"/envs", "/metrics"} {
+	for _, path := range []string{healthPath, "/envs", "/metrics"} {
 		req, _ := http.NewRequest(http.MethodGet, ts.URL+path, nil)
 		req.Header.Set("X-Access-Token", "")
 		resp, err := ts.Client().Do(req)
@@ -415,6 +416,63 @@ func TestQueryTokenIsIgnored(t *testing.T) {
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("query token: status = %d, want 401", resp.StatusCode)
+	}
+}
+
+func TestUnauthorizedResponseClosesConnection(t *testing.T) {
+	ts := testServer(t, Options{ControlToken: "sbxt_secret"})
+
+	for _, path := range []string{healthPath, "/envs"} {
+		resp, err := ts.Client().Get(ts.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Fatalf("%s: status = %d, want 401", path, resp.StatusCode)
+		}
+		if !resp.Close {
+			t.Errorf("%s: 401 response did not carry Connection: close", path)
+		}
+	}
+}
+
+func TestUnauthorizedRequestWithAStalledBodyIsDropped(t *testing.T) {
+	ts := testServer(t, Options{ControlToken: "sbxt_secret"})
+
+	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if _, err := io.WriteString(conn, "POST /envs HTTP/1.1\r\nHost: sandbox\r\nContent-Length: 1000\r\n\r\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	reply, err := io.ReadAll(conn)
+	if err != nil {
+		t.Fatalf("the connection stayed open after a 401 to a request whose body never arrived: %v", err)
+	}
+	if !strings.HasPrefix(string(reply), "HTTP/1.1 401") {
+		t.Fatalf("reply = %q, want a 401", reply)
+	}
+}
+
+func TestHealthResponseClosesConnection(t *testing.T) {
+	ts := testServer(t, Options{})
+
+	resp, err := ts.Client().Get(ts.URL + healthPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", resp.StatusCode)
+	}
+	if !resp.Close {
+		t.Error("health response did not carry Connection: close")
 	}
 }
 
@@ -495,12 +553,20 @@ func TestServesOnlyTLS13AndHTTP11(t *testing.T) {
 		t.Errorf("negotiated version %x protocol %q, want TLS 1.3 and http/1.1", state.Version, state.NegotiatedProtocol)
 	}
 
-	resp, err := http.Get("http://" + addr + healthPath)
+	req, _ := http.NewRequest(http.MethodGet, "http://"+addr+healthPath, nil)
+	req.Header.Set("X-Access-Token", testToken)
+	resp, err := http.DefaultClient.Do(req)
 	if err == nil {
 		resp.Body.Close()
 		if resp.StatusCode == http.StatusNoContent {
 			t.Error("plaintext request was served")
 		}
+	}
+}
+
+func TestHTTPServerIdleTimeoutIs60s(t *testing.T) {
+	if got := newHTTPServer(http.NotFoundHandler()).IdleTimeout; got != 60*time.Second {
+		t.Errorf("IdleTimeout = %v, want 60s", got)
 	}
 }
 

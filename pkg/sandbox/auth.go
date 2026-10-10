@@ -5,6 +5,7 @@ package sandbox
 import (
 	"crypto/subtle"
 	"net/http"
+	"time"
 )
 
 func basicAuthUsername(h http.Header) string {
@@ -22,15 +23,11 @@ type tokenAuth struct {
 }
 
 func (a *tokenAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == healthPath {
-		a.next.ServeHTTP(w, r)
-
-		return
-	}
-
 	presented := r.Header.Get("X-Access-Token")
 	if a.token == "" || subtle.ConstantTimeCompare([]byte(presented), []byte(a.token)) != 1 {
 		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Connection", "close")
+		_ = http.NewResponseController(w).SetReadDeadline(time.Now())
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 
 		return

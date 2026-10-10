@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	idleTimeout       = 640 * time.Second
+	idleTimeout       = 60 * time.Second
 	readHeaderTimeout = 10 * time.Second
 )
 
@@ -118,7 +118,7 @@ func Serve(ctx context.Context, opts Options) error {
 	}()
 
 	if opts.ControlToken == "" {
-		log.Logger().Errorf("sandbox: no control token configured; every request except %s is rejected", healthPath)
+		log.Logger().Errorf("sandbox: no control token configured; every request is rejected")
 	}
 	log.Logger().Infof("sandbox: serving TLS on %s", ln.Addr())
 
