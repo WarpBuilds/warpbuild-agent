@@ -47,6 +47,11 @@ func (l *vsockListener) Accept() (net.Conn, error) {
 		}
 		nfd := int(r)
 		syscall.CloseOnExec(nfd)
+		if err := syscall.SetNonblock(nfd, true); err != nil {
+			syscall.Close(nfd)
+
+			return nil, &net.OpError{Op: "accept", Net: "vsock", Addr: l.addr, Err: err}
+		}
 
 		return &vsockConn{f: os.NewFile(uintptr(nfd), l.addr.String()), addr: l.addr}, nil
 	}

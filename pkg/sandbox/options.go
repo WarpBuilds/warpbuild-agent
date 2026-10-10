@@ -10,6 +10,8 @@ type Options struct {
 	ControlToken string `json:"control_token"`
 	GuestUser    string `json:"guest_user"`
 	DataVolume   string `json:"data_volume"`
+	TLSCert      []byte `json:"-"`
+	TLSKey       []byte `json:"-"`
 }
 
 func (o *Options) applyDefaults() {

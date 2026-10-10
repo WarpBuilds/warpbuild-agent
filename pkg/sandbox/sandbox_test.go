@@ -4,7 +4,16 @@ package sandbox
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"io"
+	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,16 +30,25 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/sandboxspec/process/processconnect"
 )
 
+const testToken = "sbxt_test"
+
 func testServer(t *testing.T, opts Options) *httptest.Server {
 	t.Helper()
 	opts.applyDefaults()
 	opts.GuestUser = ""
+	defaultToken := opts.ControlToken == ""
+	if defaultToken {
+		opts.ControlToken = testToken
+	}
 	srv, err := newServer(opts)
 	if err != nil {
 		t.Fatalf("newServer: %v", err)
 	}
 	ts := httptest.NewServer(srv.handler())
 	t.Cleanup(ts.Close)
+	if defaultToken {
+		ts.Client().Transport = &tokenRoundTripper{token: testToken, next: ts.Client().Transport}
+	}
 
 	return ts
 }
@@ -353,6 +371,136 @@ func TestRPCRequiresToken(t *testing.T) {
 	auth := procClient(t, ts, "sbxt_secret")
 	if _, err := auth.List(context.Background(), connect.NewRequest(&procrpc.ListRequest{})); err != nil {
 		t.Fatalf("authenticated List failed: %v", err)
+	}
+}
+
+func TestEmptyTokenRejectsEverythingButHealth(t *testing.T) {
+	srv, err := newServer(Options{})
+	if err != nil {
+		t.Fatalf("newServer: %v", err)
+	}
+	ts := httptest.NewServer(srv.handler())
+	t.Cleanup(ts.Close)
+
+	resp, err := ts.Client().Get(ts.URL + healthPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("health: status = %d, want 204", resp.StatusCode)
+	}
+
+	for _, path := range []string{"/envs", "/metrics"} {
+		req, _ := http.NewRequest(http.MethodGet, ts.URL+path, nil)
+		req.Header.Set("X-Access-Token", "")
+		resp, err := ts.Client().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("%s with no configured token: status = %d, want 401", path, resp.StatusCode)
+		}
+	}
+}
+
+func TestQueryTokenIsIgnored(t *testing.T) {
+	ts := testServer(t, Options{ControlToken: "sbxt_secret"})
+
+	resp, err := ts.Client().Get(ts.URL + "/envs?access_token=sbxt_secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("query token: status = %d, want 401", resp.StatusCode)
+	}
+}
+
+func selfSignedPEM(t *testing.T) ([]byte, []byte) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "sbx.sandbox.invalid"},
+		DNSNames:     []string{"sbx.sandbox.invalid"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}),
+		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+}
+
+func TestServeRefusesToStartWithoutCertificate(t *testing.T) {
+	err := Serve(context.Background(), Options{ListenAddr: "127.0.0.1:0", ControlToken: testToken})
+	if err == nil {
+		t.Fatal("Serve started without a TLS certificate")
+	}
+}
+
+func TestServesOnlyTLS13AndHTTP11(t *testing.T) {
+	certPEM, keyPEM := selfSignedPEM(t)
+	opts := Options{ControlToken: testToken, TLSCert: certPEM, TLSKey: keyPEM}
+	cfg, err := tlsConfig(opts)
+	if err != nil {
+		t.Fatalf("tlsConfig: %v", err)
+	}
+	srv, err := newServer(opts)
+	if err != nil {
+		t.Fatalf("newServer: %v", err)
+	}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hs := newHTTPServer(srv.handler())
+	go func() { _ = hs.Serve(tls.NewListener(ln, cfg)) }()
+	t.Cleanup(func() { _ = hs.Close() })
+	addr := ln.Addr().String()
+
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(certPEM)
+	client := &tls.Config{RootCAs: pool, ServerName: "sbx.sandbox.invalid"}
+
+	tls12 := client.Clone()
+	tls12.MaxVersion = tls.VersionTLS12
+	if conn, err := tls.Dial("tcp", addr, tls12); err == nil {
+		conn.Close()
+		t.Error("TLS 1.2 handshake succeeded")
+	}
+
+	h2 := client.Clone()
+	h2.NextProtos = []string{"h2", "http/1.1"}
+	conn, err := tls.Dial("tcp", addr, h2)
+	if err != nil {
+		t.Fatalf("TLS 1.3 handshake: %v", err)
+	}
+	state := conn.ConnectionState()
+	conn.Close()
+	if state.Version != tls.VersionTLS13 || state.NegotiatedProtocol != "http/1.1" {
+		t.Errorf("negotiated version %x protocol %q, want TLS 1.3 and http/1.1", state.Version, state.NegotiatedProtocol)
+	}
+
+	resp, err := http.Get("http://" + addr + healthPath)
+	if err == nil {
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusNoContent {
+			t.Error("plaintext request was served")
+		}
 	}
 }
 

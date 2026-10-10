@@ -126,19 +126,35 @@ func (t *TransparentCacheSettings) ApplyDefaults() {
 type SandboxSettings struct {
 	sandbox.Options
 	ControlTokenFile string `json:"control_token_file"`
+	TLSCertFile      string `json:"tls_cert_file"`
+	TLSKeyFile       string `json:"tls_key_file"`
+}
+
+func readIfSet(path string) ([]byte, error) {
+	if path == "" {
+		return nil, nil
+	}
+
+	return os.ReadFile(path)
 }
 
 func (s *SandboxSettings) resolve() (sandbox.Options, error) {
 	opts := s.Options
-	if s.ControlTokenFile == "" {
-		return opts, nil
-	}
 
-	b, err := os.ReadFile(s.ControlTokenFile)
+	token, err := readIfSet(s.ControlTokenFile)
 	if err != nil {
 		return opts, err
 	}
-	opts.ControlToken = strings.TrimSpace(string(b))
+	if token != nil {
+		opts.ControlToken = strings.TrimSpace(string(token))
+	}
+
+	if opts.TLSCert, err = readIfSet(s.TLSCertFile); err != nil {
+		return opts, err
+	}
+	if opts.TLSKey, err = readIfSet(s.TLSKeyFile); err != nil {
+		return opts, err
+	}
 
 	return opts, nil
 }

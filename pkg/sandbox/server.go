@@ -4,6 +4,7 @@ package sandbox
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -17,7 +18,10 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/sandboxspec/process/processconnect"
 )
 
-const idleTimeout = 640 * time.Second
+const (
+	idleTimeout       = 640 * time.Second
+	readHeaderTimeout = 10 * time.Second
+)
 
 type Server struct {
 	opts  Options
@@ -65,8 +69,34 @@ func (s *Server) handler() http.Handler {
 	return &tokenAuth{token: s.opts.ControlToken, next: mux}
 }
 
+func tlsConfig(opts Options) (*tls.Config, error) {
+	cert, err := tls.X509KeyPair(opts.TLSCert, opts.TLSKey)
+	if err != nil {
+		return nil, fmt.Errorf("sandbox TLS certificate: %w", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13,
+		NextProtos:   []string{"http/1.1"},
+	}, nil
+}
+
+func newHTTPServer(h http.Handler) *http.Server {
+	return &http.Server{
+		Handler:           h,
+		IdleTimeout:       idleTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
+	}
+}
+
 func Serve(ctx context.Context, opts Options) error {
 	opts.applyDefaults()
+
+	tlsCfg, err := tlsConfig(opts)
+	if err != nil {
+		return err
+	}
 
 	srv, err := newServer(opts)
 	if err != nil {
@@ -78,10 +108,7 @@ func Serve(ctx context.Context, opts Options) error {
 		return err
 	}
 
-	httpSrv := &http.Server{
-		Handler:     srv.handler(),
-		IdleTimeout: idleTimeout,
-	}
+	httpSrv := newHTTPServer(srv.handler())
 
 	go func() {
 		<-ctx.Done()
@@ -91,11 +118,11 @@ func Serve(ctx context.Context, opts Options) error {
 	}()
 
 	if opts.ControlToken == "" {
-		log.Logger().Warnf("sandbox: no control token configured; the data plane is unauthenticated")
+		log.Logger().Errorf("sandbox: no control token configured; every request except %s is rejected", healthPath)
 	}
-	log.Logger().Infof("sandbox: serving on %s", ln.Addr())
+	log.Logger().Infof("sandbox: serving TLS on %s", ln.Addr())
 
-	if err := httpSrv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := httpSrv.Serve(tls.NewListener(ln, tlsCfg)); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 

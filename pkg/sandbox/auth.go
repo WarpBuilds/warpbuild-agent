@@ -22,18 +22,14 @@ type tokenAuth struct {
 }
 
 func (a *tokenAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if a.token == "" || r.URL.Path == healthPath {
+	if r.URL.Path == healthPath {
 		a.next.ServeHTTP(w, r)
 
 		return
 	}
 
 	presented := r.Header.Get("X-Access-Token")
-	if presented == "" {
-		presented = r.URL.Query().Get("access_token")
-	}
-
-	if subtle.ConstantTimeCompare([]byte(presented), []byte(a.token)) != 1 {
+	if a.token == "" || subtle.ConstantTimeCompare([]byte(presented), []byte(a.token)) != 1 {
 		w.Header().Set("Cache-Control", "no-store")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 
