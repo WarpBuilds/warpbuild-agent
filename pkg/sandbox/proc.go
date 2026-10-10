@@ -120,6 +120,7 @@ type spawnOptions struct {
 	Stdin   bool
 	User    *user.User
 	Timeout time.Duration
+	Events  *broadcaster
 }
 
 func expandPath(p string, u *user.User) string {
@@ -178,7 +179,7 @@ func startProcess(opts spawnOptions) (*procHandler, error) {
 		tag:        opts.Tag,
 		config:     cfg,
 		cmd:        cmd,
-		events:     newBroadcaster(),
+		events:     opts.Events,
 		cancelProc: cancelProc,
 	}
 

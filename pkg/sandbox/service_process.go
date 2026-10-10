@@ -4,7 +4,9 @@ package sandbox
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"syscall"
@@ -135,6 +137,10 @@ func (s *processService) Start(
 		stdin = req.Msg.GetStdin()
 	}
 
+	out := newBroadcaster()
+	id, events, _ := out.subscribe()
+	defer out.unsubscribe(id)
+
 	h, err := startProcess(spawnOptions{
 		Config:  req.Msg.GetProcess(),
 		PTY:     req.Msg.GetPty(),
@@ -142,6 +148,7 @@ func (s *processService) Start(
 		Stdin:   stdin,
 		User:    u,
 		Timeout: timeout,
+		Events:  out,
 	})
 	if err != nil {
 		return connect.NewError(connect.CodeInvalidArgument, err)
@@ -149,12 +156,6 @@ func (s *processService) Start(
 
 	s.register(h)
 	go h.wait(func(end *rpc.ProcessEvent_EndEvent) { s.retire(h, end) })
-
-	id, events, ok := h.events.subscribe()
-	if !ok {
-		return connect.NewError(connect.CodeInternal, errProcessGone)
-	}
-	defer h.events.unsubscribe(id)
 
 	if err := stream.Send(&rpc.StartResponse{Event: &rpc.ProcessEvent{
 		Event: &rpc.ProcessEvent_Start{Start: &rpc.ProcessEvent_StartEvent{Pid: uint32(h.pid)}},
@@ -348,11 +349,16 @@ func writeInput(h *procHandler, in *rpc.ProcessInput) error {
 	default:
 		return connect.NewError(connect.CodeInvalidArgument, errEmptyInput)
 	}
-	if err != nil {
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, os.ErrClosed):
+		return connect.NewError(connect.CodeNotFound, errProcessNotFound)
+	case errors.Is(err, syscall.EIO), errors.Is(err, syscall.EPIPE):
+		return connect.NewError(connect.CodeNotFound, errInputClosed)
+	default:
 		return connect.NewError(connect.CodeFailedPrecondition, err)
 	}
-
-	return nil
 }
 
 func (s *processService) running() []*procHandler {

@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -130,6 +131,44 @@ func TestStartStreamsOutputAndOrdersEvents(t *testing.T) {
 	if end == nil || end.GetExitCode() != 0 || !end.GetExited() {
 		t.Errorf("end = %+v, want exit 0 exited", end)
 	}
+}
+
+func TestStartDoesNotDropEarlyPTYOutput(t *testing.T) {
+	ts := testServer(t, Options{})
+	c := procClient(t, ts, "")
+	src := filepath.Join(t.TempDir(), "hi.txt")
+	if err := os.WriteFile(src, []byte("hi\n"+strings.Repeat(".", 8192)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	for w := 0; w < 16; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 60; i++ {
+				stream, err := c.Start(context.Background(), connect.NewRequest(&procrpc.StartRequest{
+					Process: &procrpc.ProcessConfig{Cmd: "/bin/cat", Args: []string{src}},
+					Pty:     &procrpc.PTY{Size: &procrpc.PTY_Size{Cols: 80, Rows: 24}},
+				}))
+				if err != nil {
+					t.Error(err)
+
+					return
+				}
+				var out strings.Builder
+				for stream.Receive() {
+					out.Write(stream.Msg().GetEvent().GetData().GetPty())
+				}
+				if err := stream.Err(); err != nil || !strings.HasPrefix(out.String(), "hi") {
+					t.Errorf("run %d: pty output = %.16q (err %v), want it to start with hi", i, out.String(), err)
+
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func TestEndEventStatusMatchesGoProcessStateFormat(t *testing.T) {
