@@ -1,0 +1,116 @@
+ENUM process.Signal.SIGNAL_SIGKILL = 9
+ENUM process.Signal.SIGNAL_SIGTERM = 15
+ENUM process.Signal.SIGNAL_UNSPECIFIED = 0
+FIELD process.CloseStdinRequest.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.ConnectRequest.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.ConnectResponse.event num=1 kind=message:process.ProcessEvent repeated=false optional=false
+FIELD process.ListResponse.processes num=1 kind=message:process.ProcessInfo repeated=true optional=false
+FIELD process.PTY.Size.cols num=1 kind=uint32 repeated=false optional=false
+FIELD process.PTY.Size.rows num=2 kind=uint32 repeated=false optional=false
+FIELD process.PTY.size num=1 kind=message:process.PTY.Size repeated=false optional=false
+FIELD process.ProcessConfig.args num=2 kind=string repeated=true optional=false
+FIELD process.ProcessConfig.cmd num=1 kind=string repeated=false optional=false
+FIELD process.ProcessConfig.cwd num=4 kind=string repeated=false optional=true
+FIELD process.ProcessConfig.envs num=3 kind=map<string,string> repeated=false optional=false
+FIELD process.ProcessEvent.DataEvent.pty num=3 kind=bytes repeated=false optional=false oneof=output
+FIELD process.ProcessEvent.DataEvent.stderr num=2 kind=bytes repeated=false optional=false oneof=output
+FIELD process.ProcessEvent.DataEvent.stdout num=1 kind=bytes repeated=false optional=false oneof=output
+FIELD process.ProcessEvent.EndEvent.error num=4 kind=string repeated=false optional=true
+FIELD process.ProcessEvent.EndEvent.exit_code num=1 kind=sint32 repeated=false optional=false
+FIELD process.ProcessEvent.EndEvent.exited num=2 kind=bool repeated=false optional=false
+FIELD process.ProcessEvent.EndEvent.status num=3 kind=string repeated=false optional=false
+FIELD process.ProcessEvent.StartEvent.pid num=1 kind=uint32 repeated=false optional=false
+FIELD process.ProcessEvent.data num=2 kind=message:process.ProcessEvent.DataEvent repeated=false optional=false oneof=event
+FIELD process.ProcessEvent.end num=3 kind=message:process.ProcessEvent.EndEvent repeated=false optional=false oneof=event
+FIELD process.ProcessEvent.keepalive num=4 kind=message:process.ProcessEvent.KeepAlive repeated=false optional=false oneof=event
+FIELD process.ProcessEvent.start num=1 kind=message:process.ProcessEvent.StartEvent repeated=false optional=false oneof=event
+FIELD process.ProcessInfo.config num=1 kind=message:process.ProcessConfig repeated=false optional=false
+FIELD process.ProcessInfo.pid num=2 kind=uint32 repeated=false optional=false
+FIELD process.ProcessInfo.tag num=3 kind=string repeated=false optional=true
+FIELD process.ProcessInput.pty num=2 kind=bytes repeated=false optional=false oneof=input
+FIELD process.ProcessInput.stdin num=1 kind=bytes repeated=false optional=false oneof=input
+FIELD process.ProcessSelector.pid num=1 kind=uint32 repeated=false optional=false oneof=selector
+FIELD process.ProcessSelector.tag num=2 kind=string repeated=false optional=false oneof=selector
+FIELD process.SendInputRequest.input num=2 kind=message:process.ProcessInput repeated=false optional=false
+FIELD process.SendInputRequest.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.SendSignalRequest.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.SendSignalRequest.signal num=2 kind=enum:process.Signal repeated=false optional=false
+FIELD process.StartRequest.process num=1 kind=message:process.ProcessConfig repeated=false optional=false
+FIELD process.StartRequest.pty num=2 kind=message:process.PTY repeated=false optional=true
+FIELD process.StartRequest.stdin num=4 kind=bool repeated=false optional=true
+FIELD process.StartRequest.tag num=3 kind=string repeated=false optional=true
+FIELD process.StartResponse.event num=1 kind=message:process.ProcessEvent repeated=false optional=false
+FIELD process.StreamInputRequest.DataEvent.input num=2 kind=message:process.ProcessInput repeated=false optional=false
+FIELD process.StreamInputRequest.StartEvent.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.StreamInputRequest.data num=2 kind=message:process.StreamInputRequest.DataEvent repeated=false optional=false oneof=event
+FIELD process.StreamInputRequest.keepalive num=3 kind=message:process.StreamInputRequest.KeepAlive repeated=false optional=false oneof=event
+FIELD process.StreamInputRequest.start num=1 kind=message:process.StreamInputRequest.StartEvent repeated=false optional=false oneof=event
+FIELD process.UpdateRequest.process num=1 kind=message:process.ProcessSelector repeated=false optional=false
+FIELD process.UpdateRequest.pty num=2 kind=message:process.PTY repeated=false optional=true
+RPC /process.Process/CloseStdin in=process.CloseStdinRequest out=process.CloseStdinResponse cstream=false sstream=false
+RPC /process.Process/Connect in=process.ConnectRequest out=process.ConnectResponse cstream=false sstream=true
+RPC /process.Process/List in=process.ListRequest out=process.ListResponse cstream=false sstream=false
+RPC /process.Process/SendInput in=process.SendInputRequest out=process.SendInputResponse cstream=false sstream=false
+RPC /process.Process/SendSignal in=process.SendSignalRequest out=process.SendSignalResponse cstream=false sstream=false
+RPC /process.Process/Start in=process.StartRequest out=process.StartResponse cstream=false sstream=true
+RPC /process.Process/StreamInput in=process.StreamInputRequest out=process.StreamInputResponse cstream=true sstream=false
+RPC /process.Process/Update in=process.UpdateRequest out=process.UpdateResponse cstream=false sstream=false
+ENUM filesystem.EventType.EVENT_TYPE_CHMOD = 5
+ENUM filesystem.EventType.EVENT_TYPE_CREATE = 1
+ENUM filesystem.EventType.EVENT_TYPE_REMOVE = 3
+ENUM filesystem.EventType.EVENT_TYPE_RENAME = 4
+ENUM filesystem.EventType.EVENT_TYPE_UNSPECIFIED = 0
+ENUM filesystem.EventType.EVENT_TYPE_WRITE = 2
+ENUM filesystem.FileType.FILE_TYPE_DIRECTORY = 2
+ENUM filesystem.FileType.FILE_TYPE_FILE = 1
+ENUM filesystem.FileType.FILE_TYPE_SYMLINK = 3
+ENUM filesystem.FileType.FILE_TYPE_UNSPECIFIED = 0
+FIELD filesystem.CreateWatcherRequest.allow_network_mounts num=4 kind=bool repeated=false optional=false
+FIELD filesystem.CreateWatcherRequest.include_entry num=3 kind=bool repeated=false optional=false
+FIELD filesystem.CreateWatcherRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.CreateWatcherRequest.recursive num=2 kind=bool repeated=false optional=false
+FIELD filesystem.CreateWatcherResponse.watcher_id num=1 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.group num=8 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.metadata num=11 kind=map<string,string> repeated=false optional=false
+FIELD filesystem.EntryInfo.mode num=5 kind=uint32 repeated=false optional=false
+FIELD filesystem.EntryInfo.modified_time num=9 kind=message:google.protobuf.Timestamp repeated=false optional=false
+FIELD filesystem.EntryInfo.name num=1 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.owner num=7 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.path num=3 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.permissions num=6 kind=string repeated=false optional=false
+FIELD filesystem.EntryInfo.size num=4 kind=int64 repeated=false optional=false
+FIELD filesystem.EntryInfo.symlink_target num=10 kind=string repeated=false optional=true
+FIELD filesystem.EntryInfo.type num=2 kind=enum:filesystem.FileType repeated=false optional=false
+FIELD filesystem.FilesystemEvent.entry num=3 kind=message:filesystem.EntryInfo repeated=false optional=true
+FIELD filesystem.FilesystemEvent.name num=1 kind=string repeated=false optional=false
+FIELD filesystem.FilesystemEvent.type num=2 kind=enum:filesystem.EventType repeated=false optional=false
+FIELD filesystem.GetWatcherEventsRequest.watcher_id num=1 kind=string repeated=false optional=false
+FIELD filesystem.GetWatcherEventsResponse.events num=1 kind=message:filesystem.FilesystemEvent repeated=true optional=false
+FIELD filesystem.ListDirRequest.depth num=2 kind=uint32 repeated=false optional=false
+FIELD filesystem.ListDirRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.ListDirResponse.entries num=1 kind=message:filesystem.EntryInfo repeated=true optional=false
+FIELD filesystem.MakeDirRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.MakeDirResponse.entry num=1 kind=message:filesystem.EntryInfo repeated=false optional=false
+FIELD filesystem.MoveRequest.destination num=2 kind=string repeated=false optional=false
+FIELD filesystem.MoveRequest.source num=1 kind=string repeated=false optional=false
+FIELD filesystem.MoveResponse.entry num=1 kind=message:filesystem.EntryInfo repeated=false optional=false
+FIELD filesystem.RemoveRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.RemoveWatcherRequest.watcher_id num=1 kind=string repeated=false optional=false
+FIELD filesystem.StatRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.StatResponse.entry num=1 kind=message:filesystem.EntryInfo repeated=false optional=false
+FIELD filesystem.WatchDirRequest.allow_network_mounts num=4 kind=bool repeated=false optional=false
+FIELD filesystem.WatchDirRequest.include_entry num=3 kind=bool repeated=false optional=false
+FIELD filesystem.WatchDirRequest.path num=1 kind=string repeated=false optional=false
+FIELD filesystem.WatchDirRequest.recursive num=2 kind=bool repeated=false optional=false
+FIELD filesystem.WatchDirResponse.filesystem num=2 kind=message:filesystem.FilesystemEvent repeated=false optional=false oneof=event
+FIELD filesystem.WatchDirResponse.keepalive num=3 kind=message:filesystem.WatchDirResponse.KeepAlive repeated=false optional=false oneof=event
+FIELD filesystem.WatchDirResponse.start num=1 kind=message:filesystem.WatchDirResponse.StartEvent repeated=false optional=false oneof=event
+RPC /filesystem.Filesystem/CreateWatcher in=filesystem.CreateWatcherRequest out=filesystem.CreateWatcherResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/GetWatcherEvents in=filesystem.GetWatcherEventsRequest out=filesystem.GetWatcherEventsResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/ListDir in=filesystem.ListDirRequest out=filesystem.ListDirResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/MakeDir in=filesystem.MakeDirRequest out=filesystem.MakeDirResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/Move in=filesystem.MoveRequest out=filesystem.MoveResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/Remove in=filesystem.RemoveRequest out=filesystem.RemoveResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/RemoveWatcher in=filesystem.RemoveWatcherRequest out=filesystem.RemoveWatcherResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/Stat in=filesystem.StatRequest out=filesystem.StatResponse cstream=false sstream=false
+RPC /filesystem.Filesystem/WatchDir in=filesystem.WatchDirRequest out=filesystem.WatchDirResponse cstream=false sstream=true

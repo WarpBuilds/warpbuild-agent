@@ -19,6 +19,9 @@ jobs:
       - name: Vet
         run: go vet -tags=disable_grpc_modules ./...
 
+      - name: Vet darwin/arm64
+        run: GOOS=darwin GOARCH=arm64 go vet -tags=disable_grpc_modules ./...
+
       - name: Test
         run: go test -race -tags=disable_grpc_modules ./...
 
