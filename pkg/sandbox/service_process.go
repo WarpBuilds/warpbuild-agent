@@ -165,7 +165,7 @@ func (s *processService) Start(
 
 	return s.pump(ctx, req.Header(), events, func(ev *rpc.ProcessEvent) error {
 		return stream.Send(&rpc.StartResponse{Event: ev})
-	})
+	}, h.endEvent.Load)
 }
 
 func (s *processService) Connect(
@@ -202,7 +202,7 @@ func (s *processService) Connect(
 	}
 	defer h.events.unsubscribe(id)
 
-	return s.pump(ctx, req.Header(), events, send)
+	return s.pump(ctx, req.Header(), events, send, h.endEvent.Load)
 }
 
 func (s *processService) pump(
@@ -210,18 +210,29 @@ func (s *processService) pump(
 	hdr http.Header,
 	events <-chan *rpc.ProcessEvent,
 	send func(*rpc.ProcessEvent) error,
+	retainedEnd func() *rpc.ProcessEvent_EndEvent,
 ) error {
-	return pumpWithKeepalive(ctx, events, keepAliveInterval(hdr), send,
+	ended := false
+	err := pumpWithKeepalive(ctx, events, keepAliveInterval(hdr), send,
 		func() error {
 			return send(&rpc.ProcessEvent{
 				Event: &rpc.ProcessEvent_Keepalive{Keepalive: &rpc.ProcessEvent_KeepAlive{}},
 			})
 		},
 		func(ev *rpc.ProcessEvent) bool {
-			_, done := ev.GetEvent().(*rpc.ProcessEvent_End)
+			_, ended = ev.GetEvent().(*rpc.ProcessEvent_End)
 
-			return done
+			return ended
 		})
+	if err != nil || ended {
+		return err
+	}
+	// a reader that attached after End was sent sees the channel close without it
+	if end := retainedEnd(); end != nil {
+		return send(&rpc.ProcessEvent{Event: &rpc.ProcessEvent_End{End: end}})
+	}
+
+	return nil
 }
 
 func (s *processService) List(

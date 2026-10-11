@@ -358,6 +358,179 @@ func TestConnectReplaysRetainedExit(t *testing.T) {
 	}
 }
 
+func receiveStdout(stream interface {
+	Receive() bool
+	Err() error
+}, msg func() *procrpc.ProcessEvent, slowEvents int) (int, *procrpc.ProcessEvent_EndEvent, error) {
+	got, n := 0, 0
+	var end *procrpc.ProcessEvent_EndEvent
+	for stream.Receive() {
+		ev := msg()
+		if d := ev.GetData(); d != nil {
+			got += len(d.GetStdout())
+			if n++; n <= slowEvents {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
+		if e := ev.GetEnd(); e != nil {
+			end = e
+		}
+	}
+
+	return got, end, stream.Err()
+}
+
+func TestSlowReaderGetsEveryByteAndTheExitCode(t *testing.T) {
+	ts := testServer(t, Options{})
+	c := procClient(t, ts, "")
+	const size = 32 << 20
+
+	stream, err := c.Start(context.Background(), connect.NewRequest(&procrpc.StartRequest{
+		Process: &procrpc.ProcessConfig{Cmd: "/bin/sh", Args: []string{"-c", "head -c 33554432 /dev/urandom; exit 7"}},
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, end, err := receiveStdout(stream, func() *procrpc.ProcessEvent { return stream.Msg().GetEvent() }, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != size {
+		t.Errorf("a slow reader got %d bytes, want %d", got, size)
+	}
+	if end == nil || end.GetExitCode() != 7 {
+		t.Errorf("end = %+v, want exit code 7", end)
+	}
+}
+
+func TestStalledReaderBlocksTheProcessUntilItLeaves(t *testing.T) {
+	ts := testServer(t, Options{})
+	c := procClient(t, ts, "")
+	marker := filepath.Join(t.TempDir(), "done")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stream, err := c.Start(ctx, connect.NewRequest(&procrpc.StartRequest{
+		Process: &procrpc.ProcessConfig{Cmd: "/bin/sh", Args: []string{"-c", "head -c 33554432 /dev/urandom; touch " + marker}},
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 4 && stream.Receive(); i++ {
+	}
+
+	time.Sleep(time.Second)
+	if _, err := os.Stat(marker); err == nil {
+		t.Fatal("the process finished while its only reader had stopped reading; output was dropped")
+	}
+
+	cancel()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if _, err := os.Stat(marker); err == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the process stayed blocked after its reader left")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestProcessWithoutReadersDoesNotBlock(t *testing.T) {
+	ts := testServer(t, Options{})
+	c := procClient(t, ts, "")
+	marker := filepath.Join(t.TempDir(), "done")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	stream, err := c.Start(ctx, connect.NewRequest(&procrpc.StartRequest{
+		Process: &procrpc.ProcessConfig{Cmd: "/bin/sh", Args: []string{"-c", "sleep 0.5; head -c 33554432 /dev/zero; touch " + marker}},
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !stream.Receive() || stream.Msg().GetEvent().GetStart() == nil {
+		t.Fatalf("want a start event first, err %v", stream.Err())
+	}
+	cancel()
+
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if _, err := os.Stat(marker); err == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("a process with no reader attached blocked on its output")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestTwoReadersBothGetEveryByte(t *testing.T) {
+	ts := testServer(t, Options{})
+	c := procClient(t, ts, "")
+	const size = 16 << 20
+
+	start, err := c.Start(context.Background(), connect.NewRequest(&procrpc.StartRequest{
+		Process: &procrpc.ProcessConfig{Cmd: "/bin/sh", Args: []string{"-c", "sleep 1; head -c 16777216 /dev/urandom; exit 3"}},
+		Tag:     strPtr("tworeaders"),
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !start.Receive() || start.Msg().GetEvent().GetStart() == nil {
+		t.Fatalf("want a start event first, err %v", start.Err())
+	}
+	attached, err := c.Connect(context.Background(), connect.NewRequest(&procrpc.ConnectRequest{
+		Process: &procrpc.ProcessSelector{Selector: &procrpc.ProcessSelector_Tag{Tag: "tworeaders"}},
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type result struct {
+		got  int
+		end  *procrpc.ProcessEvent_EndEvent
+		err  error
+		name string
+	}
+	results := make(chan result, 2)
+	go func() {
+		got, end, err := receiveStdout(start, func() *procrpc.ProcessEvent { return start.Msg().GetEvent() }, 0)
+		results <- result{got, end, err, "start"}
+	}()
+	go func() {
+		got, end, err := receiveStdout(attached, func() *procrpc.ProcessEvent { return attached.Msg().GetEvent() }, 100)
+		results <- result{got, end, err, "connect"}
+	}()
+	for i := 0; i < 2; i++ {
+		r := <-results
+		if r.err != nil || r.got != size || r.end == nil || r.end.GetExitCode() != 3 {
+			t.Errorf("%s reader: got %d bytes, end %+v, err %v; want %d bytes and exit 3", r.name, r.got, r.end, r.err, size)
+		}
+	}
+}
+
+func TestPumpSendsTheRetainedEndWhenTheStreamClosesWithoutIt(t *testing.T) {
+	events := make(chan *procrpc.ProcessEvent)
+	close(events)
+	var sent []*procrpc.ProcessEvent
+
+	err := (&processService{}).pump(context.Background(), http.Header{}, events,
+		func(ev *procrpc.ProcessEvent) error {
+			sent = append(sent, ev)
+
+			return nil
+		},
+		func() *procrpc.ProcessEvent_EndEvent { return &procrpc.ProcessEvent_EndEvent{ExitCode: 9} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sent) != 1 || sent[0].GetEnd().GetExitCode() != 9 {
+		t.Fatalf("want the retained end (exit 9) sent once, got %v", sent)
+	}
+}
+
 func TestHealthRequiresTokenAndReturns204(t *testing.T) {
 	ts := testServer(t, Options{ControlToken: "sbxt_secret"})
 

@@ -27,15 +27,26 @@ const (
 	pipeReadChunk    = 32 * 1024
 )
 
+type subscriber struct {
+	ch   chan *rpc.ProcessEvent
+	done chan struct{}
+	once sync.Once
+}
+
+func (s *subscriber) cancel() {
+	s.once.Do(func() { close(s.done) })
+}
+
+// A send blocks until every reader takes the event or unsubscribes, so slow readers pace the process.
 type broadcaster struct {
 	mu     sync.Mutex
-	subs   map[int]chan *rpc.ProcessEvent
+	subs   map[int]*subscriber
 	nextID int
 	closed bool
 }
 
 func newBroadcaster() *broadcaster {
-	return &broadcaster{subs: make(map[int]chan *rpc.ProcessEvent)}
+	return &broadcaster{subs: make(map[int]*subscriber)}
 }
 
 func (b *broadcaster) subscribe() (int, <-chan *rpc.ProcessEvent, bool) {
@@ -46,18 +57,19 @@ func (b *broadcaster) subscribe() (int, <-chan *rpc.ProcessEvent, bool) {
 	}
 	id := b.nextID
 	b.nextID++
-	ch := make(chan *rpc.ProcessEvent, outputBufferSize)
-	b.subs[id] = ch
+	sub := &subscriber{ch: make(chan *rpc.ProcessEvent, outputBufferSize), done: make(chan struct{})}
+	b.subs[id] = sub
 
-	return id, ch, true
+	return id, sub.ch, true
 }
 
 func (b *broadcaster) unsubscribe(id int) {
 	b.mu.Lock()
-	defer b.mu.Unlock()
-	if ch, ok := b.subs[id]; ok {
-		delete(b.subs, id)
-		close(ch)
+	sub, ok := b.subs[id]
+	delete(b.subs, id)
+	b.mu.Unlock()
+	if ok {
+		sub.cancel()
 	}
 }
 
@@ -67,20 +79,25 @@ func (b *broadcaster) send(ev *rpc.ProcessEvent) {
 
 func (b *broadcaster) sendFunc(build func() *rpc.ProcessEvent) {
 	b.mu.Lock()
-	defer b.mu.Unlock()
-	if len(b.subs) == 0 {
+	subs := make([]*subscriber, 0, len(b.subs))
+	for _, sub := range b.subs {
+		subs = append(subs, sub)
+	}
+	b.mu.Unlock()
+	if len(subs) == 0 {
 		return
 	}
 
 	ev := build()
-	for _, ch := range b.subs {
+	for _, sub := range subs {
 		select {
-		case ch <- ev:
-		default:
+		case sub.ch <- ev:
+		case <-sub.done:
 		}
 	}
 }
 
+// Only call once no send can be in flight: after the output pumps and the End send return.
 func (b *broadcaster) close() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -88,9 +105,9 @@ func (b *broadcaster) close() {
 		return
 	}
 	b.closed = true
-	for id, ch := range b.subs {
+	for id, sub := range b.subs {
 		delete(b.subs, id)
-		close(ch)
+		close(sub.ch)
 	}
 }
 
