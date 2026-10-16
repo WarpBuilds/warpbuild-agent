@@ -328,6 +328,43 @@ func TestRenderConfig_InternalPipelineHasNoPromotion(t *testing.T) {
 		"our own pipeline keeps the clean resource model")
 }
 
+func TestRenderConfig_DefaultMetricsIntervalAddsNoFilter(t *testing.T) {
+	for _, seconds := range []int{0, 1} {
+		export := testExportConfig()
+		export.MetricsIntervalSeconds = seconds
+		got := renderConfig(t, newTestManager(t, export))
+
+		assert.NotContainsf(t, got, "filter/customer_interval", "%ds must render today's config", seconds)
+		assert.Contains(t, got, "processors: [resource/customer, transform/customer_labels]")
+	}
+}
+
+func TestRenderConfig_MetricsIntervalFiltersOnlyTheCustomerCopy(t *testing.T) {
+	export := testExportConfig()
+	export.MetricsIntervalSeconds = 60
+	tm := newTestManager(t, export)
+	got := renderConfig(t, tm)
+
+	assert.Contains(t, got, "'UnixSeconds(time) - (UnixSeconds(time) / 60) * 60 != 0'")
+	assert.Contains(t, got, "processors: [filter/customer_interval, resource/customer, transform/customer_labels]")
+
+	internal := got[strings.Index(got, "receivers: [hostmetrics]"):]
+	internal = internal[:strings.Index(internal, "exporters: [otlphttp, forward/customer_metrics]")]
+	assert.NotContains(t, internal, "filter/customer_interval", "our own pipeline stays at 1s")
+
+	validateWithCollector(t, tm)
+}
+
+func TestRenderConfig_MetricsIntervalIgnoredWithoutMetricsExport(t *testing.T) {
+	export := testExportConfig()
+	export.MetricsEndpoint = ""
+	export.MetricsIntervalSeconds = 60
+	tm := newTestManager(t, export)
+
+	assert.NotContains(t, renderConfig(t, tm), "filter/customer_interval")
+	validateWithCollector(t, tm)
+}
+
 func TestRenderConfig_PercentScaledMetricsDeclarePercentUnit(t *testing.T) {
 	got := renderConfig(t, newTestManager(t, testExportConfig()))
 

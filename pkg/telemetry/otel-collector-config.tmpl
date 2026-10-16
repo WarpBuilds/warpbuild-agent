@@ -359,6 +359,14 @@ processors:
 {{- range $key := .ExportDatapointAttrs}}
           - set(attributes[{{yamlStr $key}}], resource.attributes[{{yamlStr $key}}]) where resource.attributes[{{yamlStr $key}}] != nil
 {{- end}}
+{{- if and .ExportMetrics (gt .ExportMetricsInterval 1)}}
+
+  filter/customer_interval:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'UnixSeconds(time) - (UnixSeconds(time) / {{.ExportMetricsInterval}}) * {{.ExportMetricsInterval}} != 0'
+{{- end}}
 {{- end}}
 
 {{- if or .ExportMetrics .ExportLogs}}
@@ -516,6 +524,6 @@ service:
 {{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]
-      processors: [resource/customer, transform/customer_labels]
+      processors: [{{if gt .ExportMetricsInterval 1}}filter/customer_interval, {{end}}resource/customer, transform/customer_labels]
       exporters: [otlphttp/customer_metrics]
 {{- end}}

@@ -45,6 +45,25 @@ func TestExportConfigFrom(t *testing.T) {
 	}
 }
 
+func TestExportConfigFrom_MetricsInterval(t *testing.T) {
+	cases := map[int32]int{0: 1, 1: 1, 5: 5, 10: 10, 15: 15, 30: 30, 60: 60, 7: 1, -5: 1, 120: 1}
+	for in, want := range cases {
+		api := apiExport("https://x.example.com/v1/metrics")
+		if in != 0 {
+			api.SetMetricsIntervalSeconds(in)
+		}
+		assert.Equalf(t, want, exportConfigFrom(api).MetricsIntervalSeconds, "sent %d", in)
+	}
+}
+
+func TestExportConfigEqual_MetricsInterval(t *testing.T) {
+	a, b := testExportConfig(), testExportConfig()
+	require.True(t, a.equal(b))
+
+	b.MetricsIntervalSeconds = 60
+	assert.False(t, a.equal(b), "an interval change has to re-render the collector")
+}
+
 func TestExportConfigHeaderEnv(t *testing.T) {
 	cfg := testExportConfig()
 	env := cfg.headerEnv()

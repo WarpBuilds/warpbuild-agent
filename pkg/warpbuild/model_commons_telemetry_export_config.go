@@ -23,6 +23,7 @@ type CommonsTelemetryExportConfig struct {
 	Headers *map[string]string `json:"headers,omitempty"`
 	LogsEndpoint *string `json:"logs_endpoint,omitempty"`
 	MetricsEndpoint *string `json:"metrics_endpoint,omitempty"`
+	MetricsIntervalSeconds *int32 `json:"metrics_interval_seconds,omitempty"`
 	ResourceAttrs *map[string]string `json:"resource_attrs,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
@@ -142,6 +143,38 @@ func (o *CommonsTelemetryExportConfig) SetMetricsEndpoint(v string) {
 	o.MetricsEndpoint = &v
 }
 
+// GetMetricsIntervalSeconds returns the MetricsIntervalSeconds field value if set, zero value otherwise.
+func (o *CommonsTelemetryExportConfig) GetMetricsIntervalSeconds() int32 {
+	if o == nil || IsNil(o.MetricsIntervalSeconds) {
+		var ret int32
+		return ret
+	}
+	return *o.MetricsIntervalSeconds
+}
+
+// GetMetricsIntervalSecondsOk returns a tuple with the MetricsIntervalSeconds field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CommonsTelemetryExportConfig) GetMetricsIntervalSecondsOk() (*int32, bool) {
+	if o == nil || IsNil(o.MetricsIntervalSeconds) {
+		return nil, false
+	}
+	return o.MetricsIntervalSeconds, true
+}
+
+// HasMetricsIntervalSeconds returns a boolean if a field has been set.
+func (o *CommonsTelemetryExportConfig) HasMetricsIntervalSeconds() bool {
+	if o != nil && !IsNil(o.MetricsIntervalSeconds) {
+		return true
+	}
+
+	return false
+}
+
+// SetMetricsIntervalSeconds gets a reference to the given int32 and assigns it to the MetricsIntervalSeconds field.
+func (o *CommonsTelemetryExportConfig) SetMetricsIntervalSeconds(v int32) {
+	o.MetricsIntervalSeconds = &v
+}
+
 // GetResourceAttrs returns the ResourceAttrs field value if set, zero value otherwise.
 func (o *CommonsTelemetryExportConfig) GetResourceAttrs() map[string]string {
 	if o == nil || IsNil(o.ResourceAttrs) {
@@ -193,6 +226,9 @@ func (o CommonsTelemetryExportConfig) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.MetricsEndpoint) {
 		toSerialize["metrics_endpoint"] = o.MetricsEndpoint
 	}
+	if !IsNil(o.MetricsIntervalSeconds) {
+		toSerialize["metrics_interval_seconds"] = o.MetricsIntervalSeconds
+	}
 	if !IsNil(o.ResourceAttrs) {
 		toSerialize["resource_attrs"] = o.ResourceAttrs
 	}
@@ -221,6 +257,7 @@ func (o *CommonsTelemetryExportConfig) UnmarshalJSON(bytes []byte) (err error) {
 		delete(additionalProperties, "headers")
 		delete(additionalProperties, "logs_endpoint")
 		delete(additionalProperties, "metrics_endpoint")
+		delete(additionalProperties, "metrics_interval_seconds")
 		delete(additionalProperties, "resource_attrs")
 		o.AdditionalProperties = additionalProperties
 	}
