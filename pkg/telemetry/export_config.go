@@ -3,6 +3,7 @@ package telemetry
 import (
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -39,13 +40,18 @@ func escapeExpansionKeys(in map[string]string) map[string]string {
 
 const (
 	exportHeaderEnvPrefix = "WARPBUILD_OTLP_HEADER_"
+
+	defaultExportMetricsIntervalSeconds = 1
 )
 
+var exportMetricsIntervals = []int{1, 5, 10, 15, 30, 60}
+
 type exportConfig struct {
-	MetricsEndpoint string
-	LogsEndpoint    string
-	Headers         map[string]string
-	ResourceAttrs   map[string]string
+	MetricsEndpoint        string
+	LogsEndpoint           string
+	Headers                map[string]string
+	ResourceAttrs          map[string]string
+	MetricsIntervalSeconds int
 }
 
 func (e *exportConfig) exportsMetrics() bool { return e != nil && e.MetricsEndpoint != "" }
@@ -56,6 +62,7 @@ func (e *exportConfig) equal(o *exportConfig) bool {
 	}
 	return e.MetricsEndpoint == o.MetricsEndpoint &&
 		e.LogsEndpoint == o.LogsEndpoint &&
+		e.MetricsIntervalSeconds == o.MetricsIntervalSeconds &&
 		maps.Equal(e.Headers, o.Headers) &&
 		maps.Equal(e.ResourceAttrs, o.ResourceAttrs)
 }
@@ -66,15 +73,23 @@ func exportConfigFrom(in *warpbuild.CommonsTelemetryExportConfig) *exportConfig 
 		return nil
 	}
 	out := &exportConfig{
-		MetricsEndpoint: in.GetMetricsEndpoint(),
-		LogsEndpoint:    in.GetLogsEndpoint(),
-		Headers:         in.GetHeaders(),
-		ResourceAttrs:   in.GetResourceAttrs(),
+		MetricsEndpoint:        in.GetMetricsEndpoint(),
+		LogsEndpoint:           in.GetLogsEndpoint(),
+		Headers:                in.GetHeaders(),
+		ResourceAttrs:          in.GetResourceAttrs(),
+		MetricsIntervalSeconds: exportMetricsInterval(in.GetMetricsIntervalSeconds()),
 	}
 	if !out.exportsMetrics() && !out.exportsLogs() {
 		return nil
 	}
 	return out
+}
+
+func exportMetricsInterval(seconds int32) int {
+	if slices.Contains(exportMetricsIntervals, int(seconds)) {
+		return int(seconds)
+	}
+	return defaultExportMetricsIntervalSeconds
 }
 
 func (e *exportConfig) headerEnv() map[string]string {

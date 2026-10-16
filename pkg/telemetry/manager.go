@@ -402,6 +402,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		ExportHeaderEnv       map[string]string
 		ExportResourceAttrs   map[string]string
 		ExportDatapointAttrs  []string
+		ExportMetricsInterval int
 	}{
 		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
 		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
@@ -424,6 +425,7 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
 		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
 		data.ExportDatapointAttrs = datapointLabelAttrs(export.ResourceAttrs)
+		data.ExportMetricsInterval = export.MetricsIntervalSeconds
 	}
 
 	data.LogsExporters = exporterList(
