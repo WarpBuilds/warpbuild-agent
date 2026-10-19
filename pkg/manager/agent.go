@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -15,9 +14,6 @@ import (
 
 const (
 	Interval = 1 * time.Second
-	// Until the backend answers the first poll, a request with no response is retried this often, this many times.
-	firstPollRetryInterval = 250 * time.Millisecond
-	firstPollRetryLimit    = 40
 )
 
 type StartAgentOptions struct {
@@ -58,9 +54,6 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 
 	cfg.Servers[0].URL = opts.HostURL
 	cfg.UserAgent = "warpbuild-agent"
-	// Only the allocation poll uses this client. 60 s: the backend's first-poll handler does a Nomad
-	// lookup with no deadline, so a legitimate answer can take well over 15 s; a dead connection still gets cut.
-	cfg.HTTPClient = &http.Client{Timeout: 60 * time.Second}
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
@@ -101,12 +94,8 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 	ticker := time.NewTicker(Interval)
 	defer ticker.Stop()
-	// Poll at once. Until the backend has answered (a non-nil response), a request with no response is
-	// retried every firstPollRetryInterval, at most firstPollRetryLimit times; then the ticker cadence applies.
+	// poll at once, then on the ticker
 	var next <-chan time.Time = time.After(0)
-	answered := false
-	fastRetries := 0
-	fastRetriesDone := false
 	for {
 		select {
 		case <-next:
@@ -125,21 +114,10 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
-			if resp != nil && !answered {
-				answered = true
-				ticker.Reset(Interval) // a tick may be due from the fast retries; the next poll waits a full Interval
-			}
 			if err != nil {
 				// get url from resp
 				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
 				log.Logger().Errorf("Response: %+v", resp)
-				if !answered && fastRetries < firstPollRetryLimit {
-					fastRetries++
-					next = time.After(firstPollRetryInterval)
-				} else if !answered && !fastRetriesDone {
-					fastRetriesDone = true
-					ticker.Reset(Interval) // same stale tick as above, once
-				}
 				continue
 			}
 
