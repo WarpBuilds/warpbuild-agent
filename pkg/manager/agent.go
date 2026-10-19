@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -14,6 +15,10 @@ import (
 
 const (
 	Interval = 1 * time.Second
+	// Until the backend has answered the first allocation poll, a request
+	// that gets no response is retried this often, at most this many times.
+	firstPollRetryInterval = 250 * time.Millisecond
+	firstPollRetryLimit    = 40
 )
 
 type StartAgentOptions struct {
@@ -54,6 +59,9 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 
 	cfg.Servers[0].URL = opts.HostURL
 	cfg.UserAgent = "warpbuild-agent"
+	// This client only serves the allocation poll. Without a timeout a
+	// dropped connection stalls polling until the kernel gives up on it.
+	cfg.HTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
@@ -93,9 +101,19 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 	}
 
 	ticker := time.NewTicker(Interval)
+	defer ticker.Stop()
+	// Poll at once instead of after the first tick. Until the backend has
+	// answered once (any HTTP status), a request that gets no response is
+	// retried every firstPollRetryInterval, at most firstPollRetryLimit
+	// times: at network.target the VM's address can still be a few hundred
+	// ms from configured. After the first answer the ticker cadence applies.
+	var next <-chan time.Time = time.After(0)
+	answered := false
+	fastRetries := 0
 	for {
 		select {
-		case <-ticker.C:
+		case <-next:
+			next = ticker.C
 
 			if err := a.verifyExitFile(); err != nil {
 				log.Logger().Errorf("exit file verification failed: %v", err)
@@ -110,10 +128,17 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
+			if resp != nil {
+				answered = true
+			}
 			if err != nil {
 				// get url from resp
 				log.Logger().Errorf("failed to get runner instance allocation details: %v", err)
 				log.Logger().Errorf("Response: %+v", resp)
+				if !answered && fastRetries < firstPollRetryLimit {
+					fastRetries++
+					next = time.After(firstPollRetryInterval)
+				}
 				continue
 			}
 
