@@ -132,9 +132,9 @@ func TestStartAgentReturnsWhenCancelledDuringRequest(t *testing.T) {
 
 	synctest.Test(t, func(t *testing.T) {
 		start := time.Now()
-		time.AfterFunc(time.Second, cancel)
+		time.AfterFunc(Interval/2, cancel) // not at a tick, where select may take the tick first
 		require.NoError(t, a.StartAgent(ctx, &StartAgentOptions{Manager: &ManagerOptions{Provider: ProviderGithub}}))
-		require.Equal(t, time.Second, time.Since(start))
+		require.Equal(t, Interval/2, time.Since(start))
 		require.Len(t, tr.requestTimes(), 1)
 	})
 }
