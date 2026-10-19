@@ -1,6 +1,10 @@
 [Unit]
 Description=Systemd service to manage warpbuild-agent lifecycle
-After=network.target
+DefaultDependencies=no
+After=network.target systemd-networkd.service systemd-resolved.service
+RequiresMountsFor=/runner /home/runner /var/lib/warpbuild-agentd
+Conflicts=shutdown.target
+Before=shutdown.target
 
 [Service]
 ExecStart=/usr/local/bin/warpbuild-agentd
