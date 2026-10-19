@@ -61,7 +61,10 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 	cfg.UserAgent = "warpbuild-agent"
 	// This client only serves the allocation poll. Without a timeout a
 	// dropped connection stalls polling until the kernel gives up on it.
-	cfg.HTTPClient = &http.Client{Timeout: 15 * time.Second}
+	// 60 s rather than something tighter: the backend captures node
+	// metadata inside the first poll, and that Nomad lookup carries no
+	// deadline, so a legitimate first answer can take well over 15 s.
+	cfg.HTTPClient = &http.Client{Timeout: 60 * time.Second}
 
 	wb := warpbuild.NewAPIClient(cfg)
 	return &agentImpl{
