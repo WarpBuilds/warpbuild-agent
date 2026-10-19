@@ -128,8 +128,12 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				GetRunnerInstanceAllocationDetails(ctx, a.id).
 				XPOLLINGSECRET(a.pollingSecret).
 				Execute()
-			if resp != nil {
+			if resp != nil && !answered {
 				answered = true
+				// The ticker kept running through the fast retries, so a
+				// tick may already be due; restart it so the next request
+				// comes a full Interval after this answer, not at once.
+				ticker.Reset(Interval)
 			}
 			if err != nil {
 				// get url from resp
@@ -138,6 +142,12 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				if !answered && fastRetries < firstPollRetryLimit {
 					fastRetries++
 					next = time.After(firstPollRetryInterval)
+				} else if !answered && fastRetries == firstPollRetryLimit {
+					// Fast retries used up without an answer: the same
+					// stale tick applies before falling back to the ticker.
+					// Counting past the limit makes this a one-time reset.
+					fastRetries++
+					ticker.Reset(Interval)
 				}
 				continue
 			}
