@@ -15,8 +15,7 @@ import (
 
 const (
 	Interval = 1 * time.Second
-	// Until the backend has answered the first allocation poll, a request
-	// that gets no response is retried this often, at most this many times.
+	// Until the backend answers the first poll, a request with no response is retried this often, this many times.
 	firstPollRetryInterval = 250 * time.Millisecond
 	firstPollRetryLimit    = 40
 )
@@ -59,11 +58,8 @@ func NewAgent(opts *AgentOptions) (IAgent, error) {
 
 	cfg.Servers[0].URL = opts.HostURL
 	cfg.UserAgent = "warpbuild-agent"
-	// This client only serves the allocation poll. Without a timeout a
-	// dropped connection stalls polling until the kernel gives up on it.
-	// 60 s rather than something tighter: the backend captures node
-	// metadata inside the first poll, and that Nomad lookup carries no
-	// deadline, so a legitimate first answer can take well over 15 s.
+	// Only the allocation poll uses this client. 60 s: the backend's first-poll handler does a Nomad
+	// lookup with no deadline, so a legitimate answer can take well over 15 s; a dead connection still gets cut.
 	cfg.HTTPClient = &http.Client{Timeout: 60 * time.Second}
 
 	wb := warpbuild.NewAPIClient(cfg)
@@ -105,14 +101,12 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 
 	ticker := time.NewTicker(Interval)
 	defer ticker.Stop()
-	// Poll at once instead of after the first tick. Until the backend has
-	// answered once (any HTTP status), a request that gets no response is
-	// retried every firstPollRetryInterval, at most firstPollRetryLimit
-	// times: at network.target the VM's address can still be a few hundred
-	// ms from configured. After the first answer the ticker cadence applies.
+	// Poll at once. Until the backend has answered (a non-nil response), a request with no response is
+	// retried every firstPollRetryInterval, at most firstPollRetryLimit times; then the ticker cadence applies.
 	var next <-chan time.Time = time.After(0)
 	answered := false
 	fastRetries := 0
+	fastRetriesDone := false
 	for {
 		select {
 		case <-next:
@@ -133,10 +127,7 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				Execute()
 			if resp != nil && !answered {
 				answered = true
-				// The ticker kept running through the fast retries, so a
-				// tick may already be due; restart it so the next request
-				// comes a full Interval after this answer, not at once.
-				ticker.Reset(Interval)
+				ticker.Reset(Interval) // a tick may be due from the fast retries; the next poll waits a full Interval
 			}
 			if err != nil {
 				// get url from resp
@@ -145,12 +136,9 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 				if !answered && fastRetries < firstPollRetryLimit {
 					fastRetries++
 					next = time.After(firstPollRetryInterval)
-				} else if !answered && fastRetries == firstPollRetryLimit {
-					// Fast retries used up without an answer: the same
-					// stale tick applies before falling back to the ticker.
-					// Counting past the limit makes this a one-time reset.
-					fastRetries++
-					ticker.Reset(Interval)
+				} else if !answered && !fastRetriesDone {
+					fastRetriesDone = true
+					ticker.Reset(Interval) // same stale tick as above, once
 				}
 				continue
 			}
