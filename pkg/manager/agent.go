@@ -93,13 +93,9 @@ func (a *agentImpl) StartAgent(ctx context.Context, opts *StartAgentOptions) err
 	}
 
 	ticker := time.NewTicker(Interval)
-	defer ticker.Stop()
-	// poll at once, then on the ticker
-	var next <-chan time.Time = time.After(0)
 	for {
 		select {
-		case <-next:
-			next = ticker.C
+		case <-ticker.C:
 
 			if err := a.verifyExitFile(); err != nil {
 				log.Logger().Errorf("exit file verification failed: %v", err)
