@@ -218,14 +218,12 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 	var elapsedTime time.Duration
 	var settings Settings
 	var foundSettings bool
-	// read the settings file at once, then every 200ms while it is absent
+	// read the settings file every 200ms
 	// the settings file might not be present at startup
 	ticker := time.NewTicker(200 * time.Millisecond)
-	var next <-chan time.Time = time.After(0)
 	for {
 		select {
-		case <-next:
-			next = ticker.C
+		case <-ticker.C:
 
 			log.Logger().Infof("checking for settings file at %s", opts.SettingsFile)
 			log.Logger().Infof("elapsed time: %v", elapsedTime)
@@ -265,7 +263,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			break
 		}
 	}
-	ticker.Stop()
 
 	settings.ApplyDefaults()
 
