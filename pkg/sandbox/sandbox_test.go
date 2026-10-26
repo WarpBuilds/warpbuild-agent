@@ -672,6 +672,39 @@ func TestUnauthorizedRequestWithAStalledBodyIsDropped(t *testing.T) {
 	}
 }
 
+func TestServerWideOptionsNeedsTheToken(t *testing.T) {
+	opts := Options{ControlToken: "sbxt_secret"}
+	opts.applyDefaults()
+	opts.GuestUser = ""
+	srv, err := newServer(opts)
+	if err != nil {
+		t.Fatalf("newServer: %v", err)
+	}
+	ts := httptest.NewUnstartedServer(nil)
+	ts.Config = newHTTPServer(srv.handler())
+	ts.Start()
+	t.Cleanup(ts.Close)
+
+	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if _, err := io.WriteString(conn, "OPTIONS * HTTP/1.1\r\nHost: sandbox\r\nContent-Length: 10\r\n\r\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	reply, err := io.ReadAll(conn)
+	if err != nil {
+		t.Fatalf("OPTIONS * without a token held the connection open (net/http answers it before tokenAuth unless DisableGeneralOptionsHandler is set): %v", err)
+	}
+	if !strings.HasPrefix(string(reply), "HTTP/1.1 401") {
+		t.Fatalf("reply = %q, want a 401", reply)
+	}
+}
+
 func TestHealthResponseClosesConnection(t *testing.T) {
 	ts := testServer(t, Options{})
 
