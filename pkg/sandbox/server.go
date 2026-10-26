@@ -84,9 +84,10 @@ func tlsConfig(opts Options) (*tls.Config, error) {
 
 func newHTTPServer(h http.Handler) *http.Server {
 	return &http.Server{
-		Handler:           h,
-		IdleTimeout:       idleTimeout,
-		ReadHeaderTimeout: readHeaderTimeout,
+		Handler:                      h,
+		IdleTimeout:                  idleTimeout,
+		ReadHeaderTimeout:            readHeaderTimeout,
+		DisableGeneralOptionsHandler: true,
 	}
 }
 
