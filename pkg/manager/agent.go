@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
-	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
@@ -32,13 +31,20 @@ type AgentOptions struct {
 	ExitFileLocation string `json:"exit_file_location"`
 	// WindowsOptions are options for the windows agent.
 	WindowsOptions *WindowsOptions `json:"windows_options"`
-	// TransparentCacheOginyPort is the port for the transparent cache oginy server.
-	TransparentCacheOginyPort int `json:"transparent_cache_oginy_port"`
-	TelemetryPort             int `json:"telemetry_port"`
+	// TransparentCache is nil when transparent cache is off for this VM.
+	TransparentCache *TransparentCacheOptions `json:"transparent_cache"`
+	TelemetryPort    int                      `json:"telemetry_port"`
 	// CacheBackendHost + RunnerVerificationToken let a claude agent upload its deliverables to
 	// backend-cache (via the node warp-cache client).
 	CacheBackendHost        string `json:"cache_backend_host"`
 	RunnerVerificationToken string `json:"runner_verification_token"`
+}
+
+type TransparentCacheOptions struct {
+	// SettingsFile is passed to the cache server, which the agent starts as its own child.
+	SettingsFile     string `json:"settings_file"`
+	Port             int    `json:"port"`
+	GitHubResultsURL string `json:"github_results_url"`
 }
 
 type WindowsOptions struct {
@@ -176,15 +182,6 @@ func (a *agentImpl) handleGithubAllocation(ctx context.Context, opts *StartAgent
 				Key:   key,
 				Value: val,
 			})
-		}
-	}
-
-	// Read WARPBUILD_TRANSPARENT_CACHE_ENABLED and if it is true, then start the transparent cache server
-	if (*allocationDetails.GhRunnerApplicationDetails.Variables)["WARPBUILD_TRANSPARENT_CACHE_ENABLED"] == "true" {
-		log.Logger().Infof("Starting transparent cache server")
-		if err := transparentcache.SetupNetworking(a.opts.TransparentCacheOginyPort); err != nil {
-			log.Logger().Errorf("failed to configure networking for transparent cache: %v", err)
-			return err
 		}
 	}
 

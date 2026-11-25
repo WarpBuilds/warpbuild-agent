@@ -166,4 +166,39 @@ if [ -n "$byoc_pre_hook" ]; then
     echo "User-defined pre-hook completed successfully."
 fi
 
+# Transparent cache: point the job's cache calls at the cache server on this VM.
+# The agent sets the marker only when it has patched the runner, so this does nothing on a stock
+# runner. It runs in a subshell and can never fail the job.
+transparent_cache_setup() {
+    local marker="$WARPBUILD_TRANSPARENT_CACHE_MARKER"
+    [ -n "$marker" ] && [ -f "$marker" ] || return 0
+
+    local port address github_url worker_log
+    port=$(sed -n 's/^port=//p' "$marker")
+    address=$(sed -n 's/^address=//p' "$marker")
+
+    # GitHub's real address is in the runner's newest Worker log. Match the whole line, because the
+    # same text can appear inside the workflow's own script. Try for up to 2 seconds.
+    for _ in 1 2 3 4; do
+        worker_log=$(ls -t "$(dirname "$marker")"/_diag/Worker_*.log 2>/dev/null | head -1)
+        github_url=$(sed -nE 's/^[[:space:]]*"ResultsServiceUrl": "(https?:\/\/[^"]*)",?[[:space:]]*$/\1/p' "$worker_log" 2>/dev/null | head -1)
+        [ -n "$github_url" ] && break
+        sleep 0.5
+    done
+    [ -n "$github_url" ] || github_url=$(sed -n 's/^github_results_url=//p' "$marker")
+    if [ -z "$github_url" ]; then
+        echo "::warning::WarpBuild cache: could not find GitHub's results address. Cache and artifact steps may fail."
+        return 0
+    fi
+
+    if curl -fsS -m 5 -X POST --data "$github_url" "http://127.0.0.1:$port/_warpbuild/ready" >/dev/null 2>&1; then
+        echo "ACTIONS_RESULTS_URL=http://$address:$port/" >> "$GITHUB_ENV"
+        echo "WarpBuild cache is on for this job."
+    else
+        echo "ACTIONS_RESULTS_URL=$github_url" >> "$GITHUB_ENV"
+        echo "::warning::WarpBuild cache is not available for this job. Using GitHub's cache."
+    fi
+}
+( transparent_cache_setup ) || true
+
 echo -e "\nPrehook for WarpBuild runner instance '$RUNNER_NAME' completed successfully."
