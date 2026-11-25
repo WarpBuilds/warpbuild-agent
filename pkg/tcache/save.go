@@ -77,9 +77,20 @@ func (s *server) callBackend(ctx context.Context, path string, in, out any) erro
 		return err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("backend-cache %s failed with status %d: %s", path, resp.StatusCode, data)
+		return &backendError{path: path, status: resp.StatusCode, body: string(data)}
 	}
 	return json.Unmarshal(data, out)
+}
+
+// backendError is a reply from backend-cache with a failure status.
+type backendError struct {
+	path   string
+	status int
+	body   string
+}
+
+func (e *backendError) Error() string {
+	return fmt.Sprintf("backend-cache %s failed with status %d: %s", e.path, e.status, e.body)
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
