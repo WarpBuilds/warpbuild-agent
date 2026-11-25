@@ -3,15 +3,13 @@ package uploader
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
+	"github.com/warpbuilds/warpbuild-agent/pkg/redact"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
@@ -121,7 +119,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", redactURLError(err))
+		return fmt.Errorf("failed to create HTTP request: %w", redact.URLError(err))
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
@@ -132,7 +130,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to execute HTTP request: %w", redactURLError(err))
+		return fmt.Errorf("failed to execute HTTP request: %w", redact.URLError(err))
 	}
 	defer resp.Body.Close()
 
@@ -179,16 +177,6 @@ func (s *S3Uploader) refreshPresignedURL() error {
 
 	log.Logger().Debugf("Refreshed presigned URL for event type: %s", eventType)
 	return nil
-}
-
-// redactURLError removes the presigned query (signature and token) from a *url.Error.
-func redactURLError(err error) error {
-	if urlErr, ok := errors.AsType[*url.Error](err); ok {
-		if base, _, found := strings.Cut(urlErr.URL, "?"); found {
-			urlErr.URL = base + "?REDACTED"
-		}
-	}
-	return err
 }
 
 // GetUploadChannel returns the upload channel for external use

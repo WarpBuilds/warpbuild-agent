@@ -15,6 +15,8 @@ import (
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
+
+	"github.com/warpbuilds/warpbuild-agent/pkg/redact"
 )
 
 var cacheStore = sync.Map{}
@@ -181,7 +183,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) error {
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3PresignedURL, contentReader)
 		if err != nil {
-			return fmt.Errorf("failed to create S3 request: %w", err)
+			return fmt.Errorf("failed to create S3 request: %w", redact.URLError(err))
 		}
 		req.Header.Set("Content-Type", "application/octet-stream")
 		req.ContentLength = totalSize
@@ -192,7 +194,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) error {
 		}
 
 		if err != nil {
-			return err
+			return redact.URLError(err)
 		}
 
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
@@ -251,7 +253,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) error {
 		contentReader, totalSize := NewUnorderedChunkReader(cacheEntry.Chunks)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPut, cacheEntry.BackendReserveResponse.AzureBlob.PreSignedURL, contentReader)
 		if err != nil {
-			return fmt.Errorf("failed to create Azure Blob request: %w", err)
+			return fmt.Errorf("failed to create Azure Blob request: %w", redact.URLError(err))
 		}
 		req.Header.Set("Content-Type", "application/octet-stream")
 		req.Header.Set("x-ms-blob-type", "BlockBlob")
@@ -263,7 +265,7 @@ func uploadToBlobStorage(ctx context.Context, cacheID int) error {
 		}
 
 		if err != nil {
-			return err
+			return redact.URLError(err)
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
