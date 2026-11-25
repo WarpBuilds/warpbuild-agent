@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -20,9 +21,19 @@ import (
 
 type Options struct {
 	Port int
+	// CacheBackendHost and AuthToken are used to call backend-cache.
+	CacheBackendHost string
+	AuthToken        string
 }
 
 type server struct {
+	opts   Options
+	client *http.Client
+
+	entries  sync.Map // upload id -> *entry
+	entryIDs sync.Map // key + version -> upload id
+	saved    atomic.Int64
+
 	// githubURL is GitHub's real results address for this job. The job hook sets it once.
 	githubURL atomic.Pointer[url.URL]
 }
@@ -36,14 +47,20 @@ func ListenHost() string {
 	return ""
 }
 
-func Start(ctx context.Context, opts Options) error {
-	s := &server{}
+func newHandler(opts Options) http.Handler {
+	s := &server{opts: opts, client: &http.Client{}}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /_warpbuild/ready", s.ready)
+	mux.HandleFunc("POST "+twirpPrefix+"CreateCacheEntry", s.createEntry)
+	mux.HandleFunc("POST "+twirpPrefix+"FinalizeCacheEntryUpload", s.finalizeEntry)
+	mux.HandleFunc("PUT /devstoreaccount1/upload/{id}", s.upload)
 	mux.HandleFunc("/", s.forward)
+	return mux
+}
 
-	srv := &http.Server{Addr: net.JoinHostPort(ListenHost(), strconv.Itoa(opts.Port)), Handler: mux}
+func Start(ctx context.Context, opts Options) error {
+	srv := &http.Server{Addr: net.JoinHostPort(ListenHost(), strconv.Itoa(opts.Port)), Handler: newHandler(opts)}
 	go func() {
 		<-ctx.Done()
 		srv.Close()

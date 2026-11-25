@@ -317,7 +317,11 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			return errors.New("transparent cache settings not configured")
 		}
 
-		if err := tcache.Start(ctx, tcache.Options{Port: settings.TransparentCache.Port}); err != nil {
+		if err := tcache.Start(ctx, tcache.Options{
+			Port:             settings.TransparentCache.Port,
+			CacheBackendHost: settings.Proxy.CacheBackendHost,
+			AuthToken:        settings.Agent.RunnerVerificationToken,
+		}); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)
 			return err
 		}
