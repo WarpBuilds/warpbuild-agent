@@ -3,9 +3,10 @@ package uploader
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -119,7 +120,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", err)
+		return fmt.Errorf("failed to create HTTP request: %w", redactURLError(err))
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
@@ -130,7 +131,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to execute HTTP request: %w", err)
+		return fmt.Errorf("failed to execute HTTP request: %w", redactURLError(err))
 	}
 	defer resp.Body.Close()
 
@@ -169,13 +170,7 @@ func (s *S3Uploader) refreshPresignedURL() error {
 		return fmt.Errorf("empty response from presigned URL API")
 	}
 
-	// Read and log response body for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Logger().Errorf("Error reading response body: %v", err)
-	}
-	log.Logger().Debugf("Response body: %s", string(body))
-
+	// Do not log the response body: it contains the presigned URL.
 	if out == nil || out.Url == nil {
 		return fmt.Errorf("no URL received in response")
 	}
@@ -184,6 +179,31 @@ func (s *S3Uploader) refreshPresignedURL() error {
 
 	log.Logger().Debugf("Refreshed presigned URL for event type: %s", eventType)
 	return nil
+}
+
+// redactURLError removes the query string from the URL in a *url.Error.
+// net/http and net/url put the full request URL in their errors, and the
+// query of a presigned URL holds its signature and session token.
+func redactURLError(err error) error {
+	if urlErr, ok := errors.AsType[*url.Error](err); ok {
+		urlErr.URL = redactURL(urlErr.URL)
+	}
+	return err
+}
+
+// redactURL keeps the scheme, host and path of rawURL and replaces the
+// query. If rawURL cannot be parsed, it returns a fixed placeholder.
+func redactURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "REDACTED"
+	}
+	u.User = nil
+	u.Fragment = ""
+	if u.RawQuery != "" {
+		u.RawQuery = "REDACTED"
+	}
+	return u.String()
 }
 
 // GetUploadChannel returns the upload channel for external use
