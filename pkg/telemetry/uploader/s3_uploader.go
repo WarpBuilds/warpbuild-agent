@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
+	"github.com/warpbuilds/warpbuild-agent/pkg/redact"
 	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
@@ -119,7 +119,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	req, err := http.NewRequest("PUT", presignedURL, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", err)
+		return fmt.Errorf("failed to create HTTP request: %w", redact.URLError(err))
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
@@ -130,7 +130,7 @@ func (s *S3Uploader) uploadToS3(data []byte) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to execute HTTP request: %w", err)
+		return fmt.Errorf("failed to execute HTTP request: %w", redact.URLError(err))
 	}
 	defer resp.Body.Close()
 
@@ -168,13 +168,6 @@ func (s *S3Uploader) refreshPresignedURL() error {
 	if resp == nil || resp.Body == nil {
 		return fmt.Errorf("empty response from presigned URL API")
 	}
-
-	// Read and log response body for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Logger().Errorf("Error reading response body: %v", err)
-	}
-	log.Logger().Debugf("Response body: %s", string(body))
 
 	if out == nil || out.Url == nil {
 		return fmt.Errorf("no URL received in response")
