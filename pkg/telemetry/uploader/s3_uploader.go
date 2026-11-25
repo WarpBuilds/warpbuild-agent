@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -170,7 +171,6 @@ func (s *S3Uploader) refreshPresignedURL() error {
 		return fmt.Errorf("empty response from presigned URL API")
 	}
 
-	// Do not log the response body: it contains the presigned URL.
 	if out == nil || out.Url == nil {
 		return fmt.Errorf("no URL received in response")
 	}
@@ -181,29 +181,14 @@ func (s *S3Uploader) refreshPresignedURL() error {
 	return nil
 }
 
-// redactURLError removes the query string from the URL in a *url.Error.
-// net/http and net/url put the full request URL in their errors, and the
-// query of a presigned URL holds its signature and session token.
+// redactURLError removes the presigned query (signature and token) from a *url.Error.
 func redactURLError(err error) error {
 	if urlErr, ok := errors.AsType[*url.Error](err); ok {
-		urlErr.URL = redactURL(urlErr.URL)
+		if base, _, found := strings.Cut(urlErr.URL, "?"); found {
+			urlErr.URL = base + "?REDACTED"
+		}
 	}
 	return err
-}
-
-// redactURL keeps the scheme, host and path of rawURL and replaces the
-// query. If rawURL cannot be parsed, it returns a fixed placeholder.
-func redactURL(rawURL string) string {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "REDACTED"
-	}
-	u.User = nil
-	u.Fragment = ""
-	if u.RawQuery != "" {
-		u.RawQuery = "REDACTED"
-	}
-	return u.String()
 }
 
 // GetUploadChannel returns the upload channel for external use
