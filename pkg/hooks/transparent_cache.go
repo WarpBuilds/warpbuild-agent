@@ -15,8 +15,9 @@ import (
 
 const TRANSPARENT_CACHE_HOOK = "TRANSPARENT_CACHE_HOOK"
 
-// TransparentCacheMarkerEnv tells the job hook (prerun.sh) where the marker file is.
-const TransparentCacheMarkerEnv = "WARPBUILD_TRANSPARENT_CACHE_MARKER"
+// The marker file sits next to the job hook (prerun.sh), which reads it. It exists only when the
+// agent has patched the runner.
+const transparentCacheMarker = ".warpbuild-transparent-cache"
 
 type TransparentCacheHook struct{}
 
@@ -35,19 +36,46 @@ func (*TransparentCacheHook) HookID() string {
 // It never returns an error: if anything fails the runner starts stock and uses GitHub's cache.
 func (*TransparentCacheHook) PreStartHook(ctx context.Context, opts *manager.PreStartHookOptions) error {
 	tc := opts.StartRunnerOptions.AgentOptions.TransparentCache
-	if tc == nil || opts.ManagerOptions.Github == nil {
+	if tc == nil {
 		return nil
 	}
-	runnerDir := opts.ManagerOptions.Github.RunnerDir
+	var runnerDir string
+	var envs manager.EnvironmentVariables
+	switch mo := opts.ManagerOptions; {
+	case mo.Github != nil:
+		runnerDir, envs = mo.Github.RunnerDir, mo.Github.Envs
+	case mo.GithubCRI != nil && mo.GithubCRI.CMDOptions != nil:
+		runnerDir, envs = mo.GithubCRI.RunnerDir, mo.GithubCRI.CMDOptions.Envs
+	default:
+		return nil
+	}
+	var jobHook string
+	for _, env := range envs {
+		if env.Key == "ACTIONS_RUNNER_HOOK_JOB_STARTED" {
+			jobHook = env.Value
+		}
+	}
+	if jobHook == "" {
+		log.Logger().Errorf("transparent cache: no job hook configured, using GitHub's cache")
+		return nil
+	}
 
+	// Marker first, patch second. A patched runner with no marker breaks artifact calls, because
+	// nobody sets ACTIONS_RESULTS_URL. A marker with a stock runner is harmless: the runner
+	// overwrites what the job hook sets.
+	marker := filepath.Join(filepath.Dir(jobHook), transparentCacheMarker)
+	content := fmt.Sprintf("port=%d\naddress=%s\nrunner_dir=%s\ngithub_results_url=%s\n", tc.Port, vmAddress(), runnerDir, tc.GitHubResultsURL)
+	if err := os.WriteFile(marker, []byte(content), 0644); err != nil {
+		log.Logger().Errorf("transparent cache: marker not written, using GitHub's cache: %v", err)
+		return nil
+	}
 	if err := tcache.PatchRunner(runnerDir); err != nil {
 		log.Logger().Errorf("transparent cache: runner not patched, using GitHub's cache: %v", err)
+		os.Remove(marker)
 		return nil
 	}
 
-	// The runner is patched, so from here the marker must be written: without it nobody sets
-	// ACTIONS_RESULTS_URL and artifact calls break. If the server is down the job hook falls
-	// back to GitHub's address.
+	// If the server does not start, the job hook finds it not ready and falls back to GitHub.
 	exe, err := os.Executable()
 	if err == nil {
 		// A child of the agent, not of the runner, so the runner's end-of-job clean-up cannot kill it.
@@ -58,15 +86,7 @@ func (*TransparentCacheHook) PreStartHook(ctx context.Context, opts *manager.Pre
 	if err != nil {
 		log.Logger().Errorf("transparent cache: failed to start the cache server: %v", err)
 	}
-
-	marker := filepath.Join(runnerDir, ".warpbuild-transparent-cache")
-	content := fmt.Sprintf("port=%d\naddress=%s\ngithub_results_url=%s\n", tc.Port, vmAddress(), tc.GitHubResultsURL)
-	if err := os.WriteFile(marker, []byte(content), 0644); err != nil {
-		log.Logger().Errorf("transparent cache: failed to write the marker file: %v", err)
-		return nil
-	}
-	// The runner inherits the agent's environment, and the job hook inherits the runner's.
-	os.Setenv(TransparentCacheMarkerEnv, marker)
+	log.Logger().Infof("transparent cache: runner patched, marker at %s", marker)
 	return nil
 }
 

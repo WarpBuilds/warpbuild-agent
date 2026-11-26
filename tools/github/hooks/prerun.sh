@@ -167,20 +167,22 @@ if [ -n "$byoc_pre_hook" ]; then
 fi
 
 # Transparent cache: point the job's cache calls at the cache server on this VM.
-# The agent sets the marker only when it has patched the runner, so this does nothing on a stock
-# runner. It runs in a subshell and can never fail the job.
+# The agent writes the marker file next to this script only when it has patched the runner, so
+# this does nothing on a stock runner. It runs in a subshell and can never fail the job.
 transparent_cache_setup() {
-    local marker="$WARPBUILD_TRANSPARENT_CACHE_MARKER"
-    [ -n "$marker" ] && [ -f "$marker" ] || return 0
+    local marker
+    marker="$(dirname "$0")/.warpbuild-transparent-cache"
+    [ -f "$marker" ] || return 0
 
-    local port address github_url worker_log
+    local port address runner_dir github_url worker_log
     port=$(sed -n 's/^port=//p' "$marker")
     address=$(sed -n 's/^address=//p' "$marker")
+    runner_dir=$(sed -n 's/^runner_dir=//p' "$marker")
 
     # GitHub's real address is in the runner's newest Worker log. Match the whole line, because the
     # same text can appear inside the workflow's own script. Try for up to 2 seconds.
     for _ in 1 2 3 4; do
-        worker_log=$(ls -t "$(dirname "$marker")"/_diag/Worker_*.log 2>/dev/null | head -1)
+        worker_log=$(ls -t "$runner_dir"/_diag/Worker_*.log 2>/dev/null | head -1)
         github_url=$(sed -nE 's/^[[:space:]]*"ResultsServiceUrl": "(https?:\/\/[^"]*)",?[[:space:]]*$/\1/p' "$worker_log" 2>/dev/null | head -1)
         [ -n "$github_url" ] && break
         sleep 0.5
