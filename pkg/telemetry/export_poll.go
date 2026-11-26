@@ -80,11 +80,12 @@ func (tm *TelemetryManager) handleAllocationDetails(details *warpbuild.CommonsRu
 	if details == nil {
 		return pollAgain
 	}
+	tm.syncTemplate(details.TelemetryTemplate)
 	collect := collectionEnabled(details)
 	allocated := details.GetStatus() != allocationStatusUnassigned
 
 	if export := exportConfigFrom(details.TelemetryExport); export != nil {
-		tm.applyExportConfig(collect, export)
+		tm.applyExportConfig(collect, export, allocated)
 		if allocated {
 			// Not started yet: GitHub may still run a sibling job on this runner.
 			return awaitRunningJob
@@ -99,6 +100,7 @@ func (tm *TelemetryManager) handleAllocationDetails(details *warpbuild.CommonsRu
 		return tm.finishWithoutExport(collect)
 	default:
 		tm.followCollectionToggle(collect)
+		tm.applyTemplateChange()
 		return pollAgain
 	}
 }
@@ -114,6 +116,7 @@ func (tm *TelemetryManager) finishWithoutExport(collect bool) pollStep {
 		return stopTelemetry
 	}
 	tm.unpark()
+	tm.applyTemplateChange()
 	log.Logger().Infof("No telemetry export configured for this organization; nothing to fan out")
 	return stopPolling
 }
@@ -126,15 +129,17 @@ func (tm *TelemetryManager) followCollectionToggle(collect bool) {
 	tm.park()
 }
 
-func (tm *TelemetryManager) applyExportConfig(collect bool, next *exportConfig) {
+func (tm *TelemetryManager) applyExportConfig(collect bool, next *exportConfig, allocated bool) {
 	tm.mu.Lock()
-	if tm.exportCfg.equal(next) && tm.collect == collect {
+	templateChanged := allocated && tm.renderDirty
+	if tm.exportCfg.equal(next) && tm.collect == collect && !templateChanged {
 		tm.mu.Unlock()
 		return
 	}
 	tm.exportCfg = next
 	tm.collect = collect
 	tm.parked = false
+	tm.renderDirty = false
 	tm.mu.Unlock()
 
 	log.Logger().Infof("Telemetry export configured: metrics=%q logs=%q collect=%t",
@@ -152,6 +157,7 @@ func (tm *TelemetryManager) unpark() {
 	}
 	tm.parked = false
 	tm.collect = true
+	tm.renderDirty = false
 	tm.mu.Unlock()
 
 	log.Logger().Infof("Collection to WarpBuild is enabled again; resuming the collector")
@@ -167,6 +173,7 @@ func (tm *TelemetryManager) park() {
 	}
 	tm.parked = true
 	tm.collect = false
+	tm.renderDirty = false
 	tm.mu.Unlock()
 
 	log.Logger().Infof("Collection to WarpBuild is disabled; idling the collector until this runner is allocated")

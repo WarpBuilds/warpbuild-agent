@@ -1,3 +1,46 @@
+{{- $export := dig "export" (dict) .Data }}
+{{- $metricsSelected := hasKey $export "metrics" }}
+{{- $logsSelected := hasKey $export "logs" }}
+{{- $alwaysKeep := default (list) (get $export "always_keep") }}
+{{- $logSystem := true }}
+{{- $logRunner := true }}
+{{- $logJob := true }}
+{{- $logKeys := list }}
+{{- if $logsSelected }}
+{{- $logs := get $export "logs" }}
+{{- $streams := default (list) (get $logs "streams") }}
+{{- $logSystem = has "system" $streams }}
+{{- $logRunner = has "github_runner" $streams }}
+{{- $logJob = has "job" $streams }}
+{{- range $key := concat (default (list) (get $logs "attributes")) $alwaysKeep }}
+{{- $logKeys = append $logKeys (ottlStr $key) }}
+{{- end }}
+{{- end }}
+{{- $customerSystemLogs := and .ExportLogs $logSystem }}
+{{- $customerGHALogs := and .ExportLogs (or $logRunner $logJob) }}
+{{- $metricNames := list }}
+{{- $keepStatements := list }}
+{{- if $metricsSelected }}
+{{- range $metric := get $export "metrics" }}
+{{- $name := ottlStr (get $metric "name") }}
+{{- $metricNames = append $metricNames (printf "metric.name == %s" $name) }}
+{{- $keys := list }}
+{{- range $key := concat (default (list) (get $metric "attributes")) $alwaysKeep }}
+{{- $keys = append $keys (ottlStr $key) }}
+{{- end }}
+{{- $keepStatements = append $keepStatements (printf "keep_keys(attributes, [%s]) where metric.name == %s" (join ", " $keys) $name) }}
+{{- end }}
+{{- end }}
+{{- $systemExporters := list }}
+{{- if .Collect }}{{ $systemExporters = append $systemExporters "otlphttp" }}{{ end }}
+{{- if $customerSystemLogs }}{{ $systemExporters = append $systemExporters "forward/customer_system_logs" }}{{ end }}
+{{- $ghaExporters := list }}
+{{- if .Collect }}{{ $ghaExporters = append $ghaExporters "otlphttp/gha_logs" }}{{ end }}
+{{- if $customerGHALogs }}{{ $ghaExporters = append $ghaExporters "forward/customer_gha_logs" }}{{ end }}
+{{- $metricsExporters := list }}
+{{- if .Collect }}{{ $metricsExporters = append $metricsExporters "otlphttp" }}{{ end }}
+{{- if .EnableSigNoz }}{{ $metricsExporters = append (append $metricsExporters "otlp/signoz") "debug" }}{{ end }}
+{{- if .ExportMetrics }}{{ $metricsExporters = append $metricsExporters "forward/customer_metrics" }}{{ end }}
 receivers:
 {{- if eq .OS "windows"}}
   windowseventlog/application:
@@ -55,8 +98,8 @@ receivers:
   filelog/gha_logs:
     include:
       {{- if eq .OS "darwin"}}
-      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/*.log'
-      - '/Users/runner/.warpbuild/github-runner/runner-app-new/_diag/**/*.log'
+      - '/Users/runner/.warpbuild/github-runner/_diag/*.log'
+      - '/Users/runner/.warpbuild/github-runner/_diag/**/*.log'
       {{- else if eq .OS "linux"}}
       - '/runner/_diag/*.log'
       - '/runner/_diag/**/*.log'
@@ -367,17 +410,85 @@ processors:
       datapoint:
         - 'UnixSeconds(time) - (UnixSeconds(time) / {{.ExportMetricsInterval}}) * {{.ExportMetricsInterval}} != 0'
 {{- end}}
+{{- if and .ExportMetrics $metricsSelected }}
+
+  filter/customer_metric_selection:
+    error_mode: ignore
+    metrics:
+      metric:
+        - {{ yamlStr (ternary (printf "not (%s)" (join " or " $metricNames)) "true" (gt (len $metricNames) 0)) }}
+
+  transform/customer_flatten:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+          - 'merge_maps(attributes, resource.attributes, "insert")'
+
+  transform/customer_clear_resource:
+    error_mode: ignore
+    metric_statements:
+      - context: resource
+        statements:
+          - 'delete_matching_keys(attributes, ".*")'
+{{- if $keepStatements }}
+
+  transform/customer_metric_attrs:
+    error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+{{- range $statement := $keepStatements }}
+          - {{ yamlStr $statement }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and $customerSystemLogs (eq .OS "linux") }}
+
+  filter/customer_drop_ours:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'IsMatch(body, "^(\\S+ \\S+|\\S+ +\\S+ \\S+ \\S+) warpbuild-agentd\\[[0-9]+\\]: ")'
+{{- end }}
+{{- if and $customerGHALogs (not (and $logRunner $logJob)) }}
+
+  filter/customer_gha_streams:
+    error_mode: ignore
+    logs:
+      log_record:
+{{- if $logRunner }}
+        - 'attributes["log.file.name"] == nil or not IsMatch(attributes["log.file.name"], "^Runner_")'
+{{- else }}
+        - 'IsMatch(attributes["log.file.name"], "^Runner_")'
+{{- end }}
+{{- end }}
+{{- if and .ExportLogs $logsSelected }}
+
+  transform/customer_log_attrs:
+    error_mode: ignore
+    log_statements:
+      - context: resource
+        statements:
+          - {{ yamlStr (printf "keep_keys(attributes, [%s])" (join ", " $logKeys)) }}
+      - context: log
+        statements:
+          - {{ yamlStr (printf "keep_keys(attributes, [%s])" (join ", " $logKeys)) }}
+{{- end }}
 {{- end}}
 
-{{- if or .ExportMetrics .ExportLogs}}
+{{- if or .ExportMetrics $customerSystemLogs $customerGHALogs }}
 
 connectors:
   # Fan out after our own processing rather than duplicating the chain.
 {{- if .ExportMetrics}}
   forward/customer_metrics:
 {{- end}}
-{{- if .ExportLogs}}
-  forward/customer_logs:
+{{- if $customerSystemLogs }}
+  forward/customer_system_logs:
+{{- end}}
+{{- if $customerGHALogs }}
+  forward/customer_gha_logs:
 {{- end}}
 {{- end}}
 
@@ -431,7 +542,7 @@ exporters:
       max_interval: 15s
       max_elapsed_time: 15s
 {{- end}}
-{{- if .ExportLogs}}
+{{- if or $customerSystemLogs $customerGHALogs }}
 
   otlphttp/customer_logs:
     logs_endpoint: {{yamlStr .ExportLogsEndpoint}}
@@ -466,25 +577,37 @@ service:
       receivers: [nop]
       exporters: [nop]
 {{- end}}
-{{- if .LogsExporters}}
+{{- if $systemExporters }}
     logs:
-      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security, filelog/services{{- else }}filelog{{- end}}]
+      receivers: [{{- if eq .OS "windows"}}windowseventlog/application, windowseventlog/security{{- else }}filelog{{- end}}]
       processors: [batch/logs]
-      exporters: [{{.LogsExporters}}]
+      exporters: [{{ join ", " $systemExporters }}]
 {{- end}}
-{{- if .GHALogsExporters}}
+{{- if and (eq .OS "windows") .Collect }}
+    logs/services:
+      receivers: [filelog/services]
+      processors: [batch/logs]
+      exporters: [otlphttp]
+{{- end}}
+{{- if $ghaExporters }}
     logs/gha_logs:
       receivers: [filelog/gha_logs]
       processors: [batch/logs]
-      exporters: [{{.GHALogsExporters}}]
+      exporters: [{{ join ", " $ghaExporters }}]
 {{- end}}
-{{- if .ExportLogs}}
-    logs/customer:
-      receivers: [forward/customer_logs]
-      processors: [resource/customer]
+{{- if $customerSystemLogs }}
+    logs/customer_system:
+      receivers: [forward/customer_system_logs]
+      processors: [{{ if eq .OS "linux" }}filter/customer_drop_ours, {{ end }}resource/customer{{ if $logsSelected }}, transform/customer_log_attrs{{ end }}]
       exporters: [otlphttp/customer_logs]
 {{- end}}
-{{- if .MetricsExporters}}
+{{- if $customerGHALogs }}
+    logs/customer_gha:
+      receivers: [forward/customer_gha_logs]
+      processors: [{{ if not (and $logRunner $logJob) }}filter/customer_gha_streams, {{ end }}resource/customer{{ if $logsSelected }}, transform/customer_log_attrs{{ end }}]
+      exporters: [otlphttp/customer_logs]
+{{- end}}
+{{- if $metricsExporters }}
     metrics:
       receivers: [hostmetrics{{- if eq .OS "windows"}}, windowsperfcounters/processor{{- end}}]
       processors:
@@ -519,11 +642,11 @@ service:
 
         - transform/normalize
         - batch/metrics
-      exporters: [{{.MetricsExporters}}]
+      exporters: [{{ join ", " $metricsExporters }}]
 {{- end}}
 {{- if .ExportMetrics}}
     metrics/customer:
       receivers: [forward/customer_metrics]
-      processors: [{{if gt .ExportMetricsInterval 1}}filter/customer_interval, {{end}}resource/customer, transform/customer_labels]
+      processors: [{{if gt .ExportMetricsInterval 1}}filter/customer_interval, {{end}}resource/customer{{ if $metricsSelected }}, filter/customer_metric_selection, transform/customer_flatten, transform/customer_clear_resource{{ if $keepStatements }}, transform/customer_metric_attrs{{ end }}{{ else }}, transform/customer_labels{{ end }}]
       exporters: [otlphttp/customer_metrics]
 {{- end}}

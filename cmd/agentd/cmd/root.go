@@ -5,7 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/warpbuilds/warpbuild-agent/pkg/app"
+	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
+
+var Version = "dev"
 
 type flagsStruct struct {
 	stdoutFile              string
@@ -20,6 +23,9 @@ type flagsStruct struct {
 	telemetrySigNozEndpoint string
 	telemetrySigNozAPIKey   string
 	withSysInit             bool
+	renderTelemetryTemplate string
+	renderTelemetryVars     string
+	renderTelemetryOut      string
 }
 
 var flags flagsStruct
@@ -30,6 +36,9 @@ var rootCmd = &cobra.Command{
 	Long: `Manages runner lifecycle and synchronizes runner state with the WarpBuild.
 	This is run as a daemon on the runner host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if flags.renderTelemetryTemplate != "" {
+			return telemetry.RenderTemplateFile(flags.renderTelemetryTemplate, flags.renderTelemetryVars, flags.renderTelemetryOut)
+		}
 
 		err := app.NewApp(cmd.Context(), &app.ApplicationOptions{
 			SettingsFile:            flags.settingsFile,
@@ -44,6 +53,7 @@ var rootCmd = &cobra.Command{
 			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
 			TelemetrySigNozAPIKey:   flags.telemetrySigNozAPIKey,
 			WithSysInit:             flags.withSysInit,
+			AgentVersion:            Version,
 		})
 		if err != nil {
 			return err
@@ -89,4 +99,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozEndpoint, "telemetry-signoz-endpoint", "", "SigNoz OTLP endpoint (e.g., ingest.us.signoz.cloud:443)")
 	rootCmd.PersistentFlags().StringVar(&flags.telemetrySigNozAPIKey, "telemetry-signoz-api-key", "", "SigNoz ingestion API key")
 	rootCmd.PersistentFlags().BoolVar(&flags.withSysInit, "with-sysinit", false, "run system initialization diagnostics on startup")
+	rootCmd.PersistentFlags().StringVar(&flags.renderTelemetryTemplate, "render-telemetry-template", "", "render this collector config template and exit")
+	rootCmd.PersistentFlags().StringVar(&flags.renderTelemetryVars, "render-telemetry-vars", "", "JSON inputs for --render-telemetry-template")
+	rootCmd.PersistentFlags().StringVar(&flags.renderTelemetryOut, "render-telemetry-out", "", "where --render-telemetry-template writes the config (default stdout)")
 }

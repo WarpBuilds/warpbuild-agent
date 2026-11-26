@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,7 +10,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"text/template"
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
@@ -48,12 +46,19 @@ type TelemetryManager struct {
 	exportCfg        *exportConfig
 	collect          bool
 	parked           bool
+	remoteTemplate   *remoteTemplate
+	templateData     map[string]any
+	renderDirty      bool
+	validator        configValidator
 	restartCh        chan struct{}
 	drainCh          chan struct{}
 	collectorDone    chan struct{}
 	collectorStarted atomic.Bool
 
 	drainTimeout time.Duration
+
+	templateAttemptVersion string
+	templateAttemptAt      time.Time
 }
 
 // NewTelemetryManager creates a new telemetry manager
@@ -81,6 +86,8 @@ func NewTelemetryManager(ctx context.Context, port int, baseDirectory string, wa
 
 // Start starts the telemetry manager and all its components
 func (tm *TelemetryManager) Start() error {
+	tm.loadRemoteTemplate()
+
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -156,6 +163,10 @@ func (tm *TelemetryManager) startOtelCollector() {
 	}
 
 	log.Logger().Infof("OpenTelemetry Collector binary path: %s", collectorPath)
+
+	if tm.validator == nil {
+		tm.validator = collectorValidator(collectorPath)
+	}
 
 	for {
 		if err := tm.writeOtelCollectorConfig(); err != nil {
@@ -353,103 +364,66 @@ func (tm *TelemetryManager) getOtelCollectorPath() (string, error) {
 	return collectorPath, nil
 }
 
-func yamlStr(v string) (string, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
 // writeOtelCollectorConfig writes the OTEL collector configuration
 func (tm *TelemetryManager) writeOtelCollectorConfig() error {
-	tmplPath := tm.getConfigTemplatePath()
-	tmpl, err := template.New(filepath.Base(tmplPath)).
-		Funcs(template.FuncMap{"yamlStr": yamlStr}).
-		ParseFiles(tmplPath)
+	imagePath := tm.getConfigTemplatePath()
+	image, err := os.ReadFile(imagePath)
 	if err != nil {
-		return fmt.Errorf("failed to parse template file: %w", err)
+		return fmt.Errorf("failed to read template file: %w", err)
 	}
 
-	file, err := os.Create(tm.getConfigFilePath())
-	if err != nil {
-		return fmt.Errorf("failed to create config file: %w", err)
-	}
-	defer file.Close()
-
-	collect, parked, export := tm.currentRenderState()
-
-	data := struct {
-		LogExportFilePath     string
-		MetricsExportFilePath string
-		PushFrequency         time.Duration
-		OS                    string
-		Arch                  string
-		Port                  int
-		RunnerID              string
-		SigNozEndpoint        string
-		SigNozAPIKey          string
-		EnableSigNoz          bool
-		Collect               bool
-		Parked                bool
-		LogsExporters         string
-		GHALogsExporters      string
-		MetricsExporters      string
-		ExportMetrics         bool
-		ExportLogs            bool
-		ExportMetricsEndpoint string
-		ExportLogsEndpoint    string
-		ExportHeaderEnv       map[string]string
-		ExportResourceAttrs   map[string]string
-		ExportDatapointAttrs  []string
-		ExportMetricsInterval int
-	}{
-		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
-		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
-		PushFrequency:         60 * time.Second, // Default push frequency
-		OS:                    runtime.GOOS,
-		Arch:                  runtime.GOARCH,
-		Port:                  tm.port,
-		RunnerID:              tm.runnerID,
-		SigNozEndpoint:        tm.sigNozEndpoint,
-		SigNozAPIKey:          tm.sigNozAPIKey,
-		EnableSigNoz:          tm.sigNozEnable && tm.sigNozEndpoint != "" && tm.sigNozAPIKey != "",
-		Collect:               collect,
-		Parked:                parked,
-	}
-	if export != nil {
-		data.ExportMetrics = export.exportsMetrics()
-		data.ExportLogs = export.exportsLogs()
-		data.ExportMetricsEndpoint = escapeExpansion(export.MetricsEndpoint)
-		data.ExportLogsEndpoint = escapeExpansion(export.LogsEndpoint)
-		data.ExportHeaderEnv = escapeExpansionKeys(export.headerEnv())
-		data.ExportResourceAttrs = escapeExpansionMap(export.ResourceAttrs)
-		data.ExportDatapointAttrs = datapointLabelAttrs(export.ResourceAttrs)
-		data.ExportMetricsInterval = export.MetricsIntervalSeconds
-	}
-
-	data.LogsExporters = exporterList(
-		exporterEntry{"otlphttp", collect},
-		exporterEntry{"forward/customer_logs", data.ExportLogs},
-	)
-	data.GHALogsExporters = exporterList(
-		exporterEntry{"otlphttp/gha_logs", collect},
-		exporterEntry{"forward/customer_logs", data.ExportLogs},
-	)
-	data.MetricsExporters = exporterList(
-		exporterEntry{"otlphttp", collect},
-		exporterEntry{"otlp/signoz", data.EnableSigNoz},
-		exporterEntry{"debug", data.EnableSigNoz},
-		exporterEntry{"forward/customer_metrics", data.ExportMetrics},
-	)
-
+	in, remote := tm.takeRenderInput()
+	data := newCollectorTemplateData(in)
 	log.Logger().Infof("Parsing template with vars: %+v", data)
 
-	err = tmpl.Execute(file, data)
-	if err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
+	type candidate struct{ source, name, text string }
+	var candidates []candidate
+	if remote != nil {
+		candidates = append(candidates, candidate{"telemetry template " + remote.Version, remote.Version, remote.Template})
+	}
+	candidates = append(candidates, candidate{"the image's template", filepath.Base(imagePath), string(image)})
+
+	for _, c := range candidates {
+		err := tm.installConfig(c.name, c.text, data, in.Export)
+		if err == nil {
+			log.Logger().Infof("Rendered the collector config from %s", c.source)
+			return nil
+		}
+		log.Logger().Warnf("Rejected the collector config rendered from %s: %v", c.source, err)
 	}
 
+	fallback := in
+	fallback.Export = nil
+	fallback.Parked = in.Parked || !in.Collect
+	config, err := renderCollectorConfig(filepath.Base(imagePath), string(image), newCollectorTemplateData(fallback))
+	if err != nil {
+		return err
+	}
+	log.Logger().Warnf("Running the collector from the image's template without the customer export")
+	return writeFileAtomic(tm.getConfigFilePath(), config)
+}
+
+func (tm *TelemetryManager) installConfig(name, text string, data collectorTemplateData, export *exportConfig) error {
+	config, err := renderCollectorConfig(name, text, data)
+	if err != nil {
+		return err
+	}
+
+	path := tm.getConfigFilePath()
+	tmp, err := writeTempFile(filepath.Dir(path), "otel-collector-config.*.yaml", config)
+	if err != nil {
+		return err
+	}
+	if tm.validator != nil {
+		if err := tm.validator(tm.ctx, tmp, export.envPairs()); err != nil {
+			os.Remove(tmp)
+			return err
+		}
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		os.Remove(tmp)
+		return err
+	}
 	return nil
 }
 
@@ -459,10 +433,25 @@ func (tm *TelemetryManager) currentExportConfig() *exportConfig {
 	return tm.exportCfg
 }
 
-func (tm *TelemetryManager) currentRenderState() (collect, parked bool, export *exportConfig) {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
-	return tm.collect, tm.parked, tm.exportCfg
+func (tm *TelemetryManager) takeRenderInput() (renderInput, *remoteTemplate) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	tm.renderDirty = false
+	return renderInput{
+		OS:                    runtime.GOOS,
+		Arch:                  runtime.GOARCH,
+		Port:                  tm.port,
+		RunnerID:              tm.runnerID,
+		LogExportFilePath:     tm.getOtelCollectorOutputFilePath(false),
+		MetricsExportFilePath: tm.getOtelCollectorOutputFilePath(true),
+		SigNozEnable:          tm.sigNozEnable,
+		SigNozEndpoint:        tm.sigNozEndpoint,
+		SigNozAPIKey:          tm.sigNozAPIKey,
+		Collect:               tm.collect,
+		Parked:                tm.parked,
+		Export:                tm.exportCfg,
+		Data:                  tm.templateData,
+	}, tm.remoteTemplate
 }
 
 // getConfigFilePath gets the path to the OTEL collector config file

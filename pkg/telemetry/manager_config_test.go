@@ -108,9 +108,11 @@ func TestRenderConfig_WithExport(t *testing.T) {
 		"otlphttp/customer_logs:",
 		"resource/customer:",
 		"forward/customer_metrics:",
-		"forward/customer_logs:",
+		"forward/customer_system_logs:",
+		"forward/customer_gha_logs:",
 		"metrics/customer:",
-		"logs/customer:",
+		"logs/customer_system:",
+		"logs/customer_gha:",
 		`metrics_endpoint: "https://otlp.datadoghq.com/v1/metrics"`,
 	} {
 		assert.Containsf(t, got, present, "expected %q in rendered config:\n%s", present, got)
@@ -135,8 +137,8 @@ func TestRenderConfig_InternalPipelinesUntouched(t *testing.T) {
 
 	for _, present := range []string{
 		"exporters: [otlphttp, forward/customer_metrics]",
-		"exporters: [otlphttp, forward/customer_logs]",
-		"exporters: [otlphttp/gha_logs, forward/customer_logs]",
+		"exporters: [otlphttp, forward/customer_system_logs]",
+		"exporters: [otlphttp/gha_logs, forward/customer_gha_logs]",
 	} {
 		assert.Containsf(t, got, present, "expected %q in rendered config:\n%s", present, got)
 	}
@@ -168,7 +170,7 @@ func TestRenderConfig_MetricsOnly(t *testing.T) {
 	for _, present := range []string{"otlphttp/customer_metrics:", "forward/customer_metrics:", "metrics/customer:"} {
 		assert.Containsf(t, got, present, "expected %q", present)
 	}
-	for _, absent := range []string{"otlphttp/customer_logs", "forward/customer_logs", "logs/customer:"} {
+	for _, absent := range []string{"otlphttp/customer_logs", "forward/customer_system_logs", "forward/customer_gha_logs", "logs/customer_"} {
 		assert.NotContainsf(t, got, absent, "did not expect %q", absent)
 	}
 	validateWithCollector(t, tm)
@@ -180,7 +182,7 @@ func TestRenderConfig_LogsOnly(t *testing.T) {
 	tm := newTestManager(t, cfg)
 	got := renderConfig(t, tm)
 
-	for _, present := range []string{"otlphttp/customer_logs:", "forward/customer_logs:", "logs/customer:"} {
+	for _, present := range []string{"otlphttp/customer_logs:", "forward/customer_system_logs:", "forward/customer_gha_logs:", "logs/customer_system:", "logs/customer_gha:"} {
 		assert.Containsf(t, got, present, "expected %q", present)
 	}
 	for _, absent := range []string{"otlphttp/customer_metrics", "forward/customer_metrics", "metrics/customer:"} {
@@ -224,8 +226,8 @@ func TestRenderConfig_CollectOnExporterListsUnchanged(t *testing.T) {
 	t.Run("with export", func(t *testing.T) {
 		got := renderConfig(t, newTestManager(t, testExportConfig()))
 		for _, line := range []string{
-			"      exporters: [otlphttp, forward/customer_logs]",
-			"      exporters: [otlphttp/gha_logs, forward/customer_logs]",
+			"      exporters: [otlphttp, forward/customer_system_logs]",
+			"      exporters: [otlphttp/gha_logs, forward/customer_gha_logs]",
 			"      exporters: [otlphttp, forward/customer_metrics]",
 		} {
 			assert.Containsf(t, got, line, "expected %q", line)
@@ -238,9 +240,11 @@ func TestRenderConfig_CollectOffExportsOnly(t *testing.T) {
 	got := renderConfig(t, tm)
 
 	for _, present := range []string{
-		"      exporters: [forward/customer_logs]",
+		"      exporters: [forward/customer_system_logs]",
+		"      exporters: [forward/customer_gha_logs]",
 		"      exporters: [forward/customer_metrics]",
-		"    logs/customer:",
+		"    logs/customer_system:",
+		"    logs/customer_gha:",
 		"    metrics/customer:",
 	} {
 		assert.Containsf(t, got, present, "expected %q:\n%s", present, got)
@@ -262,7 +266,8 @@ func TestRenderConfig_CollectOffSingleSignal(t *testing.T) {
 
 		assert.Contains(t, got, "      exporters: [forward/customer_metrics]")
 		assert.NotContains(t, got, "      processors: [batch/logs]", "log pipelines have no destination left")
-		assert.NotContains(t, got, "forward/customer_logs")
+		assert.NotContains(t, got, "forward/customer_system_logs")
+		assert.NotContains(t, got, "forward/customer_gha_logs")
 		validateWithCollector(t, tm)
 	})
 
@@ -272,7 +277,8 @@ func TestRenderConfig_CollectOffSingleSignal(t *testing.T) {
 		tm := newCollectOffManager(t, export)
 		got := renderConfig(t, tm)
 
-		assert.Contains(t, got, "      exporters: [forward/customer_logs]")
+		assert.Contains(t, got, "      exporters: [forward/customer_system_logs]")
+		assert.Contains(t, got, "      exporters: [forward/customer_gha_logs]")
 		assert.NotContains(t, got, "      receivers: [hostmetrics", "the metrics pipeline has no destination left")
 		assert.NotContains(t, got, "forward/customer_metrics")
 		validateWithCollector(t, tm)

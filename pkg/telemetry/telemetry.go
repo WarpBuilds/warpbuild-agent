@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
-	"github.com/warpbuilds/warpbuild-agent/pkg/warpbuild"
 )
 
 func handlePanic() {
@@ -34,6 +33,7 @@ type TelemetryOptions struct {
 	SigNozEnable   bool          `json:"signoz_enable"`
 	SigNozEndpoint string        `json:"signoz_endpoint"`
 	SigNozAPIKey   string        `json:"signoz_api_key"`
+	AgentVersion   string        `json:"agent_version"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
@@ -55,12 +55,10 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 		opts.Port, opts.PushFrequency)
 
 	// Initialize WarpBuild API client
-	cfg := warpbuild.NewConfiguration()
 	if opts.HostURL == "" {
 		return fmt.Errorf("host url is required")
 	}
-	cfg.Servers[0].URL = opts.HostURL
-	wb := warpbuild.NewAPIClient(cfg)
+	wb := newAPIClient(opts.HostURL, opts.AgentVersion)
 
 	log.Logger().Debugf("WarpBuild API client initialized with host URL: %s", opts.HostURL)
 
