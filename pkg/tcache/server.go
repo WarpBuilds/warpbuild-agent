@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/netip"
 	"net/url"
 	"runtime"
 	"strconv"
@@ -53,6 +54,66 @@ func ListenHost() string {
 	return ""
 }
 
+// VMAddress is the address jobs use to reach the server: the VM's own IP where the server listens
+// on every address, so steps inside containers can reach it.
+func VMAddress() string {
+	if host := ListenHost(); host != "" {
+		return host
+	}
+	// No packet is sent: this only asks the kernel which local address the default route uses.
+	conn, err := net.Dial("udp", "1.1.1.1:80")
+	if err != nil {
+		return "127.0.0.1"
+	}
+	defer conn.Close()
+	return conn.LocalAddr().(*net.UDPAddr).IP.String()
+}
+
+// guard answers only callers on this VM. The server has no login of its own and holds the
+// runner's cache token, so a neighbour VM must not be able to use it.
+func guard(next http.Handler) http.Handler {
+	vm, _ := netip.ParseAddr(VMAddress())
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var local []netip.Prefix
+		addrs, _ := net.InterfaceAddrs()
+		for _, a := range addrs {
+			if p, err := netip.ParsePrefix(a.String()); err == nil {
+				local = append(local, p)
+			}
+		}
+		caller, _ := netip.ParseAddrPort(r.RemoteAddr)
+		if !localCaller(caller.Addr(), vm, local) {
+			log.Logger().Warnf("transparent cache: refused caller %s", r.RemoteAddr)
+			http.Error(w, "callers must be on this VM", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// localCaller reports whether caller is on this VM: loopback, one of the VM's own addresses, or
+// a network that lives on the VM, such as Docker's. The network of the VM's own IP holds other
+// VMs, so on that one only the VM itself passes. local is the VM's addresses with their networks.
+// When the VM's own IP is not known, no network passes: the two kinds cannot be told apart.
+func localCaller(caller, vm netip.Addr, local []netip.Prefix) bool {
+	caller, vm = caller.Unmap(), vm.Unmap()
+	if caller.IsLoopback() {
+		return true
+	}
+	vmKnown := vm.IsValid() && !vm.IsLoopback()
+	for _, p := range local {
+		own := p.Addr().Unmap()
+		if caller == own {
+			return true
+		}
+		// Unmap can leave a prefix length that does not fit the address; Contains is then false.
+		if vmKnown && own != vm && netip.PrefixFrom(own, p.Bits()).Contains(caller) {
+			return true
+		}
+	}
+	return false
+}
+
 func newHandler(opts Options) http.Handler {
 	// Pieces of a file go to storage over many connections at once. Keep them open and resume
 	// TLS sessions, because new handshakes burn CPU. HTTP/2 is off: it would put every piece on
@@ -77,7 +138,7 @@ func newHandler(opts Options) http.Handler {
 }
 
 func Start(ctx context.Context, opts Options) error {
-	srv := &http.Server{Addr: net.JoinHostPort(ListenHost(), strconv.Itoa(opts.Port)), Handler: newHandler(opts)}
+	srv := &http.Server{Addr: net.JoinHostPort(ListenHost(), strconv.Itoa(opts.Port)), Handler: guard(newHandler(opts))}
 	go func() {
 		<-ctx.Done()
 		srv.Close()

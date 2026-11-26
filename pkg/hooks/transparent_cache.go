@@ -3,7 +3,6 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,7 +63,7 @@ func (*TransparentCacheHook) PreStartHook(ctx context.Context, opts *manager.Pre
 	// nobody sets ACTIONS_RESULTS_URL. A marker with a stock runner is harmless: the runner
 	// overwrites what the job hook sets.
 	marker := filepath.Join(filepath.Dir(jobHook), transparentCacheMarker)
-	content := fmt.Sprintf("port=%d\naddress=%s\nrunner_dir=%s\ngithub_results_url=%s\n", tc.Port, vmAddress(), runnerDir, tc.GitHubResultsURL)
+	content := fmt.Sprintf("port=%d\naddress=%s\nrunner_dir=%s\ngithub_results_url=%s\n", tc.Port, tcache.VMAddress(), runnerDir, tc.GitHubResultsURL)
 	if err := os.WriteFile(marker, []byte(content), 0644); err != nil {
 		log.Logger().Errorf("transparent cache: marker not written, using GitHub's cache: %v", err)
 		return nil
@@ -88,19 +87,4 @@ func (*TransparentCacheHook) PreStartHook(ctx context.Context, opts *manager.Pre
 	}
 	log.Logger().Infof("transparent cache: runner patched, marker at %s", marker)
 	return nil
-}
-
-// vmAddress is the address jobs use to reach the cache server: the VM's own IP where the server
-// listens on every address, so steps inside containers can reach it.
-func vmAddress() string {
-	if host := tcache.ListenHost(); host != "" {
-		return host
-	}
-	// No packet is sent: this only asks the kernel which local address the default route uses.
-	conn, err := net.Dial("udp", "1.1.1.1:80")
-	if err != nil {
-		return "127.0.0.1"
-	}
-	defer conn.Close()
-	return conn.LocalAddr().(*net.UDPAddr).IP.String()
 }

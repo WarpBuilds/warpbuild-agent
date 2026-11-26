@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -125,5 +126,51 @@ func TestReady(t *testing.T) {
 	resp, err = http.Post(srv.URL+"/_warpbuild/ready", "text/plain", strings.NewReader("https://results.example/"))
 	if err != nil || resp.StatusCode != http.StatusServiceUnavailable {
 		t.Fatalf("ready with backend down: %v, %v", resp, err)
+	}
+}
+
+func TestLocalCaller(t *testing.T) {
+	vm := netip.MustParseAddr("10.90.16.146")
+	local := []netip.Prefix{
+		netip.MustParsePrefix("127.0.0.1/8"),
+		netip.MustParsePrefix("10.90.16.146/20"), // the VM's network, shared with other VMs
+		netip.MustParsePrefix("172.17.0.1/16"),   // Docker's default network
+		netip.MustParsePrefix("172.18.0.1/16"),   // the network of a container job
+		netip.MustParsePrefix("fe80::1/64"),
+	}
+	for caller, want := range map[string]bool{
+		"127.0.0.1":           true, // the job hook
+		"::1":                 true,
+		"10.90.16.146":        true, // a step on the VM calling the VM's address
+		"::ffff:10.90.16.146": true,
+		"172.17.0.2":          true,  // BuildKit's container
+		"172.18.0.3":          true,  // a step of a container job
+		"10.90.16.147":        false, // a neighbour VM
+		"10.90.25.130":        false,
+		"8.8.8.8":             false,
+	} {
+		if got := localCaller(netip.MustParseAddr(caller), vm, local); got != want {
+			t.Errorf("localCaller(%s) = %v, want %v", caller, got, want)
+		}
+	}
+	if localCaller(netip.Addr{}, vm, local) {
+		t.Error("an unparsed caller address must be refused")
+	}
+	// The VM's own IP is not known: Docker's network cannot be told apart from the VM's, so both are refused.
+	if localCaller(netip.MustParseAddr("172.17.0.2"), netip.MustParseAddr("127.0.0.1"), local) {
+		t.Error("no network may pass when the VM's address is not known")
+	}
+}
+
+func TestGuardRefusesOtherAddresses(t *testing.T) {
+	h := guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	for addr, want := range map[string]int{"127.0.0.1:5000": 200, "203.0.113.9:5000": 403, "": 403} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.RemoteAddr = addr
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != want {
+			t.Errorf("caller %q: status %d, want %d", addr, rec.Code, want)
+		}
 	}
 }
