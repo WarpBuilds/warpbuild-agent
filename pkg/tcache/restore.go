@@ -152,22 +152,32 @@ func (s *server) download(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// The time spent waiting for the next piece from storage, and for the client to take a piece.
+	// One of them is where a slow download loses its time.
+	began := time.Now()
+	var onStorage, onClient time.Duration
 	var failed error
 	for c := range pieces {
+		t := time.Now()
 		p := <-c
+		onStorage += time.Since(t)
 		<-s.slots
 		if failed != nil {
 			continue
 		}
 		if p.err != nil {
 			failed = p.err
-		} else if _, err := w.Write(p.data); err != nil {
-			failed = err
+		} else {
+			t = time.Now()
+			_, failed = w.Write(p.data)
+			onClient += time.Since(t)
 		}
 		if failed != nil {
 			cancel()
 		}
 	}
+	log.Logger().Infof("transparent cache: download of %d bytes ended after %s: waited %s for storage, %s for the client",
+		end-start+1, time.Since(began).Round(time.Millisecond), onStorage.Round(time.Millisecond), onClient.Round(time.Millisecond))
 	if failed != nil {
 		// The status is already sent. Drop the connection so the client sees a short file, not a
 		// complete one.
@@ -178,6 +188,12 @@ func (s *server) download(w http.ResponseWriter, r *http.Request) {
 
 // fetchPiece gets bytes from-to of a file from storage, and the file's total size. It tries 3 times.
 func (s *server) fetchPiece(ctx context.Context, storageURL string, from, to int64) (data []byte, total int64, status int, err error) {
+	began := time.Now()
+	defer func() {
+		if took := time.Since(began); took > 2*time.Second {
+			log.Logger().Warnf("transparent cache: bytes %d-%d from storage took %s", from, to, took.Round(time.Millisecond))
+		}
+	}()
 	for attempt := 0; attempt < 3 && ctx.Err() == nil; attempt++ {
 		data, total, status, err = s.fetchPieceOnce(ctx, storageURL, from, to)
 		if err == nil || status == http.StatusRequestedRangeNotSatisfiable {
