@@ -26,10 +26,12 @@ const (
 	downloadSlots = 16
 	// Bytes from storage are read limitChunk at a time. With a download limit, there is a pause in between.
 	limitChunk = 256 << 10
-	// A request to storage that sends nothing for stallTimeout is dropped and tried again. Storage
-	// requests sometimes hang for many seconds, and the cache step gives up on a download after 5
-	// seconds with no data.
-	stallTimeout = 2 * time.Second
+	// A piece is asked for at most pieceTries times: again when a try fails, and next to a try
+	// that is slow. Some connections to storage are many times slower than the rest, and the
+	// cache step gives up on a download after 5 seconds with no data.
+	pieceTries = 3
+	// minSlowAfter is the shortest time after which a try counts as slow.
+	minSlowAfter = 1500 * time.Millisecond
 )
 
 // getDownloadURL handles GetCacheEntryDownloadURL: look the key up at backend-cache and hand the
@@ -186,32 +188,56 @@ func (s *server) download(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// fetchPiece gets bytes from-to of a file from storage, and the file's total size. It tries 3 times.
-func (s *server) fetchPiece(ctx context.Context, storageURL string, from, to int64) (data []byte, total int64, status int, err error) {
-	began := time.Now()
-	defer func() {
-		if took := time.Since(began); took > 2*time.Second {
-			log.Logger().Warnf("transparent cache: bytes %d-%d from storage took %s", from, to, took.Round(time.Millisecond))
-		}
-	}()
-	for attempt := 0; attempt < 3 && ctx.Err() == nil; attempt++ {
-		data, total, status, err = s.fetchPieceOnce(ctx, storageURL, from, to)
-		if err == nil || status == http.StatusRequestedRangeNotSatisfiable {
-			break
-		}
-		if ctx.Err() == nil {
-			log.Logger().Warnf("transparent cache: bytes %d-%d from storage stalled or failed, try %d: %v", from, to, attempt+1, err)
+// fetchPiece gets bytes from-to of a file from storage, and the file's total size. A try that
+// fails is repeated. A try that is slow gets a second one next to it on another connection, and
+// the first to finish wins: the slow connection is then closed and not used again.
+func (s *server) fetchPiece(ctx context.Context, storageURL string, from, to int64) ([]byte, int64, int, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	type result struct {
+		data   []byte
+		total  int64
+		status int
+		err    error
+	}
+	results := make(chan result, pieceTries)
+	try := func() {
+		go func() {
+			data, total, status, err := s.fetchPieceOnce(ctx, storageURL, from, to)
+			results <- result{data, total, status, err}
+		}()
+	}
+	try()
+	slow := time.NewTimer(s.slowAfter)
+	defer slow.Stop()
+
+	for tries, running := 1, 1; ; {
+		select {
+		case r := <-results:
+			running--
+			if r.err == nil || r.status == http.StatusRequestedRangeNotSatisfiable {
+				return r.data, r.total, r.status, r.err
+			}
+			if ctx.Err() == nil && tries < pieceTries {
+				log.Logger().Warnf("transparent cache: bytes %d-%d from storage failed, try %d: %v", from, to, tries, r.err)
+				try()
+				tries, running = tries+1, running+1
+			} else if running == 0 {
+				return nil, 0, r.status, r.err
+			}
+		case <-slow.C:
+			if tries < pieceTries {
+				log.Logger().Warnf("transparent cache: bytes %d-%d from storage are slow, try %d on another connection", from, to, tries+1)
+				try()
+				tries, running = tries+1, running+1
+				slow.Reset(s.slowAfter)
+			}
 		}
 	}
-	return data, total, status, err
 }
 
 func (s *server) fetchPieceOnce(ctx context.Context, storageURL string, from, to int64) ([]byte, int64, int, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	stalled := time.AfterFunc(stallTimeout, cancel)
-	defer stalled.Stop()
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, storageURL, nil)
 	if err != nil {
 		return nil, 0, 0, redact.URLError(err)
@@ -241,9 +267,7 @@ func (s *server) fetchPieceOnce(ctx context.Context, storageURL string, from, to
 	// of every download, so many restores at once on a host cannot fill its network line.
 	var buf bytes.Buffer
 	for {
-		stalled.Reset(stallTimeout)
 		n, err := io.CopyN(&buf, resp.Body, limitChunk)
-		stalled.Stop()
 		if err == io.EOF {
 			return buf.Bytes(), total, resp.StatusCode, nil
 		}

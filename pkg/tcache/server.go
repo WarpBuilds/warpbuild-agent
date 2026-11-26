@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
@@ -48,6 +49,7 @@ type server struct {
 	downloads sync.Map      // download id -> signed storage URL
 	slots     chan struct{} // see downloadSlots
 	limit     *rate.Limiter // bytes per second from storage, nil for no cap
+	slowAfter time.Duration // see fetchPiece
 
 	// githubURL is GitHub's real results address for this job. The job hook sets it once.
 	githubURL atomic.Pointer[url.URL]
@@ -138,8 +140,12 @@ func newHandler(opts Options) http.Handler {
 	if u, err := url.Parse(opts.GitHubResultsURL); err == nil && u.Host != "" {
 		s.backupURL = u
 	}
+	s.slowAfter = minSlowAfter
 	if opts.DownloadLimitMBPerSec > 0 {
 		s.limit = rate.NewLimiter(rate.Limit(opts.DownloadLimitMBPerSec)*1e6, limitChunk)
+		// With the limit, downloadSlots pieces share the speed. A piece is slow at twice its fair time.
+		fair := time.Duration(float64(downloadSlots*pieceSize) / (float64(opts.DownloadLimitMBPerSec) * 1e6) * float64(time.Second))
+		s.slowAfter = max(minSlowAfter, 2*fair)
 	}
 
 	mux := http.NewServeMux()
