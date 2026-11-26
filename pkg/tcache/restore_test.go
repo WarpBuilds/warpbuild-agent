@@ -195,3 +195,36 @@ func TestRestoreDownloadLimit(t *testing.T) {
 		t.Errorf("60 MB at 20 MB/s took %v, want about 3 s", took)
 	}
 }
+
+func TestForward(t *testing.T) {
+	github := func(name string) *httptest.Server {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, name+" "+r.URL.Path)
+		}))
+		t.Cleanup(s.Close)
+		return s
+	}
+	backup, real := github("backup"), github("real")
+	call := "/twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact"
+
+	// No address at all: the call cannot be forwarded.
+	none := httptest.NewServer(newHandler(Options{}))
+	defer none.Close()
+	if resp, _ := get(t, none.URL+call); resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("no address: status %d", resp.StatusCode)
+	}
+
+	// Before the job hook has called, as after a restart in the middle of a job: the backup.
+	backend := httptest.NewServer(http.NotFoundHandler()) // a miss is all the ready check needs
+	defer backend.Close()
+	srv := httptest.NewServer(newHandler(Options{CacheBackendHost: backend.URL, GitHubResultsURL: backup.URL + "/"}))
+	defer srv.Close()
+	if _, body := get(t, srv.URL+call); string(body) != "backup "+call {
+		t.Fatalf("before ready: %q", body)
+	}
+	// After the job hook has called: the address it gave.
+	http.Post(srv.URL+"/_warpbuild/ready", "text/plain", strings.NewReader(real.URL+"/"))
+	if _, body := get(t, srv.URL+call); string(body) != "real "+call {
+		t.Fatalf("after ready: %q", body)
+	}
+}

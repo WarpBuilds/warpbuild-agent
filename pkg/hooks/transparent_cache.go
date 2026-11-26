@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/manager"
@@ -74,16 +75,20 @@ func (*TransparentCacheHook) PreStartHook(ctx context.Context, opts *manager.Pre
 		return nil
 	}
 
-	// If the server does not start, the job hook finds it not ready and falls back to GitHub.
-	exe, err := os.Executable()
-	if err == nil {
-		// A child of the agent, not of the runner, so the runner's end-of-job clean-up cannot kill it.
-		cmd := exec.Command(exe, "--launch-transparent-cache", "--settings", tc.SettingsFile)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		err = cmd.Start()
-	}
-	if err != nil {
+	// The server is a child of the agent, not of the runner, so the runner's end-of-job clean-up
+	// cannot kill it. Every artifact call of the job goes through it, so it is started again if it
+	// ever stops. While it is down at job start, the job hook falls back to GitHub.
+	if exe, err := os.Executable(); err != nil {
 		log.Logger().Errorf("transparent cache: failed to start the cache server: %v", err)
+	} else {
+		go func() {
+			for {
+				cmd := exec.Command(exe, "--launch-transparent-cache", "--settings", tc.SettingsFile)
+				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+				log.Logger().Errorf("transparent cache: the cache server stopped, starting it again: %v", cmd.Run())
+				time.Sleep(time.Second)
+			}
+		}()
 	}
 	log.Logger().Infof("transparent cache: runner patched, marker at %s", marker)
 	return nil

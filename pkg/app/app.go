@@ -325,6 +325,7 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			CacheBackendHost: settings.Proxy.CacheBackendHost,
 			AuthToken:        settings.Agent.RunnerVerificationToken,
 
+			GitHubResultsURL:      settings.TransparentCache.GitHubResultsURL,
 			DownloadLimitMBPerSec: settings.TransparentCache.DownloadLimitMBPerSec,
 		}); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)

@@ -29,6 +29,9 @@ type Options struct {
 	// CacheBackendHost and AuthToken are used to call backend-cache.
 	CacheBackendHost string
 	AuthToken        string
+	// GitHubResultsURL is the backup for GitHub's results address, used for calls that arrive
+	// before the job hook has set the real one, such as after a restart in the middle of a job.
+	GitHubResultsURL string
 	// DownloadLimitMBPerSec caps how fast the whole VM downloads from storage, in megabytes
 	// (1,000,000 bytes) per second. 0 means no cap.
 	DownloadLimitMBPerSec int
@@ -48,6 +51,7 @@ type server struct {
 
 	// githubURL is GitHub's real results address for this job. The job hook sets it once.
 	githubURL atomic.Pointer[url.URL]
+	backupURL *url.URL // see Options.GitHubResultsURL, nil if not set
 }
 
 // ListenHost is the address the server listens on: every address on Linux, so steps inside
@@ -131,6 +135,9 @@ func newHandler(opts Options) http.Handler {
 
 	s := &server{opts: opts, client: &http.Client{Transport: transport}, slots: make(chan struct{}, downloadSlots)}
 
+	if u, err := url.Parse(opts.GitHubResultsURL); err == nil && u.Host != "" {
+		s.backupURL = u
+	}
 	if opts.DownloadLimitMBPerSec > 0 {
 		s.limit = rate.NewLimiter(rate.Limit(opts.DownloadLimitMBPerSec)*1e6, limitChunk)
 	}
@@ -191,6 +198,9 @@ func (s *server) ready(w http.ResponseWriter, r *http.Request) {
 // forward sends every call that is not a cache call to GitHub unchanged, with the caller's headers.
 func (s *server) forward(w http.ResponseWriter, r *http.Request) {
 	target := s.githubURL.Load()
+	if target == nil {
+		target = s.backupURL
+	}
 	if target == nil {
 		http.Error(w, "GitHub's results URL is not set", http.StatusBadGateway)
 		return
