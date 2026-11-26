@@ -103,6 +103,9 @@ type TransparentCacheSettings struct {
 	// GitHubResultsURL is the backup for GitHub's results address, used when the job hook
 	// cannot read it from the runner's log.
 	GitHubResultsURL string `json:"github_results_url"`
+	// DownloadLimitMBPerSec caps how fast the cache server downloads from storage, for the whole
+	// VM, in megabytes per second. 0 means no cap.
+	DownloadLimitMBPerSec int `json:"download_limit_mb_per_sec"`
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
@@ -321,6 +324,8 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			Port:             settings.TransparentCache.Port,
 			CacheBackendHost: settings.Proxy.CacheBackendHost,
 			AuthToken:        settings.Agent.RunnerVerificationToken,
+
+			DownloadLimitMBPerSec: settings.TransparentCache.DownloadLimitMBPerSec,
 		}); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)
 			return err

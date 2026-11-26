@@ -21,6 +21,7 @@ import (
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
+	"golang.org/x/time/rate"
 )
 
 type Options struct {
@@ -28,6 +29,9 @@ type Options struct {
 	// CacheBackendHost and AuthToken are used to call backend-cache.
 	CacheBackendHost string
 	AuthToken        string
+	// DownloadLimitMBPerSec caps how fast the whole VM downloads from storage, in megabytes
+	// (1,000,000 bytes) per second. 0 means no cap.
+	DownloadLimitMBPerSec int
 }
 
 type server struct {
@@ -40,6 +44,7 @@ type server struct {
 
 	downloads sync.Map      // download id -> signed storage URL
 	slots     chan struct{} // see downloadSlots
+	limit     *rate.Limiter // bytes per second from storage, nil for no cap
 
 	// githubURL is GitHub's real results address for this job. The job hook sets it once.
 	githubURL atomic.Pointer[url.URL]
@@ -125,6 +130,10 @@ func newHandler(opts Options) http.Handler {
 	transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
 
 	s := &server{opts: opts, client: &http.Client{Transport: transport}, slots: make(chan struct{}, downloadSlots)}
+
+	if opts.DownloadLimitMBPerSec > 0 {
+		s.limit = rate.NewLimiter(rate.Limit(opts.DownloadLimitMBPerSec)*1e6, limitChunk)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /_warpbuild/ready", s.ready)

@@ -17,7 +17,7 @@ import (
 
 // startRestore runs the server against a fake backend-cache that knows one key, "hit", and a fake
 // storage that serves file with Range support.
-func startRestore(t *testing.T, file []byte) string {
+func startRestore(t *testing.T, file []byte, limitMBPerSec ...int) string {
 	mux := http.NewServeMux()
 	var backendURL string
 	mux.HandleFunc("POST /v1/cache/get", func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,11 @@ func startRestore(t *testing.T, file []byte) string {
 	t.Cleanup(backend.Close)
 	backendURL = backend.URL
 
-	srv := httptest.NewServer(newHandler(Options{CacheBackendHost: backend.URL, AuthToken: "token"}))
+	opts := Options{CacheBackendHost: backend.URL, AuthToken: "token"}
+	if len(limitMBPerSec) > 0 {
+		opts.DownloadLimitMBPerSec = limitMBPerSec[0]
+	}
+	srv := httptest.NewServer(newHandler(opts))
 	t.Cleanup(srv.Close)
 	return srv.URL
 }
@@ -172,5 +176,22 @@ func TestGuardRefusesOtherAddresses(t *testing.T) {
 		if rec.Code != want {
 			t.Errorf("caller %q: status %d, want %d", addr, rec.Code, want)
 		}
+	}
+}
+
+func TestRestoreDownloadLimit(t *testing.T) {
+	// 60 MB at 20 MB/s must take about 3 s, shared by all the pieces fetched at once.
+	file := randomBytes(60_000_000)
+	base := startRestore(t, file, 20)
+	_, res := twirp(t, base, "GetCacheEntryDownloadURL", `{"key":"hit","version":"v1"}`)
+
+	began := time.Now()
+	_, body := get(t, res["signed_download_url"].(string))
+	took := time.Since(began)
+	if !bytes.Equal(body, file) {
+		t.Fatalf("got %d bytes, want %d", len(body), len(file))
+	}
+	if took < 2500*time.Millisecond || took > 5*time.Second {
+		t.Errorf("60 MB at 20 MB/s took %v, want about 3 s", took)
 	}
 }

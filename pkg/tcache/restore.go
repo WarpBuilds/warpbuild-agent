@@ -1,6 +1,7 @@
 package tcache
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -22,6 +23,8 @@ const (
 	// downloadSlots is how many pieces the whole VM fetches or holds in memory at once, across
 	// every download. It caps the VM's connections to storage and the server's memory.
 	downloadSlots = 16
+	// With a download limit, bytes from storage are read limitChunk at a time, pausing in between.
+	limitChunk = 256 << 10
 )
 
 // getDownloadURL handles GetCacheEntryDownloadURL: look the key up at backend-cache and hand the
@@ -204,9 +207,30 @@ func (s *server) fetchPieceOnce(ctx context.Context, storageURL string, from, to
 	if err != nil {
 		return nil, 0, resp.StatusCode, fmt.Errorf("storage sent no file size: %q", resp.Header.Get("Content-Range"))
 	}
-	data, err := io.ReadAll(resp.Body)
+	data, err := s.readAll(ctx, resp.Body)
 	if err != nil {
 		return nil, 0, resp.StatusCode, err
 	}
 	return data, total, resp.StatusCode, nil
+}
+
+// readAll reads all of r, no faster than the VM's download limit. The limit is shared by every
+// piece of every download, so many restores at once on a host cannot fill its network line.
+func (s *server) readAll(ctx context.Context, r io.Reader) ([]byte, error) {
+	if s.limit == nil {
+		return io.ReadAll(r)
+	}
+	var buf bytes.Buffer
+	for {
+		n, err := io.CopyN(&buf, r, limitChunk)
+		if waitErr := s.limit.WaitN(ctx, int(n)); waitErr != nil {
+			return nil, waitErr
+		}
+		if err == io.EOF {
+			return buf.Bytes(), nil
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
 }
