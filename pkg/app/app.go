@@ -6,7 +6,6 @@ import (
 	"errors"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -17,8 +16,8 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
 	"github.com/warpbuilds/warpbuild-agent/pkg/sandbox"
 	"github.com/warpbuilds/warpbuild-agent/pkg/sysinit"
+	"github.com/warpbuilds/warpbuild-agent/pkg/tcache"
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
-	transparentcache "github.com/warpbuilds/warpbuild-agent/pkg/transparent-cache"
 )
 
 type ApplicationOptions struct {
@@ -96,30 +95,22 @@ type ProxySettings struct {
 }
 
 type TransparentCacheSettings struct {
-	DerpPort       int    `json:"derp_port"`
-	OginyPort      int    `json:"oginy_port"`
-	AsurPort       int    `json:"asur_port"`
-	LoggingEnabled bool   `json:"logging_enabled"`
-	CertDir        string `json:"cert_dir"`
+	Enabled bool `json:"enabled"`
+	// Port is the port the cache server listens on.
+	//
+	// Default: 49161
+	Port int `json:"port"`
+	// GitHubResultsURL is the backup for GitHub's results address, used when the job hook
+	// cannot read it from the runner's log.
+	GitHubResultsURL string `json:"github_results_url"`
+	// DownloadLimitMBPerSec caps how fast the cache server downloads from storage, for the whole
+	// VM, in megabytes per second. 0 means no cap.
+	DownloadLimitMBPerSec int `json:"download_limit_mb_per_sec"`
 }
 
 func (t *TransparentCacheSettings) ApplyDefaults() {
-	if t.OginyPort == 0 {
-		t.OginyPort = 59991
-	}
-	if t.DerpPort == 0 {
-		t.DerpPort = 59992
-	}
-	if t.AsurPort == 0 {
-		t.AsurPort = 59993
-	}
-	if t.CertDir == "" {
-		// Default to ~/runner/certs, with fallback to /home/runner/certs
-		homeBase := os.Getenv("HOME")
-		if homeBase == "" {
-			homeBase = "/home/runner"
-		}
-		t.CertDir = filepath.Join(homeBase, "certs")
+	if t.Port == 0 {
+		t.Port = 49161
 	}
 }
 
@@ -324,28 +315,30 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			return err
 		}
 	} else if opts.LaunchTransparentCache {
-		// Start the transparent cache server with configured ports
 		if settings.TransparentCache == nil {
 			log.Logger().Errorf("transparent cache settings not configured")
 			return errors.New("transparent cache settings not configured")
 		}
 
-		if err := transparentcache.Start(
-			settings.TransparentCache.DerpPort,
-			settings.TransparentCache.OginyPort,
-			settings.TransparentCache.AsurPort,
-			settings.Proxy.CacheBackendHost,
-			settings.Agent.RunnerVerificationToken,
-			settings.TransparentCache.CertDir,
-			settings.TransparentCache.LoggingEnabled,
-		); err != nil {
+		if err := tcache.Start(ctx, tcache.Options{
+			Port:             settings.TransparentCache.Port,
+			CacheBackendHost: settings.Proxy.CacheBackendHost,
+			AuthToken:        settings.Agent.RunnerVerificationToken,
+
+			GitHubResultsURL:      settings.TransparentCache.GitHubResultsURL,
+			DownloadLimitMBPerSec: settings.TransparentCache.DownloadLimitMBPerSec,
+		}); err != nil {
 			log.Logger().Errorf("failed to start transparent cache: %v", err)
 			return err
 		}
 	} else {
-		transparentCacheOginyPort := 0
-		if settings.TransparentCache != nil {
-			transparentCacheOginyPort = settings.TransparentCache.OginyPort
+		var transparentCache *manager.TransparentCacheOptions
+		if settings.TransparentCache != nil && settings.TransparentCache.Enabled {
+			transparentCache = &manager.TransparentCacheOptions{
+				SettingsFile:     opts.SettingsFile,
+				Port:             settings.TransparentCache.Port,
+				GitHubResultsURL: settings.TransparentCache.GitHubResultsURL,
+			}
 		}
 
 		telemetryPort := 0
@@ -354,14 +347,14 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 		}
 
 		agent, err := manager.NewAgent(&manager.AgentOptions{
-			ID:                        settings.Agent.ID,
-			PollingSecret:             settings.Agent.PollingSecret,
-			HostURL:                   settings.Agent.HostURL,
-			ExitFileLocation:          settings.Agent.ExitFileLocation,
-			TransparentCacheOginyPort: transparentCacheOginyPort,
-			TelemetryPort:             telemetryPort,
-			CacheBackendHost:          settings.Proxy.CacheBackendHost,
-			RunnerVerificationToken:   settings.Agent.RunnerVerificationToken,
+			ID:                      settings.Agent.ID,
+			PollingSecret:           settings.Agent.PollingSecret,
+			HostURL:                 settings.Agent.HostURL,
+			ExitFileLocation:        settings.Agent.ExitFileLocation,
+			TransparentCache:        transparentCache,
+			TelemetryPort:           telemetryPort,
+			CacheBackendHost:        settings.Proxy.CacheBackendHost,
+			RunnerVerificationToken: settings.Agent.RunnerVerificationToken,
 		})
 		if err != nil {
 			log.Logger().Errorf("failed to create agent: %v", err)
