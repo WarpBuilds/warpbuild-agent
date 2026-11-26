@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/netip"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -226,5 +227,51 @@ func TestForward(t *testing.T) {
 	http.Post(srv.URL+"/_warpbuild/ready", "text/plain", strings.NewReader(real.URL+"/"))
 	if _, body := get(t, srv.URL+call); string(body) != "real "+call {
 		t.Fatalf("after ready: %q", body)
+	}
+}
+
+func TestRestoreStalledPiece(t *testing.T) {
+	// Storage hangs on one request: headers, then nothing. The piece must be fetched again, and
+	// the client must never wait 5 s for data, which is when the cache step gives up.
+	file := randomBytes(6 * pieceSize)
+	var requests atomic.Int32
+	mux := http.NewServeMux()
+	var backendURL string
+	mux.HandleFunc("POST /v1/cache/get", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(proxy.GetCacheResponse{
+			S3:         &proxy.S3GetCacheResponse{PreSignedURL: backendURL + "/storage/file"},
+			CacheEntry: &proxy.CacheEntry{CacheUserGivenKey: "hit"},
+		})
+	})
+	mux.HandleFunc("GET /storage/file", func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 3 {
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes 0-0/%d", len(file)))
+			w.WriteHeader(http.StatusPartialContent)
+			w.(http.Flusher).Flush()
+			select {
+			case <-r.Context().Done():
+			case <-time.After(20 * time.Second):
+			}
+			return
+		}
+		http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(file))
+	})
+	backend := httptest.NewServer(mux)
+	defer backend.Close()
+	backendURL = backend.URL
+	srv := httptest.NewServer(newHandler(Options{CacheBackendHost: backend.URL}))
+	defer srv.Close()
+
+	_, res := twirp(t, srv.URL, "GetCacheEntryDownloadURL", `{"key":"hit","version":"v1"}`)
+	began := time.Now()
+	_, body := get(t, res["signed_download_url"].(string))
+	if !bytes.Equal(body, file) {
+		t.Fatalf("got %d bytes, want %d", len(body), len(file))
+	}
+	if took := time.Since(began); took > 4*time.Second {
+		t.Errorf("the download took %v with one stalled piece, want under 4 s", took)
+	}
+	if n := requests.Load(); n != 7 {
+		t.Errorf("storage got %d requests, want 7: six pieces and one retry", n)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/warpbuilds/warpbuild-agent/pkg/log"
 	"github.com/warpbuilds/warpbuild-agent/pkg/proxy"
@@ -23,8 +24,12 @@ const (
 	// downloadSlots is how many pieces the whole VM fetches or holds in memory at once, across
 	// every download. It caps the VM's connections to storage and the server's memory.
 	downloadSlots = 16
-	// With a download limit, bytes from storage are read limitChunk at a time, pausing in between.
+	// Bytes from storage are read limitChunk at a time. With a download limit, there is a pause in between.
 	limitChunk = 256 << 10
+	// A request to storage that sends nothing for stallTimeout is dropped and tried again. Storage
+	// requests sometimes hang for many seconds, and the cache step gives up on a download after 5
+	// seconds with no data.
+	stallTimeout = 2 * time.Second
 )
 
 // getDownloadURL handles GetCacheEntryDownloadURL: look the key up at backend-cache and hand the
@@ -178,11 +183,19 @@ func (s *server) fetchPiece(ctx context.Context, storageURL string, from, to int
 		if err == nil || status == http.StatusRequestedRangeNotSatisfiable {
 			break
 		}
+		if ctx.Err() == nil {
+			log.Logger().Warnf("transparent cache: bytes %d-%d from storage stalled or failed, try %d: %v", from, to, attempt+1, err)
+		}
 	}
 	return data, total, status, err
 }
 
 func (s *server) fetchPieceOnce(ctx context.Context, storageURL string, from, to int64) ([]byte, int64, int, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	stalled := time.AfterFunc(stallTimeout, cancel)
+	defer stalled.Stop()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, storageURL, nil)
 	if err != nil {
 		return nil, 0, 0, redact.URLError(err)
@@ -207,30 +220,24 @@ func (s *server) fetchPieceOnce(ctx context.Context, storageURL string, from, to
 	if err != nil {
 		return nil, 0, resp.StatusCode, fmt.Errorf("storage sent no file size: %q", resp.Header.Get("Content-Range"))
 	}
-	data, err := s.readAll(ctx, resp.Body)
-	if err != nil {
-		return nil, 0, resp.StatusCode, err
-	}
-	return data, total, resp.StatusCode, nil
-}
 
-// readAll reads all of r, no faster than the VM's download limit. The limit is shared by every
-// piece of every download, so many restores at once on a host cannot fill its network line.
-func (s *server) readAll(ctx context.Context, r io.Reader) ([]byte, error) {
-	if s.limit == nil {
-		return io.ReadAll(r)
-	}
+	// Read in chunks, no faster than the VM's download limit. The limit is shared by every piece
+	// of every download, so many restores at once on a host cannot fill its network line.
 	var buf bytes.Buffer
 	for {
-		n, err := io.CopyN(&buf, r, limitChunk)
-		if waitErr := s.limit.WaitN(ctx, int(n)); waitErr != nil {
-			return nil, waitErr
-		}
+		stalled.Reset(stallTimeout)
+		n, err := io.CopyN(&buf, resp.Body, limitChunk)
+		stalled.Stop()
 		if err == io.EOF {
-			return buf.Bytes(), nil
+			return buf.Bytes(), total, resp.StatusCode, nil
 		}
 		if err != nil {
-			return nil, err
+			return nil, 0, resp.StatusCode, err
+		}
+		if s.limit != nil {
+			if err := s.limit.WaitN(ctx, int(n)); err != nil {
+				return nil, 0, resp.StatusCode, err
+			}
 		}
 	}
 }
