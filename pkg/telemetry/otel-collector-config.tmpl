@@ -41,6 +41,7 @@
 {{- if .Collect }}{{ $metricsExporters = append $metricsExporters "otlphttp" }}{{ end }}
 {{- if .EnableSigNoz }}{{ $metricsExporters = append (append $metricsExporters "otlp/signoz") "debug" }}{{ end }}
 {{- if .ExportMetrics }}{{ $metricsExporters = append $metricsExporters "forward/customer_metrics" }}{{ end }}
+{{- $idle := or .Parked (not (or $systemExporters $ghaExporters $metricsExporters)) }}
 receivers:
 {{- if eq .OS "windows"}}
   windowseventlog/application:
@@ -178,7 +179,7 @@ receivers:
             attributes:
               state: idle
 {{- end}}
-{{- if .Parked}}
+{{- if $idle }}
 
   nop: {}
 {{- end}}
@@ -562,7 +563,7 @@ exporters:
       max_interval: 15s
       max_elapsed_time: 15s
 {{- end}}
-{{- if .Parked}}
+{{- if $idle }}
 
   nop: {}
 {{- end}}
@@ -572,7 +573,7 @@ service:
     metrics:
       level: none
   pipelines:
-{{- if .Parked}}
+{{- if $idle }}
     metrics/idle:
       receivers: [nop]
       exporters: [nop]
