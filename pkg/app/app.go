@@ -34,7 +34,6 @@ type ApplicationOptions struct {
 	TelemetrySigNozEndpoint string `json:"telemetry_signoz_endpoint"`
 	TelemetrySigNozAPIKey   string `json:"telemetry_signoz_api_key"`
 	WithSysInit             bool   `json:"with_sysinit"`
-	AgentVersion            string `json:"agent_version"`
 }
 
 func (opts *ApplicationOptions) ApplyDefaults() {
@@ -293,7 +292,6 @@ func NewApp(ctx context.Context, opts *ApplicationOptions) error {
 			SigNozEnable:   opts.TelemetrySigNozEnable,
 			SigNozEndpoint: opts.TelemetrySigNozEndpoint,
 			SigNozAPIKey:   opts.TelemetrySigNozAPIKey,
-			AgentVersion:   opts.AgentVersion,
 		}); err != nil {
 			log.Logger().Errorf("failed to start telemetry: %v", err)
 		}

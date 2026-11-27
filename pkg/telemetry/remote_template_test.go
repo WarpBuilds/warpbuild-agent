@@ -102,7 +102,7 @@ func newBackendManager(t *testing.T, b *fakeBackend, base string) *TelemetryMana
 	t.Helper()
 	require.NoError(t, os.MkdirAll(filepath.Join(base, "pkg", "telemetry"), 0o755))
 	hostURL := b.URL + "/api/v1"
-	tm := NewTelemetryManager(t.Context(), 33931, base, newAPIClient(hostURL, "1.2.3"), "wr_test_runner", "polling-secret", hostURL, false, "", "")
+	tm := NewTelemetryManager(t.Context(), 33931, base, newAPIClient(hostURL), "wr_test_runner", "polling-secret", hostURL, false, "", "")
 	tm.restartCh = make(chan struct{}, 4)
 	return tm
 }
@@ -124,7 +124,7 @@ func withTemplate(d *warpbuild.CommonsRunnerInstanceAllocationDetails, block *wa
 	return d
 }
 
-func TestAPIClientIdentifiesTheAgentOnEveryRequest(t *testing.T) {
+func TestAPIClientSendsTheContractOnEveryRequest(t *testing.T) {
 	b := newFakeBackend(t)
 	tm := newBackendManager(t, b, t.TempDir())
 
@@ -137,7 +137,6 @@ func TestAPIClientIdentifiesTheAgentOnEveryRequest(t *testing.T) {
 	fetch := b.lastRequest()
 
 	for name, r := range map[string]recordedRequest{"allocation details": poll, "template": fetch} {
-		assert.Equalf(t, "1.2.3", r.header.Get(agentVersionHeader), "%s request", name)
 		assert.Equalf(t, "2", r.header.Get(telemetryContractHeader), "%s request", name)
 		assert.Equalf(t, "polling-secret", r.header.Get(pollingSecretHeader), "%s request", name)
 	}

@@ -33,7 +33,6 @@ type TelemetryOptions struct {
 	SigNozEnable   bool          `json:"signoz_enable"`
 	SigNozEndpoint string        `json:"signoz_endpoint"`
 	SigNozAPIKey   string        `json:"signoz_api_key"`
-	AgentVersion   string        `json:"agent_version"`
 }
 
 func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error {
@@ -58,7 +57,7 @@ func StartTelemetryCollection(ctx context.Context, opts *TelemetryOptions) error
 	if opts.HostURL == "" {
 		return fmt.Errorf("host url is required")
 	}
-	wb := newAPIClient(opts.HostURL, opts.AgentVersion)
+	wb := newAPIClient(opts.HostURL)
 
 	log.Logger().Debugf("WarpBuild API client initialized with host URL: %s", opts.HostURL)
 

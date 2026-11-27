@@ -8,8 +8,6 @@ import (
 	"github.com/warpbuilds/warpbuild-agent/pkg/telemetry"
 )
 
-var Version = "dev"
-
 type flagsStruct struct {
 	stdoutFile              string
 	stderrFile              string
@@ -53,7 +51,6 @@ var rootCmd = &cobra.Command{
 			TelemetrySigNozEndpoint: flags.telemetrySigNozEndpoint,
 			TelemetrySigNozAPIKey:   flags.telemetrySigNozAPIKey,
 			WithSysInit:             flags.withSysInit,
-			AgentVersion:            Version,
 		})
 		if err != nil {
 			return err

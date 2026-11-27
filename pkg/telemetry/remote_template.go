@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	agentVersionHeader      = "X-Warpbuild-Agent-Version"
 	telemetryContractHeader = "X-Warpbuild-Telemetry-Contract"
 	pollingSecretHeader     = "X-POLLING-SECRET"
 
@@ -67,10 +66,9 @@ func collectorValidator(collectorPath string) configValidator {
 	}
 }
 
-func newAPIClient(hostURL, agentVersion string) *warpbuild.APIClient {
+func newAPIClient(hostURL string) *warpbuild.APIClient {
 	cfg := warpbuild.NewConfiguration()
 	cfg.Servers[0].URL = hostURL
-	cfg.AddDefaultHeader(agentVersionHeader, agentVersion)
 	cfg.AddDefaultHeader(telemetryContractHeader, strconv.Itoa(telemetryTemplateContract))
 	return warpbuild.NewAPIClient(cfg)
 }
