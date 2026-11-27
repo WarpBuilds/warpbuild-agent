@@ -5,16 +5,12 @@
 {{- $logSystem := true }}
 {{- $logRunner := true }}
 {{- $logJob := true }}
-{{- $logKeys := list }}
 {{- if $logsSelected }}
 {{- $logs := get $export "logs" }}
 {{- $streams := default (list) (get $logs "streams") }}
 {{- $logSystem = has "system" $streams }}
 {{- $logRunner = has "github_runner" $streams }}
 {{- $logJob = has "job" $streams }}
-{{- range $key := concat (default (list) (get $logs "attributes")) $alwaysKeep }}
-{{- $logKeys = append $logKeys (ottlStr $key) }}
-{{- end }}
 {{- end }}
 {{- $customerSystemLogs := and .ExportLogs $logSystem }}
 {{- $customerGHALogs := and .ExportLogs (or $logRunner $logJob) }}
@@ -464,18 +460,6 @@ processors:
         - 'IsMatch(attributes["log.file.name"], "^Runner_")'
 {{- end }}
 {{- end }}
-{{- if and .ExportLogs $logsSelected }}
-
-  transform/customer_log_attrs:
-    error_mode: ignore
-    log_statements:
-      - context: resource
-        statements:
-          - {{ yamlStr (printf "keep_keys(attributes, [%s])" (join ", " $logKeys)) }}
-      - context: log
-        statements:
-          - {{ yamlStr (printf "keep_keys(attributes, [%s])" (join ", " $logKeys)) }}
-{{- end }}
 {{- end}}
 
 {{- if or .ExportMetrics $customerSystemLogs $customerGHALogs }}
@@ -599,13 +583,13 @@ service:
 {{- if $customerSystemLogs }}
     logs/customer_system:
       receivers: [forward/customer_system_logs]
-      processors: [{{ if eq .OS "linux" }}filter/customer_drop_ours, {{ end }}resource/customer{{ if $logsSelected }}, transform/customer_log_attrs{{ end }}]
+      processors: [{{ if eq .OS "linux" }}filter/customer_drop_ours, {{ end }}resource/customer]
       exporters: [otlphttp/customer_logs]
 {{- end}}
 {{- if $customerGHALogs }}
     logs/customer_gha:
       receivers: [forward/customer_gha_logs]
-      processors: [{{ if not (and $logRunner $logJob) }}filter/customer_gha_streams, {{ end }}resource/customer{{ if $logsSelected }}, transform/customer_log_attrs{{ end }}]
+      processors: [{{ if not (and $logRunner $logJob) }}filter/customer_gha_streams, {{ end }}resource/customer]
       exporters: [otlphttp/customer_logs]
 {{- end}}
 {{- if $metricsExporters }}
