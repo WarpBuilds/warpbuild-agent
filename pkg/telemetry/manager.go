@@ -374,7 +374,8 @@ func (tm *TelemetryManager) writeOtelCollectorConfig() error {
 
 	in, remote := tm.takeRenderInput()
 	data := newCollectorTemplateData(in)
-	log.Logger().Infof("Parsing template with vars: %+v", data)
+	log.Logger().Infof("Rendering the collector config: collect=%t parked=%t signoz=%t export_metrics=%t export_logs=%t",
+		data.Collect, data.Parked, data.EnableSigNoz, data.ExportMetrics, data.ExportLogs)
 
 	type candidate struct{ source, name, text string }
 	var candidates []candidate
